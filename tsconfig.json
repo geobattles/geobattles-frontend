@@ -1,8 +1,4 @@
 {
     // https://nuxt.com/docs/guide/concepts/typescript
     "extends": "./.nuxt/tsconfig.json"
-    // "include": ["types/index.d.ts"]
-    // "compilerOptions": {
-    //     /* Visit https://aka.ms/tsconfig.json to read more about this file */
-    // }
 }

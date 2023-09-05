@@ -1,12 +1,15 @@
 <template>
-    <div @click="createLobby">Hello World!</div>
+    <div>
+        <button @click="createLobby">Create Lobby</button>
+    </div>
 </template>
 
-<script>
-import { createLobby } from "~/lobby";
+<script lang="ts">
 export default {
     setup() {
         onMounted(() => {});
+
+        usePlayerInfo().value.name = "Martin"; //! Dev
 
         return { createLobby };
     },

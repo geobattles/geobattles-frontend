@@ -1,6 +1,7 @@
 export type User = {
     name: string;
     color: string;
+    isConnectedToLobby: boolean;
 };
 
 type LobbyConfig = {
@@ -17,7 +18,7 @@ type LobbyConfig = {
     scoreFactor: number;
 };
 
-export type Lobby = {
+export type LobbyInfo = {
     ID: string;
     admin: string;
     conf: LobbyConfig;

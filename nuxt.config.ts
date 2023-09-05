@@ -5,4 +5,7 @@ export default defineNuxtConfig({
         typeCheck: true,
         strict: true,
     },
+    imports: {
+        autoImport: true,
+    },
 });
