@@ -18,6 +18,19 @@ type LobbyConfig = {
     scoreFactor: number;
 };
 
+export type playerListObject = {
+    [key: string]: {
+        name: string;
+        color: string;
+        powerups: number[];
+    };
+};
+
+type Coordinates = {
+    lat: number;
+    lng: number;
+};
+
 export type LobbyInfo = {
     ID: string;
     admin: string;
@@ -25,7 +38,7 @@ export type LobbyInfo = {
     currentRound: number;
     endResults: any; //TODO: Define this
     numPlayers: number;
-    playerList: string[];
+    playerList: playerListObject;
     results: any; //TODO: Define this
     totalResults: any; //TODO: Define this
 };

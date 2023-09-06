@@ -1,3 +1,5 @@
+import type { LobbyInfo } from "~/types";
+
 /**
  * Function handles lobby creation
  */
@@ -32,8 +34,32 @@ export const createLobby = async () => {
 
         // On success redirect to lobby page
         router.push({ path: `/lobby/${lobby_settings.value.ID}` });
-        username.value.isConnectedToLobby = true; // Set user state to connected
     }
 };
 
-export const joinLobby = () => {};
+/**
+ * Function is used to join a lobby from a link or home page.
+ *
+ * @param lobby_id
+ */
+export const joinLobby = async (lobby_id: string) => {
+    const router = useRouter();
+
+    // TODO: Perfrom checks if lobby exists and is joinable
+
+    // Create socket connection
+    initializeSocketConnection(lobby_id);
+    router.push({ path: `/lobby/${lobby_id}` });
+};
+
+/**
+ * Function is used when a player joints the lobby. It will update
+ * lobby data and notify players.
+ *
+ * @param lobby_info
+ * @param player
+ */
+export const joinedLobby = (lobby_info: LobbyInfo, player: string) => {
+    useLobbySettings().value = lobby_info; // Update lobby settings state
+    console.log("Player " + player + " joined the lobby!"); // Change this to toast later
+};
