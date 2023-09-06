@@ -1,4 +1,4 @@
-import type { LobbyInfo, Coordinates } from "~/types";
+import type { LobbyInfo, Coordinates, ResultInfo } from "~/types";
 
 export const initializeSocketConnection = (lobby_id: string): void => {
     const socket = new WebSocket("http://localhost:8080".replace(/(http)(s)?\:\/\//, "ws$2://") + `/lobbySocket?id=${lobby_id}&name=${usePlayerInfo().value.name}`);
@@ -36,6 +36,12 @@ const parseSocketMessage = (data: any) => {
             break;
         case "START_ROUND":
             useCoordinates().value = data.location as Coordinates;
+            startRound();
+            break;
+        case "NEW_RESULT":
+            useResults().value[data.user as string] = data.playerRes as ResultInfo;
+            break;
+        case "ROUND_RESULT" || "TIMES_UP":
             break;
         default:
             break;

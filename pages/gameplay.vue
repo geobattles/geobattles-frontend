@@ -1,6 +1,7 @@
 <template>
     <div>
         <div ref="google_map" id="map"></div>
+        <button @click="submitGuess">Submit</button>
     </div>
 </template>
 
@@ -13,7 +14,7 @@ export default {
             initalizeNewGoogleMap(google_map.value);
             addMapClickListener();
         });
-        return { google_map };
+        return { google_map, submitGuess };
     },
 };
 </script>

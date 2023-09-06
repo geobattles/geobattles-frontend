@@ -42,3 +42,15 @@ export type LobbyInfo = {
     results: any; //TODO: Define this
     totalResults: any; //TODO: Define this
 };
+
+export type Results = {
+    [key: string]: ResultInfo;
+};
+
+type ResultInfo = {
+    attempt: number;
+    baseScr: number;
+    distance: number;
+    lives: number;
+    location: Coordinates;
+};

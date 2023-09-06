@@ -43,12 +43,12 @@ export const addMapClickListener = (): void => {
         };
         console.log("Clicked coordinates: ", clicked_coordinates); //! Dev
 
-        // Create marker
-        const marker = addNewMapMarker(clicked_coordinates);
+        // Process pin
+        processMapPin(clicked_coordinates);
     });
 };
 
-const addNewMapMarker = (coordinates: Coordinates): google.maps.Marker => {
+export const addNewMapMarker = (coordinates: Coordinates): google.maps.Marker => {
     // Get player color
     const marker_color = getPlayerColorByName(usePlayerInfo().value.name);
     if (!marker_color) throw new Error("Player color is not defined");

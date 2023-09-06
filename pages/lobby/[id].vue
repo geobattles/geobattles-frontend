@@ -13,11 +13,14 @@
 export default {
     setup() {
         const lobby_settings = useLobbySettings();
-        console.log(useLobbySettings().value);
+        console.log(useLobbySettings().value); //! Dev
 
         const startGame = () => {
-            const router = useRouter();
-            router.push("/gameplay");
+            // Notify server to start the game
+            const data = JSON.stringify({
+                command: "start",
+            });
+            useSocketConnection().value.send(data);
         };
 
         return { lobby_settings, startGame };
