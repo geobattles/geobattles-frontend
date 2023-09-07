@@ -10,9 +10,12 @@
     },
     "devDependencies": {
         "@nuxt/devtools": "latest",
+        "@types/google.maps": "^3.50.5",
+        "autoprefixer": "^10.4.15",
         "nuxt": "^3.7.0",
+        "postcss": "^8.4.29",
+        "tailwindcss": "^3.3.3",
         "typescript": "^5.2.2",
-        "vue-tsc": "^1.8.8",
-        "@types/google.maps": "^3.50.5"
+        "vue-tsc": "^1.8.8"
     }
 }

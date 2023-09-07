@@ -15,4 +15,11 @@ export default defineNuxtConfig({
     imports: {
         autoImport: true,
     },
+    css: ["~/assets/css/main.css"],
+    postcss: {
+        plugins: {
+            tailwindcss: {},
+            autoprefixer: {},
+        },
+    },
 });

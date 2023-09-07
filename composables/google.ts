@@ -2,7 +2,9 @@ import type { Coordinates } from "~/types";
 
 const map_starting_view_position: Coordinates = { lat: 0, lng: 0 }; // Constant
 
-export const initalizeNewGoogleMap = (map_html: HTMLElement): void => {
+export const initalizeNewGoogleMap = (map_html: HTMLElement | null): void => {
+    if (!map_html) throw new Error("Map html element is not defined");
+
     useGoogleMap().value = new google.maps.Map(map_html as HTMLElement, {
         center: { ...map_starting_view_position },
         zoom: 2,
@@ -31,6 +33,24 @@ export const initalizeNewGoogleMap = (map_html: HTMLElement): void => {
         gestureHandling: "greedy", // Does not need 2 fingers to move on map when using touchscreen
 
         keyboardShortcuts: false,
+    });
+};
+
+export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): void => {
+    if (!panorama_html) throw new Error("Panorama html element is not defined");
+
+    console.log(useCoordinates().value); //! Dev
+    useGooglePanorama().value = new google.maps.StreetViewPanorama(panorama_html as HTMLElement, {
+        position: useCoordinates().value,
+        pov: {
+            heading: 34,
+            pitch: 10,
+        },
+        fullscreenControl: false,
+        showRoadLabels: false,
+        addressControl: false,
+        motionTracking: false,
+        motionTrackingControl: false,
     });
 };
 
