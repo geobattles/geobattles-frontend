@@ -69,4 +69,8 @@ export type SocketMessage = {
     user?: string;
     location?: Coordinates;
     playerRes?: ResultInfo;
+    roundRes?: Results;
+    totalResults?: Results;
 };
+
+type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINISHED" | undefined;

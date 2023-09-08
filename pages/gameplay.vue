@@ -1,9 +1,13 @@
 <template>
     <div>
-        <div ref="google_map" id="google_map"></div>
-        <button class="submit-button" @click="submitGuess">Submit</button>
-        <div ref="google_panorama" id="panorama_map"></div>
-        <GameplayLiveStatistics class="live-stats" />
+        <div v-show="game_flow === 'PLAYING'" id="gameplay playing">
+            <div ref="google_map" id="google_map"></div>
+            <button class="submit-button" @click="submitGuess">Submit</button>
+            <div ref="google_panorama" id="panorama_map"></div>
+            <GameplayLiveStatistics class="live-stats" />
+        </div>
+        <div v-show="game_flow === 'MID-ROUND'" id="gameplay mid-round">This is mid round</div>
+        <div id="gameplay end-game"></div>
     </div>
 </template>
 
@@ -12,13 +16,20 @@ export default {
     setup() {
         const google_map = ref<HTMLElement | null>(null);
         const google_panorama = ref<HTMLElement | null>(null);
+        const game_flow = useGameFlow();
 
         onMounted(() => {
             initalizeNewGoogleMap(google_map.value);
             initalizeNewPanoramaView(google_panorama.value);
             addMapClickListener();
+
+            console.log(game_flow.value);
         });
-        return { google_map, google_panorama, submitGuess };
+
+        watch(game_flow, (newVal) => {
+            console.log(newVal);
+        });
+        return { google_map, google_panorama, game_flow, submitGuess };
     },
 };
 </script>
@@ -56,5 +67,18 @@ export default {
     top: 10px;
     right: 10px;
     z-index: 2;
+}
+
+.gameplay {
+    height: 100vh;
+    width: 100vw;
+}
+
+.playing {
+    z-index: 0;
+}
+
+.mid-round {
+    z-index: 10;
 }
 </style>

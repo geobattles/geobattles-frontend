@@ -44,9 +44,9 @@ const parseSocketMessage = (data: SocketMessage) => {
             // Process
             useLobbySettings().value = data.lobby; // Update lobby settings state
             break;
-        case SocketType.UPDATED_LOBBY:
+        case SocketType.START_ROUND:
             // Perform checks
-            if (!data.location) throw new Error(`Location for search in SocketMessage type: ${SocketType.UPDATED_LOBBY} is not defined.`);
+            if (!data.location) throw new Error(`Location for search in SocketMessage type: ${SocketType.START_ROUND} is not defined.`);
 
             // Process
             useCoordinates().value = data.location;
@@ -61,6 +61,9 @@ const parseSocketMessage = (data: SocketMessage) => {
             processNewResult(data.user, data.playerRes);
             break;
         case SocketType.ROUND_RESULT || SocketType.TIMES_UP:
+            // Perform checks
+            if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
+            finishRound();
             break;
         default:
             break;

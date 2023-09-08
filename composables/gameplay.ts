@@ -1,6 +1,8 @@
 import { Coordinates } from "~/types";
 
 export const startRound = () => {
+    useGameFlow().value = "PLAYING"; // Change game flow state
+
     const router = useRouter();
     router.push("/gameplay");
 };
@@ -44,4 +46,8 @@ export const submitGuess = () => {
     };
 
     useSocketConnection().value.send(JSON.stringify(socket_message));
+};
+
+export const finishRound = () => {
+    useGameFlow().value = "MID-ROUND"; // Change game flow state
 };
