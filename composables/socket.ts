@@ -11,14 +11,17 @@ export const initializeSocketConnection = (lobby_id: string): void => {
     socket.onopen = () => {
         console.log("Socket connection established");
         username.value.isConnectedToLobby = true; // Set user state to connected
+        useGameFlow().value = "WAITING";
     };
     socket.onerror = (error) => {
         console.log(`WebSocket error: ${error}`);
         username.value.isConnectedToLobby = false; // Set user state to connected
+        useGameFlow().value = undefined;
     };
     socket.onclose = () => {
         console.log("Socket connection closed");
         username.value.isConnectedToLobby = false; // Set user state to connected
+        useGameFlow().value = undefined;
     };
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -50,7 +53,7 @@ const parseSocketMessage = (data: SocketMessage) => {
 
             // Process
             useCoordinates().value = data.location;
-            startRound();
+            startGame();
             break;
         case SocketType.NEW_RESULT:
             // Perform checks
@@ -68,4 +71,8 @@ const parseSocketMessage = (data: SocketMessage) => {
         default:
             break;
     }
+};
+
+export const sendSocketMessage = () => {
+    // TODO
 };

@@ -1,10 +1,18 @@
 import { Coordinates } from "~/types";
 
-export const startRound = () => {
+export const startGame = () => {
     useGameFlow().value = "PLAYING"; // Change game flow state
 
     const router = useRouter();
     router.push("/gameplay");
+};
+
+export const nextRound = () => {
+    // Start new round
+    const game = {
+        command: "start",
+    };
+    useSocketConnection().value.send(JSON.stringify(game));
 };
 
 export const endRound = () => {};
@@ -50,4 +58,28 @@ export const submitGuess = () => {
 
 export const finishRound = () => {
     useGameFlow().value = "MID-ROUND"; // Change game flow state
+};
+
+export const googleMapDOMTracker = (google_map: HTMLElement) => {
+    const game_flow = useGameFlow();
+
+    watch(game_flow, (newVal) => {
+        console.log(newVal);
+        if (newVal === "MID-ROUND") {
+            const mid_round_cointainer = document.getElementById("midround_container"); // Element is found in GameplayMidRound component.
+            if (google_map && mid_round_cointainer) {
+                console.log("appending child");
+                mid_round_cointainer.appendChild(google_map);
+                // TODO: Change Map styles to be larger
+            }
+        }
+        if (newVal === "PLAYING") {
+            const mid_round_cointainer = document.getElementById("playing");
+            if (google_map && mid_round_cointainer) {
+                console.log("appending child");
+                mid_round_cointainer.appendChild(google_map);
+                // TODO: Change Map styles to be larger
+            }
+        }
+    });
 };

@@ -2,9 +2,7 @@ import type { Coordinates } from "~/types";
 
 const map_starting_view_position: Coordinates = { lat: 0, lng: 0 }; // Constant
 
-export const initalizeNewGoogleMap = (map_html: HTMLElement | null): void => {
-    if (!map_html) throw new Error("Map html element is not defined");
-
+export const initalizeNewGoogleMap = (map_html: HTMLElement): void => {
     useGoogleMap().value = new google.maps.Map(map_html as HTMLElement, {
         center: { ...map_starting_view_position },
         zoom: 2,
