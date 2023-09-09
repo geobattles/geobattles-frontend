@@ -1,5 +1,6 @@
 import { Coordinates } from "~/types";
 
+// Start the game
 export const startGame = () => {
     useGameFlow().value = "PLAYING"; // Change game flow state
 
@@ -7,8 +8,8 @@ export const startGame = () => {
     router.push("/gameplay");
 };
 
+// Start next round
 export const nextRound = () => {
-    // Start new round
     const game = {
         command: "start",
     };
@@ -60,6 +61,13 @@ export const finishRound = () => {
     useGameFlow().value = "MID-ROUND"; // Change game flow state
 };
 
+/**
+ * Function is used to change GoogleMap HTMLElement position in the DOM. This is used
+ * to minimize GoogleMaps API usage. With such approach, GoogleMap is only loaded for
+ * every user once in a lobby instance.
+ *
+ * @param google_map
+ */
 export const googleMapDOMTracker = (google_map: HTMLElement) => {
     const game_flow = useGameFlow();
 
@@ -70,7 +78,7 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
             if (google_map && mid_round_cointainer) {
                 console.log("appending child");
                 mid_round_cointainer.appendChild(google_map);
-                // TODO: Change Map styles to be larger
+                // TODO: Change Map styles
             }
         }
         if (newVal === "PLAYING") {
@@ -78,7 +86,7 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
             if (google_map && mid_round_cointainer) {
                 console.log("appending child");
                 mid_round_cointainer.appendChild(google_map);
-                // TODO: Change Map styles to be larger
+                // TODO: Change Map styles
             }
         }
     });
