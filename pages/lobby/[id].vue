@@ -5,7 +5,7 @@
         <div v-for="(player, index) in lobby_settings.playerList" :key="index">
             {{ player.name }}
         </div>
-        <button @click="startGame()">Start</button>
+        <button @click="nextRound()">Start</button>
     </div>
 </template>
 
@@ -15,15 +15,7 @@ export default {
         const lobby_settings = useLobbySettings();
         console.log(useLobbySettings().value); //! Dev
 
-        const startGame = () => {
-            // Notify server to start the game
-            const data = JSON.stringify({
-                command: "start",
-            });
-            useSocketConnection().value.send(data);
-        };
-
-        return { lobby_settings, startGame };
+        return { lobby_settings, nextRound };
     },
 };
 </script>

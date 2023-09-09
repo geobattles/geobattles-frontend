@@ -13,6 +13,8 @@ export default {
         const google_map = ref<HTMLElement | null>(null);
         const google_panorama = ref<HTMLElement | null>(null);
 
+        // TODO: Disable submit as on old version
+
         onMounted(() => {
             if (!google_map.value) throw new Error("Google Map DOM element not found");
 

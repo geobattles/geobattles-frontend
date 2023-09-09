@@ -1,14 +1,16 @@
 import { Coordinates } from "~/types";
 
 // Start the game
-export const startGame = () => {
-    useGameFlow().value = "PLAYING"; // Change game flow state
+export const startRound = () => {
+    useGameFlow().value = "STARTING"; // Change game flow state
+    setTimeout(() => (useGameFlow().value = "PLAYING"), 3000); // For 3 seconds countdown
 
     const router = useRouter();
-    router.push("/gameplay");
+    if (router.currentRoute.value.name !== "gameplay") router.push("/gameplay"); // Redirect to gameplay page if not already there
+    else updatePanoramaView(useCoordinates().value); // Update panorama view for next round
 };
 
-// Start next round
+// Send signal to backend to start new round
 export const nextRound = () => {
     const game = {
         command: "start",
@@ -16,7 +18,11 @@ export const nextRound = () => {
     useSocketConnection().value.send(JSON.stringify(game));
 };
 
-export const endRound = () => {};
+export const finishRound = () => {
+    useGameFlow().value = "MID-ROUND"; // Change game flow state
+    removeMarkersFromMap();
+    deleteSavedMarkers();
+};
 
 export const processMapPin = (coordinates: Coordinates) => {
     useCurrentPin().value = coordinates; // Save current pin coordinates to state
@@ -57,10 +63,6 @@ export const submitGuess = () => {
     useSocketConnection().value.send(JSON.stringify(socket_message));
 };
 
-export const finishRound = () => {
-    useGameFlow().value = "MID-ROUND"; // Change game flow state
-};
-
 /**
  * Function is used to change GoogleMap HTMLElement position in the DOM. This is used
  * to minimize GoogleMaps API usage. With such approach, GoogleMap is only loaded for
@@ -91,3 +93,5 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
         }
     });
 };
+
+export const showRoundResults = () => {};

@@ -50,10 +50,12 @@ const parseSocketMessage = (data: SocketMessage) => {
         case SocketType.START_ROUND:
             // Perform checks
             if (!data.location) throw new Error(`Location for search in SocketMessage type: ${SocketType.START_ROUND} is not defined.`);
+            if (!data.players) throw new Error(`Players info in SocketMessage type: ${SocketType.START_ROUND} is not defined.`);
 
             // Process
-            useCoordinates().value = data.location;
-            startGame();
+            useCoordinates().value = data.location; // Set new search location
+            useResults().value = data.players; // Set new player results for live statistics
+            startRound();
             break;
         case SocketType.NEW_RESULT:
             // Perform checks

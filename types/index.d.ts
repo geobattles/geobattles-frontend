@@ -24,6 +24,7 @@ export type playerListObject = {
     [key: string]: {
         name: string;
         color: string;
+        lives: number;
         powerups: number[];
     };
 };
@@ -68,6 +69,7 @@ export type SocketMessage = {
     lobby?: LobbyInfo;
     user?: string;
     location?: Coordinates;
+    players?: Results;
     playerRes?: ResultInfo;
     roundRes?: Results;
     totalResults?: Results;

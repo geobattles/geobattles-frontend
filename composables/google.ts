@@ -2,6 +2,7 @@ import type { Coordinates } from "~/types";
 
 const map_starting_view_position: Coordinates = { lat: 0, lng: 0 }; // Constant
 
+/// GOOGLE MAP ///
 export const initalizeNewGoogleMap = (map_html: HTMLElement): void => {
     useGoogleMap().value = new google.maps.Map(map_html as HTMLElement, {
         center: { ...map_starting_view_position },
@@ -34,6 +35,22 @@ export const initalizeNewGoogleMap = (map_html: HTMLElement): void => {
     });
 };
 
+export const addMapClickListener = (): void => {
+    useGoogleMap().value.addListener("click", (event: any) => {
+        // Process pin
+        const clicked_coordinates: Coordinates = {
+            lat: parseFloat(event.latLng.lat()),
+            lng: parseFloat(event.latLng.lng()),
+        };
+        console.log("Clicked coordinates: ", clicked_coordinates); //! Dev
+
+        // Process pin
+        processMapPin(clicked_coordinates);
+    });
+};
+/// END GOOGLE MAP ///
+
+/// GOOGLE PANORAMA ///
 export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): void => {
     if (!panorama_html) throw new Error("Panorama html element is not defined");
 
@@ -51,21 +68,10 @@ export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): voi
         motionTrackingControl: false,
     });
 };
+export const updatePanoramaView = (coordinates: Coordinates) => useGooglePanorama().value.setPosition(coordinates);
+/// END GOOGLE PANORAMA ///
 
-export const addMapClickListener = (): void => {
-    useGoogleMap().value.addListener("click", (event: any) => {
-        // Process pin
-        const clicked_coordinates: Coordinates = {
-            lat: parseFloat(event.latLng.lat()),
-            lng: parseFloat(event.latLng.lng()),
-        };
-        console.log("Clicked coordinates: ", clicked_coordinates); //! Dev
-
-        // Process pin
-        processMapPin(clicked_coordinates);
-    });
-};
-
+/// MAP MARKERS ///
 export const addNewMapMarker = (coordinates: Coordinates): google.maps.Marker => {
     // Get player color
     const marker_color = getPlayerColorByName(usePlayerInfo().value.name);
@@ -88,3 +94,11 @@ export const addNewMapMarker = (coordinates: Coordinates): google.maps.Marker =>
     marker.setMap(useGoogleMap().value); // Append marker to active googleMap
     return marker;
 };
+
+export const removeMarkersFromMap = () => {
+    for (let i = 0; i < useMapMarkers().value.length; i++) toRaw(useMapMarkers().value[i]).setMap(null);
+};
+export const deleteSavedMarkers = () => {
+    useMapMarkers().value = [];
+};
+/// END MAP MARKERS ///
