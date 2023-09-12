@@ -1,4 +1,4 @@
-import type { User, LobbyInfo, Coordinates, Results, GameFlow } from "~/types";
+import type { User, LobbyInfo, Coordinates, Results, GameFlow, TotalResults, RoundResults } from "~/types";
 
 // Here are defined all states that are used in the app
 export const usePlayerInfo = () => useState<User>("user_info", () => ({} as User));
@@ -14,4 +14,6 @@ export const useMapMarkers = () => useState<google.maps.Marker[]>("map_markers",
 export const useCoordinates = () => useState<Coordinates>("game_coordinates", () => ({} as Coordinates));
 export const useCurrentPin = () => useState<Coordinates>("current_pin", () => ({} as Coordinates));
 export const useResults = () => useState<Results>("live_results", () => ({} as Results));
+export const useRoundResults = () => useState<RoundResults>("live_results", () => ({} as RoundResults));
+export const useTotalResults = () => useState<TotalResults>("total_results", () => ({} as TotalResults));
 export const useGameFlow = () => useState<GameFlow>("game_flow", () => undefined);

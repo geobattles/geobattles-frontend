@@ -1,4 +1,4 @@
-import { Coordinates } from "~/types";
+import { Coordinates, RoundResults, TotalResults } from "~/types";
 
 // Start the game
 export const startRound = () => {
@@ -18,8 +18,17 @@ export const nextRound = () => {
     useSocketConnection().value.send(JSON.stringify(game));
 };
 
-export const finishRound = () => {
+export const finishRound = (total_results: TotalResults, round_results: RoundResults) => {
     useGameFlow().value = "MID-ROUND"; // Change game flow state
+
+    // Apply total results
+    useTotalResults().value = total_results;
+    useTotalResults().value = Object.fromEntries(Object.entries(useTotalResults().value).sort(([, a], [, b]) => (b.total || 0) - (a.total || 0)));
+
+    // Apply round results
+    useRoundResults().value = round_results; // Just refresh round results with data from server.
+
+    // Edit map
     removeMarkersFromMap();
     deleteSavedMarkers();
 };
@@ -84,7 +93,7 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
             }
         }
         if (newVal === "PLAYING") {
-            const mid_round_cointainer = document.getElementById("playing");
+            const mid_round_cointainer = document.getElementById("gameplay_container");
             if (google_map && mid_round_cointainer) {
                 console.log("appending child");
                 mid_round_cointainer.appendChild(google_map);

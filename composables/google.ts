@@ -42,7 +42,6 @@ export const addMapClickListener = (): void => {
             lat: parseFloat(event.latLng.lat()),
             lng: parseFloat(event.latLng.lng()),
         };
-        console.log("Clicked coordinates: ", clicked_coordinates); //! Dev
 
         // Process pin
         processMapPin(clicked_coordinates);
@@ -54,7 +53,6 @@ export const addMapClickListener = (): void => {
 export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): void => {
     if (!panorama_html) throw new Error("Panorama html element is not defined");
 
-    console.log(useCoordinates().value); //! Dev
     useGooglePanorama().value = new google.maps.StreetViewPanorama(panorama_html as HTMLElement, {
         position: useCoordinates().value,
         pov: {

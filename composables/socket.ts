@@ -68,7 +68,8 @@ const parseSocketMessage = (data: SocketMessage) => {
         case SocketType.ROUND_RESULT || SocketType.TIMES_UP:
             // Perform checks
             if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
-            finishRound();
+            if (!data.roundRes) throw new Error(`roundRes in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
+            finishRound(data.totalResults, data.roundRes);
             break;
         default:
             break;

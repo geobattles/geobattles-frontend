@@ -9,11 +9,13 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(value, index) in results">
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ index }}</th>
-                    <td class="px-6 py-4">{{ value.lives }}</td>
-                    <td class="px-6 py-4">{{ value.baseScr }}</td>
-                </tr>
+                <TransitionGroup name="list" tag="ul">
+                    <tr v-for="(value, index) in results" :key="index">
+                        <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ index }}</td>
+                        <td class="px-6 py-4">{{ value.lives }}</td>
+                        <td class="px-6 py-4">{{ value.baseScr }}</td>
+                    </tr>
+                </TransitionGroup>
             </tbody>
         </table>
     </div>
@@ -30,4 +32,19 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+/* Live statistics animation */
+.list-move, /* apply transition to moving elements */
+.list-enter-active,
+.list-leave-active {
+    transition: all 0.4s ease-out;
+}
+.list-enter-from,
+.list-leave-to {
+    opacity: 0;
+    transform: translateX(45px);
+}
+.list-leave-active {
+    position: absolute;
+}
+</style>

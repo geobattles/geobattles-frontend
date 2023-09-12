@@ -15,8 +15,8 @@ export type LobbyInfo = {
     endResults: any; //TODO: Define this
     numPlayers: number;
     playerList: playerListObject;
-    results: any; //TODO: Define this
-    totalResults: any; //TODO: Define this
+    results: Results;
+    totalResults: TotalResults;
 };
 
 // Type defines a list of players
@@ -54,13 +54,28 @@ type Coordinates = {
 export type Results = {
     [key: string]: ResultInfo;
 };
-type ResultInfo = {
+
+export type RoundResults = {
+    [key: string]: RoundResults; // Same as Results (for now?)
+};
+
+export type TotalResults = {
+    [key: string]: TotalResultInfo;
+};
+
+interface ResultInfo {
     attempt: number;
     baseScr: number;
     distance: number;
     lives: number;
     location: Coordinates;
-};
+}
+
+interface RoundResults extends ResultInfo {} // Same as ResultInfo (for now?)
+
+interface TotalResultInfo extends ResultInfo {
+    total: number | undefined; // Not defined by backend if user scores 0 points
+}
 
 // Main socket type interface
 export type SocketMessage = {
@@ -71,8 +86,8 @@ export type SocketMessage = {
     location?: Coordinates;
     players?: Results;
     playerRes?: ResultInfo;
-    roundRes?: Results;
-    totalResults?: Results;
+    roundRes?: RoundResults;
+    totalResults?: TotalResults;
 };
 
 type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINISHED" | undefined; // Undefined when not connected to a lobby (socket)
