@@ -1,4 +1,5 @@
 import type { Coordinates } from "~/types";
+import { usePolyLines } from "./states";
 
 const map_starting_view_position: Coordinates = { lat: 0, lng: 0 }; // Constant
 
@@ -47,6 +48,8 @@ export const addMapClickListener = (): void => {
         processMapPin(clicked_coordinates);
     });
 };
+
+export const updateMapView = (coordinates: Coordinates) => useGoogleMap().value.setCenter(coordinates);
 /// END GOOGLE MAP ///
 
 /// GOOGLE PANORAMA ///
@@ -70,11 +73,7 @@ export const updatePanoramaView = (coordinates: Coordinates) => useGooglePanoram
 /// END GOOGLE PANORAMA ///
 
 /// MAP MARKERS ///
-export const addNewMapMarker = (coordinates: Coordinates): google.maps.Marker => {
-    // Get player color
-    const marker_color = getPlayerColorByName(usePlayerInfo().value.name);
-    if (!marker_color) throw new Error("Player color is not defined");
-
+export const addNewMapMarker = (coordinates: Coordinates, marker_color: string): google.maps.Marker => {
     // Create marker
     const marker = new google.maps.Marker({
         position: coordinates,
@@ -96,7 +95,48 @@ export const addNewMapMarker = (coordinates: Coordinates): google.maps.Marker =>
 export const removeMarkersFromMap = () => {
     for (let i = 0; i < useMapMarkers().value.length; i++) toRaw(useMapMarkers().value[i]).setMap(null);
 };
+
 export const deleteSavedMarkers = () => {
     useMapMarkers().value = [];
 };
+
+export const createSearchedLocationMarker = (coordinates: Coordinates) => {
+    const pin = new google.maps.Marker({
+        position: coordinates,
+        title: "Searched location",
+        icon: "game/map-icons/location.svg",
+    });
+    pin.setMap(useGoogleMap().value);
+    // lr.location_pins.push(pin);
+};
 /// END MAP MARKERS ///
+
+/// MAP POLYLINES ///
+export const drawPolyLine = (from: Coordinates, to: Coordinates) => {
+    // Create polyline object
+    const lineSymbol = {
+        path: "M 0,-1 0,1",
+        strokeOpacity: 1,
+        scale: 2,
+    };
+    const polyline = new google.maps.Polyline({
+        path: [from, to],
+        strokeColor: "#000000",
+        strokeOpacity: 0,
+        icons: [
+            {
+                icon: lineSymbol,
+                offset: "0",
+                repeat: "10px",
+            },
+        ],
+    });
+    usePolyLines().value.push(polyline); // State where all polylines are saved
+    polyline.setMap(useGoogleMap().value); // Add to map
+};
+
+export const removePolyLinesFromMap = (delete_lines: Boolean) => {
+    for (let i = 0; i < usePolyLines().value.length; i++) toRaw(usePolyLines().value[i]).setMap(null); // Remove from map
+    if (delete_lines) usePolyLines().value = []; // Remove from saved polylines
+};
+/// END MAP POLYLINES ///

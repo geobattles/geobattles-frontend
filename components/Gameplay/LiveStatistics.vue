@@ -1,7 +1,7 @@
 <template>
     <div class="relative overflow-x-auto shadow-md sm:rounded-lg bg-white">
-        <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-            <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+        <table class="w-full text-sm text-left text-gray-500">
+            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
                 <tr>
                     <th scope="col" class="px-6 py-3">Name</th>
                     <th scope="col" class="px-6 py-3">Lives</th>
@@ -9,13 +9,13 @@
                 </tr>
             </thead>
             <tbody>
-                <TransitionGroup name="list" tag="ul">
-                    <tr v-for="(value, index) in results" :key="index">
-                        <td scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ index }}</td>
-                        <td class="px-6 py-4">{{ value.lives }}</td>
-                        <td class="px-6 py-4">{{ value.baseScr }}</td>
-                    </tr>
-                </TransitionGroup>
+                <!-- <TransitionGroup name="list" tag="tr"> -->
+                <tr v-for="(value, index) in results" :key="index" class="bg-white border-b">
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ index }}</th>
+                    <td class="px-6 py-4">{{ value.lives }}</td>
+                    <td class="px-6 py-4">{{ value.baseScr }}</td>
+                </tr>
+                <!-- </TransitionGroup> -->
             </tbody>
         </table>
     </div>

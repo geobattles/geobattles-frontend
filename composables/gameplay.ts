@@ -31,6 +31,18 @@ export const finishRound = (total_results: TotalResults, round_results: RoundRes
     // Edit map
     removeMarkersFromMap();
     deleteSavedMarkers();
+    createSearchedLocationMarker(useCoordinates().value);
+
+    // Draw player pins and polylines to searched location
+    const round_res = useRoundResults().value;
+    for (const key in round_res) {
+        drawPolyLine(useCoordinates().value, round_res[key].location);
+
+        const color = getPlayerColorByID(key);
+        if (!color) throw new Error("Player color is not defined");
+
+        addNewMapMarker(round_res[key].location, color);
+    }
 };
 
 export const processMapPin = (coordinates: Coordinates) => {
@@ -49,7 +61,10 @@ export const processMapPin = (coordinates: Coordinates) => {
 
     // Place first pin if no pins yet, or if pins and submits are the same
     if (used_pins === 0 || useResults().value[player_id]?.attempt === used_pins) {
-        const marker = addNewMapMarker(coordinates); // Create new marker
+        // get player color from name
+        const color = getPlayerColorByName(usePlayerInfo().value.name);
+        if (!color) throw new Error("Player color is not defined");
+        const marker = addNewMapMarker(coordinates, color); // Create new marker
         useMapMarkers().value.push(marker); // Add marker to markers state
         return;
     }
@@ -89,6 +104,10 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
             if (google_map && mid_round_cointainer) {
                 console.log("appending child");
                 mid_round_cointainer.appendChild(google_map);
+
+                // append class to google_map
+                google_map.classList.add("google-map-midround");
+
                 // TODO: Change Map styles
             }
         }
@@ -97,6 +116,8 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
             if (google_map && mid_round_cointainer) {
                 console.log("appending child");
                 mid_round_cointainer.appendChild(google_map);
+                google_map.classList.remove("google-map-midround");
+
                 // TODO: Change Map styles
             }
         }

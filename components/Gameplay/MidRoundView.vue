@@ -16,8 +16,8 @@
                 </tbody>
             </table>
         </div>
-        <div>
-            <button @click="nextRound">Next round</button>
+        <div class="midround-menu">
+            <button @click="nextRound" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">Next round</button>
         </div>
     </div>
 </template>
@@ -44,7 +44,14 @@ export default {
     background-color: white;
 }
 
+.midround-menu {
+    z-index: 1;
+    color: black;
+    position: relative;
+}
+
 .total-result-table {
     @apply max-w-lg;
+    z-index: 1;
 }
 </style>

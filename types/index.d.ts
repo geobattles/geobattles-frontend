@@ -52,18 +52,9 @@ type Coordinates = {
 
 // For handling all players results
 export type Results = {
-    [key: string]: ResultInfo;
+    [key: string]: ResultsInfo;
 };
-
-export type RoundResults = {
-    [key: string]: RoundResults; // Same as Results (for now?)
-};
-
-export type TotalResults = {
-    [key: string]: TotalResultInfo;
-};
-
-interface ResultInfo {
+interface ResultsInfo {
     attempt: number;
     baseScr: number;
     distance: number;
@@ -71,7 +62,15 @@ interface ResultInfo {
     location: Coordinates;
 }
 
-interface RoundResults extends ResultInfo {} // Same as ResultInfo (for now?)
+export type RoundResults = {
+    [key: string]: RoundResultsInfo; // Same as Results (for now?)
+};
+
+interface RoundResultsInfo extends ResultsInfo {} // Same as ResultInfo (for now?)
+
+export type TotalResults = {
+    [key: string]: TotalResultInfo;
+};
 
 interface TotalResultInfo extends ResultInfo {
     total: number | undefined; // Not defined by backend if user scores 0 points

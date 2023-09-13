@@ -15,6 +15,13 @@ export const getPlayerColorByName = (name: string): string | undefined => {
     return undefined;
 };
 
+export const getPlayerColorByID = (id: string): string | undefined => {
+    const lobby_info = useLobbySettings();
+    const player = lobby_info.value.playerList[id];
+    if (!player) return undefined;
+    return player.color;
+};
+
 export const getPlayerIDFromName = (name: string): string | undefined => {
     const lobby_info = useLobbySettings();
     for (const player_id in lobby_info.value.playerList as playerListObject) {

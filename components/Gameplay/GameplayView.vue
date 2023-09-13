@@ -1,6 +1,6 @@
 <template>
     <div id="gameplay_container">
-        <div ref="google_map" id="google_map"></div>
+        <div ref="google_map" id="google_map" class="google-map-gameplay"></div>
         <button class="submit-button" @click="submitGuess">Submit</button>
         <div ref="google_panorama" id="panorama_map"></div>
         <GameplayLiveStatistics class="live-stats" />
@@ -29,13 +29,22 @@ export default {
 </script>
 
 <style scoped>
-#google_map {
+.google-map-gameplay {
     position: absolute;
     bottom: 50px;
     left: 0;
     height: 400px;
     width: 400px;
     z-index: 1;
+}
+
+.google-map-midround {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    z-index: 0;
 }
 
 #panorama_map {
