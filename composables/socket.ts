@@ -1,6 +1,11 @@
 import { type SocketMessage } from "~/types";
 import { SocketType } from "~/types/enums";
 
+/**
+ * Function that initializes socket connection to the server.
+ * It connects player to a lobby.
+ * @param lobby_id
+ */
 export const initializeSocketConnection = (lobby_id: string): void => {
     const socket = new WebSocket("http://localhost:8080".replace(/(http)(s)?\:\/\//, "ws$2://") + `/lobbySocket?id=${lobby_id}&name=${usePlayerInfo().value.name}`);
     const username = usePlayerInfo();
@@ -30,6 +35,10 @@ export const initializeSocketConnection = (lobby_id: string): void => {
     };
 };
 
+/**
+ * Parses socket message and performs actions based on the type of message
+ * @param data
+ */
 const parseSocketMessage = (data: SocketMessage) => {
     switch (data.type) {
         case SocketType.JOINED_LOBBY:

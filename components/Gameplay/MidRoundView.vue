@@ -11,7 +11,7 @@
                 <tbody>
                     <tr v-for="(value, index) in total_results">
                         <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ index }}</th>
-                        <td class="px-6 py-4">{{ value.total }}</td>
+                        <td class="px-6 py-4">{{ value.total || 0 }}</td>
                     </tr>
                 </tbody>
             </table>

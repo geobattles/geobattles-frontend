@@ -8,6 +8,12 @@ export const startRound = () => {
     const router = useRouter();
     if (router.currentRoute.value.name !== "gameplay") router.push("/gameplay"); // Redirect to gameplay page if not already there
     else updatePanoramaView(useCoordinates().value); // Update panorama view for next round
+
+    // Clear Map before starting round
+    removePolyLinesFromMap(true);
+    removeMarkersFromMap(true);
+    if (useGoogleMap().value) updateMapView({ lat: 0, lng: 0 });
+    setMapZoom(2);
 };
 
 // Send signal to backend to start new round
@@ -29,9 +35,9 @@ export const finishRound = (total_results: TotalResults, round_results: RoundRes
     useRoundResults().value = round_results; // Just refresh round results with data from server.
 
     // Edit map
-    removeMarkersFromMap();
-    deleteSavedMarkers();
-    createSearchedLocationMarker(useCoordinates().value);
+    removeMarkersFromMap(true);
+    const marker = createSearchedLocationMarker(useCoordinates().value);
+    useMapMarkers().value.push(marker); // Save marker to state
 
     // Draw player pins and polylines to searched location
     const round_res = useRoundResults().value;
@@ -41,8 +47,12 @@ export const finishRound = (total_results: TotalResults, round_results: RoundRes
         const color = getPlayerColorByID(key);
         if (!color) throw new Error("Player color is not defined");
 
-        addNewMapMarker(round_res[key].location, color);
+        const marker = addNewMapMarker(round_res[key].location, color);
+        useMapMarkers().value.push(marker); // Save marker to state
     }
+    setTimeout(() => {
+        showRoundResults();
+    }, 1000);
 };
 
 export const processMapPin = (coordinates: Coordinates) => {
@@ -124,4 +134,19 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
     });
 };
 
-export const showRoundResults = () => {};
+export const showRoundResults = () => {
+    let bounds = new google.maps.LatLngBounds();
+    const round_res = useRoundResults().value;
+    for (const key in round_res) {
+        bounds.extend(round_res[key].location);
+    }
+    bounds.extend(useCoordinates().value);
+
+    // Fit all displayed markers bounds
+    if (bounds) fitCustomBounds(bounds, 50);
+    // TODO: Fix the zooming problem ???
+    // console.log("BOUNDS", bounds); //! Development
+    // console.log(bounds.getCenter().lat(), bounds.getCenter().lng()); //! Development
+
+    if (!round_res) setMapZoom(2);
+};

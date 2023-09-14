@@ -1,7 +1,7 @@
 <template>
     <div id="gameplay_container">
         <div ref="google_map" id="google_map" class="google-map-gameplay"></div>
-        <button class="submit-button" @click="submitGuess">Submit</button>
+        <button class="submit-button text-white bg-blue-400 dark:bg-blue-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center" @click="submitGuess" :disabled="isSubmitButtonDisabled()">Submit</button>
         <div ref="google_panorama" id="panorama_map"></div>
         <GameplayLiveStatistics class="live-stats" />
     </div>
@@ -13,8 +13,6 @@ export default {
         const google_map = ref<HTMLElement | null>(null);
         const google_panorama = ref<HTMLElement | null>(null);
 
-        // TODO: Disable submit as on old version
-
         onMounted(() => {
             if (!google_map.value) throw new Error("Google Map DOM element not found");
 
@@ -23,7 +21,20 @@ export default {
             addMapClickListener(); // Init Google Map click listener
             googleMapDOMTracker(google_map.value); // Watch and move Google Map DOM element
         });
-        return { google_map, google_panorama, submitGuess };
+
+        const getPlayerAttempt = (player_id: string) => useResults().value[player_id].attempt;
+        const isSubmitButtonDisabled = () => {
+            if (useMapMarkers().value.length === 0) return true; // Disable if no markers
+
+            //  Disable if number of markers equals number of attempts
+            const player_id = usePlayerInfo().value.ID;
+            if (!player_id) throw new Error("Player ID not found");
+            if (useMapMarkers().value.length === getPlayerAttempt(player_id)) return true;
+
+            return false; // Enable button
+        };
+
+        return { google_map, google_panorama, submitGuess, isSubmitButtonDisabled };
     },
 };
 </script>
@@ -60,9 +71,13 @@ export default {
     position: absolute;
     bottom: 5px;
     left: 10px;
-    z-index: 2;
+    z-index: 3;
 
     padding: 10px;
+}
+
+.submit-button:disabled {
+    cursor: not-allowed;
 }
 
 .live-stats {

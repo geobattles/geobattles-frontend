@@ -50,6 +50,8 @@ export const addMapClickListener = (): void => {
 };
 
 export const updateMapView = (coordinates: Coordinates) => useGoogleMap().value.setCenter(coordinates);
+export const setMapZoom = (zoom: number) => useGoogleMap().value.setZoom(zoom);
+export const fitCustomBounds = (bounds: google.maps.LatLngBounds, padding: number) => useGoogleMap().value.fitBounds(bounds, padding);
 /// END GOOGLE MAP ///
 
 /// GOOGLE PANORAMA ///
@@ -92,22 +94,19 @@ export const addNewMapMarker = (coordinates: Coordinates, marker_color: string):
     return marker;
 };
 
-export const removeMarkersFromMap = () => {
+export const removeMarkersFromMap = (delete_markers: Boolean) => {
     for (let i = 0; i < useMapMarkers().value.length; i++) toRaw(useMapMarkers().value[i]).setMap(null);
-};
-
-export const deleteSavedMarkers = () => {
-    useMapMarkers().value = [];
+    if (delete_markers) useMapMarkers().value = [];
 };
 
 export const createSearchedLocationMarker = (coordinates: Coordinates) => {
-    const pin = new google.maps.Marker({
+    const marker = new google.maps.Marker({
         position: coordinates,
         title: "Searched location",
         icon: "game/map-icons/location.svg",
     });
-    pin.setMap(useGoogleMap().value);
-    // lr.location_pins.push(pin);
+    marker.setMap(useGoogleMap().value);
+    return marker;
 };
 /// END MAP MARKERS ///
 

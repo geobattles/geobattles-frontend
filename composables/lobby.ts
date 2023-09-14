@@ -57,9 +57,10 @@ export const joinLobby = async (lobby_id: string) => {
  * lobby data and notify players.
  *
  * @param lobby_info
- * @param player
+ * @param player User id dedicated from server
  */
-export const joinedLobby = (lobby_info: LobbyInfo, player: string) => {
+export const joinedLobby = (lobby_info: LobbyInfo, user_id: string) => {
     useLobbySettings().value = lobby_info; // Update lobby settings state
-    console.log("Player " + player + " joined the lobby!"); // Change this to toast later
+    if (!usePlayerInfo().value.ID) usePlayerInfo().value.ID = user_id; // Update player ID if no ID yet
+    console.log("Player " + user_id + " joined the lobby!"); // Change this to toast later and to user name
 };

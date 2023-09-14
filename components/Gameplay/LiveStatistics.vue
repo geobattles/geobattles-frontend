@@ -13,7 +13,7 @@
                 <tr v-for="(value, index) in results" :key="index" class="bg-white border-b">
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ index }}</th>
                     <td class="px-6 py-4">{{ value.lives }}</td>
-                    <td class="px-6 py-4">{{ value.baseScr }}</td>
+                    <td class="px-6 py-4">{{ value.baseScr || 0 }}</td>
                 </tr>
                 <!-- </TransitionGroup> -->
             </tbody>
