@@ -1,10 +1,7 @@
 <template>
     <div>
         <h1>Lobby: {{ lobby_settings.ID }}</h1>
-        <span>Players:</span>
-        <div v-for="(player, index) in lobby_settings.playerList" :key="index">
-            {{ player.name }}
-        </div>
+        <LobbyPlayerList class="player-list" />
         <button @click="nextRound()">Start</button>
     </div>
 </template>
@@ -20,4 +17,9 @@ export default {
 };
 </script>
 
-<style></style>
+<style scoped>
+.player-list {
+    max-width: 400px;
+    font-size: 1.2rem;
+}
+</style>
