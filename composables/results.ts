@@ -1,6 +1,6 @@
-import { ResultInfo } from "~/types";
+import { ResultsInfo } from "~/types";
 
-export const processNewResult = (user: string, player_result: ResultInfo) => {
+export const processNewResult = (user: string, player_result: ResultsInfo) => {
     // Apply result to player only if it is higher than the previous result
     if (useResults().value[user]?.baseScr > player_result.baseScr) return;
     useResults().value[user] = player_result;

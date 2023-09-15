@@ -19,6 +19,12 @@ export default {
                 title: `GeoBattles`,
             });
         }
+
+        if (process.client) {
+            const saved_username = useCookie("saved_username");
+            console.log("saved_username.value: ", saved_username.value); //! Dev
+            usePlayerInfo().value.name = saved_username.value;
+        }
     },
 };
 </script>
@@ -52,5 +58,11 @@ html {
     --color-grey-dark-3: #999;
 
     --shadow-dark: 0 2rem 6rem (0, 0, 0, 0.3);
+}
+
+body {
+    /* Set background image */
+    background: url("/images/earth.webp") no-repeat center center fixed;
+    background-size: cover; /* Resize the background image to cover the entire container */
 }
 </style>

@@ -1,10 +1,10 @@
 <template>
     <div>
+        <Header />
         <button class="btn btn-blue" @click="createLobby">Create Lobby</button>
         <br />
-        <br />
         <div>
-            <span>Join lobby: </span>
+            <span class="text-white">Join lobby: </span>
             <input type="text" v-model="lobby_name" />
             <button class="btn btn-blue" @click="joinLobby(lobby_name)">Join</button>
         </div>
@@ -15,10 +15,6 @@
 export default {
     setup() {
         const lobby_name = ref("");
-
-        const generateRandomNumber = () => Math.floor(1000 + Math.random() * 9000).toString();
-        usePlayerInfo().value.name = `Player${generateRandomNumber()}`; //! Dev
-
         return { createLobby, joinLobby, lobby_name, useLobbySettings };
     },
 };

@@ -4,13 +4,13 @@ import type { LobbyInfo } from "~/types";
  * Function handles lobby creation
  */
 export const createLobby = async () => {
-    const username = usePlayerInfo();
+    const player_info = usePlayerInfo();
     const lobby_settings = useLobbySettings();
     const router = useRouter();
 
     // Define post parameters for lobby creation
     const lobby_post_params = {
-        name: username.value.name || "Player" + "'s Lobby",
+        name: player_info.value.name || "Player" + "'s Lobby",
         roundTime: 30,
     };
 
