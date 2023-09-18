@@ -65,9 +65,6 @@ export const processMapPin = (coordinates: Coordinates) => {
     const player_id = getPlayerIDFromName(usePlayerInfo().value.name);
     if (!player_id) throw new Error("Player ID is not defined");
 
-    console.log(useMapMarkers().value);
-    console.log(useResults().value[player_id]?.attempt);
-
     // START OF PIN PLACEMENT LOGIC
     // If there are no lives available, return
     if (useResults().value[player_id]?.lives === 0) {
