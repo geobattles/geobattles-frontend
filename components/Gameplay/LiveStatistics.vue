@@ -5,6 +5,7 @@
                 <tr>
                     <th scope="col" class="px-6 py-3">Name</th>
                     <th scope="col" class="px-6 py-3">Lives</th>
+                    <th scope="col" class="px-6 py-3">Distance</th>
                     <th scope="col" class="px-6 py-3">Score</th>
                 </tr>
             </thead>
@@ -13,6 +14,7 @@
                 <tr v-for="(value, index) in results" :key="index" class="bg-white border-b">
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ index }}</th>
                     <td class="px-6 py-4">{{ value.lives }}</td>
+                    <td class="px-6 py-4">{{ processDistance(value.distance) }}</td>
                     <td class="px-6 py-4">{{ value.baseScr || 0 }}</td>
                 </tr>
                 <!-- </TransitionGroup> -->
@@ -26,8 +28,13 @@ export default {
     setup() {
         const results = useResults();
 
-        onMounted(() => {});
-        return { results };
+        const processDistance = (distance: number | undefined): string => {
+            if (!distance) return "--"; // This means no guess yet from player
+            const distanceInMeters = distance < 1000 ? distance : distance / 1000; // Convert to km unit if neccesary
+            return `${Math.round(distanceInMeters * 10) / 10} ${distance < 1000 ? "m" : "km"}`; // Return distance in corret units
+        };
+
+        return { results, processDistance };
     },
 };
 </script>

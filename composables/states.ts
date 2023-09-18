@@ -6,7 +6,7 @@ export const useLobbySettings = () => useState<LobbyInfo>("lobby_settings", () =
 export const useSocketConnection = () => useState<WebSocket>("socket_connection", () => ({} as WebSocket));
 
 // Google map states
-export const useGoogleMap = () => useState<google.maps.Map>("google_map", () => ({} as google.maps.Map));
+export const useGoogleMap = () => useState<google.maps.Map | undefined>("google_map", () => undefined);
 export const useGooglePanorama = () => useState<google.maps.StreetViewPanorama>("google_panorama", () => ({} as google.maps.StreetViewPanorama));
 export const useMapMarkers = () => useState<google.maps.Marker[]>("map_markers", () => [] as google.maps.Marker[]);
 

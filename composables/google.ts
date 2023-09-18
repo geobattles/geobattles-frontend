@@ -37,7 +37,7 @@ export const initalizeNewGoogleMap = (map_html: HTMLElement): void => {
 };
 
 export const addMapClickListener = (): void => {
-    useGoogleMap().value.addListener("click", (event: any) => {
+    isGoogleMap().addListener("click", (event: any) => {
         // Process pin
         const clicked_coordinates: Coordinates = {
             lat: parseFloat(event.latLng.lat()),
@@ -49,9 +49,9 @@ export const addMapClickListener = (): void => {
     });
 };
 
-export const updateMapView = (coordinates: Coordinates) => useGoogleMap().value.setCenter(coordinates);
-export const setMapZoom = (zoom: number) => useGoogleMap().value.setZoom(zoom);
-export const fitCustomBounds = (bounds: google.maps.LatLngBounds, padding: number) => useGoogleMap().value.fitBounds(bounds, padding);
+export const updateMapView = (coordinates: Coordinates) => isGoogleMap().setCenter(coordinates);
+export const setMapZoom = (zoom: number) => isGoogleMap().setZoom(zoom);
+export const fitCustomBounds = (bounds: google.maps.LatLngBounds, padding: number) => isGoogleMap().fitBounds(bounds, padding);
 /// END GOOGLE MAP ///
 
 /// GOOGLE PANORAMA ///
@@ -90,7 +90,7 @@ export const addNewMapMarker = (coordinates: Coordinates, marker_color: string):
             scale: 0.07,
         },
     });
-    marker.setMap(useGoogleMap().value); // Append marker to active googleMap
+    marker.setMap(isGoogleMap()); // Append marker to active googleMap
     return marker;
 };
 
@@ -105,7 +105,7 @@ export const createSearchedLocationMarker = (coordinates: Coordinates) => {
         title: "Searched location",
         icon: "game/map-icons/location.svg",
     });
-    marker.setMap(useGoogleMap().value);
+    marker.setMap(isGoogleMap());
     return marker;
 };
 /// END MAP MARKERS ///
@@ -131,7 +131,8 @@ export const drawPolyLine = (from: Coordinates, to: Coordinates) => {
         ],
     });
     usePolyLines().value.push(polyline); // State where all polylines are saved
-    polyline.setMap(useGoogleMap().value); // Add to map
+    if (!useGoogleMap().value) throw new Error("Google map is not defined");
+    polyline.setMap(isGoogleMap()); // Add to map
 };
 
 export const removePolyLinesFromMap = (delete_lines: Boolean) => {
@@ -139,3 +140,13 @@ export const removePolyLinesFromMap = (delete_lines: Boolean) => {
     if (delete_lines) usePolyLines().value = []; // Remove from saved polylines
 };
 /// END MAP POLYLINES ///
+
+/**
+ * Work the same as useGoogleMap().value, but throws error if google map is not defined
+ * @returns Google map object
+ */
+const isGoogleMap = () => {
+    const google_map = useGoogleMap().value;
+    if (!google_map) throw new Error("Google map is not defined");
+    return google_map;
+};

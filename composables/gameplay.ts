@@ -12,8 +12,11 @@ export const startRound = () => {
     // Clear Map before starting round
     removePolyLinesFromMap(true);
     removeMarkersFromMap(true);
-    if (useGoogleMap().value) updateMapView({ lat: 0, lng: 0 });
-    setMapZoom(2);
+
+    if (useGoogleMap().value) {
+        updateMapView({ lat: 0, lng: 0 });
+        setMapZoom(2);
+    }
 };
 
 // Send signal to backend to start new round
@@ -114,11 +117,7 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
             if (google_map && mid_round_cointainer) {
                 console.log("appending child");
                 mid_round_cointainer.appendChild(google_map);
-
-                // append class to google_map
-                google_map.classList.add("google-map-midround");
-
-                // TODO: Change Map styles
+                google_map.classList.add("google-map-midround"); // Change class
             }
         }
         if (newVal === "PLAYING") {
@@ -126,9 +125,7 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
             if (google_map && mid_round_cointainer) {
                 console.log("appending child");
                 mid_round_cointainer.appendChild(google_map);
-                google_map.classList.remove("google-map-midround");
-
-                // TODO: Change Map styles
+                google_map.classList.remove("google-map-midround"); // Change class
             }
         }
     });

@@ -10,8 +10,6 @@
 export default {
     setup() {
         const game_flow = useGameFlow();
-        onMounted(() => {});
-
         return { game_flow };
     },
 };
