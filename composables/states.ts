@@ -18,3 +18,4 @@ export const useRoundResults = () => useState<RoundResults>("live_results", () =
 export const useTotalResults = () => useState<TotalResults>("total_results", () => ({} as TotalResults));
 export const useGameFlow = () => useState<GameFlow>("game_flow", () => undefined);
 export const usePolyLines = () => useState<google.maps.Polyline[]>("poly_lines", () => [] as google.maps.Polyline[]);
+export const useIsSubmitDisabled = () => useState<boolean>("submit_button", () => false);

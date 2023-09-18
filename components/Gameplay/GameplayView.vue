@@ -1,7 +1,7 @@
 <template>
     <div id="gameplay_container">
         <div ref="google_map" id="google_map" class="google-map-gameplay"></div>
-        <button class="submit-button text-white bg-blue-400 dark:bg-blue-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center" @click="submitGuess" :disabled="isSubmitButtonDisabled()">Submit</button>
+        <button class="submit-button text-white bg-blue-400 dark:bg-blue-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center" @click="handleSubmitClick" :disabled="isSubmitButtonDisabled() || is_submit_disabled">Submit</button>
         <div ref="google_panorama" id="panorama_map"></div>
         <GameplayLiveStatistics class="live-stats" />
     </div>
@@ -13,6 +13,8 @@ export default {
         const google_map = ref<HTMLElement | null>(null);
         const google_panorama = ref<HTMLElement | null>(null);
 
+        const is_submit_disabled = useIsSubmitDisabled();
+
         onMounted(() => {
             if (!google_map.value) throw new Error("Google Map DOM element not found");
 
@@ -23,6 +25,7 @@ export default {
         });
 
         const getPlayerAttempt = (player_id: string) => useResults().value[player_id].attempt;
+
         const isSubmitButtonDisabled = () => {
             if (useMapMarkers().value.length === 0) return true; // Disable if no markers
 
@@ -34,7 +37,12 @@ export default {
             return false; // Enable button
         };
 
-        return { google_map, google_panorama, submitGuess, isSubmitButtonDisabled };
+        const handleSubmitClick = () => {
+            useIsSubmitDisabled().value = true; // Disable submit button, preventing double clicks
+            submitGuess(); // Submit guess
+        };
+
+        return { google_map, google_panorama, is_submit_disabled, handleSubmitClick, isSubmitButtonDisabled };
     },
 };
 </script>
