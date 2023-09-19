@@ -3,7 +3,7 @@ import { ResultsInfo } from "~/types";
 export const processNewResult = (user: string, player_result: ResultsInfo) => {
     const results = useResults().value; // Get results from state
 
-    if (results[user]?.baseScr < player_result.baseScr || (results[user]?.baseScr === 0 && player_result.distance > results[user].distance)) {
+    if (player_result.baseScr < results[user]?.baseScr || (player_result.baseScr === 0 && player_result.distance > results[user].distance)) {
         // Update attempts and lives, not the score or distance
         results[user].lives = player_result.lives;
         results[user].attempt = player_result.attempt;
