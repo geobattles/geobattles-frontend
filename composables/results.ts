@@ -10,7 +10,7 @@ export const processNewResult = (user: string, player_result: ResultsInfo) => {
     } else {
         results[user] = player_result; // Update everything
         // Sort results by score
-        useResults().value = Object.fromEntries(Object.entries(results).sort(([, a], [, b]) => b.baseScr - a.baseScr));
+        useResults().value = Object.fromEntries(Object.entries(results).sort(([, a], [, b]) => a.distance - b.distance));
     }
     useIsSubmitDisabled().value = false; // Enable submit button
 };
