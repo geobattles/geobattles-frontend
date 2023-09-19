@@ -44,6 +44,8 @@ type LobbyConfig = {
     scoreFactor: number;
 };
 
+type CountryFlagMap = Map<string, { name: string; x: number; y: number }>;
+
 // Used for coordinates. Same as google.maps.LatLng
 type Coordinates = {
     lat: number;

@@ -1,5 +1,4 @@
 import type { LobbyInfo } from "~/types";
-
 /**
  * Function handles lobby creation
  */
@@ -63,4 +62,19 @@ export const joinedLobby = (lobby_info: LobbyInfo, user_id: string) => {
     useLobbySettings().value = lobby_info; // Update lobby settings state
     if (!usePlayerInfo().value.ID) usePlayerInfo().value.ID = user_id; // Update player ID if no ID yet
     console.log("Player " + user_id + " joined the lobby!"); // Change this to toast later and to user name
+};
+
+export const fetchCountryList = async () => {
+    const response = await fetch("http://localhost:8080/countryList", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+    // Check if response is valid
+    if (!response.ok) {
+        throw new Error(response.statusText);
+    } else {
+        useCountryList().value = await response.json();
+    }
 };

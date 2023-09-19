@@ -4,7 +4,7 @@
         <div class="main-content">
             <div class="w-full max-w-7xl">
                 <div class="inline-block w-full md:w-3/5">
-                    <!-- <BattleRoyalLobbySettings class="m-auto" /> -->
+                    <LobbyDisplaySettings class="m-auto" />
                 </div>
                 <div class="inline-block align-top w-96 ml-7">
                     <div class="w-50 mb-11 mt-5">
@@ -28,6 +28,16 @@ export default {
     setup() {
         const lobby_settings = useLobbySettings();
         const start_disabled = ref(false); // Preventing double click
+        const country_list = useCountryList();
+        const filtered_country_list = useFilteredCountryList();
+
+        onMounted(async () => {
+            await fetchCountryList();
+            // If ccList is empty it populate it with all ccodes. Happend only on first load.
+            if (lobby_settings.value.conf.ccList.length === 0) lobby_settings.value.conf.ccList = Object.values(country_list.value);
+            filtered_country_list.value = country_list.value;
+        });
+
         return { lobby_settings, start_disabled, nextRound };
     },
 };
