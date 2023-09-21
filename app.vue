@@ -65,4 +65,16 @@ body {
     background: url("/images/earth.webp") no-repeat center center fixed;
     background-size: cover; /* Resize the background image to cover the entire container */
 }
+
+/* Default button */
+.btn {
+    @apply font-bold py-2 px-4 rounded;
+    cursor: pointer;
+}
+.btn-blue {
+    @apply bg-blue-500 text-white;
+}
+.btn-blue:hover {
+    @apply bg-blue-700;
+}
 </style>

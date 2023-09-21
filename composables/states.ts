@@ -26,6 +26,7 @@ export const useIsSubmitDisabled = () => useState<boolean>("submit_button", () =
 // Countries states
 export const useCountryList = () => useState<string[]>("country_list", () => [] as string[]);
 export const useFilteredCountryList = () => useState<string[]>("filtered_country_list", () => [] as string[]);
+export const useCountryInput = () => useState<string>("country_input", () => "");
 
 /**
  * State is used to store a Map of country codes and their flag coordinates.
