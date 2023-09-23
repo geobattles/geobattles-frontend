@@ -59,22 +59,50 @@ export const joinLobby = async (lobby_id: string) => {
  * @param player User id dedicated from server
  */
 export const joinedLobby = (lobby_info: LobbyInfo, user_id: string) => {
-    useLobbySettings().value = lobby_info; // Update lobby settings state
+    useLobbySettings().value = { ...structuredClone(lobby_info) };
+    useLobbySettings().value.conf = { ...structuredClone(lobby_info.conf) };
+    useLobbySettingsOriginal().value = { ...structuredClone(lobby_info) };
+    useLobbySettingsOriginal().value.conf = { ...structuredClone(lobby_info.conf) };
+
+    if (useLobbySettings().value.conf.ccList?.length === 0) {
+        useLobbySettings().value.conf.ccList = useCountryList().value;
+    }
+
     if (!usePlayerInfo().value.ID) usePlayerInfo().value.ID = user_id; // Update player ID if no ID yet
     console.log("Player " + user_id + " joined the lobby!"); // Change this to toast later and to user name
 };
 
-export const fetchCountryList = async () => {
-    const response = await fetch("http://localhost:8080/countryList", {
-        method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-        },
-    });
-    // Check if response is valid
-    if (!response.ok) {
-        throw new Error(response.statusText);
-    } else {
-        useCountryList().value = await response.json();
+export const fetchLobbySettings = (lobby_info: LobbyInfo) => {
+    console.log("fetchLobbySettings()"); //! Dev
+    useLobbySettings().value = { ...structuredClone(lobby_info) };
+    useLobbySettings().value.conf = { ...structuredClone(lobby_info.conf) };
+    useLobbySettingsOriginal().value = { ...structuredClone(lobby_info) };
+    useLobbySettingsOriginal().value.conf = { ...structuredClone(lobby_info.conf) };
+
+    if (useLobbySettings().value.conf.ccList?.length === 0) useLobbySettings().value.conf.ccList = useCountryList().value;
+};
+
+export const applyLobbySettings = () => {
+    // If ccList is empty (=wrong input) dont send it so it wont update on server. Empty arrray if every country is selected
+    if (useLobbySettings().value.conf.ccList?.length === 0) delete useLobbySettingsOriginal().value.conf.ccList;
+    else if (useLobbySettings().value.conf.ccList?.length === useCountryList().value.length) useLobbySettings().value.conf.ccList = [];
+
+    // If objects are equal delete them from original settings, else update original settings
+    for (const field in useLobbySettingsOriginal().value.conf) {
+        // Nested objects (ccList) are always different so they are stringified and compared as such
+        if (typeof useLobbySettingsOriginal().value.conf[field] == "object") {
+            if (JSON.stringify(useLobbySettingsOriginal().value.conf[field]) == JSON.stringify(useLobbySettings().value.conf[field])) delete useLobbySettingsOriginal().value.conf[field];
+            else useLobbySettingsOriginal().value.conf[field] = useLobbySettings().value.conf[field];
+        } else {
+            if (useLobbySettingsOriginal().value.conf[field] === useLobbySettings().value.conf[field]) delete useLobbySettingsOriginal().value.conf[field];
+            else useLobbySettingsOriginal().value.conf[field] = useLobbySettings().value.conf[field];
+        }
     }
+    const settings = {
+        command: "update_lobby_settings",
+        conf: { ...useLobbySettingsOriginal().value.conf },
+    };
+
+    console.log(settings); //! Dev
+    useSocketConnection().value.send(JSON.stringify(settings));
 };

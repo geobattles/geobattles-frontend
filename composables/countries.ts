@@ -17,11 +17,26 @@ export const filterCountryList = () => {
 
 export const toggleAllCountries = () => {
     const ls = useLobbySettings();
-    if (useCountryList().value.length !== ls.value.conf.ccList.length) {
+    if (useCountryList().value.length !== ls.value.conf.ccList?.length) {
         ls.value.conf.ccList = [];
         // Fill selected countries array with all countries
-        useCountryList().value.forEach((value) => ls.value.conf.ccList.push(value));
+        useCountryList().value.forEach((value) => ls.value.conf.ccList?.push(value));
     } else {
         ls.value.conf.ccList = []; // Empty selected countries array
+    }
+};
+
+export const fetchCountryList = async () => {
+    const response = await fetch("http://localhost:8080/countryList", {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+    // Check if response is valid
+    if (!response.ok) {
+        throw new Error(response.statusText);
+    } else {
+        useCountryList().value = await response.json();
     }
 };

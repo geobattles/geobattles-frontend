@@ -2,7 +2,7 @@
     <div class="settings-overlay">
         <div ref="modal_ref" class="modal">
             <div class="flex justify-between">
-                <div @click="this_modal = false" class="btn close-button">Close</div>
+                <div @click="closeSettings" class="btn close-button">Close</div>
                 <div class="btn apply-button">Apply</div>
             </div>
             <h2>Lobby settings</h2>
@@ -101,7 +101,6 @@
                 <LobbyCountrySettings />
             </div>
         </div>
-        <button @click="this_modal = false">Close</button>
     </div>
 </template>
 
@@ -114,12 +113,33 @@ export default {
         const lobby_settings: Ref<LobbyInfo> = useLobbySettings();
         const this_modal = useModifySettingsModal();
 
+        const timer_slider = ref();
+        const score_factor = ref();
+
+        onMounted(() => {
+            score_factor.value.value = lobby_settings.value.conf.scoreFactor || 100;
+            timer_slider.value.value = lobby_settings.value.conf.roundTime || 5;
+
+            score_factor.value.oninput = function () {
+                lobby_settings.value.conf.scoreFactor = parseInt(this.value);
+            };
+
+            timer_slider.value.oninput = function () {
+                lobby_settings.value.conf.roundTime = parseInt(this.value);
+            };
+        });
+
         const radioMode = (mode: number) => {
             lobby_settings.value.conf.mode = mode;
             console.log(lobby_settings);
             // applyNewLobbySettings();
         };
-        return { this_modal, lobby_settings, radioMode };
+
+        const closeSettings = () => {
+            applyLobbySettings();
+            this_modal.value = false;
+        };
+        return { this_modal, lobby_settings, timer_slider, score_factor, radioMode, closeSettings };
     },
 };
 </script>

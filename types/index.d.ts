@@ -32,7 +32,7 @@ export type playerListObject = {
 // Type used to define lobby settings
 type LobbyConfig = {
     name: string;
-    ccList: string[];
+    ccList?: string[];
     dynLives: boolean;
     maxPlayers: number;
     mode: number;
@@ -42,6 +42,7 @@ type LobbyConfig = {
     powerups: boolean[];
     roundTime: number;
     scoreFactor: number;
+    [key: string]: any; // TODO: This is not OK.!!! Index signature to allow accessing properties using a string variable
 };
 
 type CountryFlagMap = Map<string, { name: string; x: number; y: number }>;

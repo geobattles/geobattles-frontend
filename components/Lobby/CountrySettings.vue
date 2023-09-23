@@ -20,7 +20,7 @@
                 </form>
                 <div id="toggleAll" style="display: inline-block; vertical-align: top; margin-left: 10px">
                     <label>All&nbsp;</label>
-                    <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) == Object.entries(country_list).length" />
+                    <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList?.length | 0) == Object.entries(country_list).length" />
                 </div>
             </div>
         </div>

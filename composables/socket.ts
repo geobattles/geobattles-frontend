@@ -54,7 +54,7 @@ const parseSocketMessage = (data: SocketMessage) => {
             if (!data.lobby) throw new Error(`Lobby data in SocketMessage type: ${SocketType.UPDATED_LOBBY} is not defined`);
 
             // Process
-            useLobbySettings().value = data.lobby; // Update lobby settings state
+            fetchLobbySettings(data.lobby);
             break;
         case SocketType.START_ROUND:
             // Perform checks
