@@ -6,9 +6,6 @@
                 <span>{{ (lobby_settings.conf.ccList.length | 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
             </div>
             <div style="display: block; margin-bottom: 20px">
-                <!-- <div>
-                    <input type="text" @keyup="country_store.filterCountryList" v-model="country_store.country_input" placeholder="Search country" />
-                </div> -->
                 <form style="display: inline-block; vertical-align: top">
                     <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
                     <div class="relative">
@@ -20,7 +17,7 @@
                 </form>
                 <div id="toggleAll" style="display: inline-block; vertical-align: top; margin-left: 10px">
                     <label>All&nbsp;</label>
-                    <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList?.length | 0) == Object.entries(country_list).length" />
+                    <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) == Object.entries(country_list).length" />
                 </div>
             </div>
         </div>
@@ -61,6 +58,7 @@ export default {
     max-height: 500px;
     overflow-y: scroll;
 }
+
 input[type="checkbox"] {
     width: 20px;
     height: 20px;
@@ -95,14 +93,5 @@ input[type="checkbox"] {
 .ccode-list::-webkit-scrollbar-thumb {
     background-color: rgb(109, 109, 109);
     border-radius: 10px;
-}
-
-/*  Edit scrollbar */
-.notAdmin .country-row {
-    pointer-events: none;
-}
-
-.notAdmin #toggleAll {
-    display: none !important;
 }
 </style>

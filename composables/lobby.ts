@@ -1,4 +1,4 @@
-import type { LobbyInfo } from "~/types";
+import type { LobbyConfig, LobbyInfo } from "~/types";
 /**
  * Function handles lobby creation
  */
@@ -52,57 +52,73 @@ export const joinLobby = async (lobby_id: string) => {
 };
 
 /**
- * Function is used when a player joints the lobby. It will update
+ * Function is used when a player joins the lobby. It will update
  * lobby data and notify players.
- *
  * @param lobby_info
  * @param player User id dedicated from server
  */
 export const joinedLobby = (lobby_info: LobbyInfo, user_id: string) => {
-    useLobbySettings().value = { ...structuredClone(lobby_info) };
-    useLobbySettings().value.conf = { ...structuredClone(lobby_info.conf) };
-    useLobbySettingsOriginal().value = { ...structuredClone(lobby_info) };
-    useLobbySettingsOriginal().value.conf = { ...structuredClone(lobby_info.conf) };
-
-    if (useLobbySettings().value.conf.ccList?.length === 0) {
-        useLobbySettings().value.conf.ccList = useCountryList().value;
-    }
+    updateNestedLobbySettings(lobby_info);
+    if (useLobbySettings().value.conf.ccList.length === 0) useLobbySettings().value.conf.ccList = useCountryList().value;
 
     if (!usePlayerInfo().value.ID) usePlayerInfo().value.ID = user_id; // Update player ID if no ID yet
-    console.log("Player " + user_id + " joined the lobby!"); // Change this to toast later and to user name
+    console.log("Player " + user_id + " joined the lobby!"); //! Dev: Change this to toast later and to user name
 };
 
+/**
+ * Function is called when updated lobby settings are received from server.
+ * @param lobby_info
+ */
 export const fetchLobbySettings = (lobby_info: LobbyInfo) => {
-    console.log("fetchLobbySettings()"); //! Dev
-    useLobbySettings().value = { ...structuredClone(lobby_info) };
-    useLobbySettings().value.conf = { ...structuredClone(lobby_info.conf) };
-    useLobbySettingsOriginal().value = { ...structuredClone(lobby_info) };
-    useLobbySettingsOriginal().value.conf = { ...structuredClone(lobby_info.conf) };
-
-    if (useLobbySettings().value.conf.ccList?.length === 0) useLobbySettings().value.conf.ccList = useCountryList().value;
+    updateNestedLobbySettings(lobby_info);
+    if (useLobbySettings().value.conf.ccList.length === 0) useLobbySettings().value.conf.ccList = useCountryList().value;
 };
 
+/**
+ * Function is called when admin updates lobby settings.
+ */
 export const applyLobbySettings = () => {
-    // If ccList is empty (=wrong input) dont send it so it wont update on server. Empty arrray if every country is selected
-    if (useLobbySettings().value.conf.ccList?.length === 0) delete useLobbySettingsOriginal().value.conf.ccList;
-    else if (useLobbySettings().value.conf.ccList?.length === useCountryList().value.length) useLobbySettings().value.conf.ccList = [];
+    const ls = useLobbySettings();
+    const lso = useLobbySettingsOriginal();
+
+    //@ts-ignore If ccList is empty (=wrong input) dont send it so it wont update on server. Empty arrray if every country is selected
+    if (ls.value.conf.ccList.length === 0) delete lso.value.conf.ccList;
+    else if (ls.value.conf.ccList.length === useCountryList().value.length) ls.value.conf.ccList = [];
 
     // If objects are equal delete them from original settings, else update original settings
-    for (const field in useLobbySettingsOriginal().value.conf) {
-        // Nested objects (ccList) are always different so they are stringified and compared as such
-        if (typeof useLobbySettingsOriginal().value.conf[field] == "object") {
-            if (JSON.stringify(useLobbySettingsOriginal().value.conf[field]) == JSON.stringify(useLobbySettings().value.conf[field])) delete useLobbySettingsOriginal().value.conf[field];
-            else useLobbySettingsOriginal().value.conf[field] = useLobbySettings().value.conf[field];
+    for (const field in lso.value.conf) {
+        //@ts-ignore  Nested objects (ccList) are always different so they are stringified and compared as such
+        if (typeof lso.value.conf[field] == "object") {
+            //@ts-ignore
+            if (JSON.stringify(lso.value.conf[field]) == JSON.stringify(ls.value.conf[field])) delete lso.value.conf[field]; //@ts-ignore
+            else lso.value.conf[field] = ls.value.conf[field];
         } else {
-            if (useLobbySettingsOriginal().value.conf[field] === useLobbySettings().value.conf[field]) delete useLobbySettingsOriginal().value.conf[field];
-            else useLobbySettingsOriginal().value.conf[field] = useLobbySettings().value.conf[field];
+            //@ts-ignore
+            if (lso.value.conf[field] === ls.value.conf[field]) delete lso.value.conf[field]; //@ts-ignore
+            else lso.value.conf[field] = ls.value.conf[field];
         }
     }
     const settings = {
         command: "update_lobby_settings",
-        conf: { ...useLobbySettingsOriginal().value.conf },
+        conf: { ...lso.value.conf },
     };
 
-    console.log(settings); //! Dev
+    // console.log(settings); //! Dev
     useSocketConnection().value.send(JSON.stringify(settings));
+};
+
+/**
+ * Function updates LobbySettings and LobbySettingsOriginal states with new data.
+ * To properly update deeply nested objects, this function is used.
+ * @param lobby_info LobbyInfo object received from server
+ */
+const updateNestedLobbySettings = (lobby_info: LobbyInfo) => {
+    const ls = useLobbySettings();
+    const lso = useLobbySettingsOriginal();
+
+    // Update info and nested lobby settings object
+    ls.value = structuredClone(lobby_info);
+    ls.value.conf = structuredClone(lobby_info.conf);
+    lso.value = structuredClone(lobby_info);
+    lso.value.conf = structuredClone(lobby_info.conf);
 };

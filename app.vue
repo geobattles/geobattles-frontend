@@ -71,10 +71,20 @@ body {
     @apply font-bold py-2 px-4 rounded;
     cursor: pointer;
 }
+
 .btn-blue {
     @apply bg-blue-500 text-white;
 }
+
 .btn-blue:hover {
     @apply bg-blue-700;
+}
+
+.btn-red {
+    @apply bg-red-500 hover:bg-red-700 text-white;
+}
+
+.btn-green {
+    @apply bg-green-500 hover:bg-green-700 text-white;
 }
 </style>
