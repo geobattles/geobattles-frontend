@@ -1,4 +1,4 @@
-import type { LobbyConfig, LobbyInfo } from "~/types";
+import type { LobbyInfo } from "~/types";
 /**
  * Function handles lobby creation
  */

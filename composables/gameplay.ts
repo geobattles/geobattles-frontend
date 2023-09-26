@@ -54,7 +54,7 @@ export const finishRound = (total_results: TotalResults, round_results: RoundRes
         useMapMarkers().value.push(marker); // Save marker to state
     }
     setTimeout(() => {
-        showRoundResults();
+        setMapBounds();
     }, 1000);
 };
 
@@ -131,7 +131,10 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
     });
 };
 
-export const showRoundResults = () => {
+/**
+ * Function is used to set map bounds to fit all displayed markers.
+ */
+export const setMapBounds = () => {
     let bounds = new google.maps.LatLngBounds();
     const round_res = useRoundResults().value;
     for (const key in round_res) {

@@ -78,6 +78,8 @@ const parseSocketMessage = (data: SocketMessage) => {
             // Perform checks
             if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
             if (!data.roundRes) throw new Error(`roundRes in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
+
+            // Process
             finishRound(data.totalResults, data.roundRes);
             break;
         default:

@@ -1,14 +1,10 @@
-import type { User, LobbyInfo, Coordinates, Results, GameFlow, TotalResults, RoundResults, CountryFlagMap, LobbyConfig } from "~/types";
+import type { User, LobbyInfo, Coordinates, Results, GameFlow, TotalResults, RoundResults, CountryFlagMap } from "~/types";
 
 // Here are defined all states that are used in the app
 export const usePlayerInfo = () => useState<User>("user_info", () => ({} as User));
 export const useLobbySettings = () => useState<LobbyInfo>("lobby_settings", () => ({} as LobbyInfo));
 export const useLobbySettingsOriginal = () => useState<LobbyInfo>("lobby_settings_original", () => ({} as LobbyInfo));
 export const useSocketConnection = () => useState<WebSocket>("socket_connection", () => ({} as WebSocket));
-
-//! Test
-export const useLobbyInfo = () => useState<LobbyInfo>("lobby_info", () => ({} as LobbyInfo));
-export const useLobbyConfig = () => useState<LobbyConfig>("lobby_config", () => ({} as LobbyConfig));
 
 // Settings states
 export const useModifySettingsModal = () => useState<boolean>("modify_settings_modal", () => false);
