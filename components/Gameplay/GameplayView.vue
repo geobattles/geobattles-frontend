@@ -1,8 +1,14 @@
 <template>
     <div id="gameplay_container">
+        <!-- BAR TIMER -->
+        <GameplayTimerBar v-if="game_flow === 'PLAYING'" class="bar" style="z-index: 4" />
+        <!-- GOOGLE MAP -->
         <div ref="google_map" id="google_map" class="google-map-gameplay"></div>
-        <button class="submit-button text-white bg-blue-400 dark:bg-blue-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center" @click="handleSubmitClick" :disabled="isSubmitButtonDisabled() || is_submit_disabled">Submit</button>
+        <!-- GOOGLE PANORAMA -->
         <div ref="google_panorama" id="panorama_map"></div>
+        <!-- SUBMIT BUTTON -->
+        <button class="submit-button text-white bg-blue-400 dark:bg-blue-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center" @click="handleSubmitClick" :disabled="isSubmitButtonDisabled() || is_submit_disabled">Submit</button>
+        <!-- LIVE STATISTICS -->
         <GameplayLiveStatistics class="live-stats" />
     </div>
 </template>
@@ -12,6 +18,7 @@ export default {
     setup() {
         const google_map = ref<HTMLElement | null>(null);
         const google_panorama = ref<HTMLElement | null>(null);
+        const game_flow = useGameFlow();
 
         const is_submit_disabled = useIsSubmitDisabled();
 
@@ -42,7 +49,7 @@ export default {
             submitGuess(); // Submit guess
         };
 
-        return { google_map, google_panorama, is_submit_disabled, handleSubmitClick, isSubmitButtonDisabled };
+        return { google_map, google_panorama, is_submit_disabled, game_flow, handleSubmitClick, isSubmitButtonDisabled };
     },
 };
 </script>
@@ -93,5 +100,8 @@ export default {
     top: 10px;
     right: 10px;
     z-index: 2;
+}
+.bar {
+    position: relative;
 }
 </style>
