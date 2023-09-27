@@ -1,5 +1,5 @@
 <template>
-    <div class="setting country-selector text-xl md:text-2xl">
+    <div class="setting country-selector">
         <div>
             <div style="display: block">
                 <span>Select countries:</span>
@@ -23,9 +23,9 @@
         </div>
         <div class="setting ccode-list">
             <label v-for="(ccode, id) in filtered_list" :key="id" class="country-row">
-                <input class="country-col" type="checkbox" :value="ccode" v-model="lobby_settings.conf.ccList" style="display: inline-block; float: left; vertical-align: top" />
+                <input type="checkbox" :value="ccode" v-model="lobby_settings.conf.ccList" style="display: inline-block; float: left; vertical-align: top" />
                 <div class="flag" :style="{ backgroundPosition: flag_map.get(ccode)?.x + 'px ' + flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
-                <div class="country-col" style="display: inline-block; float: right; white-space: nowrap; vertical-align: top">{{ flag_map.get(ccode)?.name }}</div>
+                <div style="display: inline-block; float: right; white-space: nowrap; vertical-align: top">{{ flag_map.get(ccode)?.name }}</div>
             </label>
         </div>
     </div>

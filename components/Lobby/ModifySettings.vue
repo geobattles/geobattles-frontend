@@ -2,11 +2,7 @@
     <div>
         <div class="settings-overlay" @click="closeSettings"></div>
         <div ref="modal_ref" class="modal">
-            <div style="display: inline-block; vertical-align: top">
-                <div class="flex justify-between">
-                    <div @click="closeSettings" class="btn btn-red">Close</div>
-                    <div class="btn btn-green">Apply</div>
-                </div>
+            <div class="block">
                 <h2>Lobby settings</h2>
                 <div class="setting row">
                     <div class="m-auto">
@@ -100,7 +96,7 @@
                     </div>
                 </div>
             </div>
-            <div style="display: inline-block; vertical-align: top">
+            <div class="text-sm md:text-xl block">
                 <LobbyCountrySettings />
             </div>
         </div>
@@ -153,9 +149,6 @@ export default {
     inset: 0;
     background-color: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(5px);
-    display: flex;
-    justify-content: center;
-    align-items: center;
     z-index: 1;
 }
 
@@ -170,11 +163,13 @@ export default {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    max-width: 400px;
+    max-width: 750px;
     max-height: 800px;
 
     overflow-y: auto;
     z-index: 2;
+
+    @apply lg:flex text-sm md:text-xl;
 }
 
 .setting {
