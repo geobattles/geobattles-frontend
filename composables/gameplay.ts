@@ -109,23 +109,27 @@ export const submitGuess = () => {
  */
 export const googleMapDOMTracker = (google_map: HTMLElement) => {
     const game_flow = useGameFlow();
-
     watch(game_flow, (newVal) => {
-        console.log(newVal);
+        console.log("Game flow changed to: " + newVal); //! Dev
         if (newVal === "MID-ROUND") {
             const mid_round_cointainer = document.getElementById("midround_container"); // Element is found in GameplayMidRound component.
             if (google_map && mid_round_cointainer) {
-                console.log("appending child");
                 mid_round_cointainer.appendChild(google_map);
+
+                // Chnage class
                 google_map.classList.add("google-map-midround"); // Change class
+                google_map.classList.remove("google-map-hover");
+                google_map.classList.remove("google-map-gameplay");
             }
         }
         if (newVal === "PLAYING") {
             const mid_round_cointainer = document.getElementById("gameplay_container");
             if (google_map && mid_round_cointainer) {
-                console.log("appending child");
                 mid_round_cointainer.appendChild(google_map);
+
+                // Change class
                 google_map.classList.remove("google-map-midround"); // Change class
+                google_map.classList.add("google-map-gameplay");
             }
         }
     });

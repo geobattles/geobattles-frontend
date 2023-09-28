@@ -98,6 +98,7 @@ export default {
     height: 100vh;
     width: 100vw;
     z-index: 0;
+    opacity: 1;
 }
 
 .google-map-hover {
