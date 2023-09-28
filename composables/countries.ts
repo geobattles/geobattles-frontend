@@ -27,7 +27,7 @@ export const toggleAllCountries = () => {
 };
 
 export const fetchCountryList = async () => {
-    const response = await fetch("http://localhost:8080/countryList", {
+    const response = await fetch("http://192.168.0.27:8080/countryList", {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
