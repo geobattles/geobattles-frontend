@@ -1,6 +1,6 @@
 <template>
     <div class="lobby-player-list text-xl md:text-2xl">
-        <h3 class="text-xl">Player List:</h3>
+        <h3 class="text-sm md:text-xl">Player List:</h3>
         <TransitionGroup name="list">
             <div v-for="(player, index) in lobby_settings.playerList" :key="index">
                 <div class="player">
@@ -36,7 +36,6 @@ export default {
     border-radius: 10px;
 
     padding: 15px 10px;
-    min-width: 0;
 }
 
 h3 {
