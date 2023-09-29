@@ -1,5 +1,4 @@
 import type { Coordinates } from "~/types";
-import { usePolyLines } from "./states";
 
 const map_starting_view_position: Coordinates = { lat: 0, lng: 0 }; // Constant
 
@@ -49,7 +48,7 @@ export const addMapClickListener = (): void => {
     });
 };
 
-export const updateMapView = (coordinates: Coordinates) => isGoogleMap().setCenter(coordinates);
+export const setMapCenter = (coordinates: Coordinates) => isGoogleMap().setCenter(coordinates);
 export const setMapZoom = (zoom: number) => isGoogleMap().setZoom(zoom);
 export const fitCustomBounds = (bounds: google.maps.LatLngBounds, padding: number) => isGoogleMap().fitBounds(bounds, padding);
 /// END GOOGLE MAP ///

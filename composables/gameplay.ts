@@ -14,7 +14,7 @@ export const startRound = () => {
     removeMarkersFromMap(true);
 
     if (useGoogleMap().value) {
-        updateMapView({ lat: 0, lng: 0 });
+        setMapCenter({ lat: 0, lng: 0 });
         setMapZoom(2);
     }
 };
@@ -45,6 +45,8 @@ export const finishRound = (total_results: TotalResults, round_results: RoundRes
     // Draw player pins and polylines to searched location
     const round_res = useRoundResults().value;
     for (const key in round_res) {
+        if (Object.keys(round_res[key].location).length === 0) continue; // Skip if location object is empty
+
         drawPolyLine(useCoordinates().value, round_res[key].location);
 
         const color = getPlayerColorByID(key);
@@ -59,6 +61,8 @@ export const finishRound = (total_results: TotalResults, round_results: RoundRes
 };
 
 export const processMapPin = (coordinates: Coordinates) => {
+    if (useGameFlow().value !== "PLAYING") return;
+
     useCurrentPin().value = coordinates; // Save current pin coordinates to state
 
     const used_pins = useMapMarkers().value.length; // Number of guesses already made iun current round
@@ -140,17 +144,24 @@ export const googleMapDOMTracker = (google_map: HTMLElement) => {
  */
 export const setMapBounds = () => {
     let bounds = new google.maps.LatLngBounds();
+
     const round_res = useRoundResults().value;
     for (const key in round_res) {
+        if (Object.keys(round_res[key].location).length === 0) continue; // Skip if location object is empty
         bounds.extend(round_res[key].location);
     }
     bounds.extend(useCoordinates().value);
 
-    // Fit all displayed markers bounds
-    if (bounds) fitCustomBounds(bounds, 50);
-    // TODO: Fix the zooming problem ???
-    // console.log("BOUNDS", bounds); //! Development
-    // console.log(bounds.getCenter().lat(), bounds.getCenter().lng()); //! Development
-
-    if (!round_res) setMapZoom(2);
+    // Dont fit bounds if there is only one marker on map (only searched location marker)
+    if (useMapMarkers().value.length === 1) {
+        setMapZoom(3);
+        setMapCenter(useCoordinates().value);
+        return;
+    } else {
+        // Fit all displayed markers bounds
+        if (bounds) fitCustomBounds(bounds, 50);
+        // TODO: Fix the zooming problem ???
+        // console.log("BOUNDS", bounds); //! Development
+        // console.log(bounds.getCenter().lat(), bounds.getCenter().lng()); //! Development
+    }
 };
