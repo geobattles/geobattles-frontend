@@ -96,7 +96,7 @@
                     </div>
                 </div>
             </div>
-            <div class="text-sm md:text-xl block">
+            <div class="text-sm md:text-base block">
                 <LobbyCountrySettings />
             </div>
         </div>

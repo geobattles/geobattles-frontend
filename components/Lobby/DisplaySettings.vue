@@ -1,72 +1,48 @@
 <template>
     <div>
-        <div ref="settings_form" class="component-content text-xl md:text-2xl m-auto" :class="{ notAdmin: false }">
+        <div class="component-content text-xl md:text-2xl m-auto" :class="{ notAdmin: false }">
             <h2>Lobby Settings</h2>
             <div class="settings-preview">
                 <div>
-                    <h3 style="text-align: center">Round info</h3>
+                    <h3 class="text-center">Game info</h3>
                     <hr style="margin-bottom: 15px" />
-                    <div style="text-align: center">
-                        <span>Mode: Battle Royale</span>
-                    </div>
+                    <div class="text-center">Mode: Battle Royale</div>
                     <div class="flex flex-row justify-center gap-3">
                         <SvgsTimerIcon :color="'white'" :width="16" />
                         {{ lobby_settings.conf.roundTime }}''
                     </div>
-                    <div style="display: inline-block; width: 50%">
-                        <li>Number of rounds: {{ lobby_settings.conf.numRounds }}</li>
-                        <li>Attempts per round: {{ lobby_settings.conf.numAttempt }}</li>
+                    <div>
+                        <div>Number of rounds: {{ lobby_settings.conf.numRounds }}</div>
                     </div>
-                    <div style="display: inline-block; vertical-align: top">
-                        <li>
-                            Dynamic lives:
-                            <span v-if="lobby_settings.conf.dynLives" style="color: #57c657">ON</span>
-                            <span v-else style="color: #a1a1a1">OFF</span>
-                            &nbsp;
-                            <span style="display: inline-block; vertical-align: text-top">
-                                <!-- <SvgsInfoIcon :color="'#9aa2df'" :width="16" :tooltip_context="lobby_settings.conf.dynamic_lives_info" /> -->
-                            </span>
-                        </li>
-                        <li>
-                            Round bonus:
-                            <span v-if="lobby_settings.conf.placeBonus" style="color: #57c657">ON</span>
-                            <span v-else style="color: #a1a1a1">OFF</span>
-                            &nbsp;
-                            <!-- <span style="display: inline-block; vertical-align: text-top">
-                                <SvgsInfoIcon :color="'#9aa2df'" :width="16" :tooltip_context="lobby_settings.conf.round_bonus_info" />
-                            </span> -->
-                        </li>
+                    <div>
+                        Dynamic lives:
+                        <span v-if="lobby_settings.conf.dynLives" style="color: #57c657">ON</span>
+                        <span v-else style="color: #a1a1a1">OFF</span>
+                    </div>
+                    <div>
+                        Round bonus:
+                        <span v-if="lobby_settings.conf.placeBonus" style="color: #57c657">ON</span>
+                        <span v-else style="color: #a1a1a1">OFF</span>
                     </div>
                 </div>
-                <!--! POWERUPS ARE DISABLED FOR NOW -->
-                <!-- <div v-if="setting_store.lobby_settings.powerups">
+                <!-- DISPLAY SELECTED POWERUPS -->
+                <div v-if="lobby_settings.conf.powerups">
                     <div>
                         <h3 style="text-align: center">Powerups</h3>
                         <hr style="margin-bottom: 15px" />
-                        <div style="display: inline-block; width: 50%">
-                            <li>
-                                Double score:
-                                <span v-if="setting_store.lobby_settings.powerups[0]" style="color: #57c657">ON</span>
-                                <span v-else style="color: #a1a1a1">OFF</span>
-                                &nbsp;
-                                <span style="display: inline-block; vertical-align: text-top">
-                                    <SvgsInfoIcon :color="'#9aa2df'" :width="16" :tooltip_context="setting_store.double_round_score" />
-                                </span>
-                            </li>
+                        <div>
+                            Double score:
+                            <span v-if="lobby_settings.conf.powerups[0]" style="color: #57c657">ON</span>
+                            <span v-else style="color: #a1a1a1">OFF</span>
                         </div>
-                        <div style="display: inline-block; width: 50%">
-                            <li>
-                                Duel battle:
-                                <span v-if="setting_store.lobby_settings.powerups[1]" style="color: #57c657">ON</span>
-                                <span v-else style="color: #a1a1a1">OFF</span>
-                                &nbsp;
-                                <span style="display: inline-block; vertical-align: text-top">
-                                    <SvgsInfoIcon :color="'#9aa2df'" :width="16" :tooltip_context="setting_store.duel_info" />
-                                </span>
-                            </li>
+                        <div>
+                            Duel battle:
+                            <span v-if="lobby_settings.conf.powerups[1]" style="color: #57c657">ON</span>
+                            <span v-else style="color: #a1a1a1">OFF</span>
                         </div>
                     </div>
-                </div> -->
+                </div>
+                <!-- DISPLAY SELECTED COUNTRIES -->
                 <div>
                     <h3 style="text-align: center">Selected countries</h3>
                     <hr style="margin-bottom: 15px" />
@@ -80,7 +56,7 @@
                 </div>
             </div>
             <div class="mt-5">
-                <button @click="modify_settings_modal = !modify_settings_modal" class="text-white text-xl m-auto bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800">Modify Settings</button>
+                <button @click="modify_settings_modal = !modify_settings_modal" class="btn btn-blue text-base">Modify Settings</button>
             </div>
         </div>
         <LobbyModifySettings v-if="modify_settings_modal" />

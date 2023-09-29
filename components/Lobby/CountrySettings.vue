@@ -1,12 +1,12 @@
 <template>
-    <div class="setting country-selector">
+    <div class="flex flex-col">
         <div>
             <div style="display: block">
                 <span>Select countries:</span>
                 <span>{{ (lobby_settings.conf.ccList.length | 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
             </div>
             <div style="display: block; margin-bottom: 20px">
-                <form style="display: inline-block; vertical-align: top">
+                <div style="display: inline-block; vertical-align: top">
                     <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
                     <div class="relative">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -14,18 +14,18 @@
                         </div>
                         <input type="search" id="search" @keyup="filterCountryList" v-model="country_input" class="block w-full p-2 pl-10 outline-none text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search country" required />
                     </div>
-                </form>
+                </div>
                 <div id="toggleAll" style="display: inline-block; vertical-align: top; margin-left: 10px">
                     <label>All&nbsp;</label>
                     <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) == Object.entries(country_list).length" />
                 </div>
             </div>
         </div>
-        <div class="setting ccode-list">
+        <div class="flex flex-col m-auto ccode-list">
             <label v-for="(ccode, id) in filtered_list" :key="id" class="country-row">
                 <input type="checkbox" :value="ccode" v-model="lobby_settings.conf.ccList" style="display: inline-block; float: left; vertical-align: top" />
-                <div class="flag" :style="{ backgroundPosition: flag_map.get(ccode)?.x + 'px ' + flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
-                <div style="display: inline-block; float: right; white-space: nowrap; vertical-align: top">{{ flag_map.get(ccode)?.name }}</div>
+                <div class="country-flag" :style="{ backgroundPosition: flag_map.get(ccode)?.x + 'px ' + flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
+                <div class="country-name">{{ flag_map.get(ccode)?.name }}</div>
             </label>
         </div>
     </div>
@@ -46,16 +46,8 @@ export default {
 </script>
 
 <style scoped>
-.setting {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 30px;
-
-    padding: 0px 10px;
-}
-
 .ccode-list {
-    max-height: 500px;
+    max-height: 600px;
     overflow-y: scroll;
 }
 
@@ -68,7 +60,7 @@ input[type="checkbox"] {
     outline: none;
 }
 
-.flag {
+.country-flag {
     width: 32px;
     height: 24px;
     margin-left: 10px;
@@ -84,6 +76,12 @@ input[type="checkbox"] {
     max-block-size: 100px;
 }
 
+.country-name {
+    float: inline-end;
+    padding-right: 10px;
+}
+
+/* CHANGE SCROLLBAR */
 .ccode-list::-webkit-scrollbar {
     width: 4px;
 }
