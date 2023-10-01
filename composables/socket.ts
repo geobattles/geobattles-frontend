@@ -64,7 +64,7 @@ const parseSocketMessage = (data: SocketMessage) => {
             // Process
             useCoordinates().value = data.location; // Set new search location
             useResults().value = data.players; // Set new player results for live statistics
-            startRound();
+            BattleRoyale.startRound();
             break;
         case SocketType.NEW_RESULT:
             // Perform checks
@@ -72,7 +72,7 @@ const parseSocketMessage = (data: SocketMessage) => {
             if (!data.user) throw new Error(`User data in SocketMessage type: ${SocketType.NEW_RESULT} is not defined`);
 
             // Process
-            processNewResult(data.user, data.playerRes);
+            BattleRoyale.processNewResult(data.user, data.playerRes);
             break;
         case SocketType.ROUND_RESULT || SocketType.TIMES_UP:
             // Perform checks
@@ -80,7 +80,7 @@ const parseSocketMessage = (data: SocketMessage) => {
             if (!data.roundRes) throw new Error(`roundRes in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
 
             // Process
-            finishRound(data.totalResults, data.roundRes);
+            BattleRoyale.finishRound(data.totalResults, data.roundRes);
             break;
         default:
             break;

@@ -17,7 +17,7 @@
             </table>
         </div>
         <div class="midround-menu">
-            <button @click="nextRound" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">Next round</button>
+            <button @click="next_round" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">Next round</button>
         </div>
     </div>
 </template>
@@ -26,9 +26,10 @@
 export default {
     setup() {
         const total_results = useTotalResults();
+        const next_round = Gameplay.nextRound;
 
         onMounted(() => {});
-        return { total_results, nextRound };
+        return { total_results, next_round };
     },
 };
 </script>

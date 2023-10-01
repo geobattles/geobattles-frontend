@@ -11,7 +11,9 @@ export const useModifySettingsModal = () => useState<boolean>("modify_settings_m
 
 // Google map states
 export const useGoogleMap = () => useState<google.maps.Map | undefined>("google_map", () => undefined);
+export const useGoogleMapHTML = () => useState<HTMLElement | null>("google_map_html", () => null);
 export const useGooglePanorama = () => useState<google.maps.StreetViewPanorama>("google_panorama", () => ({} as google.maps.StreetViewPanorama));
+export const useGooglePanoramaHTML = () => useState<HTMLElement | null>("google_panorama_html", () => null);
 export const useMapMarkers = () => useState<google.maps.Marker[]>("map_markers", () => [] as google.maps.Marker[]);
 
 // Gameplay states

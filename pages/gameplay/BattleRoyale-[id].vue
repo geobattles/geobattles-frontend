@@ -1,43 +1,46 @@
 <template>
-    <div id="gameplay_container">
-        <!-- BAR TIMER -->
-        <GameplayTimerBar v-if="game_flow === 'PLAYING'" class="bar" style="z-index: 4" />
-        <!-- GOOGLE MAP -->
-        <div ref="google_map" id="google_map" class="google-map-gameplay"></div>
-        <!-- GOOGLE PANORAMA -->
-        <div ref="google_panorama" id="panorama_map"></div>
-        <!-- SUBMIT BUTTON -->
-        <button class="submit-button text-white bg-blue-400 dark:bg-blue-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center" @click="handleSubmitClick" :disabled="isSubmitButtonDisabled() || is_submit_disabled">Submit</button>
-        <!-- LIVE STATISTICS -->
-        <GameplayLiveStatistics class="live-stats" />
-        <!-- TOGGLE MAP MOBILE BUTTON -->
-        <button v-show="show_map_button && game_flow === 'PLAYING'" ref="toggle_map_mobile" class="rounded-full bg-zinc-900 p-3">
-            <svg xmlns="http://www.w3.org/2000/svg" width="40" fill="white" viewBox="0 0 576 512">
-                <path d="M565.6 36.24C572.1 40.72 576 48.11 576 56V392C576 401.1 569.8 410.9 560.5 414.4L392.5 478.4C387.4 480.4 381.7 480.5 376.4 478.8L192.5 417.5L32.54 478.4C25.17 481.2 16.88 480.2 10.38 475.8C3.882 471.3 0 463.9 0 456V120C0 110 6.15 101.1 15.46 97.57L183.5 33.57C188.6 31.6 194.3 31.48 199.6 33.23L383.5 94.52L543.5 33.57C550.8 30.76 559.1 31.76 565.6 36.24H565.6zM48 421.2L168 375.5V90.83L48 136.5V421.2zM360 137.3L216 89.3V374.7L360 422.7V137.3zM408 421.2L528 375.5V90.83L408 136.5V421.2z" />
-            </svg>
-        </button>
+    <div>
+        <GameplayCountdownView v-show="game_flow === 'STARTING'" />
+        <div id="gameplay_container">
+            <!-- BAR TIMER -->
+            <GameplayTimerBar v-if="game_flow === 'PLAYING'" class="bar" style="z-index: 4" />
+            <!-- GOOGLE MAP -->
+            <GameplayGoogleMap default_class="google-map-gameplay" />
+            <!-- GOOGLE PANORAMA -->
+            <GameplayGooglePanorama />
+            <!-- SUBMIT BUTTON -->
+            <button class="submit-button text-white bg-blue-400 dark:bg-blue-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled() || is_submit_disabled">Submit</button>
+            <!-- LIVE STATISTICS -->
+            <GameplayLiveStatistics class="live-stats" />
+            <!-- MAP MOBILE BUTTON -->
+            <button v-show="show_map_button && game_flow === 'PLAYING'" ref="toggle_map_mobile" class="rounded-full bg-zinc-900 p-3">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" fill="white" viewBox="0 0 576 512">
+                    <path d="M565.6 36.24C572.1 40.72 576 48.11 576 56V392C576 401.1 569.8 410.9 560.5 414.4L392.5 478.4C387.4 480.4 381.7 480.5 376.4 478.8L192.5 417.5L32.54 478.4C25.17 481.2 16.88 480.2 10.38 475.8C3.882 471.3 0 463.9 0 456V120C0 110 6.15 101.1 15.46 97.57L183.5 33.57C188.6 31.6 194.3 31.48 199.6 33.23L383.5 94.52L543.5 33.57C550.8 30.76 559.1 31.76 565.6 36.24H565.6zM48 421.2L168 375.5V90.83L48 136.5V421.2zM360 137.3L216 89.3V374.7L360 422.7V137.3zM408 421.2L528 375.5V90.83L408 136.5V421.2z" />
+                </svg>
+            </button>
+        </div>
+        <GameplayMidRoundView v-show="game_flow === 'MID-ROUND'" />
     </div>
 </template>
 
 <script lang="ts">
 export default {
     setup() {
-        const google_map = ref<HTMLElement | null>(null);
-        const google_panorama = ref<HTMLElement | null>(null);
         const game_flow = useGameFlow();
+        const lobby_settings = useLobbySettings();
 
         const is_submit_disabled = useIsSubmitDisabled();
         const toggle_map_mobile = ref<HTMLElement | null>(null);
         const show_map_button = ref(false);
 
         onMounted(() => {
-            if (!google_map.value) throw new Error("Google Map DOM element not found");
-            if (!google_panorama.value) throw new Error("Google Panorama DOM element not found");
+            const google_map = useGoogleMapHTML(); // Get Google Map DOM element from state
+            const google_pan = useGooglePanoramaHTML(); // Get Google Map DOM element from state
+            if (!google_map.value) throw new Error("Google Map DOM element not found in gameplay");
+            if (!google_pan.value) throw new Error("Google Panorama DOM element not found in gameplay");
 
-            initalizeNewGoogleMap(google_map.value); // Init Google Map
-            initalizeNewPanoramaView(google_panorama.value); // Init Google Panorama
             addMapClickListener(); // Init Google Map click listener
-            googleMapDOMTracker(google_map.value); // Watch and move Google Map DOM element
+            BattleRoyale.googleMapDOMTracker(google_map.value); // Watch and move Google Map DOM element
 
             // Handle map hover and mobile view of map
             if (window.innerWidth < 1000) {
@@ -49,7 +52,7 @@ export default {
                 // Event listners to properly display minimap
                 google_map.value.addEventListener("mouseenter", () => (game_flow.value === "PLAYING" ? google_map.value?.classList.add("google-map-hover") : null));
                 google_map.value.addEventListener("mouseleave", () => {});
-                google_panorama.value.addEventListener("click", () => (game_flow.value === "PLAYING" ? google_map.value?.classList.remove("google-map-hover") : null));
+                google_pan.value.addEventListener("click", () => (game_flow.value === "PLAYING" ? google_map.value?.classList.remove("google-map-hover") : null));
             }
         });
 
@@ -67,10 +70,10 @@ export default {
 
         const handleSubmitClick = () => {
             useIsSubmitDisabled().value = true; // Disable submit button, preventing double clicks
-            submitGuess(); // Submit guess
+            BattleRoyale.submitGuess(); // Submit guess
         };
 
-        return { google_map, google_panorama, is_submit_disabled, game_flow, toggle_map_mobile, show_map_button, handleSubmitClick, isSubmitButtonDisabled };
+        return { is_submit_disabled, game_flow, toggle_map_mobile, show_map_button, lobby_settings, handleSubmitClick, isSubmitButtonDisabled };
     },
 };
 </script>

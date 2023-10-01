@@ -8,7 +8,7 @@
                 </div>
                 <div class="inline-block align-top w-96 ml-7">
                     <div class="w-50 mb-11 mt-5">
-                        <button @click="nextRound" :disabled="start_disabled" type="button" class="text-white text-xl p-3 bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none font-medium rounded-lg text-center inline-flex items-center mr-2">
+                        <button @click="next_round" :disabled="start_disabled" type="button" class="text-white text-xl p-3 bg-green-500 hover:bg-green-600 focus:ring-4 focus:outline-none font-medium rounded-lg text-center inline-flex items-center mr-2">
                             <svg aria-hidden="true" class="w-8 h-8 ml-4" fill="white" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
                             <span class="ml-16 mr-8">Start Game</span>
                         </button>
@@ -30,6 +30,7 @@ export default {
         const start_disabled = ref(false); // Preventing double click
         const country_list = useCountryList();
         const filtered_country_list = useFilteredCountryList();
+        const next_round = Gameplay.nextRound;
 
         onMounted(async () => {
             await fetchCountryList();
@@ -38,7 +39,7 @@ export default {
             filtered_country_list.value = country_list.value;
         });
 
-        return { lobby_settings, start_disabled, nextRound };
+        return { lobby_settings, start_disabled, next_round };
     },
 };
 </script>

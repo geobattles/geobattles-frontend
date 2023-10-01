@@ -44,7 +44,7 @@ export const addMapClickListener = (): void => {
         };
 
         // Process pin
-        processMapPin(clicked_coordinates);
+        BattleRoyale.processMapPin(clicked_coordinates);
     });
 };
 
@@ -144,7 +144,7 @@ export const removePolyLinesFromMap = (delete_lines: Boolean) => {
  * Work the same as useGoogleMap().value, but throws error if google map is not defined
  * @returns Google map object
  */
-const isGoogleMap = () => {
+export const isGoogleMap = () => {
     const google_map = useGoogleMap().value;
     if (!google_map) throw new Error("Google map is not defined");
     return google_map;
