@@ -64,7 +64,9 @@ const parseSocketMessage = (data: SocketMessage) => {
             // Process
             useCoordinates().value = data.location; // Set new search location
             useResults().value = data.players; // Set new player results for live statistics
-            BattleRoyale.startRound();
+            if (useGameType().value === "CountryBattle") CountryBattle.startRound();
+            else if (useGameType().value === "BattleRoyale") BattleRoyale.startRound();
+
             break;
         case SocketType.NEW_RESULT:
             // Perform checks
@@ -73,6 +75,9 @@ const parseSocketMessage = (data: SocketMessage) => {
 
             // Process
             BattleRoyale.processNewResult(data.user, data.playerRes);
+            if (useGameType().value === "BattleRoyale") BattleRoyale.processNewResult(data.user, data.playerRes);
+            else if (useGameType().value === "CountryBattle") CountryBattle.processNewResult(data.user, data.playerRes);
+
             break;
         case SocketType.ROUND_RESULT || SocketType.TIMES_UP:
             // Perform checks
@@ -81,6 +86,15 @@ const parseSocketMessage = (data: SocketMessage) => {
 
             // Process
             BattleRoyale.finishRound(data.totalResults, data.roundRes);
+            break;
+
+        case SocketType.COUNTRY_CODE:
+            // Perform checks
+            if (!data.polygon) throw new Error(`Polygon in SocketMessage type: ${SocketType.COUNTRY_CODE} is not defined`);
+            if (!data.cc) throw new Error(`Countrycode in SocketMessage type: ${SocketType.COUNTRY_CODE} is not defined`);
+
+            // Process
+            CountryBattle.processClickedCountry(data.polygon, data.cc);
             break;
         default:
             break;

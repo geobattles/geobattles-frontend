@@ -1,4 +1,4 @@
-import type { User, LobbyInfo, Coordinates, Results, GameFlow, TotalResults, RoundResults, CountryFlagMap } from "~/types";
+import type { User, LobbyInfo, Coordinates, Results, GameFlow, TotalResults, RoundResults, CountryFlagMap, GameType } from "~/types";
 
 // Here are defined all states that are used in the app
 export const usePlayerInfo = () => useState<User>("user_info", () => ({} as User));
@@ -8,6 +8,7 @@ export const useSocketConnection = () => useState<WebSocket>("socket_connection"
 
 // Settings states
 export const useModifySettingsModal = () => useState<boolean>("modify_settings_modal", () => false);
+export const useGameType = () => useState<GameType>("game_type", () => undefined);
 
 // Google map states
 export const useGoogleMap = () => useState<google.maps.Map | undefined>("google_map", () => undefined);

@@ -35,7 +35,12 @@ export const initalizeNewGoogleMap = (map_html: HTMLElement): void => {
     });
 };
 
-export const addMapClickListener = (): void => {
+/**
+ * Function that adds click listener to google map and calls
+ * provided function on every click.
+ * @param processPin Function that processes pin when clicked on map.
+ */
+export const addMapClickListener = (processPin: (coordinates: Coordinates) => void): void => {
     isGoogleMap().addListener("click", (event: any) => {
         // Process pin
         const clicked_coordinates: Coordinates = {
@@ -44,13 +49,15 @@ export const addMapClickListener = (): void => {
         };
 
         // Process pin
-        BattleRoyale.processMapPin(clicked_coordinates);
+        processPin(clicked_coordinates);
     });
 };
 
 export const setMapCenter = (coordinates: Coordinates) => isGoogleMap().setCenter(coordinates);
 export const setMapZoom = (zoom: number) => isGoogleMap().setZoom(zoom);
 export const fitCustomBounds = (bounds: google.maps.LatLngBounds, padding: number) => isGoogleMap().fitBounds(bounds, padding);
+export const addGeoJSON = (geo_json: Object) => isGoogleMap().data.addGeoJson(geo_json);
+export const removeMapEventListener = (type: string) => google.maps.event.clearListeners(isGoogleMap(), type);
 /// END GOOGLE MAP ///
 
 /// GOOGLE PANORAMA ///

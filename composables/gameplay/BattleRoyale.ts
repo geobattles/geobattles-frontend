@@ -63,13 +63,13 @@ export class BattleRoyale extends Gameplay {
 
         // START OF PIN PLACEMENT LOGIC
         // If there are no lives available, return
-        if (useResults().value[player_id]?.lives === 0) {
+        if (useResults().value[player_id].lives === 0) {
             console.log("All lives are used!!"); // TODO: Make toast that all lives are used.
             return;
         }
 
         // Place first pin if no pins yet, or if pins and submits are the same
-        if (used_pins === 0 || useResults().value[player_id]?.attempt === used_pins) {
+        if (used_pins === 0 || useResults().value[player_id].attempt === used_pins) {
             // get player color from name
             const color = getPlayerColorByName(usePlayerInfo().value.name);
             if (!color) throw new Error("Player color is not defined");

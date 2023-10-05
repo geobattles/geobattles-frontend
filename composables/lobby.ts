@@ -121,4 +121,9 @@ const updateNestedLobbySettings = (lobby_info: LobbyInfo) => {
     ls.value.conf = structuredClone(lobby_info.conf);
     lso.value = structuredClone(lobby_info);
     lso.value.conf = structuredClone(lobby_info.conf);
+
+    // Define gametype
+    if (ls.value.conf.mode === 1) useGameType().value = "BattleRoyale";
+    else if (ls.value.conf.mode === 2) useGameType().value = "CountryBattle";
+    else useGameType().value = undefined;
 };

@@ -11,7 +11,7 @@
             <!-- SUBMIT BUTTON -->
             <button class="submit-button text-white bg-blue-400 dark:bg-blue-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled() || is_submit_disabled">Submit</button>
             <!-- LIVE STATISTICS -->
-            <GameplayLiveStatistics class="live-stats" />
+            <GameplayBattleRoyaleLiveStatistics class="live-stats" />
             <!-- MAP MOBILE BUTTON -->
             <button v-show="show_map_button && game_flow === 'PLAYING'" ref="toggle_map_mobile" class="rounded-full bg-zinc-900 p-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" fill="white" viewBox="0 0 576 512">
@@ -39,7 +39,7 @@ export default {
             if (!google_map.value) throw new Error("Google Map DOM element not found in gameplay");
             if (!google_pan.value) throw new Error("Google Panorama DOM element not found in gameplay");
 
-            addMapClickListener(); // Init Google Map click listener
+            addMapClickListener(BattleRoyale.processMapPin); // Init Google Map click listener
             BattleRoyale.googleMapDOMTracker(google_map.value); // Watch and move Google Map DOM element
 
             // Handle map hover and mobile view of map
