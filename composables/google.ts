@@ -110,7 +110,7 @@ export const createSearchedLocationMarker = (coordinates: Coordinates) => {
     const marker = new google.maps.Marker({
         position: coordinates,
         title: "Searched location",
-        icon: "game/map-icons/location.svg",
+        icon: "map-icons/location.svg",
     });
     marker.setMap(isGoogleMap());
     return marker;
