@@ -1,9 +1,9 @@
-import { Coordinates, ResultsInfo } from "~/types";
+import { Coordinates, ResultsInfo, RoundResults, TotalResults } from "~/types";
 
 export class CountryBattle extends Gameplay {
     static selected_country: string | undefined = undefined;
     static selected_countries: string[] = [];
-    static total_attempts = new Map<string | number, number>();
+    // static total_attempts = new Map<string | number, number>();
 
     static startRound = () => {
         useGameFlow().value = "STARTING"; // Change game flow state
@@ -14,16 +14,16 @@ export class CountryBattle extends Gameplay {
         else updatePanoramaView(useCoordinates().value); // Update panorama view for next round
 
         // Clear Map before starting round
-        removePolyLinesFromMap(true);
-        removeMarkersFromMap(true);
+        this.deleteAllPolygons();
+        // TODO: Remove also winner polygon. Or just make all polygons the same type as winner polygon.
 
         if (useGoogleMap().value) {
             setMapCenter({ lat: 0, lng: 0 });
             setMapZoom(2);
         }
 
-        const results = useResults(); // Get results from state
-        for (const player_id in results.value) this.total_attempts.set(player_id, results.value[player_id].lives);
+        // const results = useResults(); // Get results from state
+        // for (const player_id in results.value) this.total_attempts.set(player_id, results.value[player_id].lives);
     };
 
     static processMapPin = (coordinates: Coordinates) => {
@@ -70,8 +70,7 @@ export class CountryBattle extends Gameplay {
         // Place first pin if no pins yet, or if pins and submits are the same
         if (nr_polygons === 0 || results[player_id].attempt === nr_polygons) {
             // Draw polygon to map and push to selected countries
-            console.log("Drawin polygon to map"); //! Dev
-            this.drawPolygonToMap(polygon, country_code);
+            this.drawCountryPolygon(polygon, country_code);
             this.selected_country = country_code;
             return;
         }
@@ -83,7 +82,7 @@ export class CountryBattle extends Gameplay {
                 //@ts-ignore
                 if (this.selected_country === e.h.id) map_instance.data.remove(e);
             });
-            this.drawPolygonToMap(polygon, country_code);
+            this.drawCountryPolygon(polygon, country_code);
             this.selected_country = country_code; // Set new selected_country
             return;
         }
@@ -99,6 +98,11 @@ export class CountryBattle extends Gameplay {
         return count;
     };
 
+    /**
+     * Method will process new results from server and update results state.
+     * @param user
+     * @param player_result
+     */
     static processNewResult = (user: string, player_result: ResultsInfo) => {
         const results = useResults().value; // Get results from state
 
@@ -122,10 +126,30 @@ export class CountryBattle extends Gameplay {
     };
 
     /**
+     * Method is called when round is finished. It processes total results and round results.
+     * It also displays searched polygon on the map.
+     * @param total_results
+     * @param round_results
+     * @param polygon Coordinates of the searched polygon.
+     */
+    static finishRound = (total_results: TotalResults, round_results: RoundResults, polygon: any) => {
+        useGameFlow().value = "MID-ROUND"; // Change game flow state
+
+        // Apply total results
+        useTotalResults().value = total_results;
+        useTotalResults().value = Object.fromEntries(Object.entries(useTotalResults().value).sort(([, a], [, b]) => (b.total || 0) - (a.total || 0)));
+
+        // Apply round results
+        useRoundResults().value = round_results; // Just refresh round results with data from server.
+
+        this.displaySearchedPolygon(polygon);
+    };
+
+    /**
      * Method draws new polygon to the existing google map.
      * @param {*} polygon_coordinates
      */
-    static drawPolygonToMap = (polygon_coordinates: any, country: string) => {
+    static drawCountryPolygon = (polygon_coordinates: any, country: string) => {
         let geo_json = {
             type: "Feature",
             geometry: {
@@ -140,5 +164,54 @@ export class CountryBattle extends Gameplay {
 
         geo_json.properties.id = country;
         addGeoJSON(geo_json);
+    };
+
+    /**
+     * Function draws winner polygon on the map after every round. It also zooms in on the polygon.
+     */
+    static displaySearchedPolygon = (polygon_coordinates: any) => {
+        // Declare new polygon
+        const searched_polygon = new google.maps.Data();
+
+        // Create geojson
+        const geo_json = {
+            type: "Feature",
+            geometry: {
+                type: "MultiPolygon",
+                coordinates: polygon_coordinates,
+            },
+        };
+
+        // Set polygon styles
+        searched_polygon.setStyle({
+            fillColor: "green",
+            strokeColor: "black",
+            strokeOpacity: 1,
+            strokeWeight: 2,
+        });
+        searched_polygon.addGeoJson(geo_json);
+        drawPolygonToMap(searched_polygon);
+
+        // Zoom on country and fit polygon bounds
+        let bounds = new google.maps.LatLngBounds();
+        searched_polygon.forEach(function (feature) {
+            feature.getGeometry()?.forEachLatLng(function (latlng) {
+                bounds.extend(latlng);
+            });
+        });
+
+        // Display searched polygon on map
+        setTimeout(() => {
+            fitCustomBounds(bounds, 300);
+            setMapCenter(bounds.getCenter());
+        }, 1000);
+    };
+
+    static deleteAllPolygons = () => {
+        const map_instance = isGoogleMap();
+        map_instance.data.forEach((e) => {
+            map_instance.data.remove(e);
+        });
+        // if (searched_polygon) searched_polygon.setMap(null);
     };
 }

@@ -74,7 +74,6 @@ const parseSocketMessage = (data: SocketMessage) => {
             if (!data.user) throw new Error(`User data in SocketMessage type: ${SocketType.NEW_RESULT} is not defined`);
 
             // Process
-            BattleRoyale.processNewResult(data.user, data.playerRes);
             if (useGameType().value === "BattleRoyale") BattleRoyale.processNewResult(data.user, data.playerRes);
             else if (useGameType().value === "CountryBattle") CountryBattle.processNewResult(data.user, data.playerRes);
 
@@ -83,9 +82,11 @@ const parseSocketMessage = (data: SocketMessage) => {
             // Perform checks
             if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
             if (!data.roundRes) throw new Error(`roundRes in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
+            if (!data.polygon && useGameType().value === "CountryBattle") throw new Error(`Searched polygon coordinates in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
 
             // Process
-            BattleRoyale.finishRound(data.totalResults, data.roundRes);
+            if (useGameType().value === "BattleRoyale") BattleRoyale.finishRound(data.totalResults, data.roundRes);
+            else if (useGameType().value === "CountryBattle") CountryBattle.finishRound(data.totalResults, data.roundRes, data.polygon);
             break;
 
         case SocketType.COUNTRY_CODE:

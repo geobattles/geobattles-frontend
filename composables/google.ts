@@ -53,10 +53,11 @@ export const addMapClickListener = (processPin: (coordinates: Coordinates) => vo
     });
 };
 
-export const setMapCenter = (coordinates: Coordinates) => isGoogleMap().setCenter(coordinates);
+export const setMapCenter = (coordinates: Coordinates | google.maps.LatLng) => isGoogleMap().setCenter(coordinates);
 export const setMapZoom = (zoom: number) => isGoogleMap().setZoom(zoom);
 export const fitCustomBounds = (bounds: google.maps.LatLngBounds, padding: number) => isGoogleMap().fitBounds(bounds, padding);
 export const addGeoJSON = (geo_json: Object) => isGoogleMap().data.addGeoJson(geo_json);
+export const drawPolygonToMap = (polygon: google.maps.Data) => polygon.setMap(isGoogleMap());
 export const removeMapEventListener = (type: string) => google.maps.event.clearListeners(isGoogleMap(), type);
 /// END GOOGLE MAP ///
 
