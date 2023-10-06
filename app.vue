@@ -18,6 +18,7 @@ export default {
                 script: [{ src: script, defer: true, async: true }],
                 title: `GeoBattles`,
             });
+            useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
         }
 
         if (process.client) {

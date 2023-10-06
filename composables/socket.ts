@@ -7,7 +7,7 @@ import { SocketType } from "~/types/enums";
  * @param lobby_id
  */
 export const initializeSocketConnection = (lobby_id: string): void => {
-    const socket = new WebSocket("http://192.168.0.27:8080".replace(/(http)(s)?\:\/\//, "ws$2://") + `/lobbySocket?id=${lobby_id}&name=${usePlayerInfo().value.name}`);
+    const socket = new WebSocket(`${useBackendAPI().value}`.replace(/(http)(s)?\:\/\//, "ws$2://") + `/lobbySocket?id=${lobby_id}&name=${usePlayerInfo().value.name}`);
     const username = usePlayerInfo();
 
     // Save socket connection to state

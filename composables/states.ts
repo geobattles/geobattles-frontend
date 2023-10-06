@@ -5,6 +5,7 @@ export const usePlayerInfo = () => useState<User>("user_info", () => ({} as User
 export const useLobbySettings = () => useState<LobbyInfo>("lobby_settings", () => ({} as LobbyInfo));
 export const useLobbySettingsOriginal = () => useState<LobbyInfo>("lobby_settings_original", () => ({} as LobbyInfo));
 export const useSocketConnection = () => useState<WebSocket>("socket_connection", () => ({} as WebSocket));
+export const useBackendAPI = () => useState<string | undefined>("backend_api", () => undefined);
 
 // Settings states
 export const useModifySettingsModal = () => useState<boolean>("modify_settings_modal", () => false);

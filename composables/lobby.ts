@@ -13,7 +13,7 @@ export const createLobby = async () => {
         roundTime: 30,
     };
 
-    const response = await fetch("http://192.168.0.27:8080/lobby", {
+    const response = await fetch(`${useBackendAPI().value}/lobby`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
