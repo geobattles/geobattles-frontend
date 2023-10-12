@@ -9,7 +9,7 @@
             <!-- GOOGLE PANORAMA -->
             <GameplayGooglePanorama />
             <!-- SUBMIT BUTTON -->
-            <button class="submit-button text-white bg-blue-400 dark:bg-blue-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled() || is_submit_disabled">Submit</button>
+            <button ref="submit_button" class="submit-button btn btn-blue" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled() || is_submit_disabled">GUESS</button>
             <!-- LIVE STATISTICS -->
             <GameplayBattleRoyaleLiveStatistics class="live-stats" />
             <!-- MAP MOBILE BUTTON -->
@@ -31,6 +31,7 @@ export default {
 
         const is_submit_disabled = useIsSubmitDisabled();
         const toggle_map_mobile = ref<HTMLElement | null>(null);
+        const submit_button = ref<HTMLElement | null>(null);
         const show_map_button = ref(false);
 
         onMounted(() => {
@@ -50,9 +51,15 @@ export default {
                 show_map_button.value = true;
             } else {
                 // Event listners to properly display minimap
-                google_map.value.addEventListener("mouseenter", () => (game_flow.value === "PLAYING" ? google_map.value?.classList.add("google-map-hover") : null));
+                google_map.value.addEventListener("mouseenter", () => {
+                    if (game_flow.value === "PLAYING") google_map.value?.classList.add("google-map-hover");
+                    if (game_flow.value === "PLAYING") submit_button.value?.classList.add("submit-button-hover");
+                });
                 google_map.value.addEventListener("mouseleave", () => {});
-                google_pan.value.addEventListener("click", () => (game_flow.value === "PLAYING" ? google_map.value?.classList.remove("google-map-hover") : null));
+                google_pan.value.addEventListener("click", () => {
+                    if (game_flow.value === "PLAYING") google_map.value?.classList.remove("google-map-hover");
+                    if (game_flow.value === "PLAYING") submit_button.value?.classList.remove("submit-button-hover");
+                });
             }
         });
 
@@ -73,7 +80,7 @@ export default {
             BattleRoyale.submitGuess(); // Submit guess
         };
 
-        return { is_submit_disabled, game_flow, toggle_map_mobile, show_map_button, lobby_settings, handleSubmitClick, isSubmitButtonDisabled };
+        return { is_submit_disabled, game_flow, submit_button, toggle_map_mobile, show_map_button, lobby_settings, handleSubmitClick, isSubmitButtonDisabled };
     },
 };
 </script>
@@ -81,7 +88,7 @@ export default {
 <style scoped>
 .google-map-gameplay {
     position: absolute;
-    bottom: 50px;
+    bottom: 60px;
     left: 20px;
     height: 400px;
     width: 400px;
@@ -105,11 +112,11 @@ export default {
 }
 
 .google-map-hover {
-    height: 55vh;
-    width: 50vw;
+    height: 40vh;
+    width: 40vw;
 
-    max-width: 1400px;
-    max-height: 1200px;
+    max-width: 1000px;
+    max-height: 700px;
 
     padding: 30px 30px 0px 0px;
 
@@ -117,6 +124,32 @@ export default {
 
     opacity: 1;
 }
+.submit-button {
+    position: absolute;
+    width: 380px;
+    left: 20px;
+    bottom: 10px;
+    padding: 0.75rem 1.5rem;
+
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+
+    color: white;
+    background-color: #1f2937;
+    border: none;
+    border-radius: 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: height 0.3s ease-out, width 0.3s ease-out;
+}
+.submit-button-hover {
+    width: 40vw;
+    max-width: 1000px;
+    transition: height 0.3s ease-out, width 0.3s ease-out;
+}
+
 /* MOPBILE VIEW */
 @media (max-width: 1000px) {
     .google-map-gameplay {
@@ -154,15 +187,6 @@ export default {
     height: 100vh;
     width: 100vw;
     z-index: 0;
-}
-
-.submit-button {
-    position: absolute;
-    bottom: 60px;
-    left: 30px;
-    z-index: 3;
-
-    padding: 10px;
 }
 
 .submit-button:disabled {
