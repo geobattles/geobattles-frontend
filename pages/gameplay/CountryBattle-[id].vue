@@ -20,6 +20,7 @@
             </button>
         </div>
         <GameplayMidRoundView v-show="game_flow === 'MID-ROUND'" />
+        <GameplayMidRoundView v-show="game_flow === 'FINISHED'" />
     </div>
 </template>
 

@@ -1,12 +1,12 @@
 <template>
     <div>
         <Header />
-        <button class="btn btn-blue" @click="createLobby">Create Lobby</button>
-        <br />
-        <div>
-            <span class="text-white">Join lobby: </span>
-            <input type="text" v-model="lobby_name" />
-            <button class="btn btn-blue" @click="joinLobby(lobby_name)">Join</button>
+        <div class="page-container">
+            <div>
+                <button class="play-button btn btn-blue" @click="createLobby">PLAY NOW</button>
+                <br />
+                <span class="join-text">or join a lobby by <span class="clickable" @click="router.push('/join')">game code!</span></span>
+            </div>
         </div>
     </div>
 </template>
@@ -15,7 +15,8 @@
 export default {
     setup() {
         const lobby_name = ref("");
-        return { createLobby, joinLobby, lobby_name, useLobbySettings };
+        const router = useRouter();
+        return { createLobby, joinLobby, lobby_name, useLobbySettings, router };
     },
 };
 </script>
@@ -29,5 +30,31 @@ export default {
 }
 .btn-blue:hover {
     @apply bg-blue-700;
+}
+
+.page-container {
+    width: 100%;
+    display: flex;
+
+    justify-content: center;
+}
+
+.play-button {
+    letter-spacing: 4px;
+    width: 300px;
+    padding: 15px 10px;
+
+    font-size: 18px;
+}
+
+.join-text {
+    color: white;
+    font-size: 18px;
+    margin-left: 20px;
+}
+
+.clickable {
+    text-decoration: underline;
+    cursor: pointer;
 }
 </style>

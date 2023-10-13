@@ -175,6 +175,7 @@ export default {
 .setting {
     display: flex;
     flex-direction: column;
+    text-align: center;
     margin-bottom: 30px;
 
     padding: 0px 40px;
