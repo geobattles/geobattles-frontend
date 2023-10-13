@@ -28,21 +28,52 @@ export default {
         let inputs_array: Ref<HTMLInputElement | null>[] = [];
 
         onMounted(() => {
-            input_1.value?.focus();
-            // TODO: Add onpaste event to fill inputs
-            //create array of all these inputs
-            inputs_array = [input_1, input_2, input_3, input_4, input_5, input_6];
+            input_1.value?.focus(); // Focus first input
+            inputs_array = [input_1, input_2, input_3, input_4, input_5, input_6]; // Create array of inputs for logic\
+
+            handePasteEvent();
         });
+
+        const handePasteEvent = () => {
+            // Create paste event listener
+            input_parent.value?.addEventListener("paste", async (event) => {
+                event.preventDefault(); // Prevent default paste
+                const clipboard_data = event.clipboardData; // Get clipboard data
+
+                if (clipboard_data) {
+                    const clipboard_string = clipboard_data.getData("text");
+
+                    // Split data and assign one char to each input
+                    const splitted_data = clipboard_string.split("");
+                    inputs_array.forEach((input, id) => {
+                        if (input.value) input.value.value = splitted_data[id];
+                    });
+
+                    // Try joining a lobby
+                    if (useSocketConnection().value.OPEN) return;
+                    try {
+                        await checkIfLobby(clipboard_string);
+                        await joinLobby(clipboard_string);
+                    } catch (error: unknown) {
+                        if (error instanceof Error) {
+                            console.log(error.message);
+                            inputs_array.forEach((input) => input.value?.classList.add("error-lobby")); // Add error class to inputs
+                        }
+                    }
+                }
+            });
+        };
 
         const handleKeyUpEvent = async (event: KeyboardEvent) => {
             const input_element = event.target as HTMLInputElement;
             input_element.value = input_element.value.toUpperCase();
 
-            // If all inputs are filled call joinLobby function
             if (input_1.value?.value && input_2.value?.value && input_3.value?.value && input_4.value?.value && input_5.value?.value && input_6.value?.value) {
                 // Get all inputs text and combine it to one string
                 const lobby_id = input_1.value.value + input_2.value.value + input_3.value.value + input_4.value.value + input_5.value.value + input_6.value.value;
 
+                // Try joining a lobby
+                if (useSocketConnection().value.OPEN) return;
                 try {
                     await checkIfLobby(lobby_id);
                     await joinLobby(lobby_id);
@@ -104,7 +135,7 @@ export default {
     padding: 0px 30px;
     text-align: center;
     transition: all 0.2s ease-out;
-    width: 6.25rem;
+    width: 7rem;
 
     color: white;
     outline: none;

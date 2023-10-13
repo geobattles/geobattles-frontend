@@ -152,7 +152,6 @@ export const fetchLobbyList = async () => {
         throw new Error(response.statusText);
     } else {
         useLobbyList().value = await response.json();
-        console.log(useLobbyList().value); //! Dev
     }
 };
 
