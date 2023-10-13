@@ -157,3 +157,13 @@ export const checkIfLobby = async (lobby_id: string) => {
     await fetchLobbyList();
     if (!Object.keys(useLobbyList().value).includes(lobby_id)) throw new Error("Lobby does not exist");
 };
+
+/**
+ * Returns true if player is admin of the lobby. Else returns false.
+ * @returns
+ */
+export const isPlayerAdmin = () => {
+    const lobby_settings = useLobbySettings();
+    if (lobby_settings.value.admin === usePlayerInfo().value.ID) return true;
+    else return false;
+};
