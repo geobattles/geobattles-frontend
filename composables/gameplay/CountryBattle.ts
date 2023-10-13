@@ -10,8 +10,12 @@ export class CountryBattle extends Gameplay {
         setTimeout(() => (useGameFlow().value = "PLAYING"), 3000); // For 3 seconds countdown
 
         const router = useRouter();
-        if (router.currentRoute.value.name !== "gameplay") router.push({ path: `/gameplay/CountryBattle-${useLobbySettings().value.ID}` }); // Redirect to gameplay page if not already there
-        else updatePanoramaView(useCoordinates().value); // Update panorama view for next round
+        const route_name = router.currentRoute.value.name as string;
+
+        if (!route_name.includes("gameplay")) router.push({ path: `/gameplay/CountryBattle-${useLobbySettings().value.ID}` }); // Redirect to gameplay routes if not already there
+        else {
+            updatePanoramaView(useCoordinates().value); // Update panorama view for next round
+        }
 
         // Clear Map before starting round
         this.deleteAllPolygons();
