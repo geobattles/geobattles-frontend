@@ -68,6 +68,15 @@ export const joinedLobby = (lobby_info: LobbyInfo, user_id: string) => {
 };
 
 /**
+ * Function is used when a player leaves the lobby. It will update lobby data.
+ * @param lobby_info
+ * @param user_id
+ */
+export const leftLobby = (lobby_info: LobbyInfo, user_id: string) => {
+    updateNestedLobbySettings(lobby_info);
+};
+
+/**
  * Function is called when updated lobby settings are received from server.
  * @param lobby_info
  */

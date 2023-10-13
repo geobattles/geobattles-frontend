@@ -5,6 +5,7 @@ export enum SocketStatus {
 }
 export enum SocketType {
     JOINED_LOBBY = "JOINED_LOBBY",
+    LEFT_LOBBY = "LEFT_LOBBY",
     UPDATED_LOBBY = "UPDATED_LOBBY",
     START_ROUND = "START_ROUND",
     NEW_RESULT = "NEW_RESULT",

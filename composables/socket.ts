@@ -47,23 +47,32 @@ const parseSocketMessage = (data: SocketMessage) => {
     switch (data.type) {
         case SocketType.JOINED_LOBBY:
             // Perform checks
-            if (!data.lobby) throw new Error(`Lobby data in SocketMessage type: ${SocketType.JOINED_LOBBY} is not defined`);
-            if (!data.user) throw new Error(`User data in SocketMessage type: ${SocketType.JOINED_LOBBY} is not defined`);
+            if (!data.lobby) throw new Error(`Lobby data in SocketMessage type: ${data.type} is not defined`);
+            if (!data.user) throw new Error(`User data in SocketMessage type: ${data.type} is not defined`);
 
             // Process
             joinedLobby(data.lobby, data.user);
             break;
+
+        case SocketType.LEFT_LOBBY:
+            // Perform checks
+            if (!data.lobby) throw new Error(`Lobby data in SocketMessage type: ${data.type} is not defined`);
+            if (!data.user) throw new Error(`User data in SocketMessage type: ${data.type} is not defined`);
+
+            // Process
+            leftLobby(data.lobby, data.user);
+            break;
         case SocketType.UPDATED_LOBBY:
             // Perform checks
-            if (!data.lobby) throw new Error(`Lobby data in SocketMessage type: ${SocketType.UPDATED_LOBBY} is not defined`);
+            if (!data.lobby) throw new Error(`Lobby data in SocketMessage type: ${data.type} is not defined`);
 
             // Process
             fetchLobbySettings(data.lobby);
             break;
         case SocketType.START_ROUND:
             // Perform checks
-            if (!data.location) throw new Error(`Location for search in SocketMessage type: ${SocketType.START_ROUND} is not defined.`);
-            if (!data.players) throw new Error(`Players info in SocketMessage type: ${SocketType.START_ROUND} is not defined.`);
+            if (!data.location) throw new Error(`Location for search in SocketMessage type: ${data.type} is not defined.`);
+            if (!data.players) throw new Error(`Players info in SocketMessage type: ${data.type} is not defined.`);
 
             // Process
             useCoordinates().value = data.location; // Set new search location
@@ -74,8 +83,8 @@ const parseSocketMessage = (data: SocketMessage) => {
             break;
         case SocketType.NEW_RESULT:
             // Perform checks
-            if (!data.playerRes) throw new Error(`Player result in SocketMessage type: ${SocketType.NEW_RESULT}  is not defined`);
-            if (!data.user) throw new Error(`User data in SocketMessage type: ${SocketType.NEW_RESULT} is not defined`);
+            if (!data.playerRes) throw new Error(`Player result in SocketMessage type: ${data.type}  is not defined`);
+            if (!data.user) throw new Error(`User data in SocketMessage type: ${data.type} is not defined`);
 
             // Process
             if (useGameType().value === "BattleRoyale") BattleRoyale.processNewResult(data.user, data.playerRes);
@@ -84,9 +93,9 @@ const parseSocketMessage = (data: SocketMessage) => {
             break;
         case SocketType.ROUND_RESULT || SocketType.TIMES_UP:
             // Perform checks
-            if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
-            if (!data.roundRes) throw new Error(`roundRes in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
-            if (!data.polygon && useGameType().value === "CountryBattle") throw new Error(`Searched polygon coordinates in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
+            if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${data.type} is not defined`);
+            if (!data.roundRes) throw new Error(`roundRes in SocketMessage type: ${data.type} is not defined`);
+            if (!data.polygon && useGameType().value === "CountryBattle") throw new Error(`Searched polygon coordinates in SocketMessage type: ${data.type} is not defined`);
 
             // Process
             if (useGameType().value === "BattleRoyale") BattleRoyale.finishRound(data.totalResults, data.roundRes);
@@ -95,15 +104,15 @@ const parseSocketMessage = (data: SocketMessage) => {
 
         case SocketType.COUNTRY_CODE:
             // Perform checks
-            if (!data.polygon) throw new Error(`Polygon in SocketMessage type: ${SocketType.COUNTRY_CODE} is not defined`);
-            if (!data.cc) throw new Error(`Countrycode in SocketMessage type: ${SocketType.COUNTRY_CODE} is not defined`);
+            if (!data.polygon) throw new Error(`Polygon in SocketMessage type: ${data.type} is not defined`);
+            if (!data.cc) throw new Error(`Countrycode in SocketMessage type: ${data.type} is not defined`);
 
             // Process
             CountryBattle.processClickedCountry(data.polygon, data.cc);
             break;
         case SocketType.GAME_END:
             // Perform checks
-            if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
+            if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${data.type} is not defined`);
 
             // Process
             useGameFlow().value = "FINISHED";
