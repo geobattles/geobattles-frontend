@@ -6,33 +6,37 @@ import { SocketType } from "~/types/enums";
  * It connects player to a lobby.
  * @param lobby_id
  */
-export const initializeSocketConnection = (lobby_id: string): void => {
-    const socket = new WebSocket("http://192.168.0.27:8080".replace(/(http)(s)?\:\/\//, "ws$2://") + `/lobbySocket?id=${lobby_id}&name=${usePlayerInfo().value.name}`);
-    const username = usePlayerInfo();
+export const initializeSocketConnection = (lobby_id: string): Promise<WebSocket> => {
+    return new Promise((resolve, reject) => {
+        const socket = new WebSocket(`${useBackendAPI().value}`.replace(/(http)(s)?\:\/\//, "ws$2://") + `/lobbySocket?id=${lobby_id}&name=${usePlayerInfo().value.name}`);
+        const username = usePlayerInfo();
 
-    // Save socket connection to state
-    useSocketConnection().value = socket;
+        // Save socket connection to state
+        useSocketConnection().value = socket;
 
-    socket.onopen = () => {
-        console.log("Socket connection established");
-        username.value.isConnectedToLobby = true; // Set user state to connected
-        useGameFlow().value = "WAITING";
-    };
-    socket.onerror = (error) => {
-        console.log(`WebSocket error: ${error}`);
-        username.value.isConnectedToLobby = false; // Set user state to connected
-        useGameFlow().value = undefined;
-    };
-    socket.onclose = () => {
-        console.log("Socket connection closed");
-        username.value.isConnectedToLobby = false; // Set user state to connected
-        useGameFlow().value = undefined;
-    };
-    socket.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        console.log(data); //! Dev
-        parseSocketMessage(data);
-    };
+        socket.onopen = () => {
+            console.log("Socket connection established");
+            username.value.isConnectedToLobby = true; // Set user state to connected
+            useGameFlow().value = "WAITING";
+            resolve(socket);
+        };
+        socket.onerror = (error) => {
+            console.log(`WebSocket error: ${error}`);
+            username.value.isConnectedToLobby = false; // Set user state to disconnected
+            useGameFlow().value = undefined;
+            reject();
+        };
+        socket.onclose = () => {
+            console.log("Socket connection closed");
+            username.value.isConnectedToLobby = false; // Set user state to disconnected
+            useGameFlow().value = undefined;
+        };
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log(data); //! Dev
+            parseSocketMessage(data);
+        };
+    });
 };
 
 /**
@@ -64,7 +68,9 @@ const parseSocketMessage = (data: SocketMessage) => {
             // Process
             useCoordinates().value = data.location; // Set new search location
             useResults().value = data.players; // Set new player results for live statistics
-            startRound();
+            if (useGameType().value === "CountryBattle") CountryBattle.startRound();
+            else if (useGameType().value === "BattleRoyale") BattleRoyale.startRound();
+
             break;
         case SocketType.NEW_RESULT:
             // Perform checks
@@ -72,15 +78,36 @@ const parseSocketMessage = (data: SocketMessage) => {
             if (!data.user) throw new Error(`User data in SocketMessage type: ${SocketType.NEW_RESULT} is not defined`);
 
             // Process
-            processNewResult(data.user, data.playerRes);
+            if (useGameType().value === "BattleRoyale") BattleRoyale.processNewResult(data.user, data.playerRes);
+            else if (useGameType().value === "CountryBattle") CountryBattle.processNewResult(data.user, data.playerRes);
+
             break;
         case SocketType.ROUND_RESULT || SocketType.TIMES_UP:
             // Perform checks
             if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
             if (!data.roundRes) throw new Error(`roundRes in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
+            if (!data.polygon && useGameType().value === "CountryBattle") throw new Error(`Searched polygon coordinates in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
 
             // Process
-            finishRound(data.totalResults, data.roundRes);
+            if (useGameType().value === "BattleRoyale") BattleRoyale.finishRound(data.totalResults, data.roundRes);
+            else if (useGameType().value === "CountryBattle") CountryBattle.finishRound(data.totalResults, data.roundRes, data.polygon);
+            break;
+
+        case SocketType.COUNTRY_CODE:
+            // Perform checks
+            if (!data.polygon) throw new Error(`Polygon in SocketMessage type: ${SocketType.COUNTRY_CODE} is not defined`);
+            if (!data.cc) throw new Error(`Countrycode in SocketMessage type: ${SocketType.COUNTRY_CODE} is not defined`);
+
+            // Process
+            CountryBattle.processClickedCountry(data.polygon, data.cc);
+            break;
+        case SocketType.GAME_END:
+            // Perform checks
+            if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${SocketType.ROUND_RESULT} is not defined`);
+
+            // Process
+            useGameFlow().value = "FINISHED";
+            // TODO: Process Endgame results and stuff
             break;
         default:
             break;

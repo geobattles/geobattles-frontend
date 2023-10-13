@@ -22,7 +22,7 @@
                     <p>Select gamemode</p>
                     <div style="display: flex; justify-content: space-between">
                         <div><input type="radio" style="width: 24px; height: 24px" :checked="lobby_settings.conf.mode === 1" @change="radioMode(1)" /> <label for="html">BattleRoyale</label></div>
-                        <div><input type="radio" style="width: 24px; height: 24px" :checked="lobby_settings.conf.mode === 2" @change="radioMode(2)" disabled /> <label for="css">CountryBattle</label></div>
+                        <div><input type="radio" style="width: 24px; height: 24px" :checked="lobby_settings.conf.mode === 2" @change="radioMode(2)" /> <label for="css">CountryBattle</label></div>
                     </div>
                 </div>
                 <div class="setting round-timer">
@@ -175,6 +175,7 @@ export default {
 .setting {
     display: flex;
     flex-direction: column;
+    text-align: center;
     margin-bottom: 30px;
 
     padding: 0px 40px;

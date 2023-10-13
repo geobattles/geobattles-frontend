@@ -35,7 +35,12 @@ export const initalizeNewGoogleMap = (map_html: HTMLElement): void => {
     });
 };
 
-export const addMapClickListener = (): void => {
+/**
+ * Function that adds click listener to google map and calls
+ * provided function on every click.
+ * @param processPin Function that processes pin when clicked on map.
+ */
+export const addMapClickListener = (processPin: (coordinates: Coordinates) => void): void => {
     isGoogleMap().addListener("click", (event: any) => {
         // Process pin
         const clicked_coordinates: Coordinates = {
@@ -44,13 +49,16 @@ export const addMapClickListener = (): void => {
         };
 
         // Process pin
-        processMapPin(clicked_coordinates);
+        processPin(clicked_coordinates);
     });
 };
 
-export const setMapCenter = (coordinates: Coordinates) => isGoogleMap().setCenter(coordinates);
+export const setMapCenter = (coordinates: Coordinates | google.maps.LatLng) => isGoogleMap().setCenter(coordinates);
 export const setMapZoom = (zoom: number) => isGoogleMap().setZoom(zoom);
 export const fitCustomBounds = (bounds: google.maps.LatLngBounds, padding: number) => isGoogleMap().fitBounds(bounds, padding);
+export const addGeoJSON = (geo_json: Object) => isGoogleMap().data.addGeoJson(geo_json);
+export const drawPolygonToMap = (polygon: google.maps.Data) => polygon.setMap(isGoogleMap());
+export const removeMapEventListener = (type: string) => google.maps.event.clearListeners(isGoogleMap(), type);
 /// END GOOGLE MAP ///
 
 /// GOOGLE PANORAMA ///
@@ -102,7 +110,7 @@ export const createSearchedLocationMarker = (coordinates: Coordinates) => {
     const marker = new google.maps.Marker({
         position: coordinates,
         title: "Searched location",
-        icon: "game/map-icons/location.svg",
+        icon: "map-icons/location.svg",
     });
     marker.setMap(isGoogleMap());
     return marker;
@@ -144,7 +152,7 @@ export const removePolyLinesFromMap = (delete_lines: Boolean) => {
  * Work the same as useGoogleMap().value, but throws error if google map is not defined
  * @returns Google map object
  */
-const isGoogleMap = () => {
+export const isGoogleMap = () => {
     const google_map = useGoogleMap().value;
     if (!google_map) throw new Error("Google map is not defined");
     return google_map;

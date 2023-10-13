@@ -13,7 +13,7 @@ export const createLobby = async () => {
         roundTime: 30,
     };
 
-    const response = await fetch("http://192.168.0.27:8080/lobby", {
+    const response = await fetch(`${useBackendAPI().value}/lobby`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -37,18 +37,20 @@ export const createLobby = async () => {
 };
 
 /**
- * Function is used to join a lobby from a link or home page.
+ * Function is used to join a lobby. It will initialize socket connection
+ * and connect player to a lobby. Will throw an error if connection fails.
  *
  * @param lobby_id
  */
 export const joinLobby = async (lobby_id: string) => {
     const router = useRouter();
-
-    // TODO: Perfrom checks if lobby exists and is joinable
-
-    // Create socket connection
-    initializeSocketConnection(lobby_id);
-    router.push({ path: `/lobby/${lobby_id}` });
+    try {
+        await initializeSocketConnection(lobby_id); // Create socket connection
+        router.push({ path: `/lobby/${lobby_id}` });
+    } catch (error: any) {
+        console.log(error.message); // Log socket error
+        throw new Error("Could not connect to a lobby.");
+    }
 };
 
 /**
@@ -121,4 +123,37 @@ const updateNestedLobbySettings = (lobby_info: LobbyInfo) => {
     ls.value.conf = structuredClone(lobby_info.conf);
     lso.value = structuredClone(lobby_info);
     lso.value.conf = structuredClone(lobby_info.conf);
+
+    // Define gametype
+    if (ls.value.conf.mode === 1) useGameType().value = "BattleRoyale";
+    else if (ls.value.conf.mode === 2) useGameType().value = "CountryBattle";
+    else useGameType().value = undefined;
+};
+
+export const fetchLobbyList = async () => {
+    const response = await fetch(`${useBackendAPI().value}/lobby`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+
+    // Check if response is valid
+    if (!response.ok) {
+        throw new Error(response.statusText);
+    } else {
+        useLobbyList().value = await response.json();
+        console.log(useLobbyList().value); //! Dev
+    }
+};
+
+/**
+ * Function check if lobby exists.
+ * Will throw an error if lobby does not exist.
+ * @param lobby_id
+ * @returns
+ */
+export const checkIfLobby = async (lobby_id: string) => {
+    await fetchLobbyList();
+    if (!Object.keys(useLobbyList().value).includes(lobby_id)) throw new Error("Lobby does not exist");
 };

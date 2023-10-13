@@ -62,6 +62,8 @@ interface ResultsInfo {
     distance: number;
     lives: number;
     location: Coordinates;
+    cc: string;
+    player_countries: string[];
 }
 
 export type RoundResults = {
@@ -89,6 +91,10 @@ export type SocketMessage = {
     playerRes?: ResultInfo;
     roundRes?: RoundResults;
     totalResults?: TotalResults;
+    cc?: string;
+    polygon?: any;
 };
 
 type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINISHED" | undefined; // Undefined when not connected to a lobby (socket)
+
+type GameType = "BattleRoyale" | "CountryBattle" | undefined; // Undefined when not connected to a lobby (socket)
