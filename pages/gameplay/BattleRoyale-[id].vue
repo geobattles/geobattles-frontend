@@ -92,7 +92,7 @@ export default {
     bottom: 60px;
     left: 20px;
     height: 400px;
-    width: 400px;
+    width: 380px;
     z-index: 1;
 
     opacity: 0.7;
@@ -113,8 +113,8 @@ export default {
 }
 
 .google-map-hover {
-    height: 40vh;
-    width: 40vw;
+    height: 500px;
+    width: 600px;
 
     max-width: 1000px;
     max-height: 700px;
@@ -146,7 +146,7 @@ export default {
     transition: height 0.3s ease-out, width 0.3s ease-out;
 }
 .submit-button-hover {
-    width: 40vw;
+    width: 600px;
     max-width: 1000px;
     transition: height 0.3s ease-out, width 0.3s ease-out;
 }
