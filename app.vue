@@ -65,27 +65,43 @@ body {
     /* Set background image */
     background: url("/images/earth.webp") no-repeat center center fixed;
     background-size: cover; /* Resize the background image to cover the entire container */
+
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
 }
 
 /* Default button */
 .btn {
-    @apply font-bold py-2 px-4 rounded;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
     cursor: pointer;
+    border: none;
 }
 
 .btn-blue {
-    @apply bg-blue-500 text-white;
+    background-color: #3490dc;
+    color: #fff;
 }
 
 .btn-blue:hover {
-    @apply bg-blue-700;
+    background-color: #2779bd;
 }
 
 .btn-red {
-    @apply bg-red-500 hover:bg-red-700 text-white;
+    background-color: #e3342f;
+    color: #fff;
+}
+
+.btn-red:hover {
+    background-color: #cc1f1a;
 }
 
 .btn-green {
-    @apply bg-green-500 hover:bg-green-700 text-white;
+    background-color: #38c172;
+    color: #fff;
+}
+
+.btn-green:hover {
+    background-color: #2f855a;
 }
 </style>

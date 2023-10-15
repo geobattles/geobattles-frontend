@@ -1,6 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
-    devtools: { enabled: true },
+    devtools: { enabled: false },
     runtimeConfig: {
         public: {
             GMAPS_API: process.env.GMAPS_API || "",
@@ -14,12 +14,5 @@ export default defineNuxtConfig({
     },
     imports: {
         autoImport: true,
-    },
-    css: ["~/assets/css/main.css"],
-    postcss: {
-        plugins: {
-            tailwindcss: {},
-            autoprefixer: {},
-        },
     },
 });

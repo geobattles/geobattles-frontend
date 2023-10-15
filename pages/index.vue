@@ -22,16 +22,6 @@ export default {
 </script>
 
 <style scoped>
-.btn {
-    @apply font-bold py-1 px-2 rounded text-sm;
-}
-.btn-blue {
-    @apply bg-blue-500 text-white;
-}
-.btn-blue:hover {
-    @apply bg-blue-700;
-}
-
 .page-container {
     width: 100%;
     display: flex;

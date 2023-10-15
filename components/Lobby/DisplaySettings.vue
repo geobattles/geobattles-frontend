@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="component-content text-xl md:text-2xl m-auto" :class="{ notAdmin: false }">
+        <div class="component-content text-xl md:text-2xl m-auto" :class="{ 'player-view': !isPlayerAdmin() }">
             <h2>Lobby Settings</h2>
             <div class="settings-preview">
                 <div>
@@ -56,7 +56,7 @@
                 </div>
             </div>
             <div class="mt-5">
-                <button @click="modify_settings_modal = !modify_settings_modal" class="btn btn-blue text-base">Modify Settings</button>
+                <button @click="modify_settings_modal = !modify_settings_modal" class="btn btn-blue modify-button">Modify Settings</button>
             </div>
         </div>
         <LobbyModifySettings v-if="modify_settings_modal" />
@@ -70,7 +70,7 @@ export default {
         const countries_flag_map = useCountriesFlagMap();
         const modify_settings_modal = useModifySettingsModal();
 
-        return { lobby_settings, countries_flag_map, modify_settings_modal };
+        return { lobby_settings, countries_flag_map, modify_settings_modal, isPlayerAdmin };
     },
 };
 </script>
@@ -82,8 +82,12 @@ export default {
 
     padding: 10px 30px;
     border-radius: 10px;
+}
 
-    max-width: 480px;
+.player-view {
+    /* How players view settings in lobby menu */
+    opacity: 0.7;
+    pointer-events: none;
 }
 
 h2 {
@@ -94,14 +98,9 @@ h2 {
     text-align: left;
     color: #cccccc;
 }
-.notAdmin {
-    opacity: 0.7;
-}
-.notAdmin input {
-    pointer-events: none;
-}
-.notAdmin button {
-    display: none;
+
+.modify-button {
+    margin-top: 20px;
 }
 
 .country-list-preview {
@@ -123,6 +122,7 @@ h2 {
 
     margin-bottom: 8px;
 }
+
 .country-list-preview::-webkit-scrollbar {
     width: 4px;
 }

@@ -1,5 +1,5 @@
 <template>
-    <div class="flex flex-col">
+    <div class="component-content">
         <div>
             <div style="display: block">
                 <span>Select countries:</span>
@@ -8,20 +8,20 @@
             <div style="display: block; margin-bottom: 20px">
                 <div style="display: inline-block; vertical-align: top">
                     <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <svg aria-hidden="true" class="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <div style="position: relative">
+                        <div class="search-icon">
+                            <svg aria-hidden="true" class="icon-shape" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </div>
-                        <input type="search" id="search" @keyup="filterCountryList" v-model="country_input" class="block w-full p-2 pl-10 outline-none text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search country" required />
+                        <input type="search" id="search" @keyup="filterCountryList" v-model="country_input" class="country-input" placeholder="Search country" required />
                     </div>
                 </div>
-                <div id="toggleAll" style="display: inline-block; vertical-align: top; margin-left: 10px">
+                <div style="display: inline-block; vertical-align: bottom; margin-left: 10px">
                     <label>All&nbsp;</label>
                     <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) == Object.entries(country_list).length" />
                 </div>
             </div>
         </div>
-        <div class="flex flex-col m-auto ccode-list">
+        <div class="ccode-list">
             <label v-for="(ccode, id) in filtered_list" :key="id" class="country-row">
                 <input type="checkbox" :value="ccode" v-model="lobby_settings.conf.ccList" style="display: inline-block; float: left; vertical-align: top" />
                 <div class="country-flag" :style="{ backgroundPosition: flag_map.get(ccode)?.x + 'px ' + flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
@@ -46,9 +46,19 @@ export default {
 </script>
 
 <style scoped>
+.component-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
 .ccode-list {
     max-height: 600px;
     overflow-y: scroll;
+
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
 }
 
 input[type="checkbox"] {
@@ -79,6 +89,46 @@ input[type="checkbox"] {
 .country-name {
     float: inline-end;
     padding-right: 10px;
+}
+
+.country-input {
+    display: block;
+    width: 100%;
+    padding: 0.5rem;
+    padding-left: 2.5rem;
+    outline: none;
+    color: #4b5563;
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+}
+
+.search-icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    padding-left: 0.75rem;
+    pointer-events: none;
+}
+
+.icon-shape {
+    width: 1.25rem;
+    margin-top: 5px;
+    height: 1.25rem;
+
+    color: #6b7280;
+    fill: none;
+}
+
+.country-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.country-input::placeholder {
+    color: #9ca3af;
 }
 
 /* CHANGE SCROLLBAR */

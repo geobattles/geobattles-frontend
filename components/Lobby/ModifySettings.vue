@@ -1,20 +1,20 @@
 <template>
     <div>
         <div class="settings-overlay" @click="closeSettings"></div>
-        <div ref="modal_ref" class="modal">
-            <div class="block">
+        <div ref="modal_ref" class="settings-modal">
+            <div class="settings-block">
                 <h2>Lobby settings</h2>
                 <div class="setting row">
                     <div class="m-auto">
                         <div>
                             <label for="lobby_name" class="block mb-2 font-medium text-gray-900 dark:text-white">Lobby name</label>
-                            <input type="text" id="lobby_name" v-model="lobby_settings.conf.name" class="bg-gray-50 border border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-1 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Lobby name" required />
+                            <input type="text" id="lobby_name" v-model="lobby_settings.conf.name" class="custom-input" placeholder="Lobby name" required />
                         </div>
                     </div>
                     <div class="m-auto">
                         <div>
                             <label for="players" class="block mb-2 font-medium text-gray-900 dark:text-white">Players</label>
-                            <input type="number" id="players" v-model="lobby_settings.conf.maxPlayers" class="bg-gray-50 border w-40 border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Lobby players" required />
+                            <input type="number" id="players" v-model="lobby_settings.conf.maxPlayers" class="custom-input" placeholder="Lobby players" required />
                         </div>
                     </div>
                 </div>
@@ -32,11 +32,11 @@
                 <div class="setting row">
                     <div class="m-auto">
                         <label for="rounds" class="block mb-2 font-medium text-gray-900 dark:text-white">Rounds</label>
-                        <input type="number" min="1" max="10" id="rounds" v-model="lobby_settings.conf.numRounds" class="bg-gray-50 border w-40 border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Lobby players" required />
+                        <input type="number" min="1" max="10" id="rounds" v-model="lobby_settings.conf.numRounds" class="custom-input" placeholder="Lobby players" required />
                     </div>
                     <div class="m-auto">
                         <label for="attempts" class="block mb-2 font-medium text-gray-900 dark:text-white">Attempts</label>
-                        <input type="number" id="attempts" min="1" max="5" v-model="lobby_settings.conf.numAttempt" class="bg-gray-50 border w-40 border-gray-300 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Lobby players" required />
+                        <input type="number" id="attempts" min="1" max="5" v-model="lobby_settings.conf.numAttempt" class="custom-input" placeholder="Lobby players" required />
                     </div>
                 </div>
                 <div class="setting score-factor">
@@ -96,7 +96,7 @@
                     </div>
                 </div>
             </div>
-            <div class="text-sm md:text-base block">
+            <div class="countries-block">
                 <LobbyCountrySettings />
             </div>
         </div>
@@ -104,7 +104,6 @@
 </template>
 
 <script lang="ts">
-import { useModifySettingsModal } from "~/composables/states";
 import { LobbyInfo } from "~/types";
 
 export default {
@@ -152,7 +151,7 @@ export default {
     z-index: 1;
 }
 
-.modal {
+.settings-modal {
     background-color: rgb(30 41 59);
     padding: 20px;
     border-radius: 5px;
@@ -163,13 +162,23 @@ export default {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    max-width: 750px;
     max-height: 800px;
+    min-width: 400px;
 
     overflow-y: auto;
     z-index: 2;
+}
 
-    @apply lg:flex text-sm md:text-xl;
+.settings-block {
+    display: inline-block;
+    vertical-align: top;
+    min-width: 400px;
+}
+
+.countries-block {
+    display: inline-block;
+    vertical-align: top;
+    min-width: 320px;
 }
 
 .setting {
@@ -273,4 +282,37 @@ input:checked + .slider:before {
     border-radius: 50%;
 }
 /* -------------------------- */
+
+/* Custom input */
+.custom-input {
+    background-color: #f9fafb;
+    border: 1px solid #d1d5db;
+    color: #4b5563;
+    border-radius: 0.375rem;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.05);
+    display: block;
+    padding: 0.25rem;
+}
+
+.custom-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.custom-input::placeholder {
+    color: #9ca3af;
+}
+
+/* Custom slider */
+.settings-modal::-webkit-scrollbar {
+    width: 4px;
+}
+.settings-modal::-webkit-scrollbar-track {
+    background-color: #15202b;
+}
+.settings-modal::-webkit-scrollbar-thumb {
+    background-color: rgb(109, 109, 109);
+    border-radius: 10px;
+}
 </style>

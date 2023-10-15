@@ -42,6 +42,7 @@ export default {
 
     margin-bottom: 4vh;
 }
+
 @media (max-width: 350px) {
     .header {
         flex-direction: column;
