@@ -52,8 +52,8 @@ const parseSocketMessage = (data: SocketMessage) => {
 
             // Process
             joinedLobby(data.lobby, data.user);
-            break;
 
+            break;
         case SocketType.LEFT_LOBBY:
             // Perform checks
             if (!data.lobby) throw new Error(`Lobby data in SocketMessage type: ${data.type} is not defined`);
@@ -61,6 +61,7 @@ const parseSocketMessage = (data: SocketMessage) => {
 
             // Process
             leftLobby(data.lobby, data.user);
+
             break;
         case SocketType.UPDATED_LOBBY:
             // Perform checks
@@ -68,6 +69,7 @@ const parseSocketMessage = (data: SocketMessage) => {
 
             // Process
             fetchLobbySettings(data.lobby);
+
             break;
         case SocketType.START_ROUND:
             // Perform checks
@@ -100,8 +102,8 @@ const parseSocketMessage = (data: SocketMessage) => {
             // Process
             if (useGameType().value === "BattleRoyale") BattleRoyale.finishRound(data.totalResults, data.roundRes);
             else if (useGameType().value === "CountryBattle") CountryBattle.finishRound(data.totalResults, data.roundRes, data.polygon);
-            break;
 
+            break;
         case SocketType.COUNTRY_CODE:
             // Perform checks
             if (!data.polygon) throw new Error(`Polygon in SocketMessage type: ${data.type} is not defined`);
@@ -117,8 +119,11 @@ const parseSocketMessage = (data: SocketMessage) => {
             // Process
             useGameFlow().value = "FINISHED";
             // TODO: Process Endgame results and stuff
+
             break;
         default:
+            throw new Error("Unknown socket message type: " + data.type);
+
             break;
     }
 };

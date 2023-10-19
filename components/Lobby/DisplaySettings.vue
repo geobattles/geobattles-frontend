@@ -6,7 +6,8 @@
                 <div>
                     <h3 class="text-center">Game info</h3>
                     <hr style="margin-bottom: 15px" />
-                    <div class="text-center">Mode: Battle Royale</div>
+                    <div v-if="lobby_settings.conf.mode === 1" class="text-center">Mode: Battle Royale</div>
+                    <div v-if="lobby_settings.conf.mode === 2" class="text-center">Mode: Country Battle</div>
                     <div class="flex flex-row justify-center gap-3">
                         <SvgsTimerIcon :color="'white'" :width="16" />
                         {{ lobby_settings.conf.roundTime }}''

@@ -155,6 +155,7 @@ export class BattleRoyale extends Gameplay {
 
     static processNewResult = (user: string, player_result: ResultsInfo) => {
         const results = useResults().value; // Get results from state
+        const leader_before = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID
 
         if (player_result.baseScr < results[user]?.baseScr || (player_result.baseScr === 0 && player_result.distance > results[user].distance)) {
             // Update attempts and lives, not the score or distance
@@ -165,6 +166,9 @@ export class BattleRoyale extends Gameplay {
             // Sort results by score
             useResults().value = Object.fromEntries(Object.entries(results).sort(([, a], [, b]) => a.distance - b.distance));
         }
+
+        const new_leader = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID
+        this.applyGuessStyles(user, leader_before, new_leader);
         useIsSubmitDisabled().value = false; // Enable submit button
     };
 }
