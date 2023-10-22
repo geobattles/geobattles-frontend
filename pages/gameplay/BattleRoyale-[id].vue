@@ -1,6 +1,6 @@
 <template>
     <div>
-        <GameplayCountdownView v-show="game_flow === 'STARTING'" />
+        <GameplayViewsCountdownView v-show="game_flow === 'STARTING'" />
         <div id="gameplay_container">
             <!-- BAR TIMER -->
             <GameplayTimerBar v-if="game_flow === 'PLAYING'" class="bar" style="z-index: 4" />
@@ -19,8 +19,8 @@
                 </svg>
             </button>
         </div>
-        <GameplayMidRoundView v-show="game_flow === 'MID-ROUND'" />
-        <GameplayEndGameView v-show="game_flow === 'FINISHED'" />
+        <GameplayViewsMidRoundView v-show="game_flow === 'MID-ROUND'" />
+        <GameplayViewsEndGameView v-show="game_flow === 'FINISHED'" />
     </div>
 </template>
 
@@ -104,10 +104,9 @@ export default {
 
 .google-map-midround {
     position: absolute;
-    top: 0;
-    left: 0;
+
+    width: 70vw;
     height: 100vh;
-    width: 100vw;
     z-index: 0;
     opacity: 1;
 }

@@ -19,7 +19,7 @@
                 <div class="table__row-element" style="flex: 20%">
                     <SvgsUserIcon :color="getPlayerColorByID(player_id)" :width="20" />
                 </div>
-                <div class="table__row-element"><AnimateScore :startAmount="0" :endAmount="value.total" :duration="4" separator="" :autoinit="true" /></div>
+                <div class="table__row-element"><HelpersAnimateScore :startAmount="0" :endAmount="value.total" :duration="3" separator="" :autoinit="true" /></div>
                 <!-- <PowerupDuel v-if="setting_store.lobby_settings.powerups[1] == true" :player_id="value[0]" /> -->
             </div>
         </TransitionGroup>

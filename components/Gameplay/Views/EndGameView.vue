@@ -3,20 +3,7 @@
         <div class="results-section">
             <div>Show first three places with trophy</div>
             <div class="total-result-table">
-                <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-                        <tr>
-                            <th scope="col" class="px-6 py-3">Name</th>
-                            <th scope="col" class="px-6 py-3">Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="(value, index) in total_results">
-                            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ index }}</th>
-                            <td class="px-6 py-4">{{ value.total || 0 }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <GameplayTotalStatistics />
             </div>
         </div>
         <div class="endgame-menu">
@@ -48,8 +35,6 @@ export default {
     background-color: white;
 
     display: flex;
-    justify-content: space-between;
-
     align-items: center;
     margin: auto;
 }
@@ -67,7 +52,6 @@ export default {
 
 .total-result-table {
     min-width: 600px;
-    @apply max-w-lg relative overflow-x-auto shadow-md sm:rounded-lg bg-white;
     z-index: 1;
 }
 </style>

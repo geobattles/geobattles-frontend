@@ -17,14 +17,13 @@ export class BattleRoyale extends Gameplay {
         removePolyLinesFromMap(true);
         removeMarkersFromMap(true);
 
-        if (useGoogleMap().value) {
-            setMapCenter({ lat: 0, lng: 0 });
-            setMapZoom(2);
-        }
+        isGoogleMap().setCenter({ lat: 0, lng: 0 });
+        isGoogleMap().setZoom(2);
     };
 
     static finishRound = (total_results: TotalResults, round_results: RoundResults) => {
         useGameFlow().value = "MID-ROUND"; // Change game flow state
+        console.log("Round finished"); //! Dev
 
         // Apply total results
         useTotalResults().value = total_results;
@@ -51,9 +50,10 @@ export class BattleRoyale extends Gameplay {
             const marker = addNewMapMarker(round_res[key].location, color);
             useMapMarkers().value.push(marker); // Save marker to state
         }
+        setMapZoom(3);
         setTimeout(() => {
             this.setMapBounds();
-        }, 1000);
+        }, 300);
     };
 
     static processMapPin = (coordinates: Coordinates) => {
@@ -103,20 +103,20 @@ export class BattleRoyale extends Gameplay {
         watch(game_flow, (newVal) => {
             console.log("Game flow changed to: " + newVal); //! Dev
             if (newVal === "MID-ROUND") {
-                const mid_round_cointainer = document.getElementById("midround_container"); // Element is found in GameplayMidRound component.
-                if (google_map && mid_round_cointainer) {
-                    mid_round_cointainer.appendChild(google_map);
+                const mid_round_map_window = document.getElementsByClassName("google-map-window")[0]; // Element is found in GameplayMidRound component.
+                if (google_map && mid_round_map_window) {
+                    mid_round_map_window.appendChild(google_map);
 
                     // Chnage class
-                    google_map.classList.add("google-map-midround"); // Change class
                     google_map.classList.remove("google-map-hover");
                     google_map.classList.remove("google-map-gameplay");
+                    google_map.classList.add("google-map-midround"); // Change class
                 }
             }
             if (newVal === "PLAYING") {
-                const mid_round_cointainer = document.getElementById("gameplay_container");
-                if (google_map && mid_round_cointainer) {
-                    mid_round_cointainer.appendChild(google_map);
+                const gameplay_container = document.getElementById("gameplay_container");
+                if (google_map && gameplay_container) {
+                    gameplay_container.appendChild(google_map);
 
                     // Change class
                     google_map.classList.remove("google-map-midround"); // Change class
@@ -141,15 +141,11 @@ export class BattleRoyale extends Gameplay {
 
         // Dont fit bounds if there is only one marker on map (only searched location marker)
         if (useMapMarkers().value.length === 1) {
-            setMapZoom(3);
-            setMapCenter(useCoordinates().value);
+            isGoogleMap().setCenter(useCoordinates().value);
             return;
         } else {
             // Fit all displayed markers bounds
             if (bounds) fitCustomBounds(bounds, 50);
-            // TODO: Fix the zooming problem ???
-            // console.log("BOUNDS", bounds); //! Development
-            // console.log(bounds.getCenter().lat(), bounds.getCenter().lng()); //! Development
         }
     };
 

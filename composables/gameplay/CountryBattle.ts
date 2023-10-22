@@ -21,10 +21,8 @@ export class CountryBattle extends Gameplay {
         this.deleteAllPolygons();
         // TODO: Remove also winner polygon. Or just make all polygons the same type as winner polygon.
 
-        if (useGoogleMap().value) {
-            setMapCenter({ lat: 0, lng: 0 });
-            setMapZoom(2);
-        }
+        isGoogleMap().setCenter({ lat: 0, lng: 0 });
+        isGoogleMap().setZoom(2);
 
         // const results = useResults(); // Get results from state
         // for (const player_id in results.value) this.total_attempts.set(player_id, results.value[player_id].lives);
@@ -207,7 +205,7 @@ export class CountryBattle extends Gameplay {
         // Display searched polygon on map
         setTimeout(() => {
             fitCustomBounds(bounds, 300);
-            setMapCenter(bounds.getCenter());
+            isGoogleMap().setCenter(bounds.getCenter());
         }, 1000);
     };
 
