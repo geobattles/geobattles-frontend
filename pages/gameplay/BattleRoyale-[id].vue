@@ -9,7 +9,7 @@
             <!-- GOOGLE PANORAMA -->
             <GameplayGooglePanorama />
             <!-- SUBMIT BUTTON -->
-            <button ref="submit_button" class="submit-button btn btn-blue" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled() || is_submit_disabled">GUESS</button>
+            <button ref="submit_button" class="submit-button" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled() || is_submit_disabled">GUESS</button>
             <!-- LIVE STATISTICS -->
             <GameplayBattleRoyaleLiveStatistics class="live-stats" />
             <!-- MAP MOBILE BUTTON -->
@@ -137,8 +137,8 @@ export default {
     text-transform: uppercase;
     letter-spacing: 5px;
 
-    color: white;
-    background-color: #1f2937;
+    color: var(--text-color);
+    background-color: var(--surface-card);
     border: none;
     border-radius: 0.25rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
@@ -174,7 +174,7 @@ export default {
         position: absolute;
         bottom: 110px;
         left: 30px;
-        color: white;
+        color: var(--text-color);
 
         z-index: 3;
     }
@@ -191,6 +191,7 @@ export default {
 
 .submit-button:disabled {
     cursor: not-allowed;
+    opacity: 0.7;
 }
 
 .live-stats {

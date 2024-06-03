@@ -74,7 +74,7 @@ export default {
 
 <style scoped>
 .statistics {
-    background-color: rgba(0, 30, 38, 1);
+    background-color: var(--bluegray-900);
     z-index: 4;
 
     border-radius: 10px;
@@ -99,13 +99,13 @@ export default {
     z-index: 3;
 
     color: black;
-    background-color: white;
 
     border-radius: 4px;
     margin-bottom: 10px;
     overflow: hidden;
 
-    background: linear-gradient(to right, #ffffff 50%, white 50%);
+    /* For applied guess animation */
+    background: linear-gradient(to right, #ffffff 50%, var(--surface-card) 50%);
     background-size: 200% 100%;
     background-position: right bottom;
     transition: all 0.4s ease-out;

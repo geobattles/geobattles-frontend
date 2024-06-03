@@ -1,11 +1,12 @@
 <template>
-    <div id="midround_container">
+    <div id="midround_container" class="">
         <div class="midround-content">
             <div class="total-result-table">
                 <GameplayTotalStatistics />
             </div>
             <div class="midround-menu">
-                <button @click="next_round" type="button" class="btn btn-blue">Next round</button>
+                <!-- <button @click="next_round" type="button" class="btn btn-blue">Next round</button> -->
+                <Button @click="next_round" label="Next Round" icon="pi pi-forward" severity="warning" outlined />
             </div>
         </div>
         <div class="google-map-window">
@@ -36,6 +37,7 @@ export default {
     height: 100vh;
     z-index: 2;
     background-color: rgb(220, 220, 220);
+    background-color: var(--surface-ground);
 
     /* overflow: hidden; */
     display: flex;
@@ -43,27 +45,22 @@ export default {
 }
 
 .midround-content {
-    background-color: blue;
     flex: 30%;
+
+    margin: 10px;
 }
 
 .google-map-window {
     flex: 70%;
-    background-color: aquamarine;
 
     overflow: hidden;
 }
 
 .midround-menu {
     z-index: 1;
-    color: black;
-    /* position: relative; */
 }
 
 .total-result-table {
-    background-color: white;
-    color: black;
-
     z-index: 1;
 }
 </style>

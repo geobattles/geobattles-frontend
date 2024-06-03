@@ -12,7 +12,7 @@
             </template>
             <template #end>
                 <div class="card flex justify-content-center">
-                    <InputText id="username" v-model="player_info.name" @blur="saveUsernameToCookies" context="Tes" placeholder="Username" />
+                    <input class="p-inputtext" v-model="usePlayerInfo().value.name" @blur="saveUsernameToCookies" placeholder="Username" />
                 </div>
             </template>
         </Menubar>
