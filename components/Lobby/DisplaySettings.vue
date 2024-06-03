@@ -1,7 +1,6 @@
 <template>
     <div>
-        <div class="component-content text-xl md:text-2xl m-auto" :class="{ 'player-view': !isPlayerAdmin() }">
-            <h2>Lobby Settings</h2>
+        <Panel header="Lobby Settings" :class="{ 'player-view': !isPlayerAdmin() }">
             <div class="settings-preview">
                 <div>
                     <h3 class="text-center">Game info</h3>
@@ -27,7 +26,7 @@
                     </div>
                 </div>
                 <!-- DISPLAY SELECTED POWERUPS -->
-                <div v-if="lobby_settings.conf.powerups">
+                <div v-if="lobby_settings.conf.powerups" style="text-align: center">
                     <div>
                         <h3 style="text-align: center">Powerups</h3>
                         <hr style="margin-bottom: 15px" />
@@ -48,7 +47,7 @@
                     <h3 style="text-align: center">Selected countries</h3>
                     <hr style="margin-bottom: 15px" />
                     <div class="country-list-preview">
-                        <div v-for="(ccode, id) in lobby_settings.conf.ccList" :key="id" :title="countries_flag_map.get(ccode)?.name">
+                        <div v-for="(ccode, id) in lobby_settings.conf.ccList" :key="id" :title="countries_flag_map.get(ccode)?.name" style="margin: 10px">
                             <div class="tooltip bottom">
                                 <div class="flag" :style="{ backgroundPosition: countries_flag_map.get(ccode)?.x + 'px ' + countries_flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
                             </div>
@@ -57,9 +56,9 @@
                 </div>
             </div>
             <div class="mt-5">
-                <button @click="modify_settings_modal = !modify_settings_modal" class="btn btn-blue modify-button">Modify Settings</button>
+                <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Settings" icon="pi pi-cog" badgeSeverity="contrast" outlined />
             </div>
-        </div>
+        </Panel>
         <LobbyModifySettings v-if="modify_settings_modal" />
     </div>
 </template>
@@ -77,42 +76,26 @@ export default {
 </script>
 
 <style scoped>
-.component-content {
-    background-color: #15202b;
-    color: white;
-
-    padding: 10px 30px;
-    border-radius: 10px;
-}
-
 .player-view {
-    /* How players view settings in lobby menu */
     opacity: 0.7;
     pointer-events: none;
 }
 
-h2 {
-    margin-bottom: 20px;
-}
-
 .settings-preview {
-    text-align: left;
-    color: #cccccc;
+    font-size: 15px;
 }
 
-.modify-button {
-    margin-top: 20px;
-}
-
+/* Countries Preview */
 .country-list-preview {
     max-height: 200px;
     overflow-y: scroll;
 
     max-width: 420px;
     overflow: auto;
+
+    margin: 15px auto;
 }
 
-/* Countries Preview */
 .flag {
     width: 32px;
     height: 24px;

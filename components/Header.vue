@@ -1,6 +1,6 @@
 <template>
     <header class="header-custom">
-        <Menubar :model="items">
+        <Menubar :model="items" style="font-size: 12px">
             <template #start> </template>
             <template #item="{ item, props, root }">
                 <a v-ripple class="flex align-items-center" v-bind="props.action">

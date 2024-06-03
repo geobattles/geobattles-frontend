@@ -6,10 +6,7 @@
                 <LobbyDisplaySettings />
             </div>
             <div class="lobby-block">
-                <button v-if="isPlayerAdmin()" @click="next_round" :disabled="start_disabled" class="btn btn-green start-button">
-                    <svg aria-hidden="true" class="arrow-icon" fill="white" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                    <span>Start Game</span>
-                </button>
+                <Button v-if="isPlayerAdmin()" @click="next_round" size="large" label="Start Game" icon="pi pi-play-circle" badgeSeverity="contrast" :disabled="start_disabled" />
                 <div v-else style="color: white">Waiting for admin to start the game</div>
                 <div class="lobby-code">Lobby code: {{ lobby_settings.ID }}</div>
                 <!-- <BattleRoyalJoinUrl /> -->
@@ -45,6 +42,8 @@ export default {
 .main-content {
     text-align: center;
     width: 100%;
+
+    margin-top: 50px;
 }
 
 .settings-block {
@@ -60,12 +59,12 @@ export default {
     margin-left: 1.75rem;
 }
 
-.start-button {
+/* .start-button {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin: auto;
-}
+} */
 
 .arrow-icon {
     width: 1.5rem;
