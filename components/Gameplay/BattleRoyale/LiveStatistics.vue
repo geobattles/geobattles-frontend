@@ -98,14 +98,14 @@ export default {
     align-items: center;
     z-index: 3;
 
-    color: black;
+    color: var(--text-color);
 
     border-radius: 4px;
     margin-bottom: 10px;
     overflow: hidden;
 
     /* For applied guess animation */
-    background: linear-gradient(to right, #ffffff 50%, var(--surface-card) 50%);
+    background: linear-gradient(to right, var(--bluegray-400) 50%, var(--surface-card) 50%);
     background-size: 200% 100%;
     background-position: right bottom;
     transition: all 0.4s ease-out;
@@ -167,7 +167,7 @@ export default {
 }
 /* APPLIED GUESS ROW STYLE */
 .applied-guess {
-    background: linear-gradient(to right, #cfcfcf 50%, white 50%);
+    background: linear-gradient(to right, var(--bluegray-400) 50%, var(--surface-card) 50%);
     background-size: 200% 100%;
     width: 100%;
 
