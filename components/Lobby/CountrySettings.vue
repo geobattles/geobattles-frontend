@@ -1,33 +1,27 @@
 <template>
     <div class="component-content">
         <div>
-            <div>
-                <div style="display: inline-block; vertical-align: top">
-                    <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
-                    <div style="position: relative">
-                        <div class="search-icon">
-                            <svg aria-hidden="true" class="icon-shape" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                        </div>
-                        <FloatLabel>
-                            <InputText id="search" v-model="country_input" @keyup="filterCountryList" />
-                            <label for="username">Search country</label>
-                        </FloatLabel>
-                    </div>
+            <div style="display: inline-block; vertical-align: top">
+                <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
+                <div style="position: relative">
+                    <FloatLabel>
+                        <InputText id="search" v-model="country_input" @keyup="filterCountryList" />
+                        <label for="username">Search country</label>
+                    </FloatLabel>
                 </div>
-                <div>
-                    <label>All&nbsp;</label>
-                    <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) == Object.entries(country_list).length" />
-                    <!-- <Checkbox @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) === Object.entries(country_list).length" :binary="true" :value="true" /> -->
-                </div>
-                <div>
-                    <span>Select countries:</span>
-                    <span>{{ (lobby_settings.conf.ccList.length | 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
-                </div>
+            </div>
+            <div class="mt-4">
+                <label>All&nbsp;</label>
+                <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) == Object.entries(country_list).length" />
+            </div>
+            <div class="mb-4">
+                <span>Selected: </span>
+                <span>{{ (lobby_settings.conf.ccList.length | 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
             </div>
         </div>
         <div class="ccode-list">
             <label v-for="(ccode, id) in filtered_list" :key="id" class="country-row">
-                <input type="checkbox" :value="ccode" v-model="lobby_settings.conf.ccList" style="display: inline-block; float: left; vertical-align: top" />
+                <Checkbox :value="ccode" v-model="lobby_settings.conf.ccList" style="float: left; vertical-align: top" />
                 <div class="country-flag" :style="{ backgroundPosition: flag_map.get(ccode)?.x + 'px ' + flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
                 <div class="country-name">{{ flag_map.get(ccode)?.name }}</div>
             </label>
@@ -56,18 +50,18 @@ export default {
     justify-content: center;
     align-items: center;
 }
+
 .ccode-list {
     max-height: 600px;
     overflow-y: scroll;
 
     display: flex;
     flex-direction: column;
-    margin: 0 auto;
 }
 
 input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
     cursor: pointer;
 
     border: none;
@@ -93,46 +87,6 @@ input[type="checkbox"] {
 .country-name {
     float: inline-end;
     padding-right: 10px;
-}
-
-.country-input {
-    display: block;
-    width: 100%;
-    padding: 0.5rem;
-    padding-left: 2.5rem;
-    outline: none;
-    color: #4b5563;
-    background-color: #f9fafb;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-}
-
-.search-icon {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: flex;
-    align-items: center;
-    padding-left: 0.75rem;
-    pointer-events: none;
-}
-
-.icon-shape {
-    width: 1.25rem;
-    margin-top: 5px;
-    height: 1.25rem;
-
-    color: #6b7280;
-    fill: none;
-}
-
-.country-input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-}
-
-.country-input::placeholder {
-    color: #9ca3af;
 }
 
 /* CHANGE SCROLLBAR */
