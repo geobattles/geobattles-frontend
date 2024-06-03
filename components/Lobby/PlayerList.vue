@@ -1,6 +1,5 @@
 <template>
-    <div class="lobby-player-list text-xl md:text-2xl">
-        <h3 class="text-sm md:text-xl">Player List:</h3>
+    <Panel class="text-sm md:text-xl" header="Players">
         <TransitionGroup name="list">
             <div v-for="(player, index) in lobby_settings.playerList" :key="index">
                 <div class="player">
@@ -17,7 +16,7 @@
                 </div>
             </div>
         </TransitionGroup>
-    </div>
+    </Panel>
 </template>
 
 <script>
@@ -30,23 +29,10 @@ export default {
 </script>
 
 <style scoped>
-.lobby-player-list {
-    color: white;
-    background-color: #15202b;
-    border-radius: 10px;
-
-    padding: 15px 10px;
-}
-
-h3 {
-    margin-bottom: 30px;
-    text-align: center;
-}
-
 .player {
-    width: 100%;
     padding: 5px 10px;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
+    margin-top: 10px;
 
     display: flex;
     justify-content: space-between;
