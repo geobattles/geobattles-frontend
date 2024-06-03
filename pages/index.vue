@@ -3,7 +3,7 @@
         <Header />
         <div class="page-container">
             <div>
-                <button class="play-button btn btn-blue" @click="createLobby">PLAY NOW</button>
+                <Button class="play-button" @click="createLobby" label="PLAY NOW" />
                 <br />
                 <span class="join-text">or join a lobby by <span class="clickable" @click="router.push('/join')">game code!</span></span>
             </div>
@@ -26,6 +26,7 @@ export default {
     width: 100%;
     display: flex;
 
+    margin-top: 100px;
     justify-content: center;
 }
 

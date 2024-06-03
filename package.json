@@ -11,8 +11,16 @@
     "devDependencies": {
         "@nuxt/devtools": "latest",
         "@types/google.maps": "^3.50.5",
+        "autoprefixer": "^10.4.19",
         "nuxt": "^3.7.0",
+        "nuxt-primevue": "^3.0.0",
+        "postcss": "^8.4.38",
+        "tailwindcss": "^3.4.3",
         "typescript": "^5.2.2",
         "vue-tsc": "^1.8.8"
+    },
+    "dependencies": {
+        "primeicons": "^7.0.0",
+        "primevue": "^3.52.0"
     }
 }

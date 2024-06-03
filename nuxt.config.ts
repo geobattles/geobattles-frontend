@@ -15,4 +15,24 @@ export default defineNuxtConfig({
     imports: {
         autoImport: true,
     },
+    modules: ["nuxt-primevue"],
+    css: ["@/assets/main.css", "primevue/resources/themes/aura-light-green/theme.css", "primeicons/primeicons.css"],
+
+    //@ts-ignore
+    primevue: {
+        options: {
+            ripple: true,
+        },
+        components: {
+            include: ["Calendar", "Button", "TabMenu", "InputNumber", "Card", "Dropdown", "Fieldset", "Checkbox", "FileUpload", "MultiSelect", "Panel", "InputSwitch", "InputNumber", "ProgressBar", "ProgressSpinner", "MenuBar", "Badge", "Avatar", "InputText", "FloatLabel"],
+        },
+        cssLayerOrder: "tailwind-base, primevue, tailwind-utilities",
+    },
+
+    postcss: {
+        plugins: {
+            tailwindcss: {},
+            autoprefixer: {},
+        },
+    },
 });

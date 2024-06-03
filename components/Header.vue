@@ -1,76 +1,66 @@
 <template>
-    <header class="header h-28 sm:h-20">
-        <NuxtLink to="/" class="font-bold leading-tight text-3xl mt-0 mb-2 text-white-600">GeoBattles</NuxtLink>
-        <div style="display: flex">
-            <div class="player-name">
-                <div>Username:</div>
-                <div>
-                    <input type="text" v-model="player_info.name" @blur="saveUsernameToCookies" placeholder="_______________" />
+    <header class="header-custom">
+        <Menubar :model="items">
+            <template #start> </template>
+            <template #item="{ item, props, root }">
+                <a v-ripple class="flex align-items-center" v-bind="props.action">
+                    <span :class="item.icon" />
+                    <span class="ml-2">{{ item.label }}</span>
+                    <Badge v-if="item.badge" :class="{ 'ml-auto': !root, 'ml-2': root }" :value="item.badge" />
+                    <span v-if="item.shortcut" class="ml-auto border-1 surface-border border-round surface-100 text-xs p-1">{{ item.shortcut }}</span>
+                </a>
+            </template>
+            <template #end>
+                <div class="card flex justify-content-center">
+                    <InputText id="username" v-model="player_info.name" @blur="saveUsernameToCookies" context="Tes" placeholder="Username" />
                 </div>
-            </div>
-        </div>
+            </template>
+        </Menubar>
     </header>
 </template>
 
-<script lang="ts">
+<script>
 export default {
     setup() {
         const player_info = usePlayerInfo();
+        const router = useRouter();
+
+        const items = ref([
+            {
+                label: "Home",
+                icon: "pi pi-home",
+                command: () => {
+                    if (player_info.value.isConnectedToLobby) {
+                        if (confirm("Are you sure you want to leave the lobby?")) {
+                            router.push("/");
+                        }
+                    }
+                },
+            },
+            {
+                label: "Game Modes",
+                icon: "pi pi-star",
+            },
+            {
+                label: "Contact",
+                icon: "pi pi-envelope",
+                badge: 3,
+            },
+        ]);
+
         const saveUsernameToCookies = () => {
             const player_username = useCookie("saved_username", {
                 maxAge: 3600000, // Saves username cookie for 100 hours
             });
             player_username.value = player_info.value.name;
         };
-        return { saveUsernameToCookies, player_info };
+
+        return { player_info, items, saveUsernameToCookies };
     },
 };
 </script>
 
 <style scoped>
-.header {
-    color: white;
-    background-color: var(--color-grey-dark-1);
-    top: 0;
-    padding: 5px;
-    z-index: 10;
-
-    /* Flexbox header */
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    margin-bottom: 4vh;
-}
-
-@media (max-width: 350px) {
-    .header {
-        flex-direction: column;
-        justify-content: center;
-    }
-}
-
-.player-name {
-    text-align: center;
-    min-width: 0;
-}
-
-.player-name input {
-    max-width: 120px;
-    background-color: var(--color-grey-dark-2);
-
-    font-size: 1rem;
-    border-radius: 3px;
-    color: white;
-    min-width: 0;
-    padding: 2px 4px;
-
-    border: none;
-    outline: none;
-}
-
-.player-name input:focus {
-    background-color: var(--color-grey-dark-3);
-    min-width: 0;
+.header-custom {
 }
 </style>

@@ -1,0 +1,17 @@
+/* tailwind.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer tailwind-base {
+    @tailwind base;
+  }
+  
+  @layer tailwind-utilities {
+    @tailwind components;
+    @tailwind utilities;
+  }
+
+
