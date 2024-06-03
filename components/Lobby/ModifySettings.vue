@@ -1,105 +1,99 @@
 <template>
     <div>
         <div class="settings-overlay" @click="closeSettings"></div>
-        <div ref="modal_ref" class="settings-modal">
-            <div class="settings-block">
-                <h2>Lobby settings</h2>
-                <div class="setting row">
-                    <div class="m-auto">
-                        <div>
-                            <label for="lobby_name" class="block mb-2 font-medium text-gray-900 dark:text-white">Lobby name</label>
-                            <input type="text" id="lobby_name" v-model="lobby_settings.conf.name" class="custom-input" placeholder="Lobby name" required />
+        <Panel ref="modal_ref" class="settings-modal text-xs md:text-sm" header="Lobby Settings">
+            <div style="display: flex; flex-direction: row; justify-content: space-evenly; gap: 25px">
+                <div class="settings-block">
+                    <div class="flex flex-row gap-2">
+                        <Panel class="flex flex-column m-auto" style="display: flex; flex-direction: column; scale: 0.9" header="Lobby Name">
+                            <InputText id="lobby_name" v-model="lobby_settings.conf.name" aria-describedby="username-help" />
+                        </Panel>
+                        <Panel header="Nr. Players" style="scale: 0.8">
+                            <InputNumber v-model="lobby_settings.conf.maxPlayers" showButtons buttonLayout="vertical" style="width: 3rem" :min="0" :max="99">
+                                <template #incrementbuttonicon>
+                                    <span class="pi pi-plus" />
+                                </template>
+                                <template #decrementbuttonicon>
+                                    <span class="pi pi-minus" />
+                                </template>
+                            </InputNumber>
+                        </Panel>
+                    </div>
+                    <div class="setting select-mode">
+                        <p>Select gamemode</p>
+                        <div style="display: flex; justify-content: space-between">
+                            <div><input type="radio" style="width: 24px; height: 24px" :checked="lobby_settings.conf.mode === 1" @change="radioMode(1)" /> <label for="html">BattleRoyale</label></div>
+                            <div><input type="radio" style="width: 24px; height: 24px" :checked="lobby_settings.conf.mode === 2" @change="radioMode(2)" /> <label for="css">CountryBattle</label></div>
+                            <!-- <div class="flex align-items-center">
+                            <RadioButton v-model="lobby_settings.conf.mode" @change="radioMode(1)" inputId="gm_1" name="Battle" :value="lobby_settings.conf.mode" />
+                            <label for="gm_1" class="ml-2">Battle Royale</label>
+                        </div>
+                        <div class="flex align-items-center">
+                            <RadioButton v-model="lobby_settings.conf.mode" @change="radioMode(2)" inputId="gm_2" name="Countries" :value="lobby_settings.conf.mode" />
+                            <label for="gm_2" class="ml-2">Country Battle</label>
+                        </div> -->
                         </div>
                     </div>
-                    <div class="m-auto">
-                        <div>
-                            <label for="players" class="block mb-2 font-medium text-gray-900 dark:text-white">Players</label>
-                            <input type="number" id="players" v-model="lobby_settings.conf.maxPlayers" class="custom-input" placeholder="Lobby players" required />
+                    <div class="setting round-timer">
+                        <span>Round timer: {{ lobby_settings.conf.roundTime || 60 }} seconds</span>
+                        <Slider ref="timer_slider" v-model="lobby_settings.conf.roundTime" :min="1" :max="100" class="w-14rem mt-3" />
+                    </div>
+                    <div class="flex flex-row justify-around gap-2" style="scale: 0.8">
+                        <Panel header="Rounds">
+                            <InputNumber v-model="lobby_settings.conf.numRounds" showButtons buttonLayout="vertical" style="width: 3rem" :min="0" :max="99">
+                                <template #incrementbuttonicon>
+                                    <span class="pi pi-plus" />
+                                </template>
+                                <template #decrementbuttonicon>
+                                    <span class="pi pi-minus" />
+                                </template>
+                            </InputNumber>
+                        </Panel>
+                        <Panel header="Attempts">
+                            <InputNumber v-model="lobby_settings.conf.numAttempt" showButtons buttonLayout="vertical" style="width: 3rem" :min="0" :max="99">
+                                <template #incrementbuttonicon>
+                                    <span class="pi pi-plus" />
+                                </template>
+                                <template #decrementbuttonicon>
+                                    <span class="pi pi-minus" />
+                                </template>
+                            </InputNumber>
+                        </Panel>
+                    </div>
+                    <div class="setting score-factor mt-4">
+                        <span>Score factor: {{ lobby_settings.conf.scoreFactor || 150 }}</span>
+                        <Slider ref="score_factor" v-model="lobby_settings.conf.scoreFactor" :min="50" :max="200" class="w-14rem mt-3" />
+                    </div>
+                    <div style="display: flex; flex-direction: row; gap: 10px; scale: 0.9">
+                        <div style="width: 50%">
+                            <Panel header="Dynamic lives">
+                                <InputSwitch v-model="lobby_settings.conf.dynLives" :checked="lobby_settings.conf.dynLives" />
+                            </Panel>
+                        </div>
+                        <div style="width: 50%">
+                            <Panel header="Place bonus">
+                                <InputSwitch v-model="lobby_settings.conf.placeBonus" :checked="lobby_settings.conf.placeBonus" />
+                            </Panel>
+                        </div>
+                    </div>
+                    <div v-if="lobby_settings.conf.powerups" style="display: flex; flex-direction: row; gap: 10px; margin-top: 20px; scale: 0.9">
+                        <div style="width: 50%">
+                            <Panel header="Double score">
+                                <InputSwitch v-model="lobby_settings.conf.powerups[0]" :checked="lobby_settings.conf.powerups[0]" />
+                            </Panel>
+                        </div>
+                        <div style="width: 50%">
+                            <Panel header="Duel battle">
+                                <InputSwitch v-model="lobby_settings.conf.powerups[1]" :checked="lobby_settings.conf.powerups[1]" />
+                            </Panel>
                         </div>
                     </div>
                 </div>
-                <div class="setting select-mode">
-                    <p>Select gamemode</p>
-                    <div style="display: flex; justify-content: space-between">
-                        <div><input type="radio" style="width: 24px; height: 24px" :checked="lobby_settings.conf.mode === 1" @change="radioMode(1)" /> <label for="html">BattleRoyale</label></div>
-                        <div><input type="radio" style="width: 24px; height: 24px" :checked="lobby_settings.conf.mode === 2" @change="radioMode(2)" /> <label for="css">CountryBattle</label></div>
-                    </div>
-                </div>
-                <div class="setting round-timer">
-                    <span>Round timer: {{ lobby_settings.conf.roundTime || 60 }} seconds</span>
-                    <input ref="timer_slider" type="range" min="1" max="100" :value="lobby_settings.conf.roundTime" />
-                </div>
-                <div class="setting row">
-                    <div class="m-auto">
-                        <label for="rounds" class="block mb-2 font-medium text-gray-900 dark:text-white">Rounds</label>
-                        <input type="number" min="1" max="10" id="rounds" v-model="lobby_settings.conf.numRounds" class="custom-input" placeholder="Lobby players" required />
-                    </div>
-                    <div class="m-auto">
-                        <label for="attempts" class="block mb-2 font-medium text-gray-900 dark:text-white">Attempts</label>
-                        <input type="number" id="attempts" min="1" max="5" v-model="lobby_settings.conf.numAttempt" class="custom-input" placeholder="Lobby players" required />
-                    </div>
-                </div>
-                <div class="setting score-factor">
-                    <span>Factor: {{ lobby_settings.conf.scoreFactor || 150 }}</span>
-                    <input ref="score_factor" type="range" min="50" max="200" :value="lobby_settings.conf.scoreFactor" />
-                </div>
-                <div class="setting row">
-                    <div style="width: 50%">
-                        <div>
-                            <div style="display: inline-block">Dyn. attempts</div>
-                            <div class="info-icon">
-                                <!-- <SvgsInfoIcon :color="'white'" :width="16" :tooltip_context="dynamic_lives_info.conf" /> -->
-                            </div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" :checked="lobby_settings.conf.dynLives" v-model="lobby_settings.conf.dynLives" />
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <div style="width: 50%">
-                        <div>
-                            <div style="display: inline-block">Round bonus</div>
-                            <div class="info-icon">
-                                <!-- <SvgsInfoIcon :color="'white'" :width="16" :tooltip_context="round_bonus_info.conf" /> -->
-                            </div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" :checked="lobby_settings.conf.placeBonus" v-model="lobby_settings.conf.placeBonus" />
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                </div>
-                <div v-if="lobby_settings.conf.powerups" class="setting row">
-                    <div style="width: 50%">
-                        <div>
-                            <div style="display: inline-block">Double score</div>
-                            <div class="info-icon">
-                                <!-- <SvgsInfoIcon :color="'white'" :width="16" :tooltip_context="double_round_score.conf" /> -->
-                            </div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" :checked="lobby_settings.conf.powerups[0]" v-model="lobby_settings.conf.powerups[0]" />
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
-                    <div style="width: 50%">
-                        <div>
-                            <div style="display: inline-block">Duel battle</div>
-                            <div class="info-icon">
-                                <!-- <SvgsInfoIcon :color="'white'" :width="16" :tooltip_context="duel_info.conf" /> -->
-                            </div>
-                        </div>
-                        <label class="switch">
-                            <input type="checkbox" :checked="lobby_settings.conf.powerups[1]" v-model="lobby_settings.conf.powerups[1]" />
-                            <span class="slider round"></span>
-                        </label>
-                    </div>
+                <div class="countries-block">
+                    <LobbyCountrySettings />
                 </div>
             </div>
-            <div class="countries-block">
-                <LobbyCountrySettings />
-            </div>
-        </div>
+        </Panel>
     </div>
 </template>
 
@@ -152,33 +146,18 @@ export default {
 }
 
 .settings-modal {
-    background-color: rgb(30 41 59);
     padding: 20px;
     border-radius: 5px;
-    color: white;
 
     /* Place element to the middle of page */
-    position: absolute;
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    max-height: 800px;
-    min-width: 400px;
+    max-height: 90%;
 
     overflow-y: auto;
     z-index: 2;
-}
-
-.settings-block {
-    display: inline-block;
-    vertical-align: top;
-    min-width: 400px;
-}
-
-.countries-block {
-    display: inline-block;
-    vertical-align: top;
-    min-width: 320px;
 }
 
 .setting {
@@ -188,35 +167,6 @@ export default {
     margin-bottom: 30px;
 
     padding: 0px 40px;
-}
-
-.row {
-    flex-direction: row;
-    justify-content: space-between;
-
-    text-align: center;
-}
-
-input[type="number"] {
-    max-width: 60px;
-    border: none;
-    outline: none;
-}
-
-input[type="text"] {
-    max-width: 120px;
-
-    padding: 5px;
-    border-radius: 4px;
-}
-
-input[type="range"] {
-    cursor: pointer;
-}
-
-.info-icon {
-    display: inline-block;
-    vertical-align: text-top;
 }
 
 /* SWITCH SLIDER STYLES */
@@ -282,27 +232,6 @@ input:checked + .slider:before {
     border-radius: 50%;
 }
 /* -------------------------- */
-
-/* Custom input */
-.custom-input {
-    background-color: #f9fafb;
-    border: 1px solid #d1d5db;
-    color: #4b5563;
-    border-radius: 0.375rem;
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.05);
-    display: block;
-    padding: 0.25rem;
-}
-
-.custom-input:focus {
-    border-color: #3b82f6;
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
-}
-
-.custom-input::placeholder {
-    color: #9ca3af;
-}
 
 /* Custom slider */
 .settings-modal::-webkit-scrollbar {

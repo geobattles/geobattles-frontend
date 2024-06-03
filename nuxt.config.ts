@@ -24,9 +24,9 @@ export default defineNuxtConfig({
             ripple: true,
         },
         components: {
-            include: ["Calendar", "Button", "TabMenu", "InputNumber", "Card", "Dropdown", "Fieldset", "Checkbox", "FileUpload", "MultiSelect", "Panel", "InputSwitch", "InputNumber", "ProgressBar", "ProgressSpinner", "MenuBar", "Badge", "Avatar", "InputText", "FloatLabel", "Divider"],
+            include: ["Calendar", "Slider", "Button", "TabMenu", "InputNumber", "Card", "Dropdown", "Fieldset", "Checkbox", "FileUpload", "MultiSelect", "Panel", "InputSwitch", "InputNumber", "ProgressBar", "ProgressSpinner", "MenuBar", "Badge", "Avatar", "InputText", "FloatLabel", "Divider", "RadioButton"],
         },
-        cssLayerOrder: "tailwind-base, primevue, tailwind-utilities",
+        cssLayerOrder: "tailwind-base, tailwind-utilities, primevue",
     },
 
     postcss: {

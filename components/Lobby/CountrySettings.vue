@@ -1,23 +1,27 @@
 <template>
     <div class="component-content">
         <div>
-            <div style="display: block">
-                <span>Select countries:</span>
-                <span>{{ (lobby_settings.conf.ccList.length | 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
-            </div>
-            <div style="display: block; margin-bottom: 20px">
+            <div>
                 <div style="display: inline-block; vertical-align: top">
                     <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
                     <div style="position: relative">
                         <div class="search-icon">
                             <svg aria-hidden="true" class="icon-shape" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </div>
-                        <input type="search" id="search" @keyup="filterCountryList" v-model="country_input" class="country-input" placeholder="Search country" required />
+                        <FloatLabel>
+                            <InputText id="search" v-model="country_input" @keyup="filterCountryList" />
+                            <label for="username">Search country</label>
+                        </FloatLabel>
                     </div>
                 </div>
-                <div style="display: inline-block; vertical-align: bottom; margin-left: 10px">
+                <div>
                     <label>All&nbsp;</label>
                     <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) == Object.entries(country_list).length" />
+                    <!-- <Checkbox @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) === Object.entries(country_list).length" :binary="true" :value="true" /> -->
+                </div>
+                <div>
+                    <span>Select countries:</span>
+                    <span>{{ (lobby_settings.conf.ccList.length | 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
                 </div>
             </div>
         </div>
