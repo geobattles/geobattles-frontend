@@ -124,6 +124,7 @@ export default {
 
     opacity: 1;
 }
+
 .submit-button {
     position: absolute;
     width: 380px;
@@ -144,6 +145,7 @@ export default {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: height 0.3s ease-out, width 0.3s ease-out;
 }
+
 .submit-button-hover {
     width: 600px;
     max-width: 1000px;
@@ -200,6 +202,7 @@ export default {
     right: 10px;
     z-index: 2;
 }
+
 .bar {
     position: relative;
 }

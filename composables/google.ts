@@ -153,6 +153,6 @@ export const removePolyLinesFromMap = (delete_lines: Boolean) => {
  */
 export const isGoogleMap = () => {
     const google_map = useGoogleMap().value;
-    if (!google_map) throw new Error("Google map is not defined");
+    if (!google_map) throw new Error("Google map is not defined when trying to access it.");
     return google_map;
 };

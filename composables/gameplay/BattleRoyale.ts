@@ -11,14 +11,13 @@ export class BattleRoyale extends Gameplay {
         if (!route_name.includes("gameplay")) router.push({ path: `/gameplay/BattleRoyale-${useLobbySettings().value.ID}` }); // Redirect to gameplay routes if not already there
         else {
             updatePanoramaView(useCoordinates().value); // Update panorama view for next round
+            isGoogleMap().setCenter({ lat: 0, lng: 0 });
+            isGoogleMap().setZoom(2);
         }
 
         // Clear Map before starting round
         removePolyLinesFromMap(true);
         removeMarkersFromMap(true);
-
-        isGoogleMap().setCenter({ lat: 0, lng: 0 });
-        isGoogleMap().setZoom(2);
     };
 
     static finishRound = (total_results: TotalResults, round_results: RoundResults) => {
@@ -32,8 +31,9 @@ export class BattleRoyale extends Gameplay {
         // Apply round results
         useRoundResults().value = round_results; // Just refresh round results with data from server.
 
-        // Edit map
-        removeMarkersFromMap(true);
+        removeMarkersFromMap(true); // Remove all markers from map
+
+        // Add searched location marker
         const marker = createSearchedLocationMarker(useCoordinates().value);
         useMapMarkers().value.push(marker); // Save marker to state
 
@@ -50,6 +50,7 @@ export class BattleRoyale extends Gameplay {
             const marker = addNewMapMarker(round_res[key].location, color);
             useMapMarkers().value.push(marker); // Save marker to state
         }
+
         setMapZoom(3);
         setTimeout(() => {
             this.setMapBounds();
@@ -61,12 +62,11 @@ export class BattleRoyale extends Gameplay {
 
         useCurrentPin().value = coordinates; // Save current pin coordinates to state
 
-        const used_pins = useMapMarkers().value.length; // Number of guesses already made iun current round
+        const used_pins = useMapMarkers().value.length; // Number of guesses already made in current round
         const player_id = getPlayerIDFromName(usePlayerInfo().value.name);
         if (!player_id) throw new Error("Player ID is not defined");
 
         // START OF PIN PLACEMENT LOGIC
-        // If there are no lives available, return
         if (useResults().value[player_id].lives === 0) {
             console.log("All lives are used!!"); // TODO: Make toast that all lives are used.
             return;
@@ -103,7 +103,7 @@ export class BattleRoyale extends Gameplay {
         watch(game_flow, (newVal) => {
             console.log("Game flow changed to: " + newVal); //! Dev
             if (newVal === "MID-ROUND") {
-                const mid_round_map_window = document.getElementsByClassName("google-map-window")[0]; // Element is found in GameplayMidRound component.
+                const mid_round_map_window = document.getElementsByClassName("google-map-window")[0]; // Element is found in GameplayViewsMidRound component.
                 if (google_map && mid_round_map_window) {
                     mid_round_map_window.appendChild(google_map);
 

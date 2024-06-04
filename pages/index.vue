@@ -5,7 +5,7 @@
             <div>
                 <Button class="play-button" @click="createLobby" label="PLAY NOW" />
                 <br />
-                <span class="join-text">or join a lobby by <span class="clickable" @click="router.push('/join')">game code!</span></span>
+                <span class="join-text">or join a lobby by <span class="clickable" @click="router.push('/lobby/join')">game code!</span></span>
             </div>
         </div>
     </div>

@@ -31,7 +31,7 @@ export default {
             input_1.value?.focus(); // Focus first input
             inputs_array = [input_1, input_2, input_3, input_4, input_5, input_6]; // Create array of inputs for logic\
 
-            handePasteEvent();
+            handePasteEvent(); // Activate paste event
         });
 
         const handePasteEvent = () => {
