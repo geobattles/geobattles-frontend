@@ -16,7 +16,7 @@ export default defineNuxtConfig({
         autoImport: true,
     },
     modules: ["nuxt-primevue"],
-    css: ["@/assets/main.css", "primevue/resources/themes/aura-dark-green/theme.css", "primeicons/primeicons.css"],
+    css: ["@/assets/main.css", "primevue/resources/themes/lara-dark-green/theme.css", "primeicons/primeicons.css"],
 
     //@ts-ignore
     primevue: {
