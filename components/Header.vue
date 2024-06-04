@@ -60,7 +60,4 @@ export default {
 };
 </script>
 
-<style scoped>
-.header-custom {
-}
-</style>
+<style scoped></style>

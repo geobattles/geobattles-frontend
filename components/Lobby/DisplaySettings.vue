@@ -8,7 +8,7 @@
                     <div v-if="lobby_settings.conf.mode === 1" class="text-center">Mode: Battle Royale</div>
                     <div v-if="lobby_settings.conf.mode === 2" class="text-center">Mode: Country Battle</div>
                     <div class="flex flex-row justify-center gap-3">
-                        <SvgsTimerIcon :color="'white'" :width="16" />
+                        <i class="pi pi-stopwatch" style="font-size: 1rem; margin: auto 0"></i>
                         {{ lobby_settings.conf.roundTime }}''
                     </div>
                     <div>
