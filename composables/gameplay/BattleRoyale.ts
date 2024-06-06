@@ -82,7 +82,7 @@ export class BattleRoyale extends Gameplay {
             return;
         }
 
-        // If no submitted results yet || there are stii lives left, change last marker position
+        // If no submitted results yet || there are stil lives left, change last marker position
         if (!useResults().value[player_id] || useResults().value[player_id].lives > 0) {
             const last_marker = useMapMarkers().value[used_pins - 1]; // Get last marker
             last_marker.setPosition(coordinates); // Change last marker position
@@ -100,6 +100,7 @@ export class BattleRoyale extends Gameplay {
      */
     static googleMapDOMTracker = (google_map: HTMLElement) => {
         const game_flow = useGameFlow();
+
         watch(game_flow, (newVal) => {
             console.log("Game flow changed to: " + newVal); //! Dev
             if (newVal === "MID-ROUND") {
@@ -144,27 +145,33 @@ export class BattleRoyale extends Gameplay {
             isGoogleMap().setCenter(useCoordinates().value);
             return;
         } else {
-            // Fit all displayed markers bounds
-            if (bounds) fitCustomBounds(bounds, 50);
+            if (bounds) fitCustomBounds(bounds, 50); // Fit all displayed markers bounds
         }
     };
 
-    static processNewResult = (user: string, player_result: ResultsInfo) => {
+    /**
+     * Function process new result sent from the server. It updates the results state and
+     * applies styles to the player leaderboard during gameplay based on the new result.
+     *
+     * @param user_id - Player's ID whos result was sent
+     * @param player_result - Object that contains information about player's processing result
+     */
+    static processNewResult = (user_id: string, player_result: ResultsInfo) => {
         const results = useResults().value; // Get results from state
-        const leader_before = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID
 
-        if (player_result.baseScr < results[user]?.baseScr || (player_result.baseScr === 0 && player_result.distance > results[user].distance)) {
+        if (player_result.baseScr < results[user_id]?.baseScr || (player_result.baseScr === 0 && player_result.distance > results[user_id].distance)) {
             // Update attempts and lives, not the score or distance
-            results[user].lives = player_result.lives;
-            results[user].attempt = player_result.attempt;
+            results[user_id].lives = player_result.lives;
+            results[user_id].attempt = player_result.attempt;
         } else {
-            results[user] = player_result; // Update everything
-            // Sort results by score
-            useResults().value = Object.fromEntries(Object.entries(results).sort(([, a], [, b]) => a.distance - b.distance));
+            results[user_id] = player_result; // Update everything because the new user's result is better than current best
+            useResults().value = Object.fromEntries(Object.entries(results).sort(([, a], [, b]) => a.distance - b.distance)); // Sort results by score
         }
 
+        const leader_before = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID
         const new_leader = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID
-        this.applyGuessStyles(user, leader_before, new_leader);
+
+        this.applyGuessStyles(user_id, leader_before, new_leader);
         useIsSubmitDisabled().value = false; // Enable submit button
     };
 }

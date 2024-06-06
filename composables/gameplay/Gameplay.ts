@@ -26,7 +26,7 @@ export class Gameplay {
      */
     static applyGuessStyles = (player_id: string, previous_leader: string, new_leader: string) => {
         const player_dom: HTMLElement | null = document.getElementById(player_id);
-        if (new_leader === player_id) setTimeout(() => (new_leader === previous_leader ? player_dom?.classList.add("applied-guess") : player_dom?.classList.add("applied-guess-lead-bad")), 100); // Apply winning styles for new leader
+        if (new_leader === player_id) setTimeout(() => (new_leader === previous_leader ? player_dom?.classList.add("applied-guess") : player_dom?.classList.add("applied-guess-lead")), 100); // Apply winning styles for new leader
         else setTimeout(() => player_dom?.classList.add("applied-guess"), 100); // Apply gray styles for guess
         setTimeout(() => player_dom?.classList.remove("applied-guess-lead", "applied-guess"), new_leader === player_id ? 1400 : 1200); // Remove guess styles
     };

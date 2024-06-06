@@ -105,8 +105,7 @@ export default {
                     previous_input.focus();
                     previous_input.value = "";
                 }
-                // Remove error class from inputs
-                inputs_array.forEach((input) => input.value?.classList.remove("error-lobby"));
+                inputs_array.forEach((input) => input.value?.classList.remove("error-lobby")); // Remove error class from inputs
             }
         };
         return { createLobby, joinLobby, lobby_name, input_parent, input_1, input_2, input_3, input_4, input_5, input_6, useLobbySettings, handleKeyUpEvent, handleKeyDownEvent };

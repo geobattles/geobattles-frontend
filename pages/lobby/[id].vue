@@ -9,7 +9,6 @@
                 <Button v-if="isPlayerAdmin()" @click="next_round" size="large" label="Start Game" icon="pi pi-play-circle" badgeSeverity="contrast" :disabled="start_disabled" />
                 <div v-else style="color: white">Waiting for admin to start the game</div>
                 <div class="lobby-code">Lobby code: {{ lobby_settings.ID }}</div>
-                <!-- <BattleRoyalJoinUrl /> -->
                 <LobbyPlayerList style="margin-top: 30px" />
             </div>
         </div>

@@ -171,7 +171,6 @@ export const checkIfLobby = async (lobby_id: string) => {
  * @returns
  */
 export const isPlayerAdmin = () => {
-    const lobby_settings = useLobbySettings();
-    if (lobby_settings.value.admin === usePlayerInfo().value.ID) return true;
+    if (useLobbySettings().value.admin === usePlayerInfo().value.ID) return true;
     else return false;
 };

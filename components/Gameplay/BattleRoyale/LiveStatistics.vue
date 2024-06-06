@@ -175,7 +175,7 @@ export default {
 }
 
 .applied-guess-lead {
-    background: linear-gradient(to right, #00dc82 50%, white 50%);
+    background: linear-gradient(to right, #00dc82 50%, var(--surface-card) 50%);
     background-size: 200% 100%;
     width: 100%;
 

@@ -1,5 +1,10 @@
 import type { CountryFlagMap } from "../types";
 
+// Countries states
+export const useCountryList = () => useState<string[]>("country_list", () => [] as string[]);
+export const useFilteredCountryList = () => useState<string[]>("filtered_country_list", () => [] as string[]);
+export const useCountryInput = () => useState<string>("country_input", () => "");
+
 /**
  * Function is used to handle search input in Lobby/CountrySettings.vue component.
  */

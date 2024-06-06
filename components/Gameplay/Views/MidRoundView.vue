@@ -5,7 +5,6 @@
                 <GameplayTotalStatistics />
             </div>
             <div class="midround-menu">
-                <!-- <button @click="next_round" type="button" class="btn btn-blue">Next round</button> -->
                 <Button @click="next_round" label="Next Round" icon="pi pi-forward" severity="warning" outlined />
             </div>
         </div>
@@ -36,10 +35,9 @@ export default {
     width: 100vw;
     height: 100vh;
     z-index: 2;
-    background-color: rgb(220, 220, 220);
     background-color: var(--surface-ground);
 
-    /* overflow: hidden; */
+    overflow: hidden;
     display: flex;
     flex-direction: row;
 }
@@ -54,13 +52,5 @@ export default {
     flex: 70%;
 
     overflow: hidden;
-}
-
-.midround-menu {
-    z-index: 1;
-}
-
-.total-result-table {
-    z-index: 1;
 }
 </style>
