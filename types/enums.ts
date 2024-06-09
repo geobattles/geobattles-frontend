@@ -11,6 +11,7 @@ export enum SocketType {
     NEW_RESULT = "NEW_RESULT",
     ROUND_RESULT = "ROUND_RESULT",
     TIMES_UP = "TIMES_UP",
+    ROUND_FINISHED = "ROUND_FINISHED",
     COUNTRY_CODE = "CC",
     GAME_END = "GAME_END",
 }

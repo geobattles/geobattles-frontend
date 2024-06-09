@@ -1,6 +1,8 @@
 import { type SocketMessage } from "~/types";
 import { SocketType } from "~/types/enums";
 
+export const useSocketConnection = () => useState<WebSocket>("socket_connection", () => ({} as WebSocket));
+
 /**
  * Function that initializes socket connection to the server.
  * It connects player to a lobby.
@@ -79,6 +81,7 @@ const parseSocketMessage = (data: SocketMessage) => {
             // Process
             useCoordinates().value = data.location; // Set new search location
             useResults().value = data.players; // Set new player results for live statistics
+
             if (useGameType().value === "CountryBattle") CountryBattle.startRound();
             else if (useGameType().value === "BattleRoyale") BattleRoyale.startRound();
 
@@ -93,7 +96,7 @@ const parseSocketMessage = (data: SocketMessage) => {
             else if (useGameType().value === "CountryBattle") CountryBattle.processNewResult(data.user, data.playerRes);
 
             break;
-        case SocketType.ROUND_RESULT || SocketType.TIMES_UP:
+        case SocketType.ROUND_RESULT:
             // Perform checks
             if (!data.totalResults) throw new Error(`totalResults in SocketMessage type: ${data.type} is not defined`);
             if (!data.roundRes) throw new Error(`roundRes in SocketMessage type: ${data.type} is not defined`);
@@ -103,6 +106,12 @@ const parseSocketMessage = (data: SocketMessage) => {
             if (useGameType().value === "BattleRoyale") BattleRoyale.finishRound(data.totalResults, data.roundRes);
             else if (useGameType().value === "CountryBattle") CountryBattle.finishRound(data.totalResults, data.roundRes, data.polygon);
 
+            break;
+        case SocketType.TIMES_UP:
+            // TODO: anything??
+            break;
+        case SocketType.ROUND_FINISHED:
+            // TODO: anything??
             break;
         case SocketType.COUNTRY_CODE:
             // Perform checks
@@ -123,8 +132,6 @@ const parseSocketMessage = (data: SocketMessage) => {
             break;
         default:
             throw new Error("Unknown socket message type: " + data.type);
-
-            break;
     }
 };
 

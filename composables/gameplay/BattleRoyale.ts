@@ -1,4 +1,4 @@
-import { Coordinates, RoundResults, TotalResults, ResultsInfo } from "~/types";
+import type { Coordinates, RoundResults, TotalResults, ResultsInfo } from "~/types";
 
 export class BattleRoyale extends Gameplay {
     static startRound = () => {

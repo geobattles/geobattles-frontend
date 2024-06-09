@@ -95,7 +95,7 @@
 </template>
 
 <script lang="ts">
-import { LobbyInfo } from "~/types";
+import type { LobbyInfo } from "~/types";
 
 export default {
     setup() {

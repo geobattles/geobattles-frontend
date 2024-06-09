@@ -1,4 +1,4 @@
-import { Coordinates, ResultsInfo, RoundResults, TotalResults } from "~/types";
+import type { Coordinates, ResultsInfo, RoundResults, TotalResults } from "~/types";
 
 export class CountryBattle extends Gameplay {
     static selected_country: string | undefined = undefined;
