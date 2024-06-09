@@ -11,7 +11,7 @@ export default {
             // Read ENV variables
             const runtimeConfig = useRuntimeConfig();
             console.log("App.vue was SSR-ed"); //! Dev
-            console.log(`https://maps.googleapis.com/maps/api/js?key=${runtimeConfig.public.GMAPS_API}&v=weekly`); //! Dev
+            // console.log(`https://maps.googleapis.com/maps/api/js?key=${runtimeConfig.public.GMAPS_API}&v=weekly`); //! Dev
             const script = `https://maps.googleapis.com/maps/api/js?key=${runtimeConfig.public.GMAPS_API}&v=weekly`;
 
             useHead({
