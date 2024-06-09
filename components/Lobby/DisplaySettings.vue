@@ -55,7 +55,7 @@
                     </div>
                 </div>
             </div>
-            <div class="mt-5">
+            <div style="text-align: center">
                 <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Settings" icon="pi pi-cog" badgeSeverity="contrast" outlined />
             </div>
         </Panel>

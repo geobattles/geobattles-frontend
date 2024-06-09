@@ -1,13 +1,12 @@
 <template>
     <div id="end_game_container">
         <div class="results-section">
-            <div>Show first three places with trophy</div>
             <div class="total-result-table">
                 <GameplayTotalStatistics />
             </div>
         </div>
         <div class="endgame-menu">
-            <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2">New Game</button>
+            <Button type="button" label="NEXT GAME" />
             <LobbyDisplaySettings />
         </div>
     </div>
@@ -32,26 +31,34 @@ export default {
     width: 100%;
     height: 100%;
     z-index: 3;
-    background-color: white;
+    background-color: var(--surface-ground);
 
     display: flex;
+    justify-content: center;
     align-items: center;
     margin: auto;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
 .endgame-menu {
+    flex: 50%;
     z-index: 1;
     color: black;
-    /* position: relative; */
 
     display: flex;
     flex-direction: column;
+    gap: 10px;
 
-    min-width: 500px;
+    width: 100%;
+    max-width: 400px;
 }
 
-.total-result-table {
-    min-width: 600px;
+.results-section {
+    flex: 50%;
+
+    width: 100%;
+    max-width: 400px;
     z-index: 1;
 }
 </style>
