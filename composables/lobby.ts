@@ -61,6 +61,15 @@ export const joinLobby = async (lobby_id: string) => {
     }
 };
 
+export const leaveLobby = () => {
+    try {
+        closeSocketConnection();
+    } catch (error: any) {
+        console.log(error.message); // Log socket error
+        throw new Error("Could not leave lobby.");
+    }
+};
+
 /**
  * Function is used when a player joins the lobby. It will update
  * lobby data and notify players.
@@ -71,7 +80,7 @@ export const joinedLobby = (lobby_info: LobbyInfo, user_id: string) => {
     updateNestedLobbySettings(lobby_info);
     if (useLobbySettings().value.conf.ccList.length === 0) useLobbySettings().value.conf.ccList = useCountryList().value;
 
-    if (!usePlayerInfo().value.ID) usePlayerInfo().value.ID = user_id; // Update player ID if no ID yet
+    usePlayerInfo().value.ID = user_id; // Update player ID when player join lobby
     console.log("Player " + user_id + " joined the lobby!"); //! Dev: Change this to toast later and to user name
 };
 

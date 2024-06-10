@@ -135,6 +135,12 @@ const parseSocketMessage = (data: SocketMessage) => {
     }
 };
 
+export const closeSocketConnection = () => {
+    useSocketConnection().value.close();
+    useSocketConnection().value = {} as WebSocket;
+    console.log("Socket connection closed.");
+};
+
 export const sendSocketMessage = () => {
     // TODO
 };

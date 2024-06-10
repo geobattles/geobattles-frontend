@@ -22,14 +22,27 @@ export default {
         const start_disabled = ref(false); // Preventing double click
         const country_list = useCountryList();
         const filtered_country_list = useFilteredCountryList();
-
         const next_round = Gameplay.nextRound;
+        const is_guard_disabled = ref(false);
 
         onMounted(async () => {
             await fetchCountryList();
             // If ccList is empty it populate it with all ccodes. Happend only on first load.
             if (lobby_settings.value.conf.ccList.length === 0) lobby_settings.value.conf.ccList = Object.values(country_list.value);
             filtered_country_list.value = country_list.value;
+        });
+
+        onBeforeRouteLeave((to, from, next) => {
+            if (is_guard_disabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
+            if (to.name === "gameplay-BattleRoyale-id") return next(); // If next route is gameplay, allow navigation
+
+            // Ask if user eally wants to leave lobby
+            if (confirm("Are you sure you want to leave the lobby?")) {
+                is_guard_disabled.value = true;
+                leaveLobby();
+                next();
+                return navigateTo("/");
+            } else next(false);
         });
 
         return { lobby_settings, start_disabled, next_round, isPlayerAdmin };

@@ -34,6 +34,7 @@ export default {
         const toggle_map_mobile = ref<HTMLElement | null>(null);
         const submit_button = ref<HTMLElement | null>(null);
         const show_map_button = ref(false);
+        const is_guard_disabled = ref(false);
 
         onMounted(() => {
             const google_map = useGoogleMapHTML(); // Get Google Map DOM element from state
@@ -80,6 +81,18 @@ export default {
             useIsSubmitDisabled().value = true; // Disable submit button, preventing double clicks
             BattleRoyale.submitGuess(); // Submit guess
         };
+
+        onBeforeRouteLeave((to, from, next) => {
+            if (is_guard_disabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
+
+            // Ask if user eally wants to leave lobby
+            if (confirm("Are you sure you want to leave the lobby?")) {
+                is_guard_disabled.value = true;
+                leaveLobby();
+                next();
+                return navigateTo("/");
+            } else next(false);
+        });
 
         return { is_submit_disabled, game_flow, submit_button, toggle_map_mobile, show_map_button, lobby_settings, handleSubmitClick, isSubmitButtonDisabled };
     },
