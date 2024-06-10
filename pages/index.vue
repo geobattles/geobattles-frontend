@@ -3,7 +3,7 @@
         <Header />
         <div class="page-container">
             <div>
-                <Button class="play-button" @click="createLobby" label="PLAY NOW" />
+                <Button class="play-button" @click="handlePlayNowClick" label="PLAY NOW" />
                 <br />
                 <span class="join-text">or join a lobby by <span class="clickable" @click="router.push('/lobby/join')">game code!</span></span>
             </div>
@@ -16,7 +16,12 @@ export default {
     setup() {
         const lobby_name = ref("");
         const router = useRouter();
-        return { createLobby, joinLobby, lobby_name, useLobbySettings, router };
+
+        const handlePlayNowClick = async () => {
+            if (!usePlayerInfo().value.name) return window.alert("Please enter a username before playing!");
+            createLobby();
+        };
+        return { lobby_name, router, handlePlayNowClick };
     },
 };
 </script>
