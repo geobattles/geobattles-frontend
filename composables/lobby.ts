@@ -65,6 +65,7 @@ export const leaveLobby = () => {
     try {
         usePlayerInfo().value.ID = undefined; // Reset player ID since user gets ID when he joins lobby only if ID in undefined !! // TODO: Should be fixed somehow from backend
         closeSocketConnection();
+        usePlayerInfo().value.isConnectedToLobby = false;
     } catch (error: any) {
         console.log(error.message); // Log socket error
         throw new Error("Could not leave lobby.");

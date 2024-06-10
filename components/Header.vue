@@ -30,11 +30,7 @@ export default {
                 label: "Home",
                 icon: "pi pi-home",
                 command: () => {
-                    if (player_info.value.isConnectedToLobby) {
-                        if (confirm("Are you sure you want to leave the lobby?")) {
-                            router.push("/");
-                        }
-                    }
+                    router.push("/");
                 },
             },
             {
@@ -42,9 +38,16 @@ export default {
                 icon: "pi pi-star",
             },
             {
+                label: "Online Lobbies",
+                icon: "pi pi-map-marker",
+                badge: Object.keys(useLobbyList().value).length,
+                command: () => {
+                    router.push("/lobby/list");
+                },
+            },
+            {
                 label: "Contact",
                 icon: "pi pi-envelope",
-                badge: 3,
             },
         ]);
 
@@ -54,6 +57,11 @@ export default {
             });
             player_username.value = player_info.value.name;
         };
+
+        onMounted(async () => {
+            await fetchLobbyList();
+            items.value[2].badge = Object.keys(useLobbyList().value).length;
+        });
 
         return { player_info, items, saveUsernameToCookies };
     },

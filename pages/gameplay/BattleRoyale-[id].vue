@@ -9,7 +9,7 @@
             <!-- GOOGLE PANORAMA -->
             <GameplayGooglePanorama />
             <!-- SUBMIT BUTTON -->
-            <button ref="submit_button" class="submit-button" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled() || is_submit_disabled">GUESS</button>
+            <button ref="submit_button" class="submit-button" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled()">GUESS</button>
             <!-- LIVE STATISTICS -->
             <GameplayBattleRoyaleLiveStatistics class="live-stats" />
             <!-- MAP MOBILE BUTTON -->
@@ -30,7 +30,6 @@ export default {
         const game_flow = useGameFlow();
         const lobby_settings = useLobbySettings();
 
-        const is_submit_disabled = useIsSubmitDisabled();
         const toggle_map_mobile = ref<HTMLElement | null>(null);
         const submit_button = ref<HTMLElement | null>(null);
         const show_map_button = ref(false);
@@ -68,6 +67,8 @@ export default {
         const getPlayerAttempt = (player_id: string) => useResults().value[player_id].attempt;
 
         const isSubmitButtonDisabled = () => {
+            if (is_guard_disabled.value) return; // Disable if route guard is enabled to not have unnecessary console warning when leaving lobby from gameplay
+
             if (useMapMarkers().value.length === 0) return true; // Disable if no markers
             //  Disable if number of markers equals number of attempts
             const player_id = usePlayerInfo().value.ID;
@@ -88,13 +89,13 @@ export default {
             // Ask if user eally wants to leave lobby
             if (confirm("Are you sure you want to leave the lobby?")) {
                 is_guard_disabled.value = true;
-                leaveLobby();
                 next();
+                leaveLobby();
                 return navigateTo("/");
             } else next(false);
         });
 
-        return { is_submit_disabled, game_flow, submit_button, toggle_map_mobile, show_map_button, lobby_settings, handleSubmitClick, isSubmitButtonDisabled };
+        return { game_flow, submit_button, toggle_map_mobile, show_map_button, lobby_settings, handleSubmitClick, isSubmitButtonDisabled };
     },
 };
 </script>
