@@ -63,6 +63,7 @@ export const joinLobby = async (lobby_id: string) => {
 
 export const leaveLobby = () => {
     try {
+        usePlayerInfo().value.ID = undefined; // Reset player ID since user gets ID when he joins lobby only if ID in undefined !! // TODO: Should be fixed somehow from backend
         closeSocketConnection();
     } catch (error: any) {
         console.log(error.message); // Log socket error
@@ -80,7 +81,7 @@ export const joinedLobby = (lobby_info: LobbyInfo, user_id: string) => {
     updateNestedLobbySettings(lobby_info);
     if (useLobbySettings().value.conf.ccList.length === 0) useLobbySettings().value.conf.ccList = useCountryList().value;
 
-    usePlayerInfo().value.ID = user_id; // Update player ID when player join lobby
+    if (!usePlayerInfo().value.ID) usePlayerInfo().value.ID = user_id; // Update player ID when player join lobby // TODO: Should be fixed somehow from backend
     console.log("Player " + user_id + " joined the lobby!"); //! Dev: Change this to toast later and to user name
 };
 
