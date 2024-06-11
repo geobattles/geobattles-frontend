@@ -1,8 +1,9 @@
 import type { Coordinates, ResultsInfo, RoundResults, TotalResults } from "~/types";
 
-export class CountryBattle extends Gameplay {
+export class CountryBattle {
     static selected_country: string | undefined = undefined;
     static selected_countries: string[] = [];
+    static searched_polygon: google.maps.Data | undefined = undefined;
     // static total_attempts = new Map<string | number, number>();
 
     static startRound = () => {
@@ -10,25 +11,26 @@ export class CountryBattle extends Gameplay {
         setTimeout(() => (useGameFlow().value = "PLAYING"), 3000); // For 3 seconds countdown
 
         const router = useRouter();
-        const route_name = router.currentRoute.value.name as string;
+        const route_name = router.currentRoute.value.name;
+        if (typeof route_name !== "string") throw new Error("Route name is not defined in startRound function.");
 
         if (!route_name.includes("gameplay")) router.push({ path: `/gameplay/CountryBattle-${useLobbySettings().value.ID}` }); // Redirect to gameplay routes if not already there
         else {
             updatePanoramaView(useCoordinates().value); // Update panorama view for next round
+            isGoogleMap().setCenter({ lat: 0, lng: 0 });
+            isGoogleMap().setZoom(2);
+
+            // Clear Map before starting round
+            this.deleteAllPolygons();
         }
-
-        // Clear Map before starting round
-        this.deleteAllPolygons();
-        // TODO: Remove also winner polygon. Or just make all polygons the same type as winner polygon.
-
-        isGoogleMap().setCenter({ lat: 0, lng: 0 });
-        isGoogleMap().setZoom(2);
 
         // const results = useResults(); // Get results from state
         // for (const player_id in results.value) this.total_attempts.set(player_id, results.value[player_id].lives);
     };
 
     static processMapPin = (coordinates: Coordinates) => {
+        console.log("Processing pin...");
+
         if (useGameFlow().value !== "PLAYING") return;
         useCurrentPin().value = coordinates; // Save current pin coordinates to state
 
@@ -37,14 +39,6 @@ export class CountryBattle extends Gameplay {
             location: { ...coordinates },
         };
 
-        useSocketConnection().value.send(JSON.stringify(socket_message));
-    };
-
-    static submitGuess = () => {
-        const socket_message = {
-            command: "submit_location",
-            location: { ...useCurrentPin().value },
-        };
         useSocketConnection().value.send(JSON.stringify(socket_message));
     };
 
@@ -81,8 +75,9 @@ export class CountryBattle extends Gameplay {
         if (!results[player_id] || results[player_id].lives > 0) {
             const map_instance = isGoogleMap();
             map_instance.data.forEach((e) => {
+                console.log(e);
                 //@ts-ignore
-                if (this.selected_country === e.h.id) map_instance.data.remove(e);
+                if (this.selected_country === e.Gg.id) map_instance.data.remove(e);
             });
             this.drawCountryPolygon(polygon, country_code);
             this.selected_country = country_code; // Set new selected_country
@@ -145,6 +140,8 @@ export class CountryBattle extends Gameplay {
         useRoundResults().value = round_results; // Just refresh round results with data from server.
 
         this.displaySearchedPolygon(polygon);
+        this.selected_country = undefined;
+        this.selected_countries = [];
     };
 
     /**
@@ -173,7 +170,7 @@ export class CountryBattle extends Gameplay {
      */
     static displaySearchedPolygon = (polygon_coordinates: any) => {
         // Declare new polygon
-        const searched_polygon = new google.maps.Data();
+        this.searched_polygon = new google.maps.Data();
 
         // Create geojson
         const geo_json = {
@@ -185,18 +182,18 @@ export class CountryBattle extends Gameplay {
         };
 
         // Set polygon styles
-        searched_polygon.setStyle({
+        this.searched_polygon.setStyle({
             fillColor: "green",
             strokeColor: "black",
             strokeOpacity: 1,
             strokeWeight: 2,
         });
-        searched_polygon.addGeoJson(geo_json);
-        drawPolygonToMap(searched_polygon);
+        this.searched_polygon.addGeoJson(geo_json);
+        drawPolygonToMap(this.searched_polygon);
 
         // Zoom on country and fit polygon bounds
         let bounds = new google.maps.LatLngBounds();
-        searched_polygon.forEach(function (feature) {
+        this.searched_polygon.forEach(function (feature) {
             feature.getGeometry()?.forEachLatLng(function (latlng) {
                 bounds.extend(latlng);
             });
@@ -214,6 +211,6 @@ export class CountryBattle extends Gameplay {
         map_instance.data.forEach((e) => {
             map_instance.data.remove(e);
         });
-        // if (searched_polygon) searched_polygon.setMap(null);
+        if (this.searched_polygon) this.searched_polygon.setMap(null);
     };
 }

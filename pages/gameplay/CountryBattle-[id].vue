@@ -9,7 +9,7 @@
             <!-- GOOGLE PANORAMA -->
             <GameplayGooglePanorama />
             <!-- SUBMIT BUTTON -->
-            <button class="submit-button text-white bg-green-400 dark:bg-green-500 font-medium rounded-lg text-sm px-5 py-2.5 text-center" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled()">Submit</button>
+            <button class="submit-button" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled()">GUESS</button>
             <!-- LIVE STATISTICS -->
             <GameplayCountryBattleLiveStatistics class="live-stats" />
             <!-- MAP MOBILE BUTTON -->
@@ -41,7 +41,7 @@ export default {
             if (!google_pan.value) throw new Error("Google Panorama DOM element not found in gameplay");
 
             addMapClickListener(CountryBattle.processMapPin); // Init Google Map click listener
-            BattleRoyale.googleMapDOMTracker(google_map.value); // Watch and move Google Map DOM element
+            Gameplay.googleMapDOMTracker(google_map.value); // Watch and move Google Map DOM element
 
             // Handle map hover and mobile view of map
             if (window.innerWidth < 1000) {
@@ -63,7 +63,7 @@ export default {
 
         const handleSubmitClick = () => {
             useIsSubmitDisabled().value = true; // Disable submit button, preventing double clicks
-            CountryBattle.submitGuess(); // Submit guess
+            Gameplay.submitGuess(); // Submit guess
         };
 
         return { is_submit_disabled, game_flow, toggle_map_mobile, show_map_button, lobby_settings, handleSubmitClick, isSubmitButtonDisabled };
@@ -74,10 +74,10 @@ export default {
 <style scoped>
 .google-map-gameplay {
     position: absolute;
-    bottom: 50px;
+    bottom: 60px;
     left: 20px;
     height: 400px;
-    width: 400px;
+    width: 380px;
     z-index: 1;
 
     opacity: 0.7;
@@ -96,11 +96,11 @@ export default {
 }
 
 .google-map-hover {
-    height: 55vh;
-    width: 50vw;
+    height: 500px;
+    width: 600px;
 
-    max-width: 1400px;
-    max-height: 1200px;
+    max-width: 1000px;
+    max-height: 700px;
 
     padding: 30px 30px 0px 0px;
 
@@ -108,6 +108,53 @@ export default {
 
     opacity: 1;
 }
+
+.submit-button {
+    position: absolute;
+    width: 380px;
+    left: 20px;
+    bottom: 10px;
+    padding: 0.75rem 1.5rem;
+
+    font-size: 1rem;
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+
+    color: var(--text-color);
+    background-color: var(--surface-card);
+    border: none;
+    border-radius: 0.25rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: height 0.3s ease-out, width 0.3s ease-out;
+}
+
+#panorama_map {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    z-index: 0;
+}
+
+.submit-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.live-stats {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+}
+
+.bar {
+    position: relative;
+}
+
 /* MOPBILE VIEW */
 @media (max-width: 1000px) {
     .google-map-gameplay {
@@ -136,37 +183,5 @@ export default {
 
         z-index: 3;
     }
-}
-
-#panorama_map {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100vw;
-    z-index: 0;
-}
-
-.submit-button {
-    position: absolute;
-    bottom: 60px;
-    left: 30px;
-    z-index: 3;
-
-    padding: 10px;
-}
-
-.submit-button:disabled {
-    cursor: not-allowed;
-}
-
-.live-stats {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 2;
-}
-.bar {
-    position: relative;
 }
 </style>

@@ -42,7 +42,7 @@ export default {
             if (!google_pan.value) throw new Error("Google Panorama DOM element not found in gameplay");
 
             addMapClickListener(BattleRoyale.processMapPin); // Init Google Map click listener
-            BattleRoyale.googleMapDOMTracker(google_map.value); // Watch and move Google Map DOM element
+            Gameplay.googleMapDOMTracker(google_map.value); // Watch and move Google Map DOM element
 
             // Handle map hover and mobile view of map
             if (window.innerWidth < 1000) {
@@ -80,7 +80,7 @@ export default {
 
         const handleSubmitClick = () => {
             useIsSubmitDisabled().value = true; // Disable submit button, preventing double clicks
-            BattleRoyale.submitGuess(); // Submit guess
+            Gameplay.submitGuess(); // Submit guess
         };
 
         onBeforeRouteLeave((to, from, next) => {
@@ -166,6 +166,31 @@ export default {
     transition: height 0.3s ease-out, width 0.3s ease-out;
 }
 
+#panorama_map {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+    z-index: 0;
+}
+
+.submit-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.live-stats {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 2;
+}
+
+.bar {
+    position: relative;
+}
+
 /* MOPBILE VIEW */
 @media (max-width: 1000px) {
     .google-map-gameplay {
@@ -194,30 +219,5 @@ export default {
 
         z-index: 3;
     }
-}
-
-#panorama_map {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    width: 100vw;
-    z-index: 0;
-}
-
-.submit-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.live-stats {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 2;
-}
-
-.bar {
-    position: relative;
 }
 </style>

@@ -34,7 +34,7 @@ export default {
 
         onBeforeRouteLeave((to, from, next) => {
             if (is_guard_disabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
-            if (to.name === "gameplay-BattleRoyale-id") return next(); // If next route is gameplay, allow navigation
+            if (to.name === "gameplay-BattleRoyale-id" || to.name === "gameplay-CountryBattle-id") return next(); // If next route is gameplay, allow navigation
 
             // Ask if user eally wants to leave lobby
             if (confirm("Are you sure you want to leave the lobby?")) {
