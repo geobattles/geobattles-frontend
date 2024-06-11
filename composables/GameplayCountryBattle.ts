@@ -22,6 +22,7 @@ export class CountryBattle {
 
             // Clear Map before starting round
             this.deleteAllPolygons();
+            addMapClickListener(this.processMapPin); // Add click listener to map as it is somehow removed
         }
 
         // const results = useResults(); // Get results from state

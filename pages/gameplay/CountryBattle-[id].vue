@@ -9,7 +9,7 @@
             <!-- GOOGLE PANORAMA -->
             <GameplayGooglePanorama />
             <!-- SUBMIT BUTTON -->
-            <button class="submit-button" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled()">GUESS</button>
+            <button ref="submit_button" class="submit-button" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled()">GUESS</button>
             <!-- LIVE STATISTICS -->
             <GameplayCountryBattleLiveStatistics class="live-stats" />
             <!-- MAP MOBILE BUTTON -->
@@ -31,8 +31,10 @@ export default {
         const lobby_settings = useLobbySettings();
 
         const is_submit_disabled = useIsSubmitDisabled();
+        const submit_button = ref<HTMLElement | null>(null);
         const toggle_map_mobile = ref<HTMLElement | null>(null);
         const show_map_button = ref(false);
+        const is_guard_disabled = ref(false);
 
         onMounted(() => {
             const google_map = useGoogleMapHTML(); // Get Google Map DOM element from state
@@ -51,13 +53,20 @@ export default {
                 show_map_button.value = true;
             } else {
                 // Event listners to properly display minimap
-                google_map.value.addEventListener("mouseenter", () => (game_flow.value === "PLAYING" ? google_map.value?.classList.add("google-map-hover") : null));
+                google_map.value.addEventListener("mouseenter", () => {
+                    if (game_flow.value === "PLAYING") google_map.value?.classList.add("google-map-hover");
+                    if (game_flow.value === "PLAYING") submit_button.value?.classList.add("submit-button-hover");
+                });
                 google_map.value.addEventListener("mouseleave", () => {});
-                google_pan.value.addEventListener("click", () => (game_flow.value === "PLAYING" ? google_map.value?.classList.remove("google-map-hover") : null));
+                google_pan.value.addEventListener("click", () => {
+                    if (game_flow.value === "PLAYING") google_map.value?.classList.remove("google-map-hover");
+                    if (game_flow.value === "PLAYING") submit_button.value?.classList.remove("submit-button-hover");
+                });
             }
         });
 
         const isSubmitButtonDisabled = () => {
+            // TODO: Implement logic to disable submit button
             return false;
         };
 
@@ -66,7 +75,19 @@ export default {
             Gameplay.submitGuess(); // Submit guess
         };
 
-        return { is_submit_disabled, game_flow, toggle_map_mobile, show_map_button, lobby_settings, handleSubmitClick, isSubmitButtonDisabled };
+        onBeforeRouteLeave((to, from, next) => {
+            if (is_guard_disabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
+
+            // Ask if user eally wants to leave lobby
+            if (confirm("Are you sure you want to leave the lobby?")) {
+                is_guard_disabled.value = true;
+                next();
+                leaveLobby();
+                return navigateTo("/");
+            } else next(false);
+        });
+
+        return { is_submit_disabled, submit_button, game_flow, toggle_map_mobile, show_map_button, lobby_settings, handleSubmitClick, isSubmitButtonDisabled };
     },
 };
 </script>
@@ -86,6 +107,7 @@ export default {
 
     border-radius: 10px;
 }
+
 .google-map-midround {
     position: absolute;
 
@@ -127,6 +149,12 @@ export default {
     border: none;
     border-radius: 0.25rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: height 0.3s ease-out, width 0.3s ease-out;
+}
+
+.submit-button-hover {
+    width: 600px;
+    max-width: 1000px;
     transition: height 0.3s ease-out, width 0.3s ease-out;
 }
 
@@ -179,7 +207,7 @@ export default {
         position: absolute;
         bottom: 110px;
         left: 30px;
-        color: white;
+        color: var(--text-color);
 
         z-index: 3;
     }
