@@ -72,7 +72,7 @@ export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): voi
     if (!panorama_html) throw new Error("Panorama html element is not defined");
 
     useGooglePanorama().value = new google.maps.StreetViewPanorama(panorama_html as HTMLElement, {
-        position: useCoordinates().value,
+        position: Gameplay.searched_location_coords.value,
         pov: {
             heading: 34,
             pitch: 10,
@@ -143,14 +143,14 @@ export const drawPolyLine = (from: Coordinates, to: Coordinates) => {
             },
         ],
     });
-    usePolyLines().value.push(polyline); // State where all polylines are saved
+    BattleRoyale.poly_lines_array.value.push(polyline); // State where all polylines are saved
     if (!useGoogleMap().value) throw new Error("Google map is not defined");
     polyline.setMap(isGoogleMap()); // Add to map
 };
 
 export const removePolyLinesFromMap = (delete_lines: Boolean) => {
-    for (let i = 0; i < usePolyLines().value.length; i++) toRaw(usePolyLines().value[i]).setMap(null); // Remove from map
-    if (delete_lines) usePolyLines().value = []; // Remove from saved polylines
+    for (let i = 0; i < BattleRoyale.poly_lines_array.value.length; i++) toRaw(BattleRoyale.poly_lines_array.value[i]).setMap(null); // Remove from map
+    if (delete_lines) BattleRoyale.poly_lines_array.value = []; // Remove from saved polylines
 };
 /// END MAP POLYLINES ///
 

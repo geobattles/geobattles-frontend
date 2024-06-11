@@ -79,7 +79,7 @@ const parseSocketMessage = (data: SocketMessage) => {
             if (!data.players) throw new Error(`Players info in SocketMessage type: ${data.type} is not defined.`);
 
             // Process
-            useCoordinates().value = data.location; // Set new search location
+            Gameplay.searched_location_coords.value = data.location; // Set new search location
             useResults().value = data.players; // Set new player results for live statistics
 
             if (useGameType().value === "CountryBattle") CountryBattle.startRound();
@@ -120,6 +120,10 @@ const parseSocketMessage = (data: SocketMessage) => {
 
             // Process
             CountryBattle.processClickedCountry(data.polygon, data.cc);
+            break;
+        case SocketType.NO_COUNTRY:
+            // TODO:
+            console.log("No country found on clicked area.");
             break;
         case SocketType.GAME_END:
             // Perform checks
