@@ -14,4 +14,5 @@ export enum SocketType {
     ROUND_FINISHED = "ROUND_FINISHED",
     COUNTRY_CODE = "CC",
     GAME_END = "GAME_END",
+    NO_COUNTRY = "NO_COUNTRY",
 }

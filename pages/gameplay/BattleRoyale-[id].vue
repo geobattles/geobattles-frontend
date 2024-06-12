@@ -36,32 +36,7 @@ export default {
         const is_guard_disabled = ref(false);
 
         onMounted(() => {
-            const google_map = useGoogleMapHTML(); // Get Google Map DOM element from state
-            const google_pan = useGooglePanoramaHTML(); // Get Google Map DOM element from state
-            if (!google_map.value) throw new Error("Google Map DOM element not found in gameplay");
-            if (!google_pan.value) throw new Error("Google Panorama DOM element not found in gameplay");
-
-            addMapClickListener(BattleRoyale.processMapPin); // Init Google Map click listener
-            Gameplay.googleMapDOMTracker(google_map.value); // Watch and move Google Map DOM element
-
-            // Handle map hover and mobile view of map
-            if (window.innerWidth < 1000) {
-                setMapZoom(3);
-                if (game_flow.value === "PLAYING") google_map.value?.classList.remove("google-map-gameplay");
-                toggle_map_mobile.value?.addEventListener("click", () => (game_flow.value === "PLAYING" ? google_map.value?.classList.toggle("google-map-hover") : null));
-                show_map_button.value = true;
-            } else {
-                // Event listners to properly display minimap
-                google_map.value.addEventListener("mouseenter", () => {
-                    if (game_flow.value === "PLAYING") google_map.value?.classList.add("google-map-hover");
-                    if (game_flow.value === "PLAYING") submit_button.value?.classList.add("submit-button-hover");
-                });
-                google_map.value.addEventListener("mouseleave", () => {});
-                google_pan.value.addEventListener("click", () => {
-                    if (game_flow.value === "PLAYING") google_map.value?.classList.remove("google-map-hover");
-                    if (game_flow.value === "PLAYING") submit_button.value?.classList.remove("submit-button-hover");
-                });
-            }
+            Gameplay.mountingProcess(useGameType().value, toggle_map_mobile, show_map_button, submit_button);
         });
 
         const getPlayerAttempt = (player_id: string) => useResults().value[player_id].attempt;
@@ -79,7 +54,6 @@ export default {
         };
 
         const handleSubmitClick = () => {
-            useIsSubmitDisabled().value = true; // Disable submit button, preventing double clicks
             Gameplay.submitGuess(); // Submit guess
         };
 

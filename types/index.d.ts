@@ -12,7 +12,6 @@ export type LobbyInfo = {
     admin: string;
     conf: LobbyConfig;
     currentRound: number;
-    endResults: any; //TODO: Define this
     numPlayers: number;
     playerList: playerListObject;
     results: Results;
@@ -65,12 +64,6 @@ interface ResultsInfo {
     cc: string;
     player_countries: string[];
 }
-
-export type RoundResults = {
-    [key: string]: RoundResultsInfo; // Same as Results (for now?)
-};
-
-interface RoundResultsInfo extends ResultsInfo {} // Same as ResultInfo (for now?)
 
 export type TotalResults = {
     [key: string]: TotalResultInfo;

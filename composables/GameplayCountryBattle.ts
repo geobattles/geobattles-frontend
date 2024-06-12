@@ -1,4 +1,4 @@
-import type { Coordinates, ResultsInfo, RoundResults, TotalResults } from "~/types";
+import type { Coordinates, ResultsInfo, TotalResults, Results } from "~/types";
 
 export class CountryBattle {
     static selected_country: string | undefined = undefined;
@@ -16,13 +16,13 @@ export class CountryBattle {
 
         if (!route_name.includes("gameplay")) router.push({ path: `/gameplay/CountryBattle-${useLobbySettings().value.ID}` }); // Redirect to gameplay routes if not already there
         else {
-            updatePanoramaView(useCoordinates().value); // Update panorama view for next round
+            updatePanoramaView(Gameplay.searched_location_coords.value); // Update panorama view for next round
             isGoogleMap().setCenter({ lat: 0, lng: 0 });
             isGoogleMap().setZoom(2);
 
             // Clear Map before starting round
             this.deleteAllPolygons();
-            addMapClickListener(this.processMapPin); // Add click listener to map as it is somehow removed
+            addMapClickListener(this.processMapPin); // Add click listener to map as it is somehow removed the initial one in onMounted hook
         }
 
         // const results = useResults(); // Get results from state
@@ -30,10 +30,8 @@ export class CountryBattle {
     };
 
     static processMapPin = (coordinates: Coordinates) => {
-        console.log("Processing pin...");
-
         if (useGameFlow().value !== "PLAYING") return;
-        useCurrentPin().value = coordinates; // Save current pin coordinates to state
+        Gameplay.current_map_pin.value = coordinates; // Save current pin coordinates to state
 
         const socket_message = {
             command: "loc_to_cc",
@@ -76,7 +74,6 @@ export class CountryBattle {
         if (!results[player_id] || results[player_id].lives > 0) {
             const map_instance = isGoogleMap();
             map_instance.data.forEach((e) => {
-                console.log(e);
                 //@ts-ignore
                 if (this.selected_country === e.Gg.id) map_instance.data.remove(e);
             });
@@ -130,15 +127,12 @@ export class CountryBattle {
      * @param round_results
      * @param polygon Coordinates of the searched polygon.
      */
-    static finishRound = (total_results: TotalResults, round_results: RoundResults, polygon: any) => {
+    static finishRound = (total_results: TotalResults, round_results: Results, polygon: any) => {
         useGameFlow().value = "MID-ROUND"; // Change game flow state
 
         // Apply total results
         useTotalResults().value = total_results;
         useTotalResults().value = Object.fromEntries(Object.entries(useTotalResults().value).sort(([, a], [, b]) => (b.total || 0) - (a.total || 0)));
-
-        // Apply round results
-        useRoundResults().value = round_results; // Just refresh round results with data from server.
 
         this.displaySearchedPolygon(polygon);
         this.selected_country = undefined;

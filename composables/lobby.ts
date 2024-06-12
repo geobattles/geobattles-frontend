@@ -1,4 +1,4 @@
-import type { LobbyInfo, GameType } from "~/types";
+import type { LobbyInfo, GameType, GameFlow } from "~/types";
 
 // LOBBY STATES
 export const useLobbySettings = () => useState<LobbyInfo>("lobby_settings", () => ({} as LobbyInfo));
@@ -6,6 +6,7 @@ export const useLobbySettingsOriginal = () => useState<LobbyInfo>("lobby_setting
 export const useLobbyList = () => useState<string[]>("lobby_list", () => []);
 export const useModifySettingsModal = () => useState<boolean>("modify_settings_modal", () => false);
 export const useGameType = () => useState<GameType>("game_type", () => undefined);
+export const useGameFlow = () => useState<GameFlow>("game_flow", () => undefined);
 
 /**
  * Function handles lobby creation
