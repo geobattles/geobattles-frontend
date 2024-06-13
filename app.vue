@@ -1,14 +1,12 @@
 <template>
-<<<<<<< HEAD
     <div id="vue-app">
         <div class="initial-loader" v-if="is_loading">
             <span>Loading...</span>
             <ProgressSpinner />
         </div>
-=======
-    <div ref="vue_app" id="vue-app">
->>>>>>> 714df1bd8ae96e00a1bd1250f2b4e8c405eb45ef
-        <NuxtPage />
+        <div ref="vue_app">
+            <NuxtPage />
+        </div>
     </div>
 </template>
 
@@ -24,7 +22,7 @@ export default {
             const script = `https://maps.googleapis.com/maps/api/js?key=${runtimeConfig.public.GMAPS_API}&v=weekly&loading=async`;
 
             useHead({
-                script: [{ src: script, async: true, defer: true }],
+                script: [{ src: script, defer: true, async: true }],
                 title: `GeoBattles`,
             });
 
@@ -45,8 +43,12 @@ export default {
         const nuxtApp = useNuxtApp();
 
         onBeforeMount(() => {
-            nuxtApp.hooks.hook("page:start", () => (is_loading.value = true));
-            nuxtApp.hooks.hook("page:finish", () => (is_loading.value = false));
+            nuxtApp.hooks.hook("page:start", () => {
+                is_loading.value = true;
+            });
+            nuxtApp.hooks.hook("page:finish", () => {
+                is_loading.value = false;
+            });
         });
 
         return {
