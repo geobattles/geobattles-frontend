@@ -1,5 +1,9 @@
 <template>
     <div id="vue-app">
+        <div class="initial-loader" v-if="is_loading">
+            <span>Loading...</span>
+            <ProgressSpinner />
+        </div>
         <NuxtPage />
     </div>
 </template>
@@ -24,14 +28,43 @@ export default {
             const saved_username = useCookie("saved_username");
             usePlayerInfo().value.name = saved_username.value;
         }
+
+        const is_loading = ref(true);
+        const nuxtApp = useNuxtApp();
+
+        onBeforeMount(() => {
+            nuxtApp.hooks.hook("page:start", () => (is_loading.value = true));
+            nuxtApp.hooks.hook("page:finish", () => (is_loading.value = false));
+        });
+
+        return {
+            is_loading,
+        };
     },
 };
 </script>
 
 <style>
 body {
-    /* Set background image */
     background: url("/images/earth.webp") no-repeat center center fixed;
     background-size: cover; /* Resize the background image to cover the entire container */
+}
+
+.initial-loader {
+    position: fixed;
+    z-index: 9999;
+
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--surface-ground);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+
+    font-size: 20px;
 }
 </style>
