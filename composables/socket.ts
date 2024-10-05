@@ -49,7 +49,7 @@ export const initializeSocketConnection = (lobby_id: string): Promise<WebSocket>
 
         socket.onmessage = (event) => {
             try {
-                const data: SocketMessage = JSON.parse(event.data);
+                const data = JSON.parse(event.data);
                 console.log("Received WebSocket message:", data); //! Dev
 
                 parseSocketMessage(data);
@@ -65,10 +65,6 @@ export const closeSocketConnection = () => {
     const socket = useSocketConnection().value;
     if (socket) {
         socket.close();
-        socket.onopen = null;
-        socket.onmessage = null;
-        socket.onerror = null;
-        socket.onclose = null;
         useSocketConnection().value = null;
     }
 };
@@ -116,12 +112,12 @@ const messageHandlers: {
 };
 
 // Function to parse and handle incoming socket messages
-const parseSocketMessage = (data: SocketMessage) => {
+const parseSocketMessage = (data: any) => {
     const type = data.type; // Extract socket message type
 
     if (isValidSocketType(type)) {
         const handler = messageHandlers[type]; // Get the handler function for the message type
-        if (handler) handler(data as any); // Type assertion due to dynamic type at runtime
+        if (handler) handler(data); // Type assertion due to dynamic type at runtime
         else console.warn(`No handler for socket message type: ${type}`);
     } else {
         console.warn(`Unknown socket message type: ${type}`);
