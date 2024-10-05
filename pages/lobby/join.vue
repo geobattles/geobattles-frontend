@@ -50,7 +50,8 @@ export default {
                     });
 
                     // Try joining a lobby
-                    if (useSocketConnection().value.OPEN) return;
+                    const socketConnection = useSocketConnection().value;
+                    if (socketConnection && socketConnection.OPEN) return;
                     try {
                         await checkIfLobby(clipboard_string);
                         await joinLobby(clipboard_string);
@@ -73,7 +74,8 @@ export default {
                 const lobby_id = input_1.value.value + input_2.value.value + input_3.value.value + input_4.value.value + input_5.value.value + input_6.value.value;
 
                 // Try joining a lobby
-                if (useSocketConnection().value.OPEN) return;
+                const socketConnection = useSocketConnection().value;
+                if (socketConnection && socketConnection.OPEN) return;
                 try {
                     await checkIfLobby(lobby_id);
                     await joinLobby(lobby_id);
