@@ -48,7 +48,8 @@ export class Gameplay {
         const game = {
             command: "start",
         };
-        useSocketConnection().value.send(JSON.stringify(game));
+        const socket = useSocketConnection().value;
+        if (socket) socket.send(JSON.stringify(game));
     };
 
     // Send current pin location to server
@@ -58,7 +59,8 @@ export class Gameplay {
             location: this.current_map_pin.value,
         };
 
-        useSocketConnection().value.send(JSON.stringify(socket_message));
+        const socket = useSocketConnection().value;
+        if (socket) socket.send(JSON.stringify(socket_message));
     };
 
     /**

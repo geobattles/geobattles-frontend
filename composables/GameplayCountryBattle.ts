@@ -38,7 +38,8 @@ export class CountryBattle {
             location: { ...coordinates },
         };
 
-        useSocketConnection().value.send(JSON.stringify(socket_message));
+        const socketConnection = useSocketConnection().value;
+        if (socketConnection) socketConnection.send(JSON.stringify(socket_message));
     };
 
     /**

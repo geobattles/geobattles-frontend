@@ -73,21 +73,6 @@ interface TotalResultInfo extends ResultInfo {
     total: number | undefined; // Not defined by backend if user scores 0 points
 }
 
-// Main socket type interface
-export type SocketMessage = {
-    status: SocketStatus;
-    type: SocketType;
-    lobby?: LobbyInfo;
-    user?: string;
-    location?: Coordinates;
-    players?: Results;
-    playerRes?: ResultInfo;
-    roundRes?: RoundResults;
-    totalResults?: TotalResults;
-    cc?: string;
-    polygon?: any;
-};
-
 type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINISHED" | undefined; // Undefined when not connected to a lobby (socket)
 
 type GameType = "BattleRoyale" | "CountryBattle" | undefined; // Undefined when not connected to a lobby (socket)

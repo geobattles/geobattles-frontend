@@ -135,7 +135,9 @@ export const applyLobbySettings = () => {
     };
 
     // console.log(settings); //! Dev
-    useSocketConnection().value.send(JSON.stringify(settings));
+    const socketConnection = useSocketConnection().value;
+    if (socketConnection) socketConnection.send(JSON.stringify(settings));
+    else console.error("Socket connection is null");
 };
 
 /**
