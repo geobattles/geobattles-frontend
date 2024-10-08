@@ -117,8 +117,8 @@ export default {
     text-transform: uppercase;
     letter-spacing: 5px;
 
-    color: var(--text-color);
-    background-color: var(--surface-card);
+    color: white;
+    background-color: var(--p-zinc-900);
     border: none;
     border-radius: 0.25rem;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);

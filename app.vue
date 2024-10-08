@@ -15,21 +15,19 @@ export default {
     setup() {
         const vue_app = ref<HTMLElement | null>(null);
 
-        if (process.server) {
-            // Read ENV variables
-            const runtimeConfig = useRuntimeConfig();
-            console.log("App.vue was SSR-ed"); //! Dev
-            const script = `https://maps.googleapis.com/maps/api/js?key=${runtimeConfig.public.GMAPS_API}&v=weekly&loading=async`;
+        // Read ENV variables
+        const runtimeConfig = useRuntimeConfig();
+        console.log("App.vue was SSR-ed"); //! Dev
+        const script = `https://maps.googleapis.com/maps/api/js?key=${runtimeConfig.public.GMAPS_API}&v=weekly&loading=async`;
 
-            useHead({
-                script: [{ src: script, defer: true, async: true }],
-                title: `GeoBattles`,
-            });
+        useHead({
+            script: [{ src: script, defer: true, async: true }],
+            title: `GeoBattles`,
+        });
 
-            useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
-        }
+        useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
 
-        if (process.client) {
+        onMounted(() => {
             const saved_username = useCookie("saved_username");
             console.log("saved_username: ", saved_username.value); //! Dev
             if (typeof saved_username.value === "string") usePlayerInfo().value.name = saved_username.value;
@@ -37,7 +35,7 @@ export default {
             const img = new Image();
             img.src = "/images/earth.webp";
             img.onload = () => (vue_app.value !== null ? (vue_app.value.style.backgroundImage = "url(/images/earth.webp)") : "");
-        }
+        });
 
         const is_loading = ref(true);
         const nuxtApp = useNuxtApp();
@@ -72,7 +70,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: var(--surface-ground);
+    background: var(--p-zinc-950);
     display: flex;
     flex-direction: column;
     justify-content: center;

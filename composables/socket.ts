@@ -89,7 +89,7 @@ interface SocketMessageMap {
     [SocketType.ROUND_RESULT]: MsgRoundResultData;
     [SocketType.TIMES_UP]: MsgTimesUpData;
     [SocketType.ROUND_FINISHED]: MsgRoundFinishedData;
-    [SocketType.COUNTRY_CODE]: MsgCCData;
+    [SocketType.CC]: MsgCCData;
     [SocketType.GAME_END]: MsgGameEndData;
     [SocketType.NO_COUNTRY]: MsgNoCountryData;
 }
@@ -106,7 +106,7 @@ const messageHandlers: {
     [SocketType.ROUND_RESULT]: handleRoundResult,
     [SocketType.TIMES_UP]: handleTimesUp,
     [SocketType.ROUND_FINISHED]: handleRoundFinished,
-    [SocketType.COUNTRY_CODE]: handleCC,
+    [SocketType.CC]: handleCC,
     [SocketType.GAME_END]: handleGameEnd,
     [SocketType.NO_COUNTRY]: handleNoCountry,
 };
