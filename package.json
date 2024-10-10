@@ -13,9 +13,9 @@
         "@nuxtjs/tailwindcss": "^6.12.1",
         "@primevue/nuxt-module": "^4.0.7",
         "@types/google.maps": "^3.50.5",
-        "nuxt": "^3.11.2",
+        "nuxt": "^3.13.2",
         "typescript": "^5.2.2",
-        "vue-tsc": "^1.8.8"
+        "vue-tsc": "^2.1.6"
     },
     "dependencies": {
         "@primevue/themes": "^4.0.7",

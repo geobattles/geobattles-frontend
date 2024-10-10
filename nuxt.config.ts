@@ -17,10 +17,6 @@ export default defineNuxtConfig({
         strict: true,
     },
 
-    imports: {
-        autoImport: true,
-    },
-
     modules: ["@nuxtjs/tailwindcss", "@primevue/nuxt-module"],
     css: ["primeicons/primeicons.css"],
 
