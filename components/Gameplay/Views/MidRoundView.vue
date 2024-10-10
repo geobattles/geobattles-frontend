@@ -1,5 +1,5 @@
 <template>
-    <div id="midround_container" class="">
+    <div id="midround_container">
         <div class="midround-content">
             <div class="total-result-table">
                 <GameplayTotalStatistics />
@@ -35,7 +35,7 @@ export default {
     width: 100vw;
     height: 100vh;
     z-index: 2;
-    background-color: var(--surface-ground);
+    background-color: var(--p-zinc-900);
 
     overflow: hidden;
     display: flex;

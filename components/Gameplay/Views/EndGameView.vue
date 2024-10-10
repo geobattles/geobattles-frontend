@@ -31,7 +31,7 @@ export default {
     width: 100%;
     height: 100%;
     z-index: 3;
-    background-color: var(--surface-ground);
+    background-color: var(--p-zinc-900);
 
     display: flex;
     justify-content: center;
@@ -44,7 +44,7 @@ export default {
 .endgame-menu {
     flex: 50%;
     z-index: 1;
-    color: black;
+    color: white;
 
     display: flex;
     flex-direction: column;

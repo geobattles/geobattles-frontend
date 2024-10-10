@@ -1,6 +1,6 @@
 <template>
     <div class="component-content">
-        <div>
+        <div class="flex justify-center items-center gap-2 mb-5 mt-1">
             <div style="display: inline-block; vertical-align: top">
                 <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
                 <div style="position: relative">
@@ -10,13 +10,15 @@
                     </FloatLabel>
                 </div>
             </div>
-            <div class="mt-4">
-                <label>All&nbsp;</label>
-                <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) == Object.entries(country_list).length" />
-            </div>
-            <div class="mb-4">
-                <span>Selected: </span>
-                <span>{{ (lobby_settings.conf.ccList.length | 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
+            <div class="text-xs flex flex-col justify-between items-center">
+                <div>
+                    <label>All&nbsp;</label>
+                    <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) == Object.entries(country_list).length" />
+                </div>
+                <div>
+                    <span>Selected: </span>
+                    <span>{{ (lobby_settings.conf.ccList.length | 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
+                </div>
             </div>
         </div>
         <div class="ccode-list">
@@ -54,7 +56,6 @@ export default {
 }
 
 .ccode-list {
-    max-height: 600px;
     overflow-y: scroll;
 
     display: flex;

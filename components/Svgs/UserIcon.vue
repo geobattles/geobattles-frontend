@@ -9,8 +9,6 @@ export default {
     props: ["color", "width", "height"],
 
     setup(props) {
-        if (process.server) return;
-
         return { props };
     },
 };

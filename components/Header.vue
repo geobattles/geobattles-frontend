@@ -1,6 +1,6 @@
 <template>
     <header class="header-custom">
-        <Menubar :model="items" style="font-size: 12px">
+        <Menubar :model="items" class="text-sm">
             <template #start> </template>
             <template #item="{ item, props, root }">
                 <a v-ripple class="flex align-items-center" v-bind="props.action">
@@ -11,8 +11,9 @@
                 </a>
             </template>
             <template #end>
-                <div class="card flex justify-content-center">
-                    <input class="p-inputtext" v-model="usePlayerInfo().value.name" @blur="saveUsernameToCookies" placeholder="Username" />
+                <div class="flex flex-col">
+                    <InputText id="username" v-model="usePlayerInfo().value.name" @blur="saveUsernameToCookies" placeholder="Username" aria-describedby="username-help" size="small" />
+                    <small id="username-help">Enter your username.</small>
                 </div>
             </template>
         </Menubar>

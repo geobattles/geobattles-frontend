@@ -57,7 +57,7 @@ export default {
     left: 0;
     right: 0;
 
-    border: 4px solid rgb(53 64 96);
+    border: 4px solid var(--p-zinc-900);
 
     border-radius: 5px;
 
@@ -66,7 +66,7 @@ export default {
 
 #bar div {
     height: 8px;
-    background: linear-gradient(to bottom, #00dc82, #00b368);
+    background: linear-gradient(to bottom, var(--p-primary-400), var(--p-primary-600));
 
     border-radius: 3px;
 
@@ -79,10 +79,10 @@ export default {
 }
 @keyframes ticking {
     75% {
-        background: red;
+        background: var(--p-red-400);
     }
     100% {
-        background: red;
+        background: var(--p-red-400);
     }
 }
 
