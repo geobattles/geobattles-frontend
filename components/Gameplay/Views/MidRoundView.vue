@@ -1,5 +1,5 @@
 <template>
-    <div id="midround_container" class="">
+    <div id="midround_container">
         <div class="midround-content">
             <div class="total-result-table">
                 <GameplayTotalStatistics />

@@ -11,7 +11,7 @@
             <!-- SUBMIT BUTTON -->
             <button ref="submit_button" class="submit-button" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled()">GUESS</button>
             <!-- LIVE STATISTICS -->
-            <GameplayBattleRoyaleLiveStatistics class="live-stats" />
+            <GameplayBattleRoyaleLiveStatistics class="live-stats min-w-80" />
             <!-- MAP MOBILE BUTTON -->
             <button v-show="show_map_button && game_flow === 'PLAYING'" ref="toggle_map_mobile" class="rounded-full bg-zinc-900 p-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" fill="white" viewBox="0 0 576 512">

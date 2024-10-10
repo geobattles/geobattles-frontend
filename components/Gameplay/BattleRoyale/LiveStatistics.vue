@@ -1,35 +1,36 @@
 <template>
-    <div class="statistics">
+    <div class="statistics text-xs">
         <TransitionGroup name="list" tag="ul">
             <div v-for="(value, index) in results" :key="index">
-                <div class="table__row list-item" :id="index.toString()">
-                    <div class="table__row-element user-avatar" style="flex-direction: row">
-                        <SvgsUserIcon class="svg-user-icon" style="margin: auto" :color="getPlayerColorByID(index)" />
-                    </div>
-                    <div class="table__row-element">
+                <div class="table__row" :id="index.toString()">
+                    <div class="table__row-element flex flex-col">
                         <div class="player-name">
                             {{ getPlayerNameFromID(index) }}
                         </div>
-                        <div style="display: block; margin-top: -8px">
-                            <div v-for="life in total_attempts.get(index)" :key="life" style="display: inline-block">
+                        <SvgsUserIcon class="svg-user-icon h-5" style="margin: auto" :color="getPlayerColorByID(index)" />
+                    </div>
+                    <div class="table__row-element flex flex-col">
+                        <div>Lives</div>
+                        <div class="flex gap-1 m-auto">
+                            <div v-for="life in total_attempts.get(index)" :key="life">
                                 <div v-if="value.lives >= life">
-                                    <SvgsHeartIcon class="svg-heart-icon" :color="'#FF0000'" />
+                                    <SvgsHeartIcon class="svg-heart-icon h-4" :color="'#FF0000'" />
                                 </div>
                                 <div v-else>
-                                    <SvgsHeartIcon class="svg-heart-icon" :color="'#8e7777'" />
+                                    <SvgsHeartIcon class="svg-heart-icon h-4" :color="'#8e7777'" />
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="table__row-element distance">
-                        <div class="header">Distance:</div>
-                        <div class="value">
+                        <div>Distance</div>
+                        <div class="value m-auto">
                             {{ processDistance(value.distance) }}
                         </div>
                     </div>
                     <div class="table__row-element score">
-                        <div class="header">Score:</div>
-                        <span class="value"> {{ value.baseScr || 0 }}</span>
+                        <div>Score</div>
+                        <div class="value m-auto">{{ value.baseScr || 0 }}</div>
                     </div>
                 </div>
             </div>
@@ -77,16 +78,12 @@ export default {
     background-color: var(--p-zinc-900);
     z-index: 4;
 
-    border-radius: 10px;
+    border-radius: 8px;
     padding: 10px;
 
     position: absolute;
     top: 5rem;
     right: 1rem;
-
-    max-height: 800px;
-    min-width: 400px;
-    max-width: 450px;
 }
 
 .table__row {
@@ -96,23 +93,22 @@ export default {
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
+    gap: 5px;
     z-index: 3;
 
     color: var(--text-color);
 
     border-radius: 4px;
-    margin-bottom: 10px;
     overflow: hidden;
 
     /* For applied guess animation */
-    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-zinc-900) 50%);
+    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-zinc-800) 50%);
     background-size: 200% 100%;
     background-position: right bottom;
     transition: all 0.4s ease-out;
 }
 
 .table__row-element {
-    height: 100%;
     flex: 25%;
 
     display: flex;
@@ -124,50 +120,15 @@ export default {
     z-index: 3;
 }
 
-.user-avatar {
-    flex: 15%;
-}
-
-.svg-user-icon {
-    width: 20px;
-}
-
-.svg-heart-icon {
-    width: 14px;
-    margin-right: 2px;
-}
-
-.player-name {
-    display: block;
-    overflow: hidden;
-    white-space: nowrap;
-    max-width: 100px;
-}
-
-.distance {
-    font-size: 1rem;
-}
-
-.distance .value {
-    font-size: 1rem;
-    margin-bottom: 4px;
-}
-
 .score .value {
-    font-size: 1rem;
-    margin-bottom: 4px;
-}
-
-.score .value {
-    font-size: 1rem;
     letter-spacing: 1px;
-    font-weight: 700;
+    font-weight: 800;
 
     color: #00a708;
 }
 /* APPLIED GUESS ROW STYLE */
 .applied-guess {
-    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-zinc-900) 50%);
+    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-zinc-800) 50%);
     background-size: 200% 100%;
     width: 100%;
 
@@ -175,7 +136,7 @@ export default {
 }
 
 .applied-guess-lead {
-    background: linear-gradient(to right, var(--p-green-400) 50%, var(--p-zinc-900) 50%);
+    background: linear-gradient(to right, var(--p-green-400) 50%, var(--p-zinc-800) 50%);
     background-size: 200% 100%;
     width: 100%;
 
@@ -222,14 +183,11 @@ export default {
         font-size: 8px;
     }
     .svg-user-icon {
-        width: 10px;
+        width: 8px;
     }
     .svg-heart-icon {
         width: 6px;
         margin-right: 0.5px;
-    }
-    .distance {
-        font-size: 8px;
     }
     .distance .value {
         font-size: 8px;
