@@ -153,10 +153,12 @@ function handleStartRound(data: MsgStartRoundData) {
 
     const gameFlowManager = useGameFlowManager().value;
     if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
-    gameFlowManager.searched_location_coords.value = data.location;
+    gameFlowManager.searchedLocationCoords.value = data.location;
+
     useResults().value = data.players; // Set new player results for live statistics
 
     const gameType = gameFlowManager.gameMode.gameType;
+
     switch (gameType) {
         case "CountryBattle":
             gameFlowManager.startRound();

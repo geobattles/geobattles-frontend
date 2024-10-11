@@ -23,7 +23,7 @@ export class CountryBattle implements GameMode {
         if (!route_name.includes("gameplay")) {
             router.push({ path: `/gameplay-${useLobbySettings().value.ID}` });
         } else {
-            updatePanoramaView(this.gameFlowManager.searched_location_coords.value); // Update panorama view for next round
+            updatePanoramaView(this.gameFlowManager.searchedLocationCoords.value); // Update panorama view for next round
             isGoogleMap().setCenter({ lat: 0, lng: 0 });
             isGoogleMap().setZoom(2);
 
@@ -44,7 +44,7 @@ export class CountryBattle implements GameMode {
         if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
         if (gameFlowManager.currentState !== GameState.PLAYING) return;
-        gameFlowManager.current_map_pin.value = coordinates; // Save current pin coordinates to state
+        gameFlowManager.currentMapPin.value = coordinates; // Save current pin coordinates to state
 
         const socket_message = {
             command: "loc_to_cc",

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <GameplayViewsCountdownView v-show="gameFlowManager?.currentState === 'STARTING'" />
+        <GameplayViewsCountdownView v-if="gameFlowManager?.currentState === 'STARTING'" />
         <div id="gameplay_container">
             <!-- BAR TIMER -->
             <GameplayTimerBar v-if="gameFlowManager?.currentState === 'PLAYING'" class="bar" style="z-index: 4" />
@@ -35,10 +35,8 @@ export default {
         const show_map_button = ref(false);
         const is_guard_disabled = ref(false);
         const gameFlowManager = useGameFlowManager();
-        const modify_settings_modal = useModifySettingsModal();
 
         onMounted(() => {
-            // Mounting process
             if (!gameFlowManager.value) return console.error("GameFlowManager is not initialized in the lobby");
             gameFlowManager.value.mountingProcess(toggle_map_mobile, show_map_button, submit_button);
         });

@@ -70,7 +70,7 @@ export default {
         // Watch game flow to create total attempts
         watch(
             () => gameFlowManager.value?.currentState,
-            (new_val) => (new_val === "PLAYING" ? createTotalAttempts() : null)
+            (new_val) => (new_val === GameState.PLAYING ? createTotalAttempts() : null)
         );
 
         return { results, total_attempts, flag_map, processDistance };

@@ -76,7 +76,7 @@ export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): voi
     if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
     useGooglePanorama().value = new google.maps.StreetViewPanorama(panorama_html as HTMLElement, {
-        position: gameFlowManager.searched_location_coords.value,
+        position: gameFlowManager.searchedLocationCoords.value,
         pov: {
             heading: 34,
             pitch: 10,

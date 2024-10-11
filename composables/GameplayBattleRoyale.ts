@@ -18,7 +18,7 @@ export class BattleRoyale implements GameMode {
         if (!route_name.includes("gameplay")) {
             router.push({ path: `/gameplay-${useLobbySettings().value.ID}` });
         } else {
-            updatePanoramaView(this.gameFlowManager.searched_location_coords.value);
+            updatePanoramaView(this.gameFlowManager.searchedLocationCoords.value);
             isGoogleMap().setCenter({ lat: 0, lng: 0 });
             isGoogleMap().setZoom(2);
         }
@@ -35,9 +35,7 @@ export class BattleRoyale implements GameMode {
         removeMarkersFromMap(true); // Remove all markers from map
 
         // Add searched location marker
-        console.log("Searched location coords:");
-        console.log(this.gameFlowManager.searched_location_coords.value);
-        const marker = createSearchedLocationMarker(this.gameFlowManager.searched_location_coords.value);
+        const marker = createSearchedLocationMarker(this.gameFlowManager.searchedLocationCoords.value);
         useMapMarkers().value.push(marker); // Save marker to state
 
         // Draw player pins and polylines to searched location
@@ -45,7 +43,7 @@ export class BattleRoyale implements GameMode {
         for (const key in round_res) {
             if (Object.keys(round_res[key].location).length === 0) continue; // Skip if location object is empty
 
-            drawPolyLine(this.gameFlowManager.searched_location_coords.value, round_res[key].location);
+            drawPolyLine(this.gameFlowManager.searchedLocationCoords.value, round_res[key].location);
 
             const color = getPlayerColorByID(key);
             if (!color) throw new Error("Player color is not defined");
@@ -72,7 +70,7 @@ export class BattleRoyale implements GameMode {
         if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
         if (gameFlowManager.currentState !== GameState.PLAYING) return;
-        gameFlowManager.current_map_pin.value = coordinates;
+        gameFlowManager.currentMapPin.value = coordinates;
 
         const used_pins = useMapMarkers().value.length; // Number of guesses already made in current round
         const player_id = getPlayerIDFromName(usePlayerInfo().value.name);
@@ -116,11 +114,11 @@ export class BattleRoyale implements GameMode {
             if (Object.keys(round_results[key].location).length === 0) continue; // Skip if location object is empty
             bounds.extend(round_results[key].location);
         }
-        bounds.extend(this.gameFlowManager.searched_location_coords.value);
+        bounds.extend(this.gameFlowManager.searchedLocationCoords.value);
 
         // Dont fit bounds if there is only one marker on map (only searched location marker)
         if (useMapMarkers().value.length === 1) {
-            isGoogleMap().setCenter(this.gameFlowManager.searched_location_coords.value);
+            isGoogleMap().setCenter(this.gameFlowManager.searchedLocationCoords.value);
             return;
         } else {
             if (bounds) fitCustomBounds(bounds, 50); // Fit all displayed markers bounds
