@@ -29,7 +29,6 @@ export class UIManager {
 
     private setupMobileView(toggle_map_mobile: Ref<HTMLElement | null>, show_map_button: Ref<boolean>): void {
         setMapZoom(3);
-        if (this.googleMap) this.googleMap.classList.remove("google-map-gameplay");
         toggle_map_mobile.value?.addEventListener("click", () => {
             const gameFlowManager = useGameFlowManager().value;
             if (gameFlowManager && gameFlowManager.currentState === GameState.PLAYING) {
