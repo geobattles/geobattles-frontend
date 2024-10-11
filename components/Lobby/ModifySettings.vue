@@ -11,12 +11,12 @@
                 <p class="mb-2 text-xs">Select game mode:</p>
                 <div class="flex flex-wrap justify-between gap-2">
                     <div class="flex items-center">
-                        <RadioButton v-model="lobby_settings.conf.mode" inputId="ingredient1" name="pizza" :value="1" />
-                        <label for="ingredient1" class="ml-2">BattleRoyale</label>
+                        <RadioButton v-model="lobby_settings.conf.mode" inputId="battleRoyale" name="gameMode" :value="1" @change="gameFlowManager?.updateGameMode('BattleRoyale')" />
+                        <label for="battleRoyale" class="ml-2">BattleRoyale</label>
                     </div>
                     <div class="flex items-center">
-                        <RadioButton v-model="lobby_settings.conf.mode" inputId="ingredient2" name="pizza" :value="2" />
-                        <label for="ingredient2" class="ml-2">CountryBattle</label>
+                        <RadioButton v-model="lobby_settings.conf.mode" inputId="countryBattle" name="gameMode" :value="2" @change="gameFlowManager?.updateGameMode('CountryBattle')" />
+                        <label for="countryBattle" class="ml-2">CountryBattle</label>
                     </div>
                 </div>
             </div>
@@ -83,6 +83,7 @@
 const lobby_settings = useLobbySettings();
 const timer_slider = ref();
 const score_factor = ref();
+const gameFlowManager = useGameFlowManager();
 
 onMounted(() => {
     score_factor.value.oninput = function () {

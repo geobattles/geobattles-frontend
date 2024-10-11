@@ -1,31 +1,33 @@
-import type { Coordinates, TotalResults, ResultsInfo, Results } from "~/types";
+import type { Coordinates, TotalResults, ResultsInfo, Results, GameMode, GameType } from "~/types";
+import { GameFlowManager, GameState } from "./GameFlowManager";
 
-export class BattleRoyale {
-    static poly_lines_array: Ref<google.maps.Polyline[]> = ref([]); // Array of polylines on the map
+export class BattleRoyale implements GameMode {
+    private gameFlowManager: GameFlowManager;
+    public gameType: GameType;
 
-    static startRound = () => {
-        useGameFlow().value = "STARTING"; // Change game flow state
-        setTimeout(() => (useGameFlow().value = "PLAYING"), 3000); // For 3 seconds countdown
+    constructor(gameFlowManager: GameFlowManager) {
+        this.gameFlowManager = gameFlowManager;
+        this.gameType = "BattleRoyale";
+    }
 
+    startRound(): void {
         const router = useRouter();
         const route_name = router.currentRoute.value.name as string;
 
-        if (!route_name.includes("gameplay")) router.push({ path: `/gameplay/BattleRoyale-${useLobbySettings().value.ID}` }); // Redirect to gameplay routes if not already there
-        else {
-            updatePanoramaView(Gameplay.searched_location_coords.value); // Update panorama view for next round
+        // Redirect to gampeplay route if not already there
+        if (!route_name.includes("gameplay")) {
+            router.push({ path: `/gameplay-${useLobbySettings().value.ID}` });
+        } else {
+            updatePanoramaView(this.gameFlowManager.searched_location_coords.value);
             isGoogleMap().setCenter({ lat: 0, lng: 0 });
             isGoogleMap().setZoom(2);
         }
 
-        // Clear Map before starting round
         removePolyLinesFromMap(true);
         removeMarkersFromMap(true);
-    };
+    }
 
-    static finishRound = (total_results: TotalResults, round_results: Results) => {
-        useGameFlow().value = "MID-ROUND"; // Change game flow state
-        console.log("Round finished"); //! Dev
-
+    finishRound(total_results: TotalResults, round_results: Results): void {
         // Apply total results
         useTotalResults().value = total_results;
         useTotalResults().value = Object.fromEntries(Object.entries(useTotalResults().value).sort(([, a], [, b]) => (b.total || 0) - (a.total || 0)));
@@ -33,7 +35,9 @@ export class BattleRoyale {
         removeMarkersFromMap(true); // Remove all markers from map
 
         // Add searched location marker
-        const marker = createSearchedLocationMarker(Gameplay.searched_location_coords.value);
+        console.log("Searched location coords:");
+        console.log(this.gameFlowManager.searched_location_coords.value);
+        const marker = createSearchedLocationMarker(this.gameFlowManager.searched_location_coords.value);
         useMapMarkers().value.push(marker); // Save marker to state
 
         // Draw player pins and polylines to searched location
@@ -41,7 +45,7 @@ export class BattleRoyale {
         for (const key in round_res) {
             if (Object.keys(round_res[key].location).length === 0) continue; // Skip if location object is empty
 
-            drawPolyLine(Gameplay.searched_location_coords.value, round_res[key].location);
+            drawPolyLine(this.gameFlowManager.searched_location_coords.value, round_res[key].location);
 
             const color = getPlayerColorByID(key);
             if (!color) throw new Error("Player color is not defined");
@@ -54,12 +58,21 @@ export class BattleRoyale {
         setTimeout(() => {
             this.setMapBounds(round_res);
         }, 300);
-    };
+    }
 
-    static processMapPin = (coordinates: Coordinates) => {
-        if (useGameFlow().value !== "PLAYING") return;
+    finishGame(): void {
+        removePolyLinesFromMap(true);
+        removeMarkersFromMap(true);
+    }
 
-        Gameplay.current_map_pin.value = coordinates; // Save current pin coordinates to state
+    // Keyword this wont work at start?
+    // Yes, this is true at the start. The 'this' keyword won't work as expected because this method is called by GoogleMap.addListener
+    processMapPin(coordinates: Coordinates): void {
+        const gameFlowManager = useGameFlowManager().value;
+        if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
+
+        if (gameFlowManager.currentState !== GameState.PLAYING) return;
+        gameFlowManager.current_map_pin.value = coordinates;
 
         const used_pins = useMapMarkers().value.length; // Number of guesses already made in current round
         const player_id = getPlayerIDFromName(usePlayerInfo().value.name);
@@ -67,7 +80,7 @@ export class BattleRoyale {
 
         // START OF PIN PLACEMENT LOGIC
         if (useResults().value[player_id].lives === 0) {
-            console.log("All lives are used!!"); // TODO: Make toast that all lives are used.
+            console.warn("All lives are used!!"); // TODO: Make toast that all lives are used.
             return;
         }
 
@@ -88,28 +101,31 @@ export class BattleRoyale {
             return;
         }
         // END OF PIN PLACEMENT LOGIC
-    };
+    }
+
+    // Implement other methods (finishRound, processMapPin, etc.) similarly
+    static poly_lines_array: Ref<google.maps.Polyline[]> = ref([]); // Array of polylines on the map
 
     /**
      * Function is used to set map bounds to fit all displayed markers.
      */
-    static setMapBounds = (round_results: Results) => {
+    setMapBounds(round_results: Results): void {
         let bounds = new google.maps.LatLngBounds();
 
         for (const key in round_results) {
             if (Object.keys(round_results[key].location).length === 0) continue; // Skip if location object is empty
             bounds.extend(round_results[key].location);
         }
-        bounds.extend(Gameplay.searched_location_coords.value);
+        bounds.extend(this.gameFlowManager.searched_location_coords.value);
 
         // Dont fit bounds if there is only one marker on map (only searched location marker)
         if (useMapMarkers().value.length === 1) {
-            isGoogleMap().setCenter(Gameplay.searched_location_coords.value);
+            isGoogleMap().setCenter(this.gameFlowManager.searched_location_coords.value);
             return;
         } else {
             if (bounds) fitCustomBounds(bounds, 50); // Fit all displayed markers bounds
         }
-    };
+    }
 
     /**
      * Function process new result sent from the server. It updates the results state and
@@ -118,9 +134,10 @@ export class BattleRoyale {
      * @param user_id - Player's ID whos result was sent
      * @param player_result - Object that contains information about player's processing result
      */
-    static processNewResult = (user_id: string, player_result: ResultsInfo) => {
+    processNewResult(user_id: string, player_result: ResultsInfo): void {
         const results = useResults().value; // Get results from state
         const leader_before = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID
+        console.log(results);
 
         if (player_result.baseScr < results[user_id]?.baseScr || (player_result.baseScr === 0 && player_result.distance > results[user_id].distance)) {
             // Update attempts and lives, not the score or distance
@@ -133,6 +150,6 @@ export class BattleRoyale {
 
         const new_leader = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID
 
-        Gameplay.applyGuessStyles(user_id, leader_before, new_leader);
-    };
+        GameFlowManager.applyGuessStyles(user_id, leader_before, new_leader);
+    }
 }

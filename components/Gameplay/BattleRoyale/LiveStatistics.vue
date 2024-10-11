@@ -1,6 +1,6 @@
 <template>
     <div class="statistics text-xs">
-        <TransitionGroup name="list" tag="ul">
+        <TransitionGroup name="list" tag="ul" class="flex flex-col gap-1">
             <div v-for="(value, index) in results" :key="index">
                 <div class="table__row" :id="index.toString()">
                     <div class="table__row-element flex flex-col">
@@ -42,8 +42,8 @@
 export default {
     setup() {
         const results = useResults();
-        const game_flow = useGameFlow();
         const total_attempts = ref(new Map<string | number, number>());
+        const gameFlowManager = useGameFlowManager();
 
         /**
          * Process distance to display in results table
@@ -66,7 +66,10 @@ export default {
         };
 
         // Watch game flow to create total attempts
-        watch(game_flow, (new_val) => (new_val === "PLAYING" ? createTotalAttempts() : null));
+        watch(
+            () => gameFlowManager.value?.currentState,
+            (new_val) => (new_val === "PLAYING" ? createTotalAttempts() : null)
+        );
 
         return { results, total_attempts, getPlayerColorByID, processDistance, getPlayerNameFromID };
     },

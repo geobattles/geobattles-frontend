@@ -1,22 +1,29 @@
-import type { Coordinates, ResultsInfo, TotalResults, Results } from "~/types";
+import type { Coordinates, ResultsInfo, TotalResults, Results, GameType } from "~/types";
+import type { GameMode } from "~/types";
+import { GameFlowManager, GameState } from "./GameFlowManager";
 
-export class CountryBattle {
-    static selected_country: string | undefined = undefined;
-    static selected_countries: string[] = [];
-    static searched_polygon: google.maps.Data | undefined = undefined;
-    // static total_attempts = new Map<string | number, number>();
+export class CountryBattle implements GameMode {
+    private gameFlowManager: GameFlowManager;
+    public gameType: GameType;
 
-    static startRound = () => {
-        useGameFlow().value = "STARTING"; // Change game flow state
-        setTimeout(() => (useGameFlow().value = "PLAYING"), 3000); // For 3 seconds countdown
+    constructor(gameFlowManager: GameFlowManager) {
+        this.gameFlowManager = gameFlowManager;
+        this.gameType = "CountryBattle";
+    }
 
+    private selected_country: string | undefined = undefined;
+    private selected_countries: string[] = [];
+    private searched_polygon: google.maps.Data | undefined = undefined;
+
+    startRound(): void {
         const router = useRouter();
-        const route_name = router.currentRoute.value.name;
-        if (typeof route_name !== "string") throw new Error("Route name is not defined in startRound function.");
+        const route_name = router.currentRoute.value.name as string;
 
-        if (!route_name.includes("gameplay")) router.push({ path: `/gameplay/CountryBattle-${useLobbySettings().value.ID}` }); // Redirect to gameplay routes if not already there
-        else {
-            updatePanoramaView(Gameplay.searched_location_coords.value); // Update panorama view for next round
+        // Redirect to gameplay routes if not already there
+        if (!route_name.includes("gameplay")) {
+            router.push({ path: `/gameplay-${useLobbySettings().value.ID}` });
+        } else {
+            updatePanoramaView(this.gameFlowManager.searched_location_coords.value); // Update panorama view for next round
             isGoogleMap().setCenter({ lat: 0, lng: 0 });
             isGoogleMap().setZoom(2);
 
@@ -25,13 +32,19 @@ export class CountryBattle {
             addMapClickListener(this.processMapPin); // Add click listener to map as it is somehow removed the initial one in onMounted hook
         }
 
+        removePolyLinesFromMap(true);
+        removeMarkersFromMap(true);
+
         // const results = useResults(); // Get results from state
         // for (const player_id in results.value) this.total_attempts.set(player_id, results.value[player_id].lives);
-    };
+    }
 
-    static processMapPin = (coordinates: Coordinates) => {
-        if (useGameFlow().value !== "PLAYING") return;
-        Gameplay.current_map_pin.value = coordinates; // Save current pin coordinates to state
+    processMapPin(coordinates: Coordinates): void {
+        const gameFlowManager = useGameFlowManager().value;
+        if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
+
+        if (gameFlowManager.currentState !== GameState.PLAYING) return;
+        gameFlowManager.current_map_pin.value = coordinates; // Save current pin coordinates to state
 
         const socket_message = {
             command: "loc_to_cc",
@@ -40,14 +53,14 @@ export class CountryBattle {
 
         const socketConnection = useSocketConnection().value;
         if (socketConnection) socketConnection.send(JSON.stringify(socket_message));
-    };
+    }
 
     /**
      * Method will draw a polygon of the country on a GoogleMap
      * @param polygon Arrays of coordinates to be passed to geojson.
      * @param country_code Country code
      */
-    static processClickedCountry = (polygon: any, country_code: string) => {
+    processClickedCountry(polygon: any, country_code: string): void {
         const player_id = usePlayerInfo().value.ID;
         const results = useResults().value;
         if (!player_id) throw new Error("Player ID is not defined");
@@ -75,31 +88,21 @@ export class CountryBattle {
         if (!results[player_id] || results[player_id].lives > 0) {
             const map_instance = isGoogleMap();
             map_instance.data.forEach((e) => {
-                //@ts-ignore
-                if (this.selected_country === e.Gg.id) map_instance.data.remove(e);
+                // @ts-ignore
+                if (this.selected_country === e.Fg.id) map_instance.data.remove(e); // TODO: This is updated regulary by Google so should be changed somehow
             });
             this.drawCountryPolygon(polygon, country_code);
             this.selected_country = country_code; // Set new selected_country
             return;
         }
-    };
-
-    /**
-     * @returns Number of drawn polygons on the map
-     */
-    static numberOfDrawnPolygons = () => {
-        const map_instance = isGoogleMap();
-        let count = 0;
-        map_instance.data.forEach(() => count++);
-        return count;
-    };
+    }
 
     /**
      * Method will process new results from server and update results state.
      * @param user
      * @param player_result
      */
-    static processNewResult = (user: string, player_result: ResultsInfo) => {
+    processNewResult(user: string, player_result: ResultsInfo): void {
         const results = useResults().value; // Get results from state
 
         // Remove click event listner if player guessed country or ran out of lives
@@ -119,7 +122,7 @@ export class CountryBattle {
         // Create or update player countries array
         if (!results[user].player_countries) results[user].player_countries = [player_result.cc];
         else results[user].player_countries.push(player_result.cc);
-    };
+    }
 
     /**
      * Method is called when round is finished. It processes total results and round results.
@@ -128,9 +131,7 @@ export class CountryBattle {
      * @param round_results
      * @param polygon Coordinates of the searched polygon.
      */
-    static finishRound = (total_results: TotalResults, round_results: Results, polygon: any) => {
-        useGameFlow().value = "MID-ROUND"; // Change game flow state
-
+    finishRound(total_results: TotalResults, round_results: Results, polygon: any): void {
         // Apply total results
         useTotalResults().value = total_results;
         useTotalResults().value = Object.fromEntries(Object.entries(useTotalResults().value).sort(([, a], [, b]) => (b.total || 0) - (a.total || 0)));
@@ -138,13 +139,31 @@ export class CountryBattle {
         this.displaySearchedPolygon(polygon);
         this.selected_country = undefined;
         this.selected_countries = [];
-    };
+    }
+
+    finishGame(): void {
+        this.deleteAllPolygons();
+        if (this.searched_polygon) {
+            this.searched_polygon.setMap(null);
+            this.searched_polygon = undefined;
+        }
+    }
+
+    /**
+     * @returns Number of drawn polygons on the map
+     */
+    private numberOfDrawnPolygons(): number {
+        const map_instance = isGoogleMap();
+        let count = 0;
+        map_instance.data.forEach(() => count++);
+        return count;
+    }
 
     /**
      * Method draws new polygon to the existing google map.
      * @param {*} polygon_coordinates
      */
-    static drawCountryPolygon = (polygon_coordinates: any, country: string) => {
+    private drawCountryPolygon(polygon_coordinates: any, country: string): void {
         let geo_json = {
             type: "Feature",
             geometry: {
@@ -159,12 +178,12 @@ export class CountryBattle {
 
         geo_json.properties.id = country;
         addGeoJSON(geo_json);
-    };
+    }
 
     /**
      * Function draws winner polygon on the map after every round. It also zooms in on the polygon.
      */
-    static displaySearchedPolygon = (polygon_coordinates: any) => {
+    private displaySearchedPolygon(polygon_coordinates: any): void {
         // Declare new polygon
         this.searched_polygon = new google.maps.Data();
 
@@ -200,13 +219,13 @@ export class CountryBattle {
             fitCustomBounds(bounds, 300);
             isGoogleMap().setCenter(bounds.getCenter());
         }, 1000);
-    };
+    }
 
-    static deleteAllPolygons = () => {
+    private deleteAllPolygons(): void {
         const map_instance = isGoogleMap();
         map_instance.data.forEach((e) => {
             map_instance.data.remove(e);
         });
         if (this.searched_polygon) this.searched_polygon.setMap(null);
-    };
+    }
 }

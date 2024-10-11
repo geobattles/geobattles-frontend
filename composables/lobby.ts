@@ -5,8 +5,16 @@ export const useLobbySettings = () => useState<LobbyInfo>("lobby_settings", () =
 export const useLobbySettingsOriginal = () => useState<LobbyInfo>("lobby_settings_original", () => ({} as LobbyInfo));
 export const useLobbyList = () => useState<string[]>("lobby_list", () => []);
 export const useModifySettingsModal = () => useState<boolean>("modify_settings_modal", () => false);
-export const useGameType = () => useState<GameType>("game_type", () => undefined);
-export const useGameFlow = () => useState<GameFlow>("game_flow", () => undefined);
+
+import { GameFlowManager } from "./GameFlowManager";
+export const useGameFlowManager = () => useState<GameFlowManager | null>("gameFlowManager", () => null);
+
+export const initGameFlowManager = (gameType: GameType) => {
+    const gameFlowManager = useGameFlowManager();
+    if (!gameFlowManager.value) {
+        gameFlowManager.value = new GameFlowManager(gameType);
+    }
+};
 
 /**
  * Function handles lobby creation
@@ -155,10 +163,16 @@ const updateNestedLobbySettings = (lobby_info: LobbyInfo) => {
     lso.value = structuredClone(lobby_info);
     lso.value.conf = structuredClone(lobby_info.conf);
 
-    // Define gametype
-    if (ls.value.conf.mode === 1) useGameType().value = "BattleRoyale";
-    else if (ls.value.conf.mode === 2) useGameType().value = "CountryBattle";
-    else useGameType().value = undefined;
+    const gameFlowManager = useGameFlowManager().value;
+    if (gameFlowManager) {
+        if (ls.value.conf.mode === 1) {
+            gameFlowManager.updateGameMode("BattleRoyale");
+        } else if (ls.value.conf.mode === 2) {
+            gameFlowManager.updateGameMode("CountryBattle");
+        } else {
+            console.warn("Unknown game mode");
+        }
+    }
 };
 
 export const fetchLobbyList = async () => {

@@ -24,26 +24,22 @@ export const initializeSocketConnection = (lobby_id: string): Promise<WebSocket>
         useSocketConnection().value = socket;
 
         const playerInfo = usePlayerInfo();
-        const gameFlow = useGameFlow();
 
         socket.onopen = () => {
             console.log("WebSocket connection established");
             playerInfo.value.isConnectedToLobby = true; // Set user state to connected
-            gameFlow.value = "WAITING";
             resolve(socket);
         };
 
         socket.onerror = (error) => {
             console.error("WebSocket error:", error);
             playerInfo.value.isConnectedToLobby = false; // Set user state to disconnected
-            gameFlow.value = undefined;
             reject(error);
         };
 
         socket.onclose = () => {
             console.log("WebSocket connection closed");
             playerInfo.value.isConnectedToLobby = false; // Set user state to disconnected
-            gameFlow.value = undefined;
             // TODO: Implement reconnection logic here
         };
 
@@ -145,45 +141,66 @@ function handleUpdatedLobby(data: MsgUpdatedLobbyData) {
     fetchLobbySettings(data.lobby);
 }
 
+/**
+ * This function is called when a START_ROUND message is received from the server.
+ * It sets up the new searched location for the round and inits the frontend results
+ * based on the players of the lobby aka data.players.
+ *
+ * @param data - The data received from the START_ROUND message
+ */
 function handleStartRound(data: MsgStartRoundData) {
-    if (!data.location || !data.players) {
-        console.error("Missing data in START_ROUND message", data);
-        return;
-    }
-    Gameplay.searched_location_coords.value = data.location; // Set new search location
+    if (!data.location || !data.players) return console.error("Missing data in START_ROUND message", data);
+
+    const gameFlowManager = useGameFlowManager().value;
+    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
+    gameFlowManager.searched_location_coords.value = data.location;
     useResults().value = data.players; // Set new player results for live statistics
 
-    const gameType = useGameType().value;
-    if (gameType === "CountryBattle") {
-        CountryBattle.startRound();
-    } else if (gameType === "BattleRoyale") {
-        BattleRoyale.startRound();
+    const gameType = gameFlowManager.gameMode.gameType;
+    switch (gameType) {
+        case "CountryBattle":
+            gameFlowManager.startRound();
+            break;
+        case "BattleRoyale":
+            gameFlowManager.startRound();
+            break;
+        default:
+            console.warn(`Unhandled game type: ${gameType}`);
     }
+
+    // Log the start of the new round
+    console.log(`New round started. Game type: ${gameType}, Players:`, data.players);
 }
 
 function handleNewResult(data: MsgNewResultData) {
     if (!data.playerRes || !data.user) return console.error("Missing data in NEW_RESULT message", data);
+    const gameFlowManager = useGameFlowManager().value;
+    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
-    const gameType = useGameType().value;
+    const gameType = gameFlowManager.gameMode.gameType;
     if (gameType === "BattleRoyale") {
-        BattleRoyale.processNewResult(data.user, data.playerRes);
+        gameFlowManager.processNewResult(data.user, data.playerRes);
     } else if (gameType === "CountryBattle") {
-        CountryBattle.processNewResult(data.user, data.playerRes);
+        gameFlowManager.processNewResult(data.user, data.playerRes);
     }
 }
 
 function handleRoundResult(data: MsgRoundResultData) {
     if (!data.totalResults || !data.roundRes) return console.error("Missing data in ROUND_RESULT message", data);
+    const gameFlowManager = useGameFlowManager().value;
+    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
-    const gameType = useGameType().value;
-    if (gameType === "BattleRoyale") {
-        BattleRoyale.finishRound(data.totalResults, data.roundRes);
-    } else if (gameType === "CountryBattle") {
-        if (!data.polygon) {
-            console.error("Missing polygon data in ROUND_RESULT message for CountryBattle", data);
-            return;
-        }
-        CountryBattle.finishRound(data.totalResults, data.roundRes, data.polygon);
+    const gameType = gameFlowManager.gameMode.gameType;
+    switch (gameType) {
+        case "BattleRoyale":
+            gameFlowManager.finishRound(data.totalResults, data.roundRes);
+            break;
+        case "CountryBattle":
+            if (!data.polygon) return console.error("Missing polygon data in ROUND_RESULT message for CountryBattle", data);
+            gameFlowManager.finishRound(data.totalResults, data.roundRes, data.polygon);
+            break;
+        default:
+            console.warn(`Unhandled game type in handleRoundResult: ${gameType}`);
     }
 }
 
@@ -196,19 +213,25 @@ function handleRoundFinished(data: MsgRoundFinishedData) {
 }
 
 function handleCC(data: MsgCCData) {
+    const gameFlowManager = useGameFlowManager().value;
+    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
+
     if (!data.polygon || !data.cc) {
         console.error("Missing data in CC message", data);
         return;
     }
-    CountryBattle.processClickedCountry(data.polygon, data.cc);
+
+    const gameType = gameFlowManager.gameMode.gameType;
+    if (gameType === "CountryBattle") gameFlowManager.gameMode.processClickedCountry?.(data.polygon, data.cc);
 }
 
 function handleGameEnd(data: MsgGameEndData) {
-    if (!data.totalResults) {
-        console.error("Missing data in GAME_END message", data);
-        return;
-    }
-    useGameFlow().value = "FINISHED";
+    if (!data.totalResults) return console.error("Missing data in GAME_END message", data);
+
+    const gameFlowManager = useGameFlowManager().value;
+    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
+
+    gameFlowManager.finishGame();
     // TODO: Process endgame results and display them
 }
 

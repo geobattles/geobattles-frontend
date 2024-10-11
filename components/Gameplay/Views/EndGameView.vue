@@ -6,21 +6,26 @@
             </div>
         </div>
         <div class="endgame-menu">
-            <Button type="button" label="NEXT GAME" />
+            <Button type="button" label="NEXT GAME" @click="gameFlowManager?.sendStartRoundSocketMessage" />
             <LobbyDisplaySettings />
+            <div style="text-align: center">
+                <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Settings" icon="pi pi-cog" badgeSeverity="contrast" outlined />
+            </div>
         </div>
+        <Dialog v-model:visible="modify_settings_modal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
+            <LobbyModifySettings />
+        </Dialog>
     </div>
 </template>
 
-<script lang="ts">
-export default {
-    setup() {
-        const total_results = useTotalResults();
+<script setup lang="ts">
+const total_results = useTotalResults();
+const modify_settings_modal = useModifySettingsModal();
+const gameFlowManager = useGameFlowManager();
 
-        onMounted(() => {});
-        return { total_results };
-    },
-};
+watch(modify_settings_modal, (newVal) => {
+    if (!newVal) applyLobbySettings();
+});
 </script>
 
 <style scoped>

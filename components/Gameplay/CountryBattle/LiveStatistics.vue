@@ -43,9 +43,9 @@
 export default {
     setup() {
         const results = useResults();
-        const game_flow = useGameFlow();
         const flag_map = useCountriesFlagMap();
         const total_attempts = ref(new Map<string | number, number>());
+        const gameFlowManager = useGameFlowManager();
 
         /**
          * Process distance to display in results table
@@ -68,7 +68,10 @@ export default {
         };
 
         // Watch game flow to create total attempts
-        watch(game_flow, (new_val) => (new_val === "PLAYING" ? createTotalAttempts() : null));
+        watch(
+            () => gameFlowManager.value?.currentState,
+            (new_val) => (new_val === "PLAYING" ? createTotalAttempts() : null)
+        );
 
         return { results, total_attempts, flag_map, processDistance };
     },

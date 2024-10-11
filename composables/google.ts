@@ -47,8 +47,8 @@ export const initalizeNewGoogleMap = (map_html: HTMLElement): void => {
  * provided function on every click.
  * @param processPin Function that processes pin when clicked on map.
  */
-export const addMapClickListener = (processPin: (coordinates: Coordinates) => void): void => {
-    isGoogleMap().addListener("click", (event: any) => {
+export const addMapClickListener = (processPin: (coordinates: Coordinates) => void): any => {
+    const listener = isGoogleMap().addListener("click", (event: any) => {
         // Process pin
         const clicked_coordinates: Coordinates = {
             lat: parseFloat(event.latLng.lat()),
@@ -58,6 +58,8 @@ export const addMapClickListener = (processPin: (coordinates: Coordinates) => vo
         // Process pin
         processPin(clicked_coordinates);
     });
+
+    return listener;
 };
 
 export const setMapZoom = (zoom: number) => isGoogleMap().setZoom(zoom);
@@ -70,9 +72,11 @@ export const removeMapEventListener = (type: string) => google.maps.event.clearL
 /// GOOGLE PANORAMA ///
 export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): void => {
     if (!panorama_html) throw new Error("Panorama html element is not defined");
+    const gameFlowManager = useGameFlowManager().value;
+    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
     useGooglePanorama().value = new google.maps.StreetViewPanorama(panorama_html as HTMLElement, {
-        position: Gameplay.searched_location_coords.value,
+        position: gameFlowManager.searched_location_coords.value,
         pov: {
             heading: 34,
             pitch: 10,
@@ -116,7 +120,15 @@ export const createSearchedLocationMarker = (coordinates: Coordinates) => {
     const marker = new google.maps.Marker({
         position: coordinates,
         title: "Searched location",
-        icon: "map-icons/location.svg",
+        icon: {
+            path: "M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 256c-35.3 0-64-28.7-64-64s28.7-64 64-64s64 28.7 64 64s-28.7 64-64 64z",
+            fillColor: "black",
+            fillOpacity: 1,
+            anchor: new google.maps.Point(192, 512),
+            strokeWeight: 1,
+            strokeColor: "#000000",
+            scale: 0.07,
+        },
     });
     marker.setMap(isGoogleMap());
     return marker;

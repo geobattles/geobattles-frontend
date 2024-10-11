@@ -76,3 +76,14 @@ interface TotalResultInfo extends ResultInfo {
 type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINISHED" | undefined; // Undefined when not connected to a lobby (socket)
 
 type GameType = "BattleRoyale" | "CountryBattle" | undefined; // Undefined when not connected to a lobby (socket)
+
+interface GameMode {
+    startRound(): void;
+    finishRound(totalResults: TotalResults, roundResults: Results, polygon?: any): void;
+    finishGame(): void;
+    processMapPin(coordinates: Coordinates): void;
+    processNewResult(user: string, player_result: ResultsInfo): void;
+    processClickedCountry?(polygon: any, country_code: string): void;
+    gameType: GameType;
+    // Add other common methods here
+}

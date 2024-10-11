@@ -5,7 +5,7 @@
                 <GameplayTotalStatistics />
             </div>
             <div class="midround-menu">
-                <Button @click="next_round" label="Next Round" icon="pi pi-forward" severity="warning" outlined />
+                <Button v-if="isPlayerAdmin()" @click="gameFlowManager?.sendStartRoundSocketMessage" label="Next Round" icon="pi pi-forward" severity="warning" outlined />
             </div>
         </div>
         <div class="google-map-window">
@@ -17,12 +17,12 @@
 <script lang="ts">
 export default {
     setup() {
+        const gameFlowManager = useGameFlowManager();
+        if (!gameFlowManager.value) throw new Error("GameFlowManager is not initialized");
         const total_results = useTotalResults();
-        const next_round = Gameplay.nextRound;
-        const game_type = useGameType();
 
         onMounted(() => {});
-        return { total_results, next_round, game_type };
+        return { total_results, gameFlowManager };
     },
 };
 </script>
