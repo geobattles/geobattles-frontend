@@ -4,7 +4,7 @@
             <span>Loading...</span>
             <ProgressSpinner />
         </div>
-        <div ref="vue_app">
+        <div id="my_vue_app" ref="vue_app">
             <NuxtPage />
         </div>
     </div>
@@ -39,6 +39,22 @@ export default {
 
         const is_loading = ref(true);
         const nuxtApp = useNuxtApp();
+
+        const toggleFullscreen = () => {
+            const elem = vue_app.value;
+            if (elem) {
+                if (!document.fullscreenElement) {
+                    elem.requestFullscreen().catch((err) => {
+                        console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                    });
+                } else {
+                    document.exitFullscreen().catch((err) => {
+                        console.error(`Error attempting to exit full-screen mode: ${err.message} (${err.name})`);
+                    });
+                }
+            }
+        };
+        toggleFullscreen();
 
         onBeforeMount(() => {
             nuxtApp.hooks.hook("page:start", () => {

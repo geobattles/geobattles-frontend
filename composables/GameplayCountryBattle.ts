@@ -143,10 +143,6 @@ export class CountryBattle implements GameMode {
 
     finishGame(): void {
         this.deleteAllPolygons();
-        if (this.searched_polygon) {
-            this.searched_polygon.setMap(null);
-            this.searched_polygon = undefined;
-        }
     }
 
     /**
@@ -222,10 +218,17 @@ export class CountryBattle implements GameMode {
     }
 
     private deleteAllPolygons(): void {
+        // Clear all drawn polygons from the map
         const map_instance = isGoogleMap();
         map_instance.data.forEach((e) => {
             map_instance.data.remove(e);
         });
-        if (this.searched_polygon) this.searched_polygon.setMap(null);
+
+        // Clear searched polygon
+        if (this.searched_polygon) {
+            this.searched_polygon.forEach((feature) => {
+                this.searched_polygon?.remove(feature);
+            });
+        }
     }
 }

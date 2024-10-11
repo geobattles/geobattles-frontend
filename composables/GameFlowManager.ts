@@ -23,8 +23,6 @@ export class GameFlowManager {
     private uiManager: UIManager;
 
     constructor(gameType: GameType) {
-        console.log("GameFlowManager CONTRUCTED"); //! Dev
-
         this.currentState = GameState.WAITING;
         this.gameMode = this.createGameMode(gameType);
         this.currentMapPin = ref({} as Coordinates);
@@ -46,7 +44,7 @@ export class GameFlowManager {
     updateGameMode(newGameType: GameType): void {
         if (this.gameMode.gameType !== newGameType) {
             this.gameMode = this.createGameMode(newGameType);
-            console.log(`Game mode updated to: ${newGameType}`);
+            console.info(`Game mode updated to: ${newGameType}`);
 
             // Reset game state
             if (this.currentState !== GameState.FINISHED) this.setGameState(GameState.WAITING);
@@ -75,6 +73,8 @@ export class GameFlowManager {
      * Method is used when we receive a new round message from the server.
      */
     startRound(): void {
+        console.info(`Starting new ${this.gameMode.gameType} round.`);
+
         this.setGameState(GameState.STARTING); // Change game flow state
         setTimeout(() => this.setGameState(GameState.PLAYING), 3000); // For 3 seconds countdown
 
@@ -83,17 +83,20 @@ export class GameFlowManager {
 
         // Set new click listener after 3 seconds countdown
         setTimeout(() => {
-            console.log("SETTING ENW CLICK LISTENER for game mode", this.gameMode.gameType); //! Dev
             this.setMapClickEventListener();
         }, 3000);
     }
 
     finishRound(total_results: TotalResults, round_results: Results, polygon?: any): void {
+        console.info(`Finsihing gameplay round.`);
+
         this.setGameState(GameState.MID_ROUND); // Change game flow state
         this.gameMode.finishRound(total_results, round_results, polygon);
     }
 
     finishGame(): void {
+        console.info(`Finishing gameplay.`);
+
         this.setGameState(GameState.FINISHED);
         this.gameMode.finishGame();
 

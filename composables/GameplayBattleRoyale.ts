@@ -135,7 +135,6 @@ export class BattleRoyale implements GameMode {
     processNewResult(user_id: string, player_result: ResultsInfo): void {
         const results = useResults().value; // Get results from state
         const leader_before = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID
-        console.log(results);
 
         if (player_result.baseScr < results[user_id]?.baseScr || (player_result.baseScr === 0 && player_result.distance > results[user_id].distance)) {
             // Update attempts and lives, not the score or distance
