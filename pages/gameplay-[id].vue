@@ -1,5 +1,6 @@
 <template>
     <div>
+        <ConnectionStatus />
         <GameplayViewsCountdownView v-if="gameFlowManager?.currentState === 'STARTING'" />
         <div id="gameplay_container">
             <!-- BAR TIMER -->

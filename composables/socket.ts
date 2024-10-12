@@ -1,5 +1,6 @@
 import type { SocketMessage, MsgJoinedLobbyData, MsgLeftLobbyData, MsgUpdatedLobbyData, MsgStartRoundData, MsgNewResultData, MsgRoundResultData, MsgCCData, MsgGameEndData, MsgTimesUpData, MsgRoundFinishedData, MsgNoCountryData } from "~/types/socketTypes"; // Adjust the path according to your project structure
 import { SocketType } from "~/types/socketTypes"; // Adjust the path according to your project structure
+import { useConnectionStatus } from "./socketConnectionStatus";
 
 // Define default socket connection state
 export const useSocketConnection = () => useState<WebSocket | null>("socket_connection", () => null);
@@ -11,48 +12,85 @@ export const useSocketConnection = () => useState<WebSocket | null>("socket_conn
  */
 export const initializeSocketConnection = (lobby_id: string): Promise<WebSocket> => {
     return new Promise((resolve, reject) => {
-        const backendAPI = useBackendAPI().value;
-        if (!backendAPI) return reject(new Error("Backend API is undefined"));
+        const { setConnected, setReconnecting } = useConnectionStatus()
+        const MAX_RECONNECT_ATTEMPTS = 5
+        const INITIAL_RECONNECT_DELAY = 1000 // 1 second
+        let reconnectAttempts = 0
+        let reconnectTimeout: number | null = null
 
-        const apiUrl = backendAPI.replace(/(http)(s)?:\/\//, "ws$2://");
-        const lobbyId = encodeURIComponent(lobby_id);
-        const playerName = encodeURIComponent(usePlayerInfo().value.name);
-        const socketUrl = `${apiUrl}/lobbySocket?id=${lobbyId}&name=${playerName}`;
-        const socket = new WebSocket(socketUrl);
+        const connect = () => {
+            const backendAPI = useBackendAPI().value;
+            if (!backendAPI) return reject(new Error("Backend API is undefined"));
 
-        // Save socket connection to state
-        useSocketConnection().value = socket;
+            const apiUrl = backendAPI.replace(/(http)(s)?:\/\//, "ws$2://");
+            const lobbyId = encodeURIComponent(lobby_id);
+            const playerName = encodeURIComponent(usePlayerInfo().value.name);
+            const socketUrl = `${apiUrl}/lobbySocket?id=${lobbyId}&name=${playerName}`;
+            const socket = new WebSocket(socketUrl);
 
-        const playerInfo = usePlayerInfo();
+            useSocketConnection().value = socket;
+            const playerInfo = usePlayerInfo();
 
-        socket.onopen = () => {
-            console.log("WebSocket connection established");
-            playerInfo.value.isConnectedToLobby = true; // Set user state to connected
-            resolve(socket);
-        };
+            socket.onopen = () => {
+                console.log("WebSocket connection established");
+                playerInfo.value.isConnectedToLobby = true;
+                setConnected(true)
+                resolve(socket);
+            };
 
-        socket.onerror = (error) => {
-            console.error("WebSocket error:", error);
-            playerInfo.value.isConnectedToLobby = false; // Set user state to disconnected
-            reject(error);
-        };
+            socket.onerror = (error) => {
+                console.error("WebSocket error:", error);
+                playerInfo.value.isConnectedToLobby = false;
+                setConnected(false)
+            };
 
-        socket.onclose = () => {
-            console.log("WebSocket connection closed");
-            playerInfo.value.isConnectedToLobby = false; // Set user state to disconnected
-            // TODO: Implement reconnection logic here
-        };
+            socket.onclose = (event) => {
+                console.log("WebSocket connection closed");
+                playerInfo.value.isConnectedToLobby = false;
+                setConnected(false)
+                if (!event.wasClean) {
+                    attemptReconnect();
+                }
+            };
 
-        socket.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                console.log("Received WebSocket message:", data); //! Dev
+            socket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log("Received WebSocket message:", data); //! Dev
 
-                parseSocketMessage(data);
-            } catch (e) {
-                console.error("Error parsing WebSocket message:", e);
+                    parseSocketMessage(data);
+                } catch (e) {
+                    console.error("Error parsing WebSocket message:", e);
             }
         };
+        };
+
+        const attemptReconnect = () => {
+            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+                reconnectAttempts++;
+                setReconnecting(true)
+                console.warn(`Reconnection attempt ${reconnectAttempts} of ${MAX_RECONNECT_ATTEMPTS}`);
+                const delay = INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
+                reconnectTimeout = setTimeout(() => connect(), delay) as unknown as number;
+            } else {
+                console.warn("Max reconnection attempts reached. Stopping reconnection.");
+                setReconnecting(false);
+                // TODO: Here we might want to show a message to the user or redirect them
+            }
+        };
+
+        // TODO: Needs to be implemented from server side as well
+        const startHeartbeat = (socket: WebSocket) => {
+            const heartbeatInterval = setInterval(() => {
+                if (socket.readyState === WebSocket.OPEN) {
+                    socket.send(JSON.stringify({ type: 'heartbeat' }));
+                } else {
+                    clearInterval(heartbeatInterval);
+                }
+            }, 30000); // Send heartbeat every 30 seconds
+        };
+
+        connect();
     });
 };
 

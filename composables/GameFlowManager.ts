@@ -115,8 +115,7 @@ export class GameFlowManager {
             location: this.currentMapPin.value,
         };
 
-        const socket = useSocketConnection().value;
-        if (socket) socket.send(JSON.stringify(socket_message));
+        sendSocketMessage(socket_message);
     }
 
     setMapClickEventListener(): void {
