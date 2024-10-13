@@ -1,11 +1,6 @@
-import { ref, watch, reactive } from "vue";
-import type { Ref } from "vue";
-import { BattleRoyale } from "./GameplayBattleRoyale";
+import { BattleRoyale } from "../composables/GameplayBattleRoyale";
 import type { GameType, GameFlow, Coordinates, Results, TotalResults, ResultsInfo, GameMode } from "~/types";
 import { UIManager } from "./UIManager";
-
-export const useResults = () => useState<Results>("live_results", () => ({} as Results));
-export const useTotalResults = () => useState<TotalResults>("total_results", () => ({} as TotalResults));
 
 export enum GameState {
     WAITING = "WAITING",
@@ -62,11 +57,12 @@ export class GameFlowManager {
      * that lobby admin would like to start a new round.
      */
     sendStartRoundSocketMessage(): void {
+        console.log("Sending start round message");
         const game = {
             command: "start",
         };
-        const socket = useSocketConnection().value;
-        if (socket) socket.send(JSON.stringify(game));
+        const { sendMessage } = useWebSocket();
+        if (sendMessage) sendMessage(game);
     }
 
     /**
@@ -115,7 +111,8 @@ export class GameFlowManager {
             location: this.currentMapPin.value,
         };
 
-        sendSocketMessage(socket_message);
+        const { sendMessage } = useWebSocket();
+        if (sendMessage) sendMessage(socket_message);
     }
 
     setMapClickEventListener(): void {

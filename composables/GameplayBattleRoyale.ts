@@ -1,5 +1,5 @@
 import type { Coordinates, TotalResults, ResultsInfo, Results, GameMode, GameType } from "~/types";
-import { GameFlowManager, GameState } from "./GameFlowManager";
+import { GameFlowManager, GameState } from "../services/GameFlowManager";
 
 export class BattleRoyale implements GameMode {
     private gameFlowManager: GameFlowManager;

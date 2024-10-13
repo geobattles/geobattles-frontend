@@ -17,7 +17,6 @@ export default {
 
         // Read ENV variables
         const runtimeConfig = useRuntimeConfig();
-        console.log("App.vue was SSR-ed"); //! Dev
         const script = `https://maps.googleapis.com/maps/api/js?key=${runtimeConfig.public.GMAPS_API}&v=weekly&loading=async`;
 
         useHead({
@@ -29,7 +28,6 @@ export default {
 
         onMounted(() => {
             const saved_username = useCookie("saved_username");
-            console.log("saved_username: ", saved_username.value); //! Dev
             if (typeof saved_username.value === "string") usePlayerInfo().value.name = saved_username.value;
 
             const img = new Image();

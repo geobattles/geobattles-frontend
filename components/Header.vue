@@ -11,9 +11,9 @@
                 </a>
             </template>
             <template #end>
-                <div class="flex flex-col">
-                    <InputText id="username" v-model="usePlayerInfo().value.name" @blur="saveUsernameToCookies" placeholder="Username" aria-describedby="username-help" size="small" />
-                    <small id="username-help">Enter your username.</small>
+                <div class="flex flex-wrap gap-2">
+                    <InputText id="username" v-model="usePlayerInfo().value.name" @blur="saveUsernameToCookies" placeholder="Username" aria-describedby="username-help" size="small" :invalid="!usePlayerInfo().value.name" />
+                    <Message v-if="!usePlayerInfo().value.name" severity="error" icon="pi pi-times-circle" />
                 </div>
             </template>
         </Menubar>

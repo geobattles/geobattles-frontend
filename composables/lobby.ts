@@ -1,4 +1,6 @@
-import type { LobbyInfo, GameType, GameFlow } from "~/types";
+import type { LobbyInfo, Results, TotalResults } from "~/types";
+import { WebSocketService } from "~/services/WebSocketService";
+import { useToast } from "primevue/usetoast";
 
 // LOBBY STATES
 export const useLobbySettings = () => useState<LobbyInfo>("lobby_settings", () => ({} as LobbyInfo));
@@ -6,15 +8,8 @@ export const useLobbySettingsOriginal = () => useState<LobbyInfo>("lobby_setting
 export const useLobbyList = () => useState<string[]>("lobby_list", () => []);
 export const useModifySettingsModal = () => useState<boolean>("modify_settings_modal", () => false);
 
-import { GameFlowManager } from "./GameFlowManager";
-export const useGameFlowManager = () => useState<GameFlowManager | null>("gameFlowManager", () => null);
-
-export const initGameFlowManager = (gameType: GameType) => {
-    const gameFlowManager = useGameFlowManager();
-    if (!gameFlowManager.value) {
-        gameFlowManager.value = new GameFlowManager(gameType);
-    }
-};
+export const useResults = () => useState<Results>("live_results", () => ({} as Results));
+export const useTotalResults = () => useState<TotalResults>("total_results", () => ({} as TotalResults));
 
 /**
  * Function handles lobby creation
@@ -24,32 +19,34 @@ export const createLobby = async () => {
     const lobby_settings = useLobbySettings();
     const router = useRouter();
 
-    // Define post parameters for lobby creation
     const lobby_post_params = {
-        name: player_info.value.name || "Player" + "'s Lobby",
-        roundTime: 30,
+        name: `${player_info.value.name}'s Lobby`,
+        roundTime: 100,
     };
 
-    const response = await fetch(`${useBackendAPI().value}/lobby`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ ...lobby_post_params }), // Empty body means gather today's data
-    });
+    try {
+        // Make post request to create lobby
+        const response = await fetch(`${useBackendAPI().value}/lobby`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(lobby_post_params),
+        });
+        if (!response.ok) throw new Error(`Failed to create lobby: ${response.statusText}`);
 
-    // Check if response is valid
-    if (!response.ok) {
-        throw new Error(response.statusText);
-    } else {
+        // Await for created lobby data
         lobby_settings.value = await response.json();
-        console.log(lobby_settings.value); //! Dev
 
-        // Initialize socket connection
-        initializeSocketConnection(lobby_settings.value.ID);
+        // Initialize WebSocket connection to created lobby
+        const { initializeWebSocket } = useWebSocket();
+        await initializeWebSocket(() => WebSocketService.getSocketUrl(lobby_settings.value.ID, player_info.value.name));
 
-        // On success redirect to lobby page
+        // Redirect to created lobby
         router.push({ path: `/lobby/${lobby_settings.value.ID}` });
+    } catch (error) {
+        console.error("Error creating lobby:", error);
+        throw error; // Re-throw the error for the caller to handle
     }
 };
 
@@ -62,21 +59,23 @@ export const createLobby = async () => {
 export const joinLobby = async (lobby_id: string) => {
     const router = useRouter();
     try {
-        await initializeSocketConnection(lobby_id); // Create socket connection
+        const { initializeWebSocket } = useWebSocket();
+        await initializeWebSocket(() => WebSocketService.getSocketUrl(lobby_id, usePlayerInfo().value.name));
         router.push({ path: `/lobby/${lobby_id}` });
     } catch (error: any) {
-        console.log(error.message); // Log socket error
+        console.error("Error joining lobby:", error);
         throw new Error("Could not connect to a lobby.");
     }
 };
 
 export const leaveLobby = () => {
     try {
-        usePlayerInfo().value.ID = undefined; // Reset player ID since user gets ID when he joins lobby only if ID in undefined !! // TODO: Should be fixed somehow from backend
-        closeSocketConnection();
+        usePlayerInfo().value.ID = undefined;
+        const { closeConnection } = useWebSocket();
+        closeConnection();
         usePlayerInfo().value.isConnectedToLobby = false;
     } catch (error: any) {
-        console.log(error.message); // Log socket error
+        console.log(error.message);
         throw new Error("Could not leave lobby.");
     }
 };
@@ -102,6 +101,18 @@ export const joinedLobby = (lobby_info: LobbyInfo, user_id: string) => {
  */
 export const leftLobby = (lobby_info: LobbyInfo, user_id: string) => {
     updateNestedLobbySettings(lobby_info);
+    const results = useResults();
+    const totalResults = useTotalResults();
+
+    // Remove player from live results
+    if (results.value[user_id]) {
+        delete results.value[user_id];
+    }
+
+    // Remove player from total results
+    if (totalResults.value[user_id]) {
+        delete totalResults.value[user_id];
+    }
 };
 
 /**
@@ -142,10 +153,8 @@ export const applyLobbySettings = () => {
         conf: { ...lso.value.conf },
     };
 
-    // console.log(settings); //! Dev
-    const socketConnection = useSocketConnection().value;
-    if (socketConnection) socketConnection.send(JSON.stringify(settings));
-    else console.error("Socket connection is null");
+    const { sendMessage } = useWebSocket();
+    sendMessage(settings);
 };
 
 /**

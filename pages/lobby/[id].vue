@@ -8,10 +8,20 @@
                     <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Settings" icon="pi pi-cog" badgeSeverity="contrast" outlined />
                 </div>
             </Panel>
-            <div class="basis-1/2 md:basis-1/3 text-xs">
+
+            <div class="basis-1/2 md:basis-1/3 text-sm md:text-base">
                 <Button v-if="isPlayerAdmin()" @click="gameFlowManager?.sendStartRoundSocketMessage" size="large" label="Start Game" icon="pi pi-play-circle" badgeSeverity="contrast" :disabled="start_disabled" />
                 <div v-else style="color: white">Waiting for admin to start the game</div>
-                <div class="lobby-code">Lobby code: {{ lobby_settings.ID }}</div>
+                <div class="flex justify-evenly mt-5">
+                    <div class="flex flex-col">
+                        <div class="mb-1">Lobby code</div>
+                        <div class="text-xl" style="letter-spacing: 2px">{{ lobby_settings.ID }}</div>
+                    </div>
+                    <div class="flex flex-col">
+                        <div class="mb-1">Connection Status</div>
+                        <ConnectionStatus />
+                    </div>
+                </div>
                 <LobbyPlayerList class="text-sm md:text-base m-auto mt-5" style="max-width: 350px; min-width: 250px" />
             </div>
         </div>
@@ -72,10 +82,5 @@ export default {
 .player-view {
     opacity: 0.7;
     pointer-events: none;
-}
-
-.lobby-code {
-    color: white;
-    margin-top: 30px;
 }
 </style>

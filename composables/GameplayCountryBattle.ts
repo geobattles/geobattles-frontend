@@ -1,6 +1,6 @@
 import type { Coordinates, ResultsInfo, TotalResults, Results, GameType } from "~/types";
 import type { GameMode } from "~/types";
-import { GameFlowManager, GameState } from "./GameFlowManager";
+import { GameFlowManager, GameState } from "../services/GameFlowManager";
 
 export class CountryBattle implements GameMode {
     private gameFlowManager: GameFlowManager;
@@ -51,8 +51,8 @@ export class CountryBattle implements GameMode {
             location: { ...coordinates },
         };
 
-        const socketConnection = useSocketConnection().value;
-        if (socketConnection) socketConnection.send(JSON.stringify(socket_message));
+        const { sendMessage } = useWebSocket();
+        sendMessage(socket_message);
     }
 
     /**

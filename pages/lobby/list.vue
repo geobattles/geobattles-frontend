@@ -1,26 +1,24 @@
 <template>
     <div>
         <Header />
-        <div class="main-content">
-            <div class="lobby-table">
-                <DataTable :value="Object.values(useLobbyList().value)" stripedRows size="small" style="font-size: 14px" :loading="is_table_loading">
-                    <template #header>
-                        <div class="flex flex-wrap align-items-center justify-content-between gap-2">
-                            <span class="text-xl text-900 font-bold">Active Lobbies</span>
-                            <Button @click="handleRefreshClick" icon="pi pi-refresh" rounded raised style="width: 30px; height: 30px; margin-left: auto" />
-                        </div>
+        <Panel class="main-content">
+            <DataTable :value="Object.values(useLobbyList().value)" class="text-xs md:text-base" size="small" :loading="is_table_loading">
+                <template #header>
+                    <div class="flex align-items-center">
+                        <span class="text-xl font-bold">Active Lobbies</span>
+                        <Button @click="handleRefreshClick" icon="pi pi-refresh" rounded raised style="width: 30px; height: 30px; margin-left: auto" />
+                    </div>
+                </template>
+                <Column field="conf.name" header="Name"></Column>
+                <Column field="conf.maxPlayers" header="Max. Players"></Column>
+                <Column field="numPlayers" header="Online"></Column>
+                <Column header="" style="text-align: right">
+                    <template #body="slotProps">
+                        <Button @click="handleJoinLobbyClick(slotProps.data.ID)" label="Join" size="small" />
                     </template>
-                    <Column field="conf.name" header="Name"></Column>
-                    <Column field="conf.maxPlayers" header="Max. Players"></Column>
-                    <Column field="numPlayers" header="Online"></Column>
-                    <Column field="conf.ID" header="" style="text-align: right">
-                        <template #body="slotProps" style="width: 50%">
-                            <Button @click="handleJoinLobbyClick(slotProps.data.ID)" label="Join" size="small" style="padding: 6px 14px; font-size: 12px" />
-                        </template>
-                    </Column>
-                </DataTable>
-            </div>
-        </div>
+                </Column>
+            </DataTable>
+        </Panel>
     </div>
 </template>
 
@@ -53,18 +51,10 @@ export default {
 
 <style scoped>
 .main-content {
-    text-align: center;
-    width: 95%;
     max-width: 800px;
-
     margin: auto;
-    border-radius: 10px;
+    background-color: var(--p-panel-background);
 
-    margin-top: 50px;
-    background-color: var(--surface-card);
-}
-
-.lobby-table {
-    padding: 20px;
+    margin-top: 3%;
 }
 </style>
