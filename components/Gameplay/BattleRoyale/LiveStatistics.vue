@@ -39,6 +39,7 @@
 </template>
 
 <script lang="ts">
+import { GameState } from "~/services/GameFlowManager";
 export default {
     setup() {
         const results = useResults();

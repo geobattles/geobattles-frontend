@@ -23,7 +23,7 @@
             <!-- Define lobby round timer section -->
             <div>
                 <span>Round timer: {{ lobby_settings.conf.roundTime || 60 }} seconds</span>
-                <Slider ref="timer_slider" v-model="lobby_settings.conf.roundTime" :min="1" :max="100" class="w-14rem mt-3" />
+                <Slider ref="timer_slider" v-model="lobby_settings.conf.roundTime" :min="1" :max="1000" class="w-14rem mt-3" />
             </div>
             <!-- Define lobby rounds, attempts and max players section -->
             <div class="flex flex-row flex-wrap justify-around gap-2">

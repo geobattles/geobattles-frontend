@@ -1,6 +1,7 @@
 <template>
     <div>
-        <ConnectionStatus />
+        <ConnectionStatus class="connection-status-container" />
+        <Toast />
         <GameplayViewsCountdownView v-if="gameFlowManager?.currentState === 'STARTING'" />
         <div id="gameplay_container">
             <!-- BAR TIMER -->
@@ -168,6 +169,17 @@ export default {
 
 .bar {
     position: relative;
+}
+
+.connection-status-container {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 9999;
+
+    background-color: var(--p-zinc-900);
+    border-radius: 10px;
+    padding: 0.5rem;
 }
 
 /* MOPBILE VIEW */

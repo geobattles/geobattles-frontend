@@ -1,4 +1,3 @@
-import type { Ref } from "vue";
 import { GameState } from "./GameFlowManager";
 
 export class UIManager {
@@ -98,5 +97,3 @@ export class UIManager {
         }
     }
 }
-
-export const useUIManager = () => useState<UIManager>("uiManager", () => new UIManager());

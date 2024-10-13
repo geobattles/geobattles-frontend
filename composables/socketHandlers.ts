@@ -1,117 +1,5 @@
-import type { SocketMessage, MsgJoinedLobbyData, MsgLeftLobbyData, MsgUpdatedLobbyData, MsgStartRoundData, MsgNewResultData, MsgRoundResultData, MsgCCData, MsgGameEndData, MsgTimesUpData, MsgRoundFinishedData, MsgNoCountryData } from "~/types/socketTypes"; // Adjust the path according to your project structure
+import type { MsgJoinedLobbyData, MsgLeftLobbyData, MsgUpdatedLobbyData, MsgStartRoundData, MsgNewResultData, MsgRoundResultData, MsgCCData, MsgGameEndData, MsgTimesUpData, MsgRoundFinishedData, MsgNoCountryData } from "~/types/socketTypes"; // Adjust the path according to your project structure
 import { SocketType } from "~/types/socketTypes"; // Adjust the path according to your project structure
-import { useConnectionStatus } from "./socketConnectionStatus";
-
-// Define default socket connection state
-export const useSocketConnection = () => useState<WebSocket | null>("socket_connection", () => null);
-
-/**
- * Initializes a WebSocket connection to the server and connects the player to a lobby.
- * @param lobby_id - The ID of the lobby to connect to.
- * @returns A promise that resolves with the WebSocket instance when connected.
- */
-export const initializeSocketConnection = (lobby_id: string): Promise<WebSocket> => {
-    return new Promise((resolve, reject) => {
-        const { setConnected, setReconnecting } = useConnectionStatus()
-        const MAX_RECONNECT_ATTEMPTS = 5
-        const INITIAL_RECONNECT_DELAY = 1000 // 1 second
-        let reconnectAttempts = 0
-        let reconnectTimeout: number | null = null
-
-        const connect = () => {
-            const backendAPI = useBackendAPI().value;
-            if (!backendAPI) return reject(new Error("Backend API is undefined"));
-
-            const apiUrl = backendAPI.replace(/(http)(s)?:\/\//, "ws$2://");
-            const lobbyId = encodeURIComponent(lobby_id);
-            const playerName = encodeURIComponent(usePlayerInfo().value.name);
-            const socketUrl = `${apiUrl}/lobbySocket?id=${lobbyId}&name=${playerName}`;
-            const socket = new WebSocket(socketUrl);
-
-            useSocketConnection().value = socket;
-            const playerInfo = usePlayerInfo();
-
-            socket.onopen = () => {
-                console.log("WebSocket connection established");
-                playerInfo.value.isConnectedToLobby = true;
-                setConnected(true)
-                resolve(socket);
-            };
-
-            socket.onerror = (error) => {
-                console.error("WebSocket error:", error);
-                playerInfo.value.isConnectedToLobby = false;
-                setConnected(false)
-            };
-
-            socket.onclose = (event) => {
-                console.log("WebSocket connection closed");
-                playerInfo.value.isConnectedToLobby = false;
-                setConnected(false)
-                if (!event.wasClean) {
-                    attemptReconnect();
-                }
-            };
-
-            socket.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    console.log("Received WebSocket message:", data); //! Dev
-
-                    parseSocketMessage(data);
-                } catch (e) {
-                    console.error("Error parsing WebSocket message:", e);
-            }
-        };
-        };
-
-        const attemptReconnect = () => {
-            if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-                reconnectAttempts++;
-                setReconnecting(true)
-                console.warn(`Reconnection attempt ${reconnectAttempts} of ${MAX_RECONNECT_ATTEMPTS}`);
-                const delay = INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
-                reconnectTimeout = setTimeout(() => connect(), delay) as unknown as number;
-            } else {
-                console.warn("Max reconnection attempts reached. Stopping reconnection.");
-                setReconnecting(false);
-                // TODO: Here we might want to show a message to the user or redirect them
-            }
-        };
-
-        // TODO: Needs to be implemented from server side as well
-        const startHeartbeat = (socket: WebSocket) => {
-            const heartbeatInterval = setInterval(() => {
-                if (socket.readyState === WebSocket.OPEN) {
-                    socket.send(JSON.stringify({ type: 'heartbeat' }));
-                } else {
-                    clearInterval(heartbeatInterval);
-                }
-            }, 30000); // Send heartbeat every 30 seconds
-        };
-
-        connect();
-    });
-};
-
-// Function to close the WebSocket connection and clean up
-export const closeSocketConnection = () => {
-    const socket = useSocketConnection().value;
-    if (socket) {
-        socket.close();
-        useSocketConnection().value = null;
-    }
-};
-
-// Function to send a message over the WebSocket connection
-export const sendSocketMessage = (message: any) => {
-    const socket = useSocketConnection().value;
-    if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify(message));
-    } else {
-        console.error("WebSocket is not open. Cannot send message:", message);
-    }
-};
 
 // Map SocketType to the corresponding message data types
 interface SocketMessageMap {
@@ -129,7 +17,7 @@ interface SocketMessageMap {
 }
 
 // Map of message handlers
-const messageHandlers: {
+export const messageHandlers: {
     [K in SocketType]: (data: SocketMessageMap[K]) => void;
 } = {
     [SocketType.JOINED_LOBBY]: handleJoinedLobby,
@@ -143,24 +31,6 @@ const messageHandlers: {
     [SocketType.CC]: handleCC,
     [SocketType.GAME_END]: handleGameEnd,
     [SocketType.NO_COUNTRY]: handleNoCountry,
-};
-
-// Function to parse and handle incoming socket messages
-const parseSocketMessage = (data: any) => {
-    const type = data.type; // Extract socket message type
-
-    if (isValidSocketType(type)) {
-        const handler = messageHandlers[type]; // Get the handler function for the message type
-        if (handler) handler(data); // Type assertion due to dynamic type at runtime
-        else console.warn(`No handler for socket message type: ${type}`);
-    } else {
-        console.warn(`Unknown socket message type: ${type}`);
-    }
-};
-
-// Function to check if a given string is a valid SocketType
-const isValidSocketType = (type: string): type is SocketType => {
-    return Object.values(SocketType).includes(type as SocketType);
 };
 
 // Implement handlers for each message type
