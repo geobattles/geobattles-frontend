@@ -73,7 +73,7 @@ export class BattleRoyale implements GameMode {
         gameFlowManager.currentMapPin.value = coordinates;
 
         const used_pins = useMapMarkers().value.length; // Number of guesses already made in current round
-        const player_id = getPlayerIDFromName(usePlayerInfo().value.name);
+        const player_id = usePlayerInfo().value.ID;
         if (!player_id) throw new Error("Player ID is not defined");
 
         // START OF PIN PLACEMENT LOGIC
@@ -85,7 +85,7 @@ export class BattleRoyale implements GameMode {
         // Place first pin if no pins yet, or if pins and submits are the same
         if (used_pins === 0 || useResults().value[player_id].attempt === used_pins) {
             // get player color from name
-            const color = getPlayerColorByName(usePlayerInfo().value.name);
+            const color = getPlayerColorByID(player_id);
             if (!color) throw new Error("Player color is not defined");
             const marker = addNewMapMarker(coordinates, color); // Create new marker
             useMapMarkers().value.push(marker); // Add marker to markers state
