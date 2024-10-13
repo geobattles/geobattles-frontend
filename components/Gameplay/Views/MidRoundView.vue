@@ -1,10 +1,10 @@
 <template>
     <div id="midround_container">
         <div class="midround-content">
-            <div class="total-result-table">
-                <GameplayTotalStatistics />
-            </div>
-            <div class="midround-menu">
+            <Panel class="mt-12" header="Total results">
+                <GameplayTotalStatistics class="text-sm md:text-base" />
+            </Panel>
+            <div class="mt-5 text-center">
                 <Button v-if="isPlayerAdmin()" @click="gameFlowManager?.sendStartRoundSocketMessage" label="Next Round" icon="pi pi-forward" severity="warning" outlined />
             </div>
         </div>
