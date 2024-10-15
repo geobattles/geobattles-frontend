@@ -41,6 +41,7 @@ function handleJoinedLobby(data: MsgJoinedLobbyData) {
 
 function handleLeftLobby(data: MsgLeftLobbyData) {
     if (!data.lobby || !data.user) return console.error("Missing data in LEFT_LOBBY message", data);
+    useUIManager().value.showPlayerLeftToast(getPlayerNameFromID(data.user) ?? "Unknown Player");
     leftLobby(data.lobby, data.user);
 }
 

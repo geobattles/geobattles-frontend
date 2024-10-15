@@ -1,8 +1,10 @@
 import { GameState } from "./GameFlowManager";
+type EventCallback = (event: CustomEvent) => void;
 
 export class UIManager {
     private googleMap: HTMLElement | null = null;
     private googlePanorama: HTMLElement | null = null;
+    private eventListeners: { [key: string]: EventCallback[] } = {};
 
     constructor() {}
 
@@ -95,5 +97,36 @@ export class UIManager {
             this.googleMap.classList.remove("google-map-midround");
             this.googleMap.classList.add("google-map-gameplay");
         }
+    }
+
+    // Method to add event listeners
+    on(event: string, callback: EventCallback): void {
+        if (!this.eventListeners[event]) {
+            this.eventListeners[event] = [];
+        }
+        this.eventListeners[event].push(callback);
+    }
+
+    // Method to remove event listeners
+    off(event: string, callback: EventCallback): void {
+        if (!this.eventListeners[event]) return;
+        this.eventListeners[event] = this.eventListeners[event].filter((cb) => cb !== callback);
+    }
+
+    // Method to dispatch events
+    dispatch(event: string, detail: any): void {
+        if (!this.eventListeners[event]) return;
+        const customEvent = new CustomEvent(event, { detail });
+        this.eventListeners[event].forEach((callback) => callback(customEvent));
+    }
+
+    // Example method that triggers an event
+    triggerPlayerLeft(playerName: string): void {
+        this.dispatch("showPlayerLeftToast", { playerName });
+    }
+
+    showPlayerLeftToast(player_id: string): void {
+        console.info("Player left: " + player_id);
+        this.triggerPlayerLeft(player_id); // Ensure the event is dispatched
     }
 }

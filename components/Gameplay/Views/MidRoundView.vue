@@ -44,8 +44,11 @@ export default {
 
 .midround-content {
     flex: 30%;
-
     margin: 10px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .google-map-window {

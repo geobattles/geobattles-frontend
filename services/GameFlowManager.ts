@@ -115,6 +115,26 @@ export class GameFlowManager {
         if (sendMessage) sendMessage(socket_message);
     }
 
+    isSubmitButtonDisabled(): boolean {
+        try {
+            if (this.gameMode.gameType === "BattleRoyale") {
+                if (useMapMarkers().value.length === 0) return true; // Disable if no markers
+                // Disable if number of markers equals number of attempts
+                const player_id = usePlayerInfo().value.ID;
+                if (!player_id) throw new Error("Player ID not found probably because left lobby");
+                const playerAttempt = useResults().value[player_id].attempt;
+                if (useMapMarkers().value.length === playerAttempt) return true;
+            } else if (this.gameMode.gameType === "CountryBattle") {
+                return false; // Always enable for CountryBattle
+            }
+            // TODO: Implement for other CountryBattle game mode
+        } catch (error) {
+            console.log("Error in isSubmitButtonDisabled:", error);
+        }
+
+        return false; // Enable button for other game modes
+    }
+
     setMapClickEventListener(): void {
         // Clear previous listener
         const google_map_instance = isGoogleMap();

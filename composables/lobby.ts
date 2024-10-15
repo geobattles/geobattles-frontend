@@ -68,6 +68,9 @@ export const joinLobby = async (lobby_id: string) => {
     }
 };
 
+/**
+ * Function will set user ID to undefined and close connection to the lobby.
+ */
 export const leaveLobby = () => {
     try {
         usePlayerInfo().value.ID = undefined;

@@ -1,6 +1,7 @@
 <template>
-    <div>
-        <ConnectionStatus class="connection-status-container" />
+    <div ref="gameplay_page">
+        <Toast position="bottom-right" />
+        <GameplayMenu class="connection-status-container" @leaveLobbyClicked="handleClickLeaveLobby" />
         <GameplayViewsCountdownView v-if="gameFlowManager?.currentState === 'STARTING'" />
         <div id="gameplay_container">
             <!-- BAR TIMER -->
@@ -10,13 +11,15 @@
             <!-- GOOGLE PANORAMA -->
             <GameplayGooglePanorama />
             <!-- SUBMIT BUTTON -->
-            <button ref="submit_button" v-if="gameFlowManager?.gameMode.gameType === 'BattleRoyale'" class="submit-button" @click="handleSubmitClick()" :disabled="isSubmitButtonDisabled()">GUESS</button>
-            <button ref="submit_button" v-if="gameFlowManager?.gameMode.gameType === 'CountryBattle'" class="submit-button" @click="handleSubmitClick()" :disabled="false">GUESS</button>
+            <div v-if="gameFlowManager?.currentState === 'PLAYING'">
+                <button ref="submit_button" v-if="gameFlowManager?.gameMode.gameType === 'BattleRoyale'" class="submit-button" @click="gameFlowManager.submitGuess()" :disabled="gameFlowManager.isSubmitButtonDisabled()">GUESS</button>
+                <button ref="submit_button" v-if="gameFlowManager?.gameMode.gameType === 'CountryBattle'" class="submit-button" @click="gameFlowManager.submitGuess()" :disabled="false">GUESS</button>
+            </div>
             <!-- LIVE STATISTICS -->
             <GameplayBattleRoyaleLiveStatistics v-if="gameFlowManager?.gameMode.gameType === 'BattleRoyale'" class="live-stats min-w-80" />
             <GameplayCountryBattleLiveStatistics v-if="gameFlowManager?.gameMode.gameType === 'CountryBattle'" class="live-stats min-w-80" />
             <!-- MAP MOBILE BUTTON -->
-            <button v-show="show_map_button && gameFlowManager?.currentState === 'PLAYING'" ref="toggle_map_mobile" class="rounded-full bg-zinc-900 p-3">
+            <button v-show="show_map_button && gameFlowManager?.currentState === 'PLAYING'" ref="toggle_map_mobile" class="mobile-map-button rounded-full bg-zinc-900 p-3">
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" fill="white" viewBox="0 0 576 512">
                     <path d="M565.6 36.24C572.1 40.72 576 48.11 576 56V392C576 401.1 569.8 410.9 560.5 414.4L392.5 478.4C387.4 480.4 381.7 480.5 376.4 478.8L192.5 417.5L32.54 478.4C25.17 481.2 16.88 480.2 10.38 475.8C3.882 471.3 0 463.9 0 456V120C0 110 6.15 101.1 15.46 97.57L183.5 33.57C188.6 31.6 194.3 31.48 199.6 33.23L383.5 94.52L543.5 33.57C550.8 30.76 559.1 31.76 565.6 36.24H565.6zM48 421.2L168 375.5V90.83L48 136.5V421.2zM360 137.3L216 89.3V374.7L360 422.7V137.3zM408 421.2L528 375.5V90.83L408 136.5V421.2z" />
                 </svg>
@@ -24,58 +27,74 @@
         </div>
         <GameplayViewsMidRoundView v-show="gameFlowManager?.currentState === 'MID-ROUND'" />
         <GameplayViewsEndGameView v-show="gameFlowManager?.currentState === 'FINISHED'" />
+        <button @click="toggleFullscreen" class="fullscreen-button">Enter Fullscreen</button>
     </div>
 </template>
 
-<script lang="ts">
-export default {
-    setup() {
-        const lobby_settings = useLobbySettings();
-        const submit_button = ref<HTMLElement | null>(null);
-        const toggle_map_mobile = ref<HTMLElement | null>(null);
-        const show_map_button = ref(false);
-        const is_guard_disabled = ref(false);
-        const gameFlowManager = useGameFlowManager();
+<script setup lang="ts">
+import { useToast } from "primevue/usetoast";
+const submit_button = ref<HTMLElement | null>(null);
+const toggle_map_mobile = ref<HTMLElement | null>(null);
+const show_map_button = ref(false);
+const gameFlowManager = useGameFlowManager();
+const toast = useToast();
+const UIManager = useUIManager();
+const router = useRouter();
+const wantsToLeaveLobby = ref(false);
+const gameplay_page = ref<HTMLElement | null>(null);
 
-        onMounted(() => {
-            if (!gameFlowManager.value) return console.error("GameFlowManager is not initialized in the lobby");
-            gameFlowManager.value.mountingProcess(toggle_map_mobile, show_map_button, submit_button);
-        });
+onMounted(() => {
+    if (!gameFlowManager.value) return console.error("GameFlowManager is not initialized in the lobby");
+    gameFlowManager.value.mountingProcess(toggle_map_mobile, show_map_button, submit_button);
 
-        const getPlayerAttempt = (player_id: string) => useResults().value[player_id].attempt;
+    // Add listener when player leaves lobby
+    UIManager.value.on("showPlayerLeftToast", handlePlayerLeftToast);
+});
 
-        const isSubmitButtonDisabled = () => {
-            // TOOD: THIS MUST BE DIFFERENT FOR THE GAMEMODE (currently only for BattleRoyale)
-            if (is_guard_disabled.value) return; // Disable if route guard is enabled to not have unnecessary console warning when leaving lobby from gameplay
+onUnmounted(() => {
+    try {
+        UIManager.value.off("showPlayerLeftToast", handlePlayerLeftToast);
+    } catch (error) {
+        console.error("Error during onUnmounted:", error);
+    }
+});
 
-            if (useMapMarkers().value.length === 0) return true; // Disable if no markers
-            //  Disable if number of markers equals number of attempts
-            const player_id = usePlayerInfo().value.ID;
-            if (!player_id) throw new Error("Player ID not found");
-            if (useMapMarkers().value.length === getPlayerAttempt(player_id)) return true;
+onBeforeRouteLeave((to, from, next) => {
+    if (wantsToLeaveLobby.value) {
+        if (confirm("Are you sure you want to leave the lobby?")) {
+            next();
+            leaveLobby();
+        } else next(false);
+    } else {
+        next(false);
+    }
+    wantsToLeaveLobby.value = false;
+});
 
-            return false; // Enable button
-        };
+// When player leaves lobby, show toast
+const handlePlayerLeftToast = (event: CustomEvent) => {
+    console.log("playerLeftLobby event triggered", event.detail);
+    toast.add({ severity: "warn", summary: `Player ${event.detail.playerName} Left`, detail: `Player ${event.detail.playerName} has left the lobby`, life: 3000 });
+};
 
-        const handleSubmitClick = () => {
-            if (gameFlowManager.value) gameFlowManager.value.submitGuess();
-            else console.error("GameFlowManager is not initialized");
-        };
+const handleClickLeaveLobby = () => {
+    wantsToLeaveLobby.value = true;
+    router.push("/");
+};
 
-        onBeforeRouteLeave((to, from, next) => {
-            if (is_guard_disabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
-
-            // Ask if user eally wants to leave lobby
-            if (confirm("Are you sure you want to leave the lobby?")) {
-                is_guard_disabled.value = true;
-                next();
-                leaveLobby();
-                return navigateTo("/");
-            } else next(false);
-        });
-
-        return { submit_button, toggle_map_mobile, show_map_button, lobby_settings, gameFlowManager, handleSubmitClick, isSubmitButtonDisabled };
-    },
+const toggleFullscreen = () => {
+    const elem = gameplay_page.value;
+    if (elem) {
+        if (!document.fullscreenElement) {
+            elem.requestFullscreen().catch((err) => {
+                console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+            });
+        } else {
+            document.exitFullscreen().catch((err) => {
+                console.error(`Error attempting to exit full-screen mode: ${err.message} (${err.name})`);
+            });
+        }
+    }
 };
 </script>
 
@@ -171,7 +190,7 @@ export default {
 }
 
 .connection-status-container {
-    position: fixed;
+    position: absolute;
     top: 10px;
     left: 10px;
     z-index: 9999;
@@ -179,6 +198,19 @@ export default {
     background-color: var(--p-zinc-900);
     border-radius: 10px;
     padding: 0.5rem;
+}
+
+.fullscreen-button {
+    position: fixed;
+    bottom: 20px;
+    right: 60px;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: var(--p-zinc-950);
+    color: white;
+    border: none;
+    border-radius: 5px;
 }
 
 /* MOPBILE VIEW */
@@ -201,10 +233,18 @@ export default {
         max-height: 100vh;
     }
 
-    button {
+    .mobile-map-button {
+        position: fixed;
+        bottom: 75px;
+        left: 20px;
+        z-index: 9999;
+    }
+
+    .submit-button {
         position: absolute;
-        bottom: 110px;
-        left: 30px;
+        bottom: 60;
+        left: 20px;
+        max-width: 200px;
         color: var(--text-color);
 
         z-index: 3;

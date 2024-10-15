@@ -35,7 +35,7 @@ export default defineNuxtConfig({
             },
         },
         components: {
-            include: ["Calendar", "Slider", "Button", "TabMenu", "InputNumber", "Card", "Dropdown", "Fieldset", "Checkbox", "FileUpload", "MultiSelect", "Panel", "InputSwitch", "InputNumber", "ProgressBar", "ProgressSpinner", "MenuBar", "Badge", "Avatar", "InputText", "FloatLabel", "Divider", "RadioButton", "DataTable", "Column"],
+            include: ["Calendar", "Slider", "Button", "TabMenu", "InputNumber", "Card", "Dropdown", "Fieldset", "Checkbox", "FileUpload", "MultiSelect", "Panel", "InputSwitch", "InputNumber", "ProgressBar", "ProgressSpinner", "MenuBar", "Badge", "Avatar", "InputText", "FloatLabel", "Divider", "RadioButton", "DataTable", "Column", "Toast"],
         },
     },
 

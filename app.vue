@@ -30,29 +30,13 @@ export default {
             const saved_username = useCookie("saved_username");
             if (typeof saved_username.value === "string") usePlayerInfo().value.name = saved_username.value;
 
-            const img = new Image();
-            img.src = "/images/earth.webp";
-            img.onload = () => (vue_app.value !== null ? (vue_app.value.style.backgroundImage = "url(/images/earth.webp)") : "");
+            // const img = new Image();
+            // img.src = "/images/earth.webp";
+            // img.onload = () => (vue_app.value !== null ? (vue_app.value.style.backgroundImage = "url(/images/earth.webp)") : "");
         });
 
         const is_loading = ref(true);
         const nuxtApp = useNuxtApp();
-
-        const toggleFullscreen = () => {
-            const elem = vue_app.value;
-            if (elem) {
-                if (!document.fullscreenElement) {
-                    elem.requestFullscreen().catch((err) => {
-                        console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-                    });
-                } else {
-                    document.exitFullscreen().catch((err) => {
-                        console.error(`Error attempting to exit full-screen mode: ${err.message} (${err.name})`);
-                    });
-                }
-            }
-        };
-        toggleFullscreen();
 
         onBeforeMount(() => {
             nuxtApp.hooks.hook("page:start", () => {
@@ -64,6 +48,7 @@ export default {
         });
 
         return {
+            vue_app,
             is_loading,
         };
     },
