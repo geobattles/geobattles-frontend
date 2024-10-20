@@ -79,7 +79,8 @@ export default {
 
 <style scoped>
 .statistics {
-    background-color: var(--p-zinc-900);
+    background-color: var(--p-surface-900);
+    color: var(--p-surface-0);
     z-index: 4;
 
     border-radius: 8px;
@@ -106,7 +107,7 @@ export default {
     overflow: hidden;
 
     /* For applied guess animation */
-    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-zinc-800) 50%);
+    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-surface-700) 50%);
     background-size: 200% 100%;
     background-position: right bottom;
     transition: all 0.4s ease-out;
@@ -132,7 +133,7 @@ export default {
 }
 /* APPLIED GUESS ROW STYLE */
 .applied-guess {
-    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-zinc-800) 50%);
+    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-surface-700) 50%);
     background-size: 200% 100%;
     width: 100%;
 
@@ -140,7 +141,7 @@ export default {
 }
 
 .applied-guess-lead {
-    background: linear-gradient(to right, var(--p-green-400) 50%, var(--p-zinc-800) 50%);
+    background: linear-gradient(to right, var(--p-green-400) 50%, var(--p-surface-700) 50%);
     background-size: 200% 100%;
     width: 100%;
 

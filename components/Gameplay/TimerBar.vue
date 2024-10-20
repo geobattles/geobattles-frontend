@@ -57,7 +57,7 @@ export default {
     left: 0;
     right: 0;
 
-    border: 4px solid var(--p-zinc-900);
+    border: 4px solid var(--p-surface-900);
 
     border-radius: 5px;
 

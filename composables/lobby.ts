@@ -1,6 +1,5 @@
 import type { LobbyInfo, Results, TotalResults } from "~/types";
 import { WebSocketService } from "~/services/WebSocketService";
-import { useToast } from "primevue/usetoast";
 
 // LOBBY STATES
 export const useLobbySettings = () => useState<LobbyInfo>("lobby_settings", () => ({} as LobbyInfo));

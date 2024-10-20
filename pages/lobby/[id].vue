@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div id="lobby-id-component">
         <Header />
         <div class="main-content flex flex-wrap gap-0 md:gap-5 justify-center text-xs md:text-base">
             <Panel class="basis-1/2 md:basis-1/3" header="Lobby Settings" :class="{ 'player-view': !isPlayerAdmin() }" style="min-width: 250px">
@@ -8,7 +8,6 @@
                     <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Settings" icon="pi pi-cog" badgeSeverity="contrast" outlined />
                 </div>
             </Panel>
-
             <div class="basis-1/2 md:basis-1/3 text-sm md:text-base">
                 <Button v-if="isPlayerAdmin()" @click="gameFlowManager?.sendStartRoundSocketMessage" size="large" label="Start Game" icon="pi pi-play-circle" badgeSeverity="contrast" :disabled="start_disabled" />
                 <div v-else style="color: white">Waiting for admin to start the game</div>
@@ -74,6 +73,11 @@ export default {
 </script>
 
 <style scoped>
+#lobby-id-component {
+    background-color: var(--p-surface-900);
+    color: var(--p-surface-0);
+    height: 100vh;
+}
 .main-content {
     text-align: center;
     margin-top: 50px;

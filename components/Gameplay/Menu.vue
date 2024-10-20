@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col md:flex-row justify-between gap-1 flex-wrap w-30 md:w-60">
         <div class="m-auto">
-            <p class="text-xs text-center">Connection:</p>
+            <p class="text-xs text-center text-white">Connection:</p>
             <ConnectionStatus label="Contrast" class="text-center" />
         </div>
         <div class="text-center m-auto">

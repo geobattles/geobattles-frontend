@@ -25,7 +25,7 @@ export default {
     font-size: 3rem;
     font-weight: bold;
     color: var(--p-primary-400);
-    background-color: var(--p-zinc-900);
+    background-color: var(--p-surface-900);
     z-index: 9999;
 }
 </style>
