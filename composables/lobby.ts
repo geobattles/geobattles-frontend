@@ -20,7 +20,7 @@ export const createLobby = async () => {
     const router = useRouter();
 
     const lobby_post_params = {
-        name: `${player_info.value.name}'s Lobby`,
+        name: `${player_info.value.username}'s Lobby`,
         roundTime: 100,
     };
 
@@ -40,7 +40,7 @@ export const createLobby = async () => {
 
         // Initialize WebSocket connection to created lobby
         const { initializeWebSocket } = useWebSocket();
-        await initializeWebSocket(() => WebSocketService.getSocketUrl(lobby_settings.value.ID, player_info.value.name));
+        await initializeWebSocket(() => WebSocketService.getSocketUrl(lobby_settings.value.ID, player_info.value.username));
 
         // Redirect to created lobby
         router.push({ path: `/lobby/${lobby_settings.value.ID}` });
@@ -60,7 +60,7 @@ export const joinLobby = async (lobby_id: string) => {
     const router = useRouter();
     try {
         const { initializeWebSocket } = useWebSocket();
-        await initializeWebSocket(() => WebSocketService.getSocketUrl(lobby_id, usePlayerInfo().value.name));
+        await initializeWebSocket(() => WebSocketService.getSocketUrl(lobby_id, usePlayerInfo().value.username));
         router.push({ path: `/lobby/${lobby_id}` });
     } catch (error: any) {
         console.error("Error joining lobby:", error);
@@ -73,7 +73,7 @@ export const joinLobby = async (lobby_id: string) => {
  */
 export const leaveLobby = () => {
     try {
-        usePlayerInfo().value.ID = undefined;
+        // usePlayerInfo().value.ID = undefined;
         const { closeConnection } = useWebSocket();
         closeConnection();
         usePlayerInfo().value.isConnectedToLobby = false;
