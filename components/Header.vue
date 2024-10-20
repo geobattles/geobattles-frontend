@@ -60,7 +60,11 @@ export default {
         };
 
         onMounted(async () => {
-            await fetchLobbyList();
+            try {
+                await fetchLobbyList();
+            } catch (error) {
+                console.error("Failed to fetch lobby list in Header component:", error);
+            }
             items.value[2].badge = Object.keys(useLobbyList().value).length;
         });
 

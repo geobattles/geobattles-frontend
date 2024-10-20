@@ -19,7 +19,14 @@ export default {
 
         const handlePlayNowClick = async () => {
             if (!usePlayerInfo().value.name) return window.alert("Please enter a username before playing!");
-            createLobby();
+
+            // Try to create a lobby
+            try {
+                await createLobby();
+            } catch (error) {
+                console.error("Failed to create lobby:", error);
+                return window.alert("Failed to create lobby. Please try again later.\n" + error);
+            }
         };
         return { lobby_name, router, handlePlayNowClick };
     },
