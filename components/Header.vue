@@ -11,12 +11,20 @@
                 </a>
             </template>
             <template #end>
-                <div class="flex flex-wrap gap-2">
-                    <InputText id="username" v-model="usePlayerInfo().value.name" @blur="saveUsernameToCookies" placeholder="Username" aria-describedby="username-help" size="small" :invalid="!usePlayerInfo().value.name" />
-                    <Message v-if="!usePlayerInfo().value.name" severity="error" icon="pi pi-times-circle" />
+                <div class="flex">
+                    <div>
+                        <Button label="Login" size="small" @click="handleLoginClick" />
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <InputText id="username" v-model="usePlayerInfo().value.username" @blur="saveUsernameToCookies" placeholder="Username" aria-describedby="username-help" size="small" :invalid="!usePlayerInfo().value.username" />
+                        <Message v-if="!usePlayerInfo().value.username" severity="error" icon="pi pi-times-circle" />
+                    </div>
                 </div>
             </template>
         </Menubar>
+        <Dialog v-model:visible="isLoginDialogVisible" header="Login" style="width: 800px" position="center" :modal="true" :draggable="false">
+            <Login />
+        </Dialog>
     </header>
 </template>
 
@@ -25,6 +33,7 @@ export default {
     setup() {
         const player_info = usePlayerInfo();
         const router = useRouter();
+        const isLoginDialogVisible = ref(false);
 
         const items = ref([
             {
@@ -56,7 +65,11 @@ export default {
             const player_username = useCookie("saved_username", {
                 maxAge: 3600000, // Saves username cookie for 100 hours
             });
-            player_username.value = player_info.value.name;
+            player_username.value = player_info.value.username;
+        };
+
+        const handleLoginClick = () => {
+            isLoginDialogVisible.value = true;
         };
 
         onMounted(async () => {
@@ -68,7 +81,7 @@ export default {
             items.value[2].badge = Object.keys(useLobbyList().value).length;
         });
 
-        return { player_info, items, saveUsernameToCookies };
+        return { player_info, items, router, isLoginDialogVisible, saveUsernameToCookies, handleLoginClick };
     },
 };
 </script>

@@ -18,7 +18,7 @@ export default {
         const router = useRouter();
 
         const handlePlayNowClick = async () => {
-            if (!usePlayerInfo().value.name) return window.alert("Please enter a username before playing!");
+            if (!usePlayerInfo().value.username) return window.alert("Please enter a username before playing!");
 
             // Try to create a lobby
             try {

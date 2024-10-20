@@ -28,7 +28,7 @@ export default {
 
         onMounted(() => {
             const saved_username = useCookie("saved_username");
-            if (typeof saved_username.value === "string") usePlayerInfo().value.name = saved_username.value;
+            if (typeof saved_username.value === "string") usePlayerInfo().value.username = saved_username.value;
 
             // const img = new Image();
             // img.src = "/images/earth.webp";
@@ -57,7 +57,7 @@ export default {
 
 <style>
 body {
-    background: url("/images/earth.webp") no-repeat center center fixed;
+    /* background: url("/images/earth.webp") no-repeat center center fixed; */
     background-size: cover; /* Resize the background image to cover the entire container */
 }
 
