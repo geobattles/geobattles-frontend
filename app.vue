@@ -61,6 +61,11 @@ body {
     background-size: cover; /* Resize the background image to cover the entire container */
 }
 
+#my_vue_app {
+    background-color: var(--p-surface-900);
+    min-height: 100vh;
+}
+
 .initial-loader {
     position: fixed;
     z-index: 9999;

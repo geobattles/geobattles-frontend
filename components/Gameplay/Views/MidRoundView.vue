@@ -35,7 +35,7 @@ export default {
     width: 100vw;
     height: 100vh;
     z-index: 2;
-    background-color: var(--p-zinc-900);
+    background-color: var(--p-surface-900);
 
     overflow: hidden;
     display: flex;

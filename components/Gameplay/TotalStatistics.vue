@@ -40,10 +40,7 @@ export default {
 
 <style scoped>
 .statistics {
-    background-color: var(--primary-color);
     border-radius: 5px;
-
-    color: var(--primary-color-text);
 }
 
 .table__row {
