@@ -10,12 +10,11 @@ export default {
         onMounted(() => {
             if (!google_panorama.value) throw new Error("Google Panorama DOM element not found");
             const existingPanorama = useGooglePanoramaHTML().value;
-            console.log("Existing Panorama", existingPanorama);
+
+            // Append existing Google Panorama HTML to the DOM or create new one
             if (existingPanorama) {
-                console.log("Google Panorama HTML already exists");
                 google_panorama.value.appendChild(existingPanorama);
             } else {
-                console.log("Google Panorama HTML does not exist so creating new one");
                 useGooglePanoramaHTML().value = google_panorama.value;
                 initalizeNewPanoramaView(google_panorama.value); // Init Google Map
             }
