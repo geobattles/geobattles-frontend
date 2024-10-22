@@ -12,8 +12,15 @@ export default {
 
         onMounted(() => {
             if (!google_map.value) throw new Error("Google Map DOM element not found");
-            useGoogleMapHTML().value = google_map.value;
-            initalizeNewGoogleMap(google_map.value); // Init Google Map
+            const existingMap = useGoogleMapHTML().value;
+
+            // Append existing Google Map HTML to the DOM or create new one
+            if (existingMap) {
+                google_map.value.appendChild(existingMap);
+            } else {
+                useGoogleMapHTML().value = google_map.value;
+                initalizeNewGoogleMap(google_map.value); // Init Google Map
+            }
         });
 
         return { google_map, props };

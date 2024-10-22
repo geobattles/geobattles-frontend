@@ -20,10 +20,11 @@ export class CountryBattle implements GameMode {
         const route_name = router.currentRoute.value.name as string;
 
         // Redirect to gameplay routes if not already there
-        if (!route_name.includes("gameplay")) {
-            router.push({ path: `/gameplay-${useLobbySettings().value.ID}` });
-        } else {
-            updatePanoramaView(this.gameFlowManager.searchedLocationCoords.value); // Update panorama view for next round
+        if (!route_name.includes("gameplay")) router.push({ path: `/gameplay-${useLobbySettings().value.ID}` });
+
+        // Reset panorama and map views
+        if (useGoogleMapHTML().value && useGooglePanoramaHTML().value) {
+            updatePanoramaView(this.gameFlowManager.searchedLocationCoords.value);
             isGoogleMap().setCenter({ lat: 0, lng: 0 });
             isGoogleMap().setZoom(2);
 
