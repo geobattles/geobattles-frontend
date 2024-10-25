@@ -3,9 +3,10 @@
         <Header />
         <div class="page-container">
             <div>
-                <Button class="play-button" @click="handlePlayNowClick" label="PLAY NOW" />
-                <br />
-                <span class="join-text">or join a lobby by <span class="clickable" @click="router.push('/lobby/join')">game code!</span></span>
+                <Button class="play-button w-56 md:w-80" @click="handlePlayNowClick" label="PLAY NOW" />
+                <div class="m-auto text-center mt-4">
+                    <span class="text-white">or join a lobby by <a class="clickable" @click="router.push('/lobby/join')">game code!</a></span>
+                </div>
             </div>
         </div>
     </div>
@@ -44,20 +45,13 @@ export default {
 
 .play-button {
     letter-spacing: 4px;
-    width: 300px;
     padding: 15px 10px;
-
-    font-size: 18px;
-}
-
-.join-text {
-    color: white;
-    font-size: 18px;
-    margin-left: 20px;
 }
 
 .clickable {
     text-decoration: underline;
     cursor: pointer;
+
+    color: var(--p-primary-400);
 }
 </style>

@@ -56,6 +56,9 @@ export default {
 </script>
 
 <style>
+html {
+    font-size: 14px;
+}
 body {
     /* background: url("/images/earth.webp") no-repeat center center fixed; */
     background-size: cover; /* Resize the background image to cover the entire container */
