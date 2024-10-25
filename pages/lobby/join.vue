@@ -9,7 +9,7 @@
             <input ref="input_6" class="sign-input" @keyup="handleKeyUpEvent($event)" @keydown="handleKeyDownEvent($event)" type="text" />
         </div>
         <div>
-            <span style="color: white">Join the game!</span>
+            <span style="color: white">Insert or paste lobby code to join the game!</span>
         </div>
     </div>
 </template>
@@ -119,6 +119,8 @@ export default {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+
+    background-color: var(--p-surface-900);
 }
 
 .sign-input {
@@ -129,10 +131,9 @@ export default {
     font-weight: 700;
     height: 9.375rem;
     margin: 1rem;
-    padding: 0px 30px;
     text-align: center;
     transition: all 0.2s ease-out;
-    width: 7rem;
+    width: 6rem;
 
     color: white;
     outline: none;
@@ -141,14 +142,14 @@ export default {
 }
 
 .error-lobby {
-    border-color: red;
+    border-color: var(--p-red-500);
 }
 
 .error-lobby:focus {
-    border-color: red !important;
+    border-color: var(--p-red-500) !important;
 }
 
 .sign-input:focus {
-    border-color: #fecd19;
+    border-color: var(--p-primary-400);
 }
 </style>

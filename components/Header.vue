@@ -1,13 +1,12 @@
 <template>
-    <header class="header-custom">
-        <Menubar :model="items" class="text-sm">
-            <template #start> </template>
+    <header>
+        <Menubar :model="items">
+            <template #start></template>
             <template #item="{ item, props, root }">
                 <a v-ripple class="flex align-items-center" v-bind="props.action">
                     <span :class="item.icon" />
                     <span class="ml-2">{{ item.label }}</span>
-                    <Badge v-if="item.badge" :class="{ 'ml-auto': !root, 'ml-2': root }" :value="item.badge" />
-                    <span v-if="item.shortcut" class="ml-auto border-1 surface-border border-round surface-100 text-xs p-1">{{ item.shortcut }}</span>
+                    <Badge v-if="item.badge !== undefined" :value="item.badge" />
                 </a>
             </template>
             <template #end>
