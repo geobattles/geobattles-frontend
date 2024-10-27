@@ -27,18 +27,22 @@ export default {
         useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
 
         onMounted(() => {
-            const saved_token = useCookie("saved_token");
-            if (typeof saved_token.value === "string") {
-                const { isAuthenticated } = useAuth();
-                isAuthenticated.value = true;
+            const { isAuthenticated } = useAuth();
+            const playerTokenCookie = useCookie("saved_token");
 
-                // Parse JWT
-                const tokenData = parseJwt(saved_token.value);
-                if (tokenData !== null) {
-                    usePlayerInfo().value.username = tokenData.user_name; // Unique username
-                    usePlayerInfo().value.displayName = tokenData.display_name; // Display name
-                    usePlayerInfo().value.ID = tokenData.uid; // Unique user ID
+            if (playerTokenCookie.value) {
+                const tokenData = parseJwt(playerTokenCookie.value);
+                if (tokenData && tokenData.exp > Math.floor(Date.now() / 1000)) {
+                    usePlayerInfo().value.username = tokenData.user_name;
+                    usePlayerInfo().value.ID = tokenData.uid;
+                    usePlayerInfo().value.displayName = tokenData.display_name;
+                    isAuthenticated.value = true;
+                } else {
+                    playerTokenCookie.value = null; // Clear invalid or expired token
+                    isAuthenticated.value = false;
                 }
+            } else {
+                isAuthenticated.value = false;
             }
 
             // const img = new Image();

@@ -28,6 +28,11 @@ export default {
         const is_table_loading = ref(false);
 
         const handleJoinLobbyClick = async (lobby_id: string) => {
+            const { isAuthenticated } = useAuth();
+            if (!isAuthenticated.value) {
+                return window.alert("Please log in before joining a lobby!");
+            }
+
             try {
                 await checkIfLobby(lobby_id);
                 await joinLobby(lobby_id);
