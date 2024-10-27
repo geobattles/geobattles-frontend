@@ -36,27 +36,33 @@ export const registerPlayer = async (username: string, display_name: string, pas
             },
             body: JSON.stringify({ username, displayname: display_name, password }),
         });
-        if (!response.ok) throw new Error("Failed to register player");
 
-        const reponseData = await response.json();
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to login player: ${errorText}`);
+        }
+
+        const responseData: { Auth_token: string; Expiry: number } = await response.json();
 
         // Save the player token in a cookie
-        const max_age = reponseData.Expiry - Math.floor(Date.now() / 1000);
-        const expiryDate = new Date(reponseData.Expiry * 1000);
+        const maxAge = responseData.Expiry - Math.floor(Date.now() / 1000);
+        const expiryDate = new Date(responseData.Expiry * 1000);
         console.log("Token will expire on:", expiryDate.toLocaleString()); //! Dev
         const playerTokenCookie = useCookie("saved_token", {
-            maxAge: max_age,
+            maxAge: maxAge,
+            sameSite: true,
+            // secure: true, // Ensure the cookie is sent over HTTPS
+            // httpOnly: true, // Prevent JavaScript access to the cookie
         });
-        playerTokenCookie.value = reponseData.Auth_token;
+        playerTokenCookie.value = responseData.Auth_token;
 
         // Parse the JWT to get data from it
-        console.log("Token data:", parseJwt(reponseData.Auth_token)); //! Dev
-        const tokenData = parseJwt(reponseData.Auth_token);
-        if (tokenData) {
-            usePlayerInfo().value.username = tokenData.user_name; // Unique username
-            usePlayerInfo().value.ID = tokenData.uid; // Unique user ID
-            usePlayerInfo().value.displayName = tokenData.display_name; // Display name
-        }
+        const tokenData = parseJwt(responseData.Auth_token);
+        if (!tokenData) throw new Error("Invalid token data");
+
+        usePlayerInfo().value.username = tokenData.user_name; // Unique username
+        usePlayerInfo().value.ID = tokenData.uid; // Unique user ID
+        usePlayerInfo().value.displayName = tokenData.display_name; // Display name
 
         isAuthenticated.value = true;
     } catch (error) {
@@ -80,27 +86,33 @@ export const loginPlayer = async (username: string, password: string): Promise<v
             },
             body: JSON.stringify({ username, password }),
         });
-        if (!response.ok) throw new Error("Failed to login player");
 
-        const reponseData = await response.json();
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Failed to login player: ${errorText}`);
+        }
+
+        const responseData: { Auth_token: string; Expiry: number } = await response.json();
 
         // Save the player token in a cookie
-        const max_age = reponseData.Expiry - Math.floor(Date.now() / 1000);
-        const expiryDate = new Date(reponseData.Expiry * 1000);
+        const maxAge = responseData.Expiry - Math.floor(Date.now() / 1000);
+        const expiryDate = new Date(responseData.Expiry * 1000);
         console.log("Token will expire on:", expiryDate.toLocaleString()); //! Dev
         const playerTokenCookie = useCookie("saved_token", {
-            maxAge: max_age,
+            maxAge: maxAge,
+            sameSite: true,
+            // secure: true, // Ensure the cookie is sent over HTTPS
+            // httpOnly: true, // Prevent JavaScript access to the cookie
         });
-        playerTokenCookie.value = reponseData.Auth_token;
+        playerTokenCookie.value = responseData.Auth_token;
 
         // Parse the JWT to get data from it
-        console.log("Token data:", parseJwt(reponseData.Auth_token)); //! Dev
-        const tokenData = parseJwt(reponseData.Auth_token);
-        if (tokenData) {
-            usePlayerInfo().value.username = tokenData.user_name; // Unique username
-            usePlayerInfo().value.ID = tokenData.uid; // Unique user ID
-            usePlayerInfo().value.displayName = tokenData.display_name; // Display name
-        }
+        const tokenData = parseJwt(responseData.Auth_token);
+        if (!tokenData) throw new Error("Invalid token data");
+
+        usePlayerInfo().value.username = tokenData.user_name; // Unique username
+        usePlayerInfo().value.ID = tokenData.uid; // Unique user ID
+        usePlayerInfo().value.displayName = tokenData.display_name; // Display name
 
         isAuthenticated.value = true;
     } catch (error) {

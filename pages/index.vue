@@ -3,7 +3,7 @@
         <Header />
         <div class="page-container">
             <div>
-                <Button class="play-button w-56 md:w-80" @click="handlePlayNowClick" label="PLAY NOW" />
+                <Button class="play-button w-56 md:w-80" @click="handlePlayNowClick" label="PLAY NOW" icon="pi pi-map-marker" size="large" />
                 <div class="m-auto text-center mt-4">
                     <span class="text-white">or join a lobby by <a class="clickable" @click="router.push('/lobby/join')">game code!</a></span>
                 </div>

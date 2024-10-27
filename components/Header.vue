@@ -45,10 +45,6 @@ export default {
                 },
             },
             {
-                label: "Game Modes",
-                icon: "pi pi-star",
-            },
-            {
                 label: "Online Lobbies",
                 icon: "pi pi-map-marker",
                 badge: Object.keys(useLobbyList().value).length,
@@ -57,8 +53,11 @@ export default {
                 },
             },
             {
-                label: "Contact",
-                icon: "pi pi-envelope",
+                label: "About",
+                icon: "pi pi-info-circle",
+                command: () => {
+                    router.push("/about");
+                },
             },
         ]);
 
@@ -79,7 +78,7 @@ export default {
             } catch (error) {
                 console.error("Failed to fetch lobby list in Header component:", error);
             }
-            items.value[2].badge = Object.keys(useLobbyList().value).length;
+            items.value[1].badge = Object.keys(useLobbyList().value).length;
         });
 
         return { isAuthenticated, playerInfo, items, router, isLoginDialogVisible, saveUsernameToCookies, handleLoginClick };
