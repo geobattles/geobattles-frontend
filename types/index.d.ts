@@ -1,11 +1,9 @@
 // Type describing current user session
 export type User = {
     username: string;
-    password: string;
-    ID: string | undefined; // Only if in a lobby
-
+    displayName: string;
+    ID: string | undefined; // Only if in a lobby\
     color: string;
-    isConnectedToLobby: boolean;
 };
 
 // Type used to define lobby info

@@ -10,19 +10,19 @@
                 </a>
             </template>
             <template #end>
-                <div class="flex">
+                <div v-if="!isAuthenticated" class="flex">
                     <div>
                         <Button label="Login" size="small" @click="handleLoginClick" />
                     </div>
-                    <div class="flex flex-wrap gap-2">
-                        <InputText id="username" v-model="usePlayerInfo().value.username" @blur="saveUsernameToCookies" placeholder="Username" aria-describedby="username-help" size="small" :invalid="!usePlayerInfo().value.username" />
-                        <Message v-if="!usePlayerInfo().value.username" severity="error" icon="pi pi-times-circle" />
-                    </div>
+                </div>
+                <div v-else>
+                    <Button label="Logout" size="small" severity="secondary" raised @click="logoutPlayer()" />
+                    <span class="ml-2">Welcome, {{ playerInfo.username }}!</span>
                 </div>
             </template>
         </Menubar>
         <Dialog v-model:visible="isLoginDialogVisible" header="Login" style="width: 800px" position="center" :modal="true" :draggable="false">
-            <Login />
+            <Login @userLogged="isLoginDialogVisible = !isLoginDialogVisible" />
         </Dialog>
     </header>
 </template>
@@ -30,9 +30,10 @@
 <script>
 export default {
     setup() {
-        const player_info = usePlayerInfo();
+        const playerInfo = usePlayerInfo();
         const router = useRouter();
         const isLoginDialogVisible = ref(false);
+        const { isAuthenticated } = useAuth();
 
         const items = ref([
             {
@@ -64,7 +65,7 @@ export default {
             const player_username = useCookie("saved_username", {
                 maxAge: 3600000, // Saves username cookie for 100 hours
             });
-            player_username.value = player_info.value.username;
+            player_username.value = playerInfo.value.username;
         };
 
         const handleLoginClick = () => {
@@ -80,7 +81,7 @@ export default {
             items.value[2].badge = Object.keys(useLobbyList().value).length;
         });
 
-        return { player_info, items, router, isLoginDialogVisible, saveUsernameToCookies, handleLoginClick };
+        return { isAuthenticated, playerInfo, items, router, isLoginDialogVisible, saveUsernameToCookies, handleLoginClick };
     },
 };
 </script>

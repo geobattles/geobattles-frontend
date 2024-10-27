@@ -27,8 +27,18 @@ export default {
         useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
 
         onMounted(() => {
-            const saved_username = useCookie("saved_username");
-            if (typeof saved_username.value === "string") usePlayerInfo().value.username = saved_username.value;
+            const saved_token = useCookie("saved_token");
+            if (typeof saved_token.value === "string") {
+                const { isAuthenticated } = useAuth();
+                isAuthenticated.value = true;
+
+                // Parse JWT
+                const tokenData = parseJwt(saved_token.value);
+                if (tokenData !== null) {
+                    usePlayerInfo().value.username = tokenData.user_name;
+                    usePlayerInfo().value.displayName = tokenData.display_name;
+                }
+            }
 
             // const img = new Image();
             // img.src = "/images/earth.webp";

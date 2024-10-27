@@ -42,7 +42,11 @@ export default {
         const gameFlowManager = useGameFlowManager();
 
         onMounted(async () => {
-            await fetchCountryList();
+            try {
+                await fetchCountryList();
+            } catch (error) {
+                console.error("Failed to fetch country list:", error);
+            }
             // If ccList is empty it populate it with all ccodes. Happend only on first load.
             if (lobby_settings.value.conf.ccList.length === 0) lobby_settings.value.conf.ccList = Object.values(country_list.value);
             filtered_country_list.value = country_list.value;

@@ -9,8 +9,8 @@
                     <label for="username">Username</label>
                 </FloatLabel>
                 <FloatLabel>
-                    <InputText id="email" v-model="email" type="email" required />
-                    <label for="username">Email address</label>
+                    <InputText id="displayName" v-model="displayName" type="text" required />
+                    <label for="username">Display Name</label>
                 </FloatLabel>
                 <FloatLabel>
                     <Password id="password" v-model="password" required />
@@ -27,13 +27,14 @@
 import { ref } from "vue";
 
 const username = ref("");
-const email = ref("");
+const displayName = ref("");
 const password = ref("");
 const errorMessage = ref("");
+const playerInfo = usePlayerInfo();
 
 const onSubmit = async () => {
     console.log("Username:", username.value);
-    console.log("Email:", email.value);
+    console.log("Email:", displayName.value);
     console.log("Password:", password.value);
 
     // Clear previous error message
@@ -41,8 +42,14 @@ const onSubmit = async () => {
 
     // Call the API to sign up
     try {
-        const response = await registerPlayer(username.value, email.value, password.value);
-        console.log("Registration successful:", response);
+        const response = await registerPlayer(username.value, displayName.value, password.value);
+        console.log("Registration successful");
+
+        // Update the player info
+        playerInfo.value.username = username.value;
+        playerInfo.value.displayName = displayName.value;
+
+        console.log("Player info:", playerInfo.value); //! Dev
     } catch (error) {
         console.error("Registration failed:", error);
         errorMessage.value = "Registration failed. Please try again." + error;

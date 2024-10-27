@@ -6,9 +6,10 @@ export const useAuth = () => {
     const isLoading = useState("isLoading", () => false);
 
     const authenticateUser = async (username: string, password: string): Promise<void> => {
+        const backendAPI = useBackendAPI().value;
         isLoading.value = true;
         try {
-            const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
+            const response = await fetch(`${backendAPI}/login/user`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

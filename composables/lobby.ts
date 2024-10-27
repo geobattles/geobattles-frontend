@@ -25,10 +25,12 @@ export const createLobby = async () => {
 
     try {
         // Make post request to create lobby
+        const authToken = getToken(); // Assuming you have a composable to get the auth token
         const response = await fetch(`${useBackendAPI().value}/lobby`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
+                Authorization: `${authToken}`,
             },
             body: JSON.stringify(lobby_post_params),
         });
@@ -75,7 +77,6 @@ export const leaveLobby = () => {
         // usePlayerInfo().value.ID = undefined;
         const { closeConnection } = useWebSocket();
         closeConnection();
-        usePlayerInfo().value.isConnectedToLobby = false;
     } catch (error: any) {
         console.log(error.message);
         throw new Error("Could not leave lobby.");
