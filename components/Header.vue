@@ -17,6 +17,7 @@
                 </div>
                 <div v-else>
                     <Button label="Logout" size="small" severity="secondary" raised @click="logoutPlayer()" />
+                    <span class="ml-2 text-xs">{{ playerInfo.ID }}</span>
                     <span class="ml-2">Welcome, {{ playerInfo.username }}!</span>
                 </div>
             </template>

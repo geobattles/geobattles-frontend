@@ -24,8 +24,6 @@ export const useWebSocket = () => {
         webSocketService.value?.close();
         webSocketService.value = null;
         connectionStatus.value = "disconnected";
-
-        usePlayerInfo().value.ID = undefined;
     };
 
     const updateConnectionStatus = () => {

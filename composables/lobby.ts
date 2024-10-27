@@ -92,8 +92,6 @@ export const leaveLobby = () => {
 export const joinedLobby = (lobby_info: LobbyInfo, user_id: string) => {
     updateNestedLobbySettings(lobby_info);
     if (useLobbySettings().value.conf.ccList.length === 0) useLobbySettings().value.conf.ccList = useCountryList().value;
-
-    if (!usePlayerInfo().value.ID) usePlayerInfo().value.ID = user_id; // Update player ID when player join lobby // TODO: Should be fixed somehow from backend
     console.log("Player " + user_id + " joined the lobby!"); //! Dev: Change this to toast later and to user name
 };
 

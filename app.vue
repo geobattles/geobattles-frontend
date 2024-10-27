@@ -35,8 +35,9 @@ export default {
                 // Parse JWT
                 const tokenData = parseJwt(saved_token.value);
                 if (tokenData !== null) {
-                    usePlayerInfo().value.username = tokenData.user_name;
-                    usePlayerInfo().value.displayName = tokenData.display_name;
+                    usePlayerInfo().value.username = tokenData.user_name; // Unique username
+                    usePlayerInfo().value.displayName = tokenData.display_name; // Display name
+                    usePlayerInfo().value.ID = tokenData.uid; // Unique user ID
                 }
             }
 
