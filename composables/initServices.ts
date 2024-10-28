@@ -2,6 +2,7 @@ import { WebSocketService } from "../services/WebSocketService";
 import { UIManager } from "../services/UIManager";
 import type { GameType } from "~/types";
 import { GameFlowManager } from "../services/GameFlowManager";
+import { AuthenticationService } from "../services/AuthenticationService";
 
 // --------- WEB SOCKET SERVICE --------- //
 export const useWebSocketService = () => useState<WebSocketService | null>("webSocketService", () => null);
@@ -43,6 +44,9 @@ export const useWebSocket = () => {
         connectionStatus: readonly(connectionStatus),
     };
 };
+
+// --------- AUTHENTICATION SERVICE --------- //
+export const useAuthenticationService = () => useState<AuthenticationService>("authenticationService", () => new AuthenticationService(useRouter()));
 
 // --------- GAMEFLOW MANAGER SERVICE --------- //
 export const useGameFlowManager = () => useState<GameFlowManager | null>("gameFlowManager", () => null);

@@ -29,6 +29,7 @@ const password = ref("");
 const errorMessage = ref("");
 const playerInfo = usePlayerInfo();
 const router = useRouter();
+const auth = useAuthenticationService().value;
 
 const onSubmit = async () => {
     console.log("Username:", username.value);
@@ -40,7 +41,7 @@ const onSubmit = async () => {
 
     // Call the API to sign up
     try {
-        await registerPlayer(username.value, displayName.value, password.value);
+        await auth.register(username.value, password.value, displayName.value);
         console.log("Registration successful");
 
         // Update the player info

@@ -14,6 +14,7 @@
 export default {
     setup() {
         const vue_app = ref<HTMLElement | null>(null);
+        const auth = useAuthenticationService().value;
 
         // Read ENV variables
         const runtimeConfig = useRuntimeConfig();
@@ -27,23 +28,10 @@ export default {
         useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
 
         onMounted(() => {
-            const { isAuthenticated } = useAuth();
-            const playerTokenCookie = useCookie("saved_token");
-
-            if (playerTokenCookie.value) {
-                const tokenData = parseJwt(playerTokenCookie.value);
-                if (tokenData && tokenData.exp > Math.floor(Date.now() / 1000)) {
-                    usePlayerInfo().value.username = tokenData.user_name;
-                    usePlayerInfo().value.ID = tokenData.uid;
-                    usePlayerInfo().value.displayName = tokenData.display_name;
-                    usePlayerInfo().value.guest = tokenData.guest;
-                    isAuthenticated.value = true;
-                } else {
-                    playerTokenCookie.value = null; // Clear invalid or expired token
-                    isAuthenticated.value = false;
-                }
-            } else {
-                isAuthenticated.value = false;
+            try {
+                auth.saveTokenData();
+            } catch (error) {
+                console.log("Failed to save token data:", error);
             }
 
             // const img = new Image();

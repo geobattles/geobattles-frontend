@@ -39,6 +39,7 @@
 <script setup>
 const emit = defineEmits(["userLogged"]);
 const router = useRouter();
+const auth = useAuthenticationService().value;
 const username = ref("");
 const password = ref("");
 const isGuestFormVisible = ref(false);
@@ -49,9 +50,10 @@ const generateGuestUsername = () => {
 };
 
 guestDisplayName.value = generateGuestUsername();
+
 const handleLogin = async () => {
     try {
-        await loginPlayer(username.value, password.value);
+        await auth.login(username.value, password.value);
         // Handle successful login to close the dialog
         emit("userLogged");
     } catch (error) {
@@ -59,9 +61,10 @@ const handleLogin = async () => {
         console.error("Login failed", error);
     }
 };
+
 const handleRegisterGuest = async () => {
     try {
-        await registerGuest(guestDisplayName.value);
+        await auth.register(null, null, guestDisplayName.value);
         // Handle successful login to close the dialog
         isGuestFormVisible.value = false;
         emit("userLogged");
