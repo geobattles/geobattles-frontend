@@ -13,12 +13,12 @@
 </template>
 
 <script setup lang="ts">
-const lobby_name = ref("");
 const router = useRouter();
-const { isLoginDialogVisible } = useAuth();
+const auth = useAuthenticationService().value;
+const isLoginDialogVisible = useIsLoginDialogVisible();
 
 const handlePlayNowClick = async () => {
-    if (!useAuth().isAuthenticated.value) return (isLoginDialogVisible.value = true);
+    if (!auth.isPlayerAuthenticated()) return (isLoginDialogVisible.value = true);
 
     // Try to create a lobby
     try {
@@ -30,7 +30,7 @@ const handlePlayNowClick = async () => {
 };
 
 const handleJoinByCodeClick = () => {
-    if (!useAuth().isAuthenticated.value) return (isLoginDialogVisible.value = true);
+    if (!auth.isPlayerAuthenticated()) return (isLoginDialogVisible.value = true);
     router.push("/lobby/join");
 };
 </script>

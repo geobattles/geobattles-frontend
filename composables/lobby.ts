@@ -17,6 +17,7 @@ export const createLobby = async () => {
     const player_info = usePlayerInfo();
     const lobby_settings = useLobbySettings();
     const router = useRouter();
+    const auth = useAuthenticationService().value;
 
     const lobby_post_params = {
         name: `${player_info.value.displayName}'s Lobby`,
@@ -25,7 +26,7 @@ export const createLobby = async () => {
 
     try {
         // Make post request to create lobby
-        const authToken = getToken(); // Assuming you have a composable to get the auth token
+        const authToken = auth.getToken(); // Assuming you have a composable to get the auth token
         const response = await fetch(`${useBackendAPI().value}/lobby`, {
             method: "POST",
             headers: {
