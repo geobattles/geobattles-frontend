@@ -1,7 +1,7 @@
 export default defineNuxtRouteMiddleware((to, from) => {
     const allowedPaths = ["/", "/signup", "/lobby/list", "/about"];
     if (!allowedPaths.includes(to.path)) {
-        if (!usePlayerInfo().value.username) {
+        if (!usePlayerInfo().value.ID) {
             return navigateTo("/");
         }
     }

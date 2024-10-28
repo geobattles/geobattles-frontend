@@ -18,7 +18,12 @@ export class WebSocketService {
 
     connect(): Promise<WebSocket> {
         return new Promise((resolve, reject) => {
-            const socket = new WebSocket(this.getSocketUrl());
+            const authToken = useCookie("saved_token").value;
+            if (!authToken || typeof authToken !== "string") {
+                return reject("No valid auth token found");
+            }
+            const socket = new WebSocket(this.getSocketUrl(), ["json", authToken]);
+
             this.socket = socket;
 
             socket.onopen = this.handleOpen.bind(this, resolve);

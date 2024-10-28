@@ -4,6 +4,7 @@ export type User = {
     displayName: string;
     ID: string | undefined; // Only if in a lobby\
     color: string;
+    guest: boolean | undefined;
 };
 
 // Type used to define lobby info

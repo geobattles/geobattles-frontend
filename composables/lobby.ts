@@ -19,7 +19,7 @@ export const createLobby = async () => {
     const router = useRouter();
 
     const lobby_post_params = {
-        name: `${player_info.value.username}'s Lobby`,
+        name: `${player_info.value.displayName}'s Lobby`,
         roundTime: 100,
     };
 
