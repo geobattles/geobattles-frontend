@@ -5,33 +5,33 @@
             <div>
                 <Button class="play-button w-56 md:w-80" @click="handlePlayNowClick" label="PLAY NOW" icon="pi pi-map-marker" size="large" />
                 <div class="m-auto text-center mt-4">
-                    <span class="text-white">or join a lobby by <a class="clickable" @click="router.push('/lobby/join')">game code!</a></span>
+                    <span class="text-white">or join a lobby by <a class="clickable" @click="handleJoinByCodeClick()">game code!</a></span>
                 </div>
             </div>
         </div>
     </div>
 </template>
 
-<script lang="ts">
-export default {
-    setup() {
-        const lobby_name = ref("");
-        const router = useRouter();
-        const { isLoginDialogVisible } = useAuth();
+<script setup lang="ts">
+const lobby_name = ref("");
+const router = useRouter();
+const { isLoginDialogVisible } = useAuth();
 
-        const handlePlayNowClick = async () => {
-            if (!useAuth().isAuthenticated.value) return (isLoginDialogVisible.value = true);
+const handlePlayNowClick = async () => {
+    if (!useAuth().isAuthenticated.value) return (isLoginDialogVisible.value = true);
 
-            // Try to create a lobby
-            try {
-                await createLobby();
-            } catch (error) {
-                console.error("Failed to create lobby:", error);
-                return window.alert("Failed to create lobby. Please try again later.\n" + error);
-            }
-        };
-        return { lobby_name, router, handlePlayNowClick };
-    },
+    // Try to create a lobby
+    try {
+        await createLobby();
+    } catch (error) {
+        console.error("Failed to create lobby:", error);
+        return window.alert("Failed to create lobby. Please try again later.\n" + error);
+    }
+};
+
+const handleJoinByCodeClick = () => {
+    if (!useAuth().isAuthenticated.value) return (isLoginDialogVisible.value = true);
+    router.push("/lobby/join");
 };
 </script>
 
