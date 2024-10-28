@@ -12,13 +12,13 @@
             <template #end>
                 <div v-if="!auth.isPlayerAuthenticated()" class="flex">
                     <div>
-                        <Button label="Login" size="small" @click="handleLoginClick" />
+                        <Button label="Login" size="small" severity="contrast" @click="handleLoginClick" />
                     </div>
                 </div>
-                <div class="flex gap-2 items-center" v-else>
-                    <Button label="Logout" size="small" severity="secondary" raised @click="auth.logout()" />
-                    <span>{{ playerInfo.displayName }}</span>
-                    <Button size="small" severity="secondary" type="button" icon="pi pi-user-edit" @click="toggleUserMenu" aria-haspopup="true" aria-controls="overlay_menu" />
+                <div v-else class="flex gap-2 items-center">
+                    <Button v-if="showLogoutButton" label="Logout" size="small" severity="contrast" raised @click="auth.logout()" />
+                    <Tag icon="pi pi-user" severity="info" :value="playerInfo.displayName" />
+                    <Button v-if="showLogoutButton" size="small" severity="contrast" type="button" icon="pi pi-user-edit" @click="toggleUserMenu" aria-haspopup="true" aria-controls="overlay_menu" />
                     <Menu ref="userMenu" id="overlay_menu" :model="itemsProfile" :popup="true" />
                 </div>
             </template>
@@ -32,6 +32,7 @@
 <script setup lang="ts">
 const playerInfo = usePlayerInfo();
 const router = useRouter();
+const route = useRoute();
 const userMenu = ref();
 const isLoginDialogVisible = useIsLoginDialogVisible();
 const auth = useAuthenticationService().value;
@@ -85,6 +86,11 @@ const toggleUserMenu = (event: any) => {
 const handleLoginClick = () => {
     isLoginDialogVisible.value = true;
 };
+
+const showLogoutButton = computed(() => {
+    const routeName = route.name as string;
+    return !["lobby-id", "gameplay-id"].some((word) => routeName.includes(word));
+});
 
 onMounted(async () => {
     try {

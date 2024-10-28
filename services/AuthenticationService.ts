@@ -4,9 +4,7 @@ import type { User } from "@/types";
 export class AuthenticationService {
     private isAuthenticated = false;
 
-    constructor(private readonly router: Router) {
-        console.log("Authentication service initialized"); //! Dev
-    }
+    constructor(private readonly router: Router) {}
 
     public saveToken(token: string, expire: number): void {
         const maxAge = expire - Math.floor(Date.now() / 1000);
@@ -24,8 +22,8 @@ export class AuthenticationService {
 
     public getToken(): string | null {
         const playerTokenCookie = useCookie("saved_token");
-        console.log("Player token cookie:", playerTokenCookie.value); //! Dev
         if (!playerTokenCookie.value) return null;
+        this.isAuthenticated = true; // Set authentication status to true
         return playerTokenCookie.value;
     }
 
@@ -35,7 +33,15 @@ export class AuthenticationService {
     }
 
     public isPlayerAuthenticated(): boolean {
-        return this.getToken() !== null;
+        const token = this.getToken();
+        const isAuthenticated = this.isAuthenticated && token !== null;
+        if (!isAuthenticated) {
+            console.log("Authentication check failed. Missing:", {
+                isAuthenticated: this.isAuthenticated,
+                token: token,
+            });
+        } //! Dev
+        return isAuthenticated;
     }
 
     public logout(): void {
@@ -75,7 +81,6 @@ export class AuthenticationService {
 
             // Save the player token in a cookie
             this.saveToken(responseData.Auth_token, responseData.Expiry);
-            console.log("Token saved:", responseData.Auth_token); //! Dev
 
             // Parse the JWT to get data from it and save data
             this.saveTokenData(responseData.Auth_token);
@@ -128,7 +133,7 @@ export class AuthenticationService {
         const tokenData = this.parseJwt(tokenToUse);
         if (!tokenData) throw new Error("Invalid token data");
 
-        console.log("Token data:", tokenData); //! Dev
+        console.log("Token data DEV:", tokenData); //! Dev
 
         usePlayerInfo().value.username = tokenData.user_name; // Unique username
         usePlayerInfo().value.ID = tokenData.uid; // Unique user ID
