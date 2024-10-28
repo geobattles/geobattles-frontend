@@ -1,39 +1,19 @@
 export const useAuth = () => {
+    // Main state to check if user is authenticated
     const isAuthenticated = useState("isAuthenticated", () => {
         console.log("isAuthenticated INITED"); //! Dev
         return false;
     });
+
+    // State to check if the login dialog is visible (//TODO: Add this functionality)
     const isLoading = useState("isLoading", () => false);
 
-    const authenticateUser = async (username: string, password: string): Promise<void> => {
-        const backendAPI = useBackendAPI().value;
-        isLoading.value = true;
-        try {
-            const response = await fetch(`${backendAPI}/login/user`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ username, password }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                isAuthenticated.value = data.success;
-            } else {
-                isAuthenticated.value = false;
-            }
-        } catch (error) {
-            console.error("Authentication failed", error);
-            isAuthenticated.value = false;
-        } finally {
-            isLoading.value = false;
-        }
-    };
+    // State to check if the login dialog
+    const isLoginDialogVisible = useState("isLoginDialogVisible", () => false);
 
     return {
         isAuthenticated,
+        isLoginDialogVisible,
         isLoading,
-        authenticateUser,
     };
 };

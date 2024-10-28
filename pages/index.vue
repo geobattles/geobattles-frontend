@@ -17,9 +17,10 @@ export default {
     setup() {
         const lobby_name = ref("");
         const router = useRouter();
+        const { isLoginDialogVisible } = useAuth();
 
         const handlePlayNowClick = async () => {
-            if (!usePlayerInfo().value.username) return window.alert("Please enter a username before playing!");
+            if (!useAuth().isAuthenticated.value) return (isLoginDialogVisible.value = true);
 
             // Try to create a lobby
             try {

@@ -36,6 +36,7 @@ export default {
                     usePlayerInfo().value.username = tokenData.user_name;
                     usePlayerInfo().value.ID = tokenData.uid;
                     usePlayerInfo().value.displayName = tokenData.display_name;
+                    usePlayerInfo().value.guest = tokenData.guest;
                     isAuthenticated.value = true;
                 } else {
                     playerTokenCookie.value = null; // Clear invalid or expired token
