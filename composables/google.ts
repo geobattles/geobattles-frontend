@@ -75,18 +75,21 @@ export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): voi
     const gameFlowManager = useGameFlowManager().value;
     if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
-    useGooglePanorama().value = new google.maps.StreetViewPanorama(panorama_html as HTMLElement, {
-        position: gameFlowManager.searchedLocationCoords.value,
-        pov: {
-            heading: 34,
-            pitch: 10,
-        },
-        fullscreenControl: false,
-        showRoadLabels: false,
-        addressControl: false,
-        motionTracking: false,
-        motionTrackingControl: false,
-    });
+    // Timeout heres is added just to track Google Maps API billing (so panorama is alomst for sure loaded after map)
+    setTimeout(() => {
+        useGooglePanorama().value = new google.maps.StreetViewPanorama(panorama_html as HTMLElement, {
+            position: gameFlowManager.searchedLocationCoords.value,
+            pov: {
+                heading: 34,
+                pitch: 10,
+            },
+            fullscreenControl: false,
+            showRoadLabels: false,
+            addressControl: false,
+            motionTracking: false,
+            motionTrackingControl: false,
+        });
+    }, 2000);
 };
 export const updatePanoramaView = (coordinates: Coordinates) => useGooglePanorama().value.setPosition(coordinates);
 /// END GOOGLE PANORAMA ///
