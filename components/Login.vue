@@ -1,5 +1,6 @@
 <template>
     <div>
+        <Toast />
         <div class="flex flex-col md:flex-row">
             <div class="w-full md:w-5/12 flex flex-col items-center justify-center gap-3 py-5">
                 <div class="flex flex-col gap-2">
@@ -36,8 +37,9 @@
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const emit = defineEmits(["userLogged"]);
+const toast = useToast();
 const router = useRouter();
 const auth = useAuthenticationService().value;
 const username = ref("");
@@ -58,7 +60,8 @@ const handleLogin = async () => {
         emit("userLogged");
     } catch (error) {
         // Handle login error
-        console.error("Login failed", error);
+        const errorMessage = (error instanceof Error && error.message) || "Unknown error";
+        toast.add({ severity: "error", summary: "Error logging in", detail: errorMessage, life: 5000 });
     }
 };
 

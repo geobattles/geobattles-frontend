@@ -59,6 +59,13 @@ export class AuthenticationService {
         console.log("Player has been logged out successfully"); //! Dev
     }
 
+    /**
+     * Logs in a user with the provided username and password.
+     *
+     * @param username - The username of the user.
+     * @param password - The password of the user.
+     * @throws Will throw an error if the login fails.
+     */
     public async login(username: string, password: string): Promise<void> {
         const backendAPI = useBackendAPI().value;
         if (!backendAPI) return console.error("Backend API is not defined");
@@ -73,8 +80,8 @@ export class AuthenticationService {
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to login player: ${errorText}`);
+                const errorText = await response.json();
+                throw new Error(errorText.error);
             }
 
             const responseData: { Auth_token: string; Expiry: number } = await response.json();
@@ -85,7 +92,7 @@ export class AuthenticationService {
             // Parse the JWT to get data from it and save data
             this.saveTokenData(responseData.Auth_token);
         } catch (error) {
-            console.error("Error logging in player:", error);
+            console.error("Login failed:", error);
             this.isAuthenticated = false;
             throw error; // Re-throw the error to be caught in the component
         }
