@@ -1,6 +1,6 @@
 <template>
     <div class="signup-container">
-        <div class="mb-5 text-center font-bold" style="color: var(--p-primary-400)">Sign Up Form</div>
+        <div class="mb-5 p-5 text-center font-bold" style="color: var(--p-primary-400)">Sign Up Form</div>
         <div class="flex flex-col gap-6 items-center">
             <FloatLabel>
                 <InputText id="username" v-model="username" type="text" required />
@@ -57,10 +57,6 @@ const onSubmit = async () => {
 </script>
 
 <style scoped>
-.signup-container {
-    margin-top: 1%;
-}
-
 .error-message {
     color: red;
     margin-top: 10px;
