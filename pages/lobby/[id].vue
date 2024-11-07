@@ -3,10 +3,10 @@
         <Header />
         <div class="main-content flex flex-wrap gap-0 md:gap-5 justify-center text-xs md:text-base">
             <Panel class="basis-1/2 md:basis-1/3" header="Lobby Settings" :class="{ 'player-view': !isPlayerAdmin() }" style="min-width: 250px">
-                <LobbyDisplaySettings />
-                <div style="text-align: center">
-                    <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Settings" icon="pi pi-cog" badgeSeverity="contrast" outlined />
+                <div style="text-align: center" class="mb-3">
+                    <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Settings" icon="pi pi-cog" severity="contrast" />
                 </div>
+                <LobbyDisplaySettings />
             </Panel>
             <div class="basis-1/2 md:basis-1/3 text-sm md:text-base">
                 <Button v-if="isPlayerAdmin()" @click="gameFlowManager?.sendStartRoundSocketMessage" size="large" label="Start Game" icon="pi pi-play-circle" badgeSeverity="contrast" :disabled="start_disabled" />
@@ -21,7 +21,7 @@
                         <ConnectionStatus />
                     </div>
                 </div>
-                <LobbyPlayerList class="text-sm md:text-base m-auto mt-5" style="max-width: 350px; min-width: 250px" />
+                <LobbyPlayerList class="text-sm md:text-base m-auto mt-5" style="max-width: 300px" />
             </div>
         </div>
         <Dialog v-model:visible="modify_settings_modal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
@@ -81,7 +81,6 @@ export default {
     background-color: var(--p-surface-900);
     color: var(--p-surface-0);
     height: 100%;
-    padding-bottom: 100px;
 }
 .main-content {
     text-align: center;
