@@ -102,8 +102,8 @@ export class AuthenticationService {
         const backendAPI = useBackendAPI().value;
         if (!backendAPI) return console.error("Backend API is not defined");
 
-        const endpoint = displayName ? `${backendAPI}/register/guest` : `${backendAPI}/register`;
-        const body = displayName ? { username, password, displayname: displayName } : { displayname: displayName };
+        const endpoint = username && password ? `${backendAPI}/register/user` : `${backendAPI}/register/guest`;
+        const body = username && password ? { username, password, displayname: displayName } : { displayname: displayName };
 
         try {
             const response = await fetch(endpoint, {
@@ -115,8 +115,8 @@ export class AuthenticationService {
             });
 
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to register guest: ${errorText}`);
+                const errorText = await response.json();
+                throw new Error(errorText.error);
             }
 
             const responseData: { Auth_token: string; Expiry: number } = await response.json();
@@ -127,7 +127,7 @@ export class AuthenticationService {
             // Parse the JWT to get data from it and save data
             this.saveTokenData(responseData.Auth_token);
         } catch (error) {
-            console.error("Error registering guest:", error);
+            console.error("Registering failed:", error);
             this.isAuthenticated = false;
             throw error; // Re-throw the error to be caught in the component
         }

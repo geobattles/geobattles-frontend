@@ -1,5 +1,6 @@
 <template>
     <div class="signup-container">
+        <Toast />
         <div class="mb-5 p-5 text-center font-bold" style="color: var(--p-primary-400)">Sign Up Form</div>
         <div class="flex flex-col gap-6 items-center">
             <FloatLabel>
@@ -30,6 +31,7 @@ const errorMessage = ref("");
 const playerInfo = usePlayerInfo();
 const router = useRouter();
 const auth = useAuthenticationService().value;
+const toast = useToast();
 
 const onSubmit = async () => {
     console.log("Username:", username.value);
@@ -50,8 +52,9 @@ const onSubmit = async () => {
 
         router.push("/"); // Redirect to the home page after successful registration
     } catch (error) {
-        console.error("Registration failed:", error);
-        errorMessage.value = "Registration failed. Please try again." + error;
+        // Handle register error
+        const errorMessage = (error instanceof Error && error.message) || "Unknown error";
+        toast.add({ severity: "error", summary: "Error registering", detail: errorMessage, life: 5000 });
     }
 };
 </script>
