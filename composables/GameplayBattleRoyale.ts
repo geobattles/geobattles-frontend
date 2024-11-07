@@ -60,10 +60,7 @@ export class BattleRoyale implements GameMode {
         }, 300);
     }
 
-    finishGame(): void {
-        removePolyLinesFromMap(true);
-        removeMarkersFromMap(true);
-    }
+    finishGame(): void {}
 
     // Keyword this wont work at start?
     // Yes, this is true at the start. The 'this' keyword won't work as expected because this method is called by GoogleMap.addListener

@@ -76,6 +76,9 @@ export class UIManager {
                 if (newVal === GameState.PLAYING) {
                     this.moveMapToPlaying();
                 }
+                if (newVal === GameState.FINISHED) {
+                    this.moveMapToFinished();
+                }
             },
             { immediate: true }
         );
@@ -96,6 +99,14 @@ export class UIManager {
             gameplay_container.appendChild(this.googleMap);
             this.googleMap.classList.remove("google-map-midround");
             this.googleMap.classList.add("google-map-gameplay");
+        }
+    }
+
+    private moveMapToFinished(): void {
+        const gameplay_container = document.getElementById("google-map-finished");
+        if (this.googleMap && gameplay_container) {
+            gameplay_container.appendChild(this.googleMap);
+            this.googleMap.classList.remove("google-map-hover", "google-map-gameplay");
         }
     }
 

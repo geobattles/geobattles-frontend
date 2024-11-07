@@ -1,5 +1,5 @@
 <template>
-    <div id="midround_container">
+    <div class="midround_container">
         <div class="midround-content">
             <Panel class="mt-12" pt:header:class="text-xs md:text-base" header="Total results">
                 <GameplayTotalStatistics class="text-xs md:text-base" />
@@ -28,7 +28,7 @@ export default {
 </script>
 
 <style scoped>
-#midround_container {
+.midround_container {
     position: absolute;
     top: 0;
     left: 0;
@@ -36,8 +36,8 @@ export default {
     height: 100vh;
     z-index: 2;
     background-color: var(--p-surface-900);
-
     overflow: hidden;
+
     display: flex;
     flex-direction: row;
 }
@@ -53,7 +53,6 @@ export default {
 
 .google-map-window {
     flex: 70%;
-
     overflow: hidden;
 }
 </style>
