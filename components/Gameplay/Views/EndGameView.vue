@@ -1,15 +1,17 @@
 <template>
     <div id="end_game_container">
-        <div class="results-section">
-            <Panel header="Total Results" class="total-result-table">
-                <GameplayTotalStatistics />
-            </Panel>
-        </div>
-        <div class="endgame-menu">
-            <Button type="button" label="NEXT GAME" @click="gameFlowManager?.sendStartRoundSocketMessage" />
-            <LobbyDisplaySettings />
-            <div style="text-align: center">
-                <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Settings" icon="pi pi-cog" badgeSeverity="contrast" outlined />
+        <div id="google-map-finished" style="width: 70vw"></div>
+        <div class="flex flex-col p-1" style="width: 30vw">
+            <div class="results-section">
+                <Panel header="Total Results" pt:header:class="text-xs md:text-base">
+                    <GameplayTotalStatistics class="text-xs md:text-base" />
+                </Panel>
+            </div>
+            <div class="endgame-menu">
+                <Button type="button" label="NEXT GAME" @click="gameFlowManager?.sendStartRoundSocketMessage" />
+                <div style="text-align: center">
+                    <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Lobby Settings" icon="pi pi-cog" severity="info" />
+                </div>
             </div>
         </div>
         <Dialog v-model:visible="modify_settings_modal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
@@ -39,14 +41,10 @@ watch(modify_settings_modal, (newVal) => {
     color: var(--p-surface-0);
 
     display: flex;
-    justify-content: center;
-    align-items: center;
-    margin: auto;
-    gap: 20px;
+    flex-direction: row;
 }
 
 .endgame-menu {
-    flex: 50%;
     z-index: 1;
 
     display: flex;
