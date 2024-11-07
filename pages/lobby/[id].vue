@@ -80,10 +80,12 @@ export default {
 #lobby-id-component {
     background-color: var(--p-surface-900);
     color: var(--p-surface-0);
-    height: 100vh;
+    height: 100%;
+    padding-bottom: 100px;
 }
 .main-content {
     text-align: center;
+    margin: 1%;
     margin-top: 50px;
 }
 

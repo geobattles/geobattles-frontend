@@ -3,13 +3,15 @@
         <TransitionGroup name="list" tag="ul" class="flex flex-col gap-1">
             <div v-for="(value, index) in results" :key="index">
                 <div class="table__row" :id="index.toString()">
-                    <div class="table__row-element flex flex-col">
+                    <div class="table__row-element">
                         <div class="player-name">
                             {{ getPlayerNameFromID(index) }}
                         </div>
-                        <SvgsUserIcon class="svg-user-icon h-5" style="margin: auto" :color="getPlayerColorByID(index)" />
+                        <div>
+                            <SvgsUserIcon class="svg-user-icon w-4" :color="getPlayerColorByID(index)" />
+                        </div>
                     </div>
-                    <div class="table__row-element flex flex-col">
+                    <div class="table__row-element">
                         <div>Lives</div>
                         <div class="flex gap-1 m-auto">
                             <div v-for="life in total_attempts.get(index)" :key="life">
@@ -22,7 +24,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="table__row-element distance">
+                    <div class="table__row-element distance" style="flex: 35%">
                         <div>Distance</div>
                         <div class="value m-auto">
                             {{ processDistance(value.distance) }}
@@ -121,16 +123,14 @@ export default {
     justify-content: space-between;
     align-items: center;
 
-    position: relative;
     z-index: 3;
 }
 
 .score .value {
-    letter-spacing: 1px;
-    font-weight: 800;
-
-    color: #00a708;
+    font-weight: 600;
+    color: var(--p-primary-300);
 }
+
 /* APPLIED GUESS ROW STYLE */
 .applied-guess {
     background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-surface-700) 50%);
@@ -146,11 +146,6 @@ export default {
     width: 100%;
 
     background-position: left;
-}
-
-.player-icon {
-    width: 18px;
-    height: 18px;
 }
 
 /* LIVE STATS ANIMATION LIST */
@@ -177,10 +172,10 @@ export default {
     .statistics {
         padding: 5px;
 
-        min-width: 150px;
+        min-width: 180px;
     }
     .table__row {
-        height: 25px;
+        height: 28px;
         font-size: 8px;
         margin-bottom: 3px;
     }
@@ -191,8 +186,7 @@ export default {
         width: 8px;
     }
     .svg-heart-icon {
-        width: 6px;
-        margin-right: 0.5px;
+        width: 7px;
     }
     .distance .value {
         font-size: 8px;

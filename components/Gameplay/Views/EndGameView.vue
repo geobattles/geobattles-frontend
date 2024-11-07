@@ -1,9 +1,9 @@
 <template>
     <div id="end_game_container">
         <div class="results-section">
-            <div class="total-result-table">
+            <Panel header="Total Results" class="total-result-table">
                 <GameplayTotalStatistics />
-            </div>
+            </Panel>
         </div>
         <div class="endgame-menu">
             <Button type="button" label="NEXT GAME" @click="gameFlowManager?.sendStartRoundSocketMessage" />
@@ -19,7 +19,6 @@
 </template>
 
 <script setup lang="ts">
-const total_results = useTotalResults();
 const modify_settings_modal = useModifySettingsModal();
 const gameFlowManager = useGameFlowManager();
 
@@ -36,20 +35,19 @@ watch(modify_settings_modal, (newVal) => {
     width: 100%;
     height: 100%;
     z-index: 3;
-    background-color: var(--p-zinc-900);
+    background-color: var(--p-surface-900);
+    color: var(--p-surface-0);
 
     display: flex;
     justify-content: center;
     align-items: center;
     margin: auto;
     gap: 20px;
-    flex-wrap: wrap;
 }
 
 .endgame-menu {
     flex: 50%;
     z-index: 1;
-    color: white;
 
     display: flex;
     flex-direction: column;
