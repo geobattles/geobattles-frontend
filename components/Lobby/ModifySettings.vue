@@ -29,11 +29,11 @@
             <div class="flex flex-row flex-wrap justify-around gap-2">
                 <div class="flex flex-col gap-1">
                     <label for="number-of-rounds-input" class="text-xs"> Rounds </label>
-                    <InputNumber class="m-auto w-12" inputId="number-of-rounds-input" v-model="lobby_settings.conf.numRounds" showButtons buttonLayout="vertical" :min="0" :max="99" />
+                    <InputNumber class="m-auto w-12" inputId="number-of-rounds-input" v-model="lobby_settings.conf.numRounds" showButtons buttonLayout="vertical" :min="0" :max="10" />
                 </div>
                 <div class="flex flex-col gap-1">
                     <label for="attempts-per-rounds-input" class="text-xs"> Attempts </label>
-                    <InputNumber class="m-auto w-12" inputId="attempts-per-rounds-input" v-model="lobby_settings.conf.numAttempt" showButtons buttonLayout="vertical" :min="0" :max="99" />
+                    <InputNumber class="m-auto w-12" inputId="attempts-per-rounds-input" v-model="lobby_settings.conf.numAttempt" showButtons buttonLayout="vertical" :min="0" :max="5" />
                 </div>
                 <div class="flex flex-col gap-1">
                     <label for="stacked-buttons" class="text-xs"> Max players </label>
