@@ -84,15 +84,6 @@ export class UIManager {
         );
     }
 
-    private moveMapToMidRound(): void {
-        const mid_round_map_window = document.querySelector(".google-map-window");
-        if (this.googleMap && mid_round_map_window) {
-            mid_round_map_window.appendChild(this.googleMap);
-            this.googleMap.classList.remove("google-map-hover", "google-map-gameplay");
-            this.googleMap.classList.add("google-map-midround");
-        }
-    }
-
     private moveMapToPlaying(): void {
         const gameplay_container = document.getElementById("gameplay_container");
         if (this.googleMap && gameplay_container) {
@@ -102,11 +93,19 @@ export class UIManager {
         }
     }
 
+    private moveMapToMidRound(): void {
+        const mid_round_map_window = document.querySelector(".google-map-window");
+        if (this.googleMap && mid_round_map_window) {
+            mid_round_map_window.appendChild(this.googleMap);
+            this.googleMap.classList.remove("google-map-hover", "google-map-gameplay");
+            this.googleMap.classList.add("google-map-midround");
+        }
+    }
+
     private moveMapToFinished(): void {
         const gameplay_container = document.getElementById("google-map-finished");
         if (this.googleMap && gameplay_container) {
             gameplay_container.appendChild(this.googleMap);
-            this.googleMap.classList.remove("google-map-hover", "google-map-gameplay");
         }
     }
 
