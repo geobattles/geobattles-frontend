@@ -21,6 +21,12 @@ export default defineNuxtConfig({
     modules: ["@nuxtjs/tailwindcss", "@primevue/nuxt-module"],
     css: ["primeicons/primeicons.css"],
 
+    vite: {
+        optimizeDeps: {
+            include: ["primevue/toggleswitch", "primevue/inputnumber", "primevue/slider", "primevue/radiobutton", "primevue/checkbox", "primevue/panel", "primevue/button", "primevue/tabmenu", "primevue/card", "primevue/dropdown", "primevue/fieldset", "primevue/inputswitch", "primevue/progressbar", "primevue/progressspinner", "primevue/menubar", "primevue/badge", "primevue/inputtext", "primevue/floatlabel", "primevue/divider", "primevue/datatable", "primevue/column", "primevue/usetoast", "primevue/toast", "primevue/menu", "primevue/ripple", "primevue/dialog", "primevue/tag"],
+        },
+    },
+
     primevue: {
         options: {
             ripple: true,
@@ -34,9 +40,7 @@ export default defineNuxtConfig({
                 },
             },
         },
-        components: {
-            include: ["Calendar", "Slider", "Button", "TabMenu", "InputNumber", "Card", "Dropdown", "Fieldset", "Checkbox", "FileUpload", "MultiSelect", "Panel", "InputSwitch", "InputNumber", "ProgressBar", "ProgressSpinner", "MenuBar", "Badge", "Avatar", "InputText", "FloatLabel", "Divider", "RadioButton", "DataTable", "Column", "Toast"],
-        },
+        autoImport: true,
     },
 
     compatibilityDate: "2024-10-06",
