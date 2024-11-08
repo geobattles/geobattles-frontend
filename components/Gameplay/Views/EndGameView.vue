@@ -3,8 +3,8 @@
         <div id="google-map-finished" style="width: 70vw"></div>
         <div class="flex flex-col justify-center gap-5 p-1" style="width: 30vw">
             <div class="results-section">
-                <Panel header="Total Results" pt:header:class="text-xs md:text-base">
-                    <GameplayTotalStatistics class="text-xs md:text-base" />
+                <Panel header="Total Results" pt:header:class="text-xs lg:text-base">
+                    <GameplayTotalStatistics class="text-xs lg:text-base" />
                 </Panel>
             </div>
             <div class="endgame-menu">

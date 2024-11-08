@@ -1,27 +1,27 @@
 <template>
     <div id="lobby-id-component">
         <Header />
-        <div class="main-content flex flex-wrap gap-0 md:gap-5 justify-center text-xs md:text-base">
-            <Panel class="basis-1/2 md:basis-1/3" header="Lobby Settings" :class="{ 'player-view': !isPlayerAdmin() }" style="min-width: 250px">
+        <div class="main-content flex flex-wrap gap-0 lg:gap-5 justify-center text-xs lg:text-base">
+            <Panel class="basis-1/2 lg:basis-1/3" header="Lobby Settings" :class="{ 'player-view': !isPlayerAdmin() }" style="min-width: 250px">
                 <div style="text-align: center" class="mb-3">
                     <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Settings" icon="pi pi-cog" severity="contrast" />
                 </div>
                 <LobbyDisplaySettings />
             </Panel>
-            <div class="basis-1/2 md:basis-1/3 text-sm md:text-base">
+            <div class="basis-1/2 lg:basis-1/3 text-sm lg:text-base">
                 <Button v-if="isPlayerAdmin()" @click="gameFlowManager?.sendStartRoundSocketMessage" size="large" label="Start Game" icon="pi pi-play-circle" badgeSeverity="contrast" :disabled="start_disabled" />
                 <div v-else style="color: white">Waiting for admin to start the game</div>
                 <div class="flex justify-evenly mt-5">
                     <div class="flex flex-col">
                         <div class="mb-1">Lobby code</div>
-                        <div class="text-xl" style="letter-spacing: 2px">{{ lobby_settings.ID }}</div>
+                        <div class="text-base lg:text-xl" style="letter-spacing: 2px">{{ lobby_settings.ID }}</div>
                     </div>
                     <div class="flex flex-col">
                         <div class="mb-1">Connection Status</div>
                         <ConnectionStatus />
                     </div>
                 </div>
-                <LobbyPlayerList class="text-sm md:text-base m-auto mt-5" style="max-width: 300px" />
+                <LobbyPlayerList class="text-sm lg:text-base m-auto mt-5" style="max-width: 300px" />
             </div>
         </div>
         <Dialog v-model:visible="modify_settings_modal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">

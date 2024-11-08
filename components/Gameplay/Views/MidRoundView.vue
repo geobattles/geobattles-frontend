@@ -1,8 +1,8 @@
 <template>
     <div class="midround_container">
         <div class="midround-content">
-            <Panel class="mt-12" pt:header:class="text-xs md:text-base" header="Total results">
-                <GameplayTotalStatistics class="text-xs md:text-base" />
+            <Panel class="mt-12" pt:header:class="text-xs lg:text-base" header="Total results">
+                <GameplayTotalStatistics class="text-xs lg:text-base" />
             </Panel>
             <div class="mt-5 text-center">
                 <Button v-if="isPlayerAdmin()" @click="gameFlowManager?.sendStartRoundSocketMessage" label="Next Round" icon="pi pi-forward" severity="warning" outlined />
