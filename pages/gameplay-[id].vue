@@ -1,7 +1,7 @@
 <template>
     <div ref="gameplay_page">
         <Toast position="bottom-right" />
-        <GameplayMenu class="connection-status-container scale-75 md:scale-100" @leaveLobbyClicked="handleClickLeaveLobby" />
+        <GameplayMenu class="connection-status-container scale-75 lg:scale-100" @leaveLobbyClicked="handleClickLeaveLobby" />
         <GameplayViewsCountdownView v-if="gameFlowManager?.currentState === 'STARTING'" />
         <div id="gameplay_container">
             <!-- BAR TIMER -->
@@ -216,7 +216,7 @@ const toggleFullscreen = () => {
 }
 
 /* MOPBILE VIEW */
-@media (max-width: 1000px) {
+@media (max-width: 1024px) {
     .google-map-gameplay {
         height: 0px;
         width: 0px;

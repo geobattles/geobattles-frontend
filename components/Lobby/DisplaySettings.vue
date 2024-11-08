@@ -47,7 +47,7 @@
             <div class="country-list-preview">
                 <div v-for="(ccode, id) in lobby_settings.conf.ccList" :key="id" :title="countries_flag_map.get(ccode)?.name" style="margin: 10px">
                     <div class="tooltip bottom">
-                        <div class="flag m-0 md:m-1 scale-75 md:scale-100" :style="{ backgroundPosition: countries_flag_map.get(ccode)?.x + 'px ' + countries_flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
+                        <div class="flag m-0 md:m-1 scale-75 lg:scale-100" :style="{ backgroundPosition: countries_flag_map.get(ccode)?.x + 'px ' + countries_flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
                     </div>
                 </div>
             </div>

@@ -21,7 +21,7 @@ export class UIManager {
     }
 
     private setupMapListeners(toggle_map_mobile: Ref<HTMLElement | null>, show_map_button: Ref<boolean>, submit_button: Ref<HTMLElement | null>): void {
-        if (window.innerWidth < 1000) {
+        if (window.innerWidth < 1024) {
             this.setupMobileView(toggle_map_mobile, show_map_button);
         } else {
             this.setupDesktopView(submit_button);
