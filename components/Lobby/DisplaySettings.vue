@@ -1,53 +1,65 @@
 <template>
     <div>
         <div>
-            <h3 class="text-center">Game info</h3>
-            <hr style="margin-bottom: 15px" />
-            <div v-if="lobby_settings.conf.mode === 1" class="text-center">Mode: Battle Royale</div>
-            <div v-if="lobby_settings.conf.mode === 2" class="text-center">Mode: Country Battle</div>
-            <div class="flex flex-row justify-center gap-3">
-                <i class="pi pi-stopwatch" style="font-size: 1rem"></i>
-                {{ lobby_settings.conf.roundTime }}''
+            <Divider pt:root:class="!mt-0" align="center">
+                <b>Game Info</b>
+            </Divider>
+            <div class="flex justify-evenly flex-wrap">
+                <div>
+                    <div v-if="lobby_settings.conf.mode === 1" class="text-center flex flex-col"><Tag severity="info" class="p-mr-2">GameMode:</Tag> Battle Royale</div>
+                    <div v-if="lobby_settings.conf.mode === 2" class="text-center"><Tag severity="info" class="p-mr-2">GameMode:</Tag> Country Battle</div>
+                </div>
+                <div class="flex flex-col">
+                    <Tag severity="info" icon="pi pi-clock" class="p-mr-2">Round Time:</Tag>
+                    <span>{{ lobby_settings.conf.roundTime }} seconds</span>
+                </div>
+                <div>
+                    <Tag severity="info" icon="pi pi-replay" class="p-mr-2">Nr. Rounds:</Tag>
+                    <div>{{ lobby_settings.conf.numRounds }}</div>
+                </div>
             </div>
-            <div>
-                <div>Number of rounds: {{ lobby_settings.conf.numRounds }}</div>
-            </div>
-            <div>
-                Dynamic lives:
-                <span v-if="lobby_settings.conf.dynLives" style="color: #57c657">ON</span>
-                <span v-else style="color: #a1a1a1">OFF</span>
-            </div>
-            <div>
-                Round bonus:
-                <span v-if="lobby_settings.conf.placeBonus" style="color: #57c657">ON</span>
-                <span v-else style="color: #a1a1a1">OFF</span>
+            <Divider align="center">
+                <b>Specifics</b>
+            </Divider>
+            <div class="flex justify-around">
+                <div class="flex flex-col">
+                    <Tag severity="info"> Dynamic lives: </Tag>
+                    <Tag v-if="lobby_settings.conf.dynLives" class="m-auto mt-2">ON</Tag>
+                    <Tag v-else severity="secondary" class="m-auto">OFF</Tag>
+                </div>
+                <div class="flex flex-col">
+                    <Tag severity="info"> Round bonus: </Tag>
+                    <Tag v-if="lobby_settings.conf.placeBonus" class="m-auto mt-2">ON</Tag>
+                    <Tag v-else severity="secondary" class="m-auto">OFF</Tag>
+                </div>
             </div>
         </div>
         <!-- DISPLAY SELECTED POWERUPS -->
-        <div v-if="lobby_settings.conf.powerups" style="text-align: center">
+        <!-- <div v-if="lobby_settings.conf.powerups" style="text-align: center">
             <div>
                 <h3 style="text-align: center">Powerups</h3>
-                <hr style="margin-bottom: 15px" />
+                <Divider />
                 <div>
                     Double score:
-                    <span v-if="lobby_settings.conf.powerups[0]" style="color: #57c657">ON</span>
-                    <span v-else style="color: #a1a1a1">OFF</span>
+                    <Tag v-if="lobby_settings.conf.powerups[0]" pt:root:class="p-1">ON</Tag>
+                    <Tag v-else severity="secondary">OFF</Tag>
                 </div>
                 <div>
                     Duel battle:
-                    <span v-if="lobby_settings.conf.powerups[1]" style="color: #57c657">ON</span>
-                    <span v-else style="color: #a1a1a1">OFF</span>
+                    <Tag v-if="lobby_settings.conf.powerups[1]">ON</Tag>
+                    <Tag v-else severity="secondary">OFF</Tag>
                 </div>
             </div>
-        </div>
+        </div> -->
         <!-- DISPLAY SELECTED COUNTRIES -->
         <div>
-            <h3 style="text-align: center">Selected countries</h3>
-            <hr class="mb-5" />
+            <Divider align="center">
+                <b>Selected Countries</b>
+            </Divider>
             <div class="country-list-preview">
                 <div v-for="(ccode, id) in lobby_settings.conf.ccList" :key="id" :title="countries_flag_map.get(ccode)?.name" style="margin: 10px">
                     <div class="tooltip bottom">
-                        <div class="flag m-0 md:m-1 scale-75 lg:scale-100" :style="{ backgroundPosition: countries_flag_map.get(ccode)?.x + 'px ' + countries_flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
+                        <div class="flag m-0 lg:m-1 scale-75 lg:scale-100" :style="{ backgroundPosition: countries_flag_map.get(ccode)?.x + 'px ' + countries_flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
                     </div>
                 </div>
             </div>
@@ -71,17 +83,15 @@ export default {
 .country-list-preview {
     max-height: 200px;
     overflow-y: scroll;
-
-    max-width: 420px;
-    overflow: auto;
-
-    margin: 15px auto;
 }
 
 .flag {
     width: 32px;
     height: 24px;
     background-image: url("/images/flags32.webp");
+
+    border-radius: 5px;
+    border: 1px solid var(--p-primary-600);
 }
 
 .country-list-preview::-webkit-scrollbar {

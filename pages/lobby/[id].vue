@@ -2,10 +2,13 @@
     <div id="lobby-id-component">
         <Header />
         <div class="main-content flex flex-wrap gap-0 lg:gap-5 justify-center text-xs lg:text-base">
-            <Panel class="basis-1/2 lg:basis-1/3" header="Lobby Settings" :class="{ 'player-view': !isPlayerAdmin() }" style="min-width: 250px">
-                <div style="text-align: center" class="mb-3">
-                    <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Settings" icon="pi pi-cog" severity="contrast" />
-                </div>
+            <Panel class="basis-1/2 lg:basis-1/3" header="Lobby Settings" :class="{ 'player-view': !isPlayerAdmin() }" style="min-width: 250px; max-width: 500px">
+                <template #header class="flex justify-around">
+                    <div class="font-bold text-base">Lobby Settings</div>
+                </template>
+                <template #icons>
+                    <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify" icon="pi pi-cog" severity="contrast" />
+                </template>
                 <LobbyDisplaySettings />
             </Panel>
             <div class="basis-1/2 lg:basis-1/3 text-sm lg:text-base">
