@@ -1,31 +1,46 @@
 <template>
-    <div id="countdown_container">Countdown 3, 2, 1. GO</div>
+    <div class="timer">
+        <span>
+            {{ counter }}
+        </span>
+    </div>
 </template>
 
-<script lang="ts">
-export default {
-    setup() {
-        onMounted(() => {});
+<script setup lang="ts">
+let counter = ref(3);
+let interval: string | number | NodeJS.Timeout | undefined;
+onMounted(() => {
+    interval = setInterval(() => {
+        if (counter.value > 1) {
+            counter.value--;
+        } else {
+            clearInterval(interval);
+        }
+    }, 1000);
+});
 
-        return {};
-    },
-};
+onUnmounted(() => {
+    // Clear interval so it stop counting when unmounted
+    clearInterval(interval);
+});
 </script>
 
 <style scoped>
-#countdown_container {
+.timer {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
+
+    background-color: var(--p-surface-900);
+    color: var(--p-primary-400);
+
+    font-size: 10rem;
+
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 3rem;
-    font-weight: bold;
-    color: var(--p-primary-400);
-    background-color: var(--p-surface-900);
     z-index: 9999;
 }
 </style>
