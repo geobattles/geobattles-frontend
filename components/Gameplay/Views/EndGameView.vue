@@ -1,16 +1,16 @@
 <template>
     <div id="end_game_container">
         <div id="google-map-finished" style="width: 70vw"></div>
-        <div class="flex flex-col p-1" style="width: 30vw">
+        <div class="flex flex-col justify-center gap-5 p-1" style="width: 30vw">
             <div class="results-section">
                 <Panel header="Total Results" pt:header:class="text-xs md:text-base">
                     <GameplayTotalStatistics class="text-xs md:text-base" />
                 </Panel>
             </div>
             <div class="endgame-menu">
-                <Button type="button" label="NEXT GAME" @click="gameFlowManager?.sendStartRoundSocketMessage" />
+                <Button type="button" label="NEXT GAME" icon="pi pi-play-circle" @click="gameFlowManager?.sendStartRoundSocketMessage" severity="" />
                 <div style="text-align: center">
-                    <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Lobby Settings" icon="pi pi-cog" severity="info" />
+                    <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Lobby Settings" icon="pi pi-cog" severity="contrast" />
                 </div>
             </div>
         </div>
@@ -53,13 +53,5 @@ watch(modify_settings_modal, (newVal) => {
 
     width: 100%;
     max-width: 400px;
-}
-
-.results-section {
-    flex: 50%;
-
-    width: 100%;
-    max-width: 400px;
-    z-index: 1;
 }
 </style>
