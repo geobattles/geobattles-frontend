@@ -29,15 +29,15 @@
             <div class="flex flex-row flex-wrap justify-around gap-2">
                 <div class="flex flex-col gap-1">
                     <label for="number-of-rounds-input" class="text-xs"> Rounds </label>
-                    <InputNumber class="m-auto w-12" inputId="number-of-rounds-input" v-model="lobby_settings.conf.numRounds" showButtons buttonLayout="vertical" :min="0" :max="10" />
+                    <InputNumber class="m-auto w-12" inputId="number-of-rounds-input" v-model="lobby_settings.conf.numRounds" showButtons buttonLayout="vertical" :min="0" :max="10" @focus="handleFocus" />
                 </div>
                 <div class="flex flex-col gap-1">
                     <label for="attempts-per-rounds-input" class="text-xs"> Attempts </label>
-                    <InputNumber class="m-auto w-12" inputId="attempts-per-rounds-input" v-model="lobby_settings.conf.numAttempt" showButtons buttonLayout="vertical" :min="0" :max="5" />
+                    <InputNumber class="m-auto w-12" inputId="attempts-per-rounds-input" v-model="lobby_settings.conf.numAttempt" showButtons buttonLayout="vertical" :min="0" :max="5" @focus="handleFocus" />
                 </div>
                 <div class="flex flex-col gap-1">
                     <label for="stacked-buttons" class="text-xs"> Max players </label>
-                    <InputNumber class="m-auto w-12" v-model="lobby_settings.conf.maxPlayers" style="width: 3rem" buttonLayout="vertical" inputId="stacked-buttons" :min="0" :max="20" showButtons mode="decimal" />
+                    <InputNumber class="m-auto w-12" v-model="lobby_settings.conf.maxPlayers" style="width: 3rem" buttonLayout="vertical" inputId="stacked-buttons" :min="0" :max="20" showButtons mode="decimal" @focus="handleFocus" />
                 </div>
             </div>
             <!-- Define lobby score factor section -->
@@ -93,6 +93,12 @@ onMounted(() => {
         lobby_settings.value.conf.roundTime = parseInt(this.value);
     };
 });
+
+const handleFocus = (event: Event) => {
+    //? Maybe blur this only for mobile devices
+    const target = event.target as HTMLElement;
+    if (target) target.blur();
+};
 </script>
 
 <style scoped></style>

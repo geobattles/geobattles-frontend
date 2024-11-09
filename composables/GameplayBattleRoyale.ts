@@ -141,7 +141,7 @@ export class BattleRoyale implements GameMode {
             results[user_id].attempt = player_result.attempt;
         } else {
             results[user_id] = player_result; // Update everything because the new user's result is better than current best
-            useResults().value = Object.fromEntries(Object.entries(results).sort(([, a], [, b]) => a.distance - b.distance)); // Sort results by score
+            useResults().value = Object.fromEntries(Object.entries(results).sort(([, a], [, b]) => (a.distance ?? 999999999) - (b.distance ?? 999999999))); // Sort results by score
         }
 
         const new_leader = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID

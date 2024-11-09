@@ -12,7 +12,7 @@
                 <LobbyDisplaySettings />
             </Panel>
             <div class="basis-1/2 lg:basis-1/3 text-sm lg:text-base">
-                <Button v-if="isPlayerAdmin()" @click="gameFlowManager?.sendStartRoundSocketMessage" size="large" label="Start Game" icon="pi pi-play-circle" badgeSeverity="contrast" :disabled="start_disabled" />
+                <Button v-if="isPlayerAdmin()" @click="handleStartGameButton()" size="large" label="Start Game" icon="pi pi-play-circle" badgeSeverity="contrast" :loading="isPlayNowLoading" />
                 <div v-else style="color: white">Waiting for admin to start the game</div>
                 <div class="flex justify-evenly mt-5">
                     <div class="flex flex-col">
@@ -37,12 +37,12 @@
 export default {
     setup() {
         const lobby_settings = useLobbySettings();
-        const start_disabled = ref(false); // Preventing double click
         const country_list = useCountryList();
         const filtered_country_list = useFilteredCountryList();
         const is_guard_disabled = ref(false);
         const modify_settings_modal = useModifySettingsModal();
         const gameFlowManager = useGameFlowManager();
+        const isPlayNowLoading = ref(false);
 
         onMounted(async () => {
             try {
@@ -61,6 +61,11 @@ export default {
             if (!newVal) applyLobbySettings();
         });
 
+        const handleStartGameButton = () => {
+            isPlayNowLoading.value = true;
+            gameFlowManager.value?.sendStartRoundSocketMessage();
+        };
+
         onBeforeRouteLeave((to, from, next) => {
             if (is_guard_disabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
             if (to.name === "gameplay-id") return next(); // If next route is gameplay, allow navigation
@@ -74,7 +79,7 @@ export default {
             } else next(false);
         });
 
-        return { lobby_settings, start_disabled, modify_settings_modal, gameFlowManager, isPlayerAdmin };
+        return { lobby_settings, modify_settings_modal, gameFlowManager, isPlayNowLoading, isPlayerAdmin, handleStartGameButton };
     },
 };
 </script>
