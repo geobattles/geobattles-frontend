@@ -12,7 +12,7 @@
                     <InputText id="password" type="password" v-model="password" />
                 </div>
                 <div class="flex">
-                    <Button label="Login" icon="pi pi-user" class="w-full max-w-[17.35rem] mx-auto" @click="handleLogin" />
+                    <Button label="Login" :loading="isLoginLoading" icon="pi pi-user" class="w-full max-w-[17.35rem] mx-auto" @click="handleLogin" />
                 </div>
             </div>
             <div class="w-full md:w-2/12">
@@ -31,7 +31,7 @@
                     <InputText id="guest-username" type="text" v-model="guestDisplayName" />
                     <label for="guest-username">Guest Username</label>
                 </FloatLabel>
-                <Button label="Submit" icon="pi pi-check" severity="info" class="w-full max-w-[17.35rem] mx-auto" @click="handleRegisterGuest()" />
+                <Button label="Submit" icon="pi pi-check" severity="info" class="w-full max-w-[17.35rem] mx-auto" @click="handleRegisterGuest()" :loading="isGuestRegisterLoading" />
             </div>
         </Dialog>
     </div>
@@ -46,6 +46,8 @@ const username = ref("");
 const password = ref("");
 const isGuestFormVisible = ref(false);
 const guestDisplayName = ref("");
+const isLoginLoading = ref(false);
+const isGuestRegisterLoading = ref(false);
 const generateGuestUsername = () => {
     const randomDigits = Math.floor(1000 + Math.random() * 9000);
     return `Guest${randomDigits}`;
@@ -54,6 +56,7 @@ const generateGuestUsername = () => {
 guestDisplayName.value = generateGuestUsername();
 
 const handleLogin = async () => {
+    isLoginLoading.value = true;
     try {
         await auth.login(username.value, password.value);
         // Handle successful login to close the dialog
@@ -62,10 +65,12 @@ const handleLogin = async () => {
         // Handle login error
         const errorMessage = (error instanceof Error && error.message) || "Unknown error";
         toast.add({ severity: "error", summary: "Error logging in", detail: errorMessage, life: 5000 });
+        isLoginLoading.value = false;
     }
 };
 
 const handleRegisterGuest = async () => {
+    isGuestRegisterLoading.value = true;
     try {
         await auth.register(null, null, guestDisplayName.value);
         // Handle successful login to close the dialog
@@ -74,6 +79,8 @@ const handleRegisterGuest = async () => {
     } catch (error) {
         // Handle login error
         console.error("Registering guest failed", error);
+        toast.add({ severity: "error", summary: "Error registering guest", detail: "Failed to register guest. Please try again later.", life: 5000 });
+        isGuestRegisterLoading.value = false;
     }
 };
 </script>

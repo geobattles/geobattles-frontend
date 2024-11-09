@@ -14,7 +14,7 @@
                 <Column field="numPlayers" header="Online"></Column>
                 <Column header="" style="text-align: right">
                     <template #body="slotProps">
-                        <Button @click="handleJoinLobbyClick(slotProps.data.ID)" label="Join" size="small" />
+                        <Button @click="handleJoinLobbyClick(slotProps.data.ID)" :loading="isJoiningLobby" label="Join" size="small" />
                     </template>
                 </Column>
             </DataTable>
@@ -27,11 +27,12 @@ export default {
     setup() {
         const is_table_loading = ref(false);
         const auth = useAuthenticationService().value;
+        const isLoginDialogVisible = useIsLoginDialogVisible();
+        const isJoiningLobby = ref(false);
 
         const handleJoinLobbyClick = async (lobby_id: string) => {
-            if (!auth.isPlayerAuthenticated()) {
-                return window.alert("Please log in before joining a lobby!");
-            }
+            if (!auth.isPlayerAuthenticated()) return (isLoginDialogVisible.value = true);
+            isJoiningLobby.value = true;
 
             try {
                 await checkIfLobby(lobby_id);
@@ -49,7 +50,7 @@ export default {
             is_table_loading.value = false;
         };
 
-        return { is_table_loading, handleJoinLobbyClick, handleRefreshClick };
+        return { is_table_loading, isJoiningLobby, handleJoinLobbyClick, handleRefreshClick };
     },
 };
 </script>

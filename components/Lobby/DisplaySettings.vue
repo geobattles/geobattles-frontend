@@ -7,7 +7,7 @@
             <div class="flex justify-evenly flex-wrap">
                 <div>
                     <div v-if="lobby_settings.conf.mode === 1" class="text-center flex flex-col"><Tag severity="info" class="p-mr-2">GameMode:</Tag> Battle Royale</div>
-                    <div v-if="lobby_settings.conf.mode === 2" class="text-center"><Tag severity="info" class="p-mr-2">GameMode:</Tag> Country Battle</div>
+                    <div v-if="lobby_settings.conf.mode === 2" class="text-center flex flex-col"><Tag severity="info" class="p-mr-2">GameMode:</Tag> Country Battle</div>
                 </div>
                 <div class="flex flex-col">
                     <Tag severity="info" icon="pi pi-clock" class="p-mr-2">Round Time:</Tag>

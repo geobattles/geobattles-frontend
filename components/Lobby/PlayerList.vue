@@ -1,5 +1,5 @@
 <template>
-    <Panel header="Players">
+    <Panel header="Connected Players">
         <TransitionGroup name="list">
             <div v-for="(player, index) in lobby_settings.playerList" :key="index">
                 <div class="player">

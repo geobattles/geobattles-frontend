@@ -15,8 +15,7 @@
                 <Password id="password" v-model="password" required />
                 <label for="username">Password</label>
             </FloatLabel>
-            <Button label="Sign Up" @click="onSubmit()" type="submit" size="small" severity="primary" />
-            <div v-if="errorMessage" class="error-message">{{ errorMessage }}</div>
+            <Button label="Sign Up" @click="onSubmit()" :loading="isRegisterLoading" type="submit" size="small" severity="primary" />
         </div>
     </div>
 </template>
@@ -27,22 +26,30 @@ import { ref } from "vue";
 const username = ref("");
 const displayName = ref("");
 const password = ref("");
-const errorMessage = ref("");
 const playerInfo = usePlayerInfo();
 const router = useRouter();
 const auth = useAuthenticationService().value;
 const toast = useToast();
+const isLoginDialogVisible = useIsLoginDialogVisible();
+const isRegisterLoading = ref(false);
 
 const onSubmit = async () => {
-    console.log("Username:", username.value);
-    console.log("Email:", displayName.value);
-    console.log("Password:", password.value);
-
-    // Clear previous error message
-    errorMessage.value = "";
+    isRegisterLoading.value = true;
 
     // Call the API to sign up
     try {
+        // Validate the form fields
+        if (!username.value || !displayName.value || !password.value) {
+            const missingFields = [];
+            if (!username.value) missingFields.push("Username");
+            if (!displayName.value) missingFields.push("Display Name");
+            if (!password.value) missingFields.push("Password");
+
+            toast.add({ severity: "warn", summary: "Missing Fields", detail: `Please fill in the following fields: ${missingFields.join(", ")}`, life: 5000 });
+            isRegisterLoading.value = false;
+            return;
+        }
+
         await auth.register(username.value, password.value, displayName.value);
         console.log("Registration successful");
 
@@ -50,11 +57,14 @@ const onSubmit = async () => {
         playerInfo.value.username = username.value;
         playerInfo.value.displayName = displayName.value;
 
+        isLoginDialogVisible.value = false; // Close the login dialog if it's open
+
         router.push("/"); // Redirect to the home page after successful registration
     } catch (error) {
         // Handle register error
         const errorMessage = (error instanceof Error && error.message) || "Unknown error";
         toast.add({ severity: "error", summary: "Error registering", detail: errorMessage, life: 5000 });
+        isRegisterLoading.value = false;
     }
 };
 </script>
