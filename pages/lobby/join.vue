@@ -1,5 +1,5 @@
 <template>
-    <div class="h-screen">
+    <div class="h-screen relative">
         <Toast position="bottom-right" />
         <Header class="absolute w-full" />
         <div class="flex flex-col justify-center items-center h-full bg-p-surface-900">
@@ -14,6 +14,12 @@
             <div class="flex items-center gap-5">
                 <div class="text-white">Insert or paste lobby code to join the game!</div>
                 <Button @click="handleJoinLobbyClick" icon="pi pi-play" label="Join" size="small" outlined />
+            </div>
+        </div>
+        <div v-if="isLoading" class="overlay">
+            <div class="flex flex-col gap-5">
+                <div class="text-white text-2xl lg:text-4xl font-bold">Joining lobby...</div>
+                <ProgressSpinner style="width: 75px; height: 75px" strokeWidth="8" fill="transparent" animationDuration=".5s" aria-label="Custom ProgressSpinner" />
             </div>
         </div>
     </div>
@@ -33,6 +39,7 @@ const auth = useAuthenticationService().value;
 const isLoginDialogVisible = useIsLoginDialogVisible();
 const lobbyURLParameter = ref("");
 const toast = useToast();
+const isLoading = ref(false);
 
 onMounted(() => {
     input_1.value?.focus(); // Focus first input
@@ -56,6 +63,7 @@ onMounted(() => {
 });
 
 const handleJoinLobby = async (lobby_id: string) => {
+    isLoading.value = true;
     try {
         await checkIfLobby(lobby_id);
         await joinLobby(lobby_id);
@@ -65,6 +73,8 @@ const handleJoinLobby = async (lobby_id: string) => {
             inputs_array.forEach((input) => input.value?.classList.add("error-lobby")); // Add error class to inputs
             toast.add({ severity: "error", summary: "Error Joining Lobby", detail: error.message, life: 2000 });
         }
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -160,5 +170,19 @@ const handleKeyDownEvent = (event: KeyboardEvent) => {
 
 .sign-input:focus {
     border-color: var(--p-primary-400);
+}
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 </style>
