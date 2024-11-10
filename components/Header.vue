@@ -23,8 +23,8 @@
                 </div>
             </template>
         </Menubar>
-        <Dialog v-model:visible="isLoginDialogVisible" header="Login" style="width: 800px" position="center" :modal="true" :draggable="false">
-            <Login @userLogged="isLoginDialogVisible = !isLoginDialogVisible" />
+        <Dialog v-model:visible="isLoginDialogVisible" class="w-full lg:w-1/2" header="Login" position="center" :modal="true" :draggable="false">
+            <Login class="m-10" @userLogged="isLoginDialogVisible = !isLoginDialogVisible" />
         </Dialog>
     </header>
 </template>

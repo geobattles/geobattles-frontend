@@ -1,7 +1,7 @@
 <template>
-    <div id="lobby-id-component">
+    <div class="h-screen overflow-scroll">
         <Header />
-        <div class="main-content flex flex-wrap gap-0 lg:gap-5 justify-center text-xs lg:text-base">
+        <div class="main-content flex flex-wrap gap-0 justify-center lg:gap-5 text-xs lg:text-base">
             <Panel class="basis-1/2 lg:basis-1/3" header="Lobby Settings" :class="{ 'player-view': !isPlayerAdmin() }" style="min-width: 250px; max-width: 500px">
                 <template #header class="flex justify-around">
                     <div class="font-bold text-base">Lobby Settings</div>
@@ -11,7 +11,7 @@
                 </template>
                 <LobbyDisplaySettings />
             </Panel>
-            <div class="basis-1/2 lg:basis-1/3 text-sm lg:text-base">
+            <div class="basis-1/2 lg:basis-1/3 text-sm lg:text-base text-white">
                 <Button v-if="isPlayerAdmin()" @click="handleStartGameButton()" size="large" label="Start Game" icon="pi pi-play-circle" badgeSeverity="contrast" :loading="isPlayNowLoading" />
                 <div v-else style="color: white">Waiting for admin to start the game</div>
                 <div class="flex justify-evenly mt-5">
@@ -24,6 +24,9 @@
                         <ConnectionStatus />
                     </div>
                 </div>
+                <div class="flex flex-col mt-2">
+                    <Tag class="mt-2 m-auto cursor-pointer" :icon="inviteLinkTagSettings.icon" :severity="inviteLinkTagSettings.severity" :value="inviteLinkTagSettings.value" @click="copyInviteLink()" />
+                </div>
                 <LobbyPlayerList class="text-sm lg:text-base m-auto mt-5" style="max-width: 300px" />
             </div>
         </div>
@@ -33,67 +36,79 @@
     </div>
 </template>
 
-<script lang="ts">
-export default {
-    setup() {
-        const lobby_settings = useLobbySettings();
-        const country_list = useCountryList();
-        const filtered_country_list = useFilteredCountryList();
-        const is_guard_disabled = ref(false);
-        const modify_settings_modal = useModifySettingsModal();
-        const gameFlowManager = useGameFlowManager();
-        const isPlayNowLoading = ref(false);
+<script lang="ts" setup>
+const lobby_settings = useLobbySettings();
+const country_list = useCountryList();
+const filtered_country_list = useFilteredCountryList();
+const is_guard_disabled = ref(false);
+const modify_settings_modal = useModifySettingsModal();
+const gameFlowManager = useGameFlowManager();
+const isPlayNowLoading = ref(false);
+const inviteLink = ref("");
+const inviteLinkTagSettings = ref({ value: "Copy Invite Link", severity: "info", icon: "pi pi-copy" });
 
-        onMounted(async () => {
-            try {
-                await fetchCountryList();
-            } catch (error) {
-                console.error("Failed to fetch country list:", error);
-            }
-            // If ccList is empty it populate it with all ccodes. Happend only on first load.
-            if (lobby_settings.value.conf.ccList.length === 0) lobby_settings.value.conf.ccList = Object.values(country_list.value);
-            filtered_country_list.value = country_list.value;
+onMounted(async () => {
+    try {
+        await fetchCountryList();
+    } catch (error) {
+        console.error("Failed to fetch country list:", error);
+    }
+    // If ccList is empty it populate it with all ccodes. Happend only on first load.
+    if (lobby_settings.value.conf.ccList.length === 0) lobby_settings.value.conf.ccList = Object.values(country_list.value);
+    filtered_country_list.value = country_list.value;
 
-            initGameFlowManager("BattleRoyale"); // Initialize GameFlowManager with default BattleRoyale game mode
-        });
+    initGameFlowManager("BattleRoyale"); // Initialize GameFlowManager with default BattleRoyale game mode
 
-        watch(modify_settings_modal, (newVal) => {
-            if (!newVal) applyLobbySettings();
-        });
+    // Generate invite link
+    inviteLink.value = `${window.location.origin}/lobby/join?id=${lobby_settings.value.ID}`;
+});
 
-        const handleStartGameButton = () => {
-            isPlayNowLoading.value = true;
-            gameFlowManager.value?.sendStartRoundSocketMessage();
-        };
+watch(modify_settings_modal, (newVal) => {
+    if (!newVal) applyLobbySettings();
+});
 
-        onBeforeRouteLeave((to, from, next) => {
-            if (is_guard_disabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
-            if (to.name === "gameplay-id") return next(); // If next route is gameplay, allow navigation
-
-            // Ask if user eally wants to leave lobby
-            if (confirm("Are you sure you want to leave the lobby?")) {
-                is_guard_disabled.value = true;
-                leaveLobby();
-                next();
-                return navigateTo(to.path);
-            } else next(false);
-        });
-
-        return { lobby_settings, modify_settings_modal, gameFlowManager, isPlayNowLoading, isPlayerAdmin, handleStartGameButton };
-    },
+const handleStartGameButton = () => {
+    isPlayNowLoading.value = true;
+    gameFlowManager.value?.sendStartRoundSocketMessage();
 };
+
+const copyInviteLink = () => {
+    navigator.clipboard
+        .writeText(inviteLink.value)
+        .then(() => {
+            inviteLinkTagSettings.value.value = "Copied";
+            inviteLinkTagSettings.value.severity = "success";
+            inviteLinkTagSettings.value.icon = "pi pi-check";
+
+            setTimeout(() => {
+                inviteLinkTagSettings.value.value = "Copy Invite Link";
+                inviteLinkTagSettings.value.severity = "info";
+                inviteLinkTagSettings.value.icon = "pi pi-copy";
+            }, 2000);
+        })
+        .catch((err) => {
+            console.error("Failed to copy invite link:", err);
+        });
+};
+
+onBeforeRouteLeave((to, from, next) => {
+    if (is_guard_disabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
+    if (to.name === "gameplay-id") return next(); // If next route is gameplay, allow navigation
+
+    // Ask if user really wants to leave lobby
+    if (confirm("Are you sure you want to leave the lobby?")) {
+        is_guard_disabled.value = true;
+        leaveLobby();
+        next();
+        return navigateTo(to.path);
+    } else next(false);
+});
 </script>
 
 <style scoped>
-#lobby-id-component {
-    background-color: var(--p-surface-900);
-    color: var(--p-surface-0);
-    height: 100%;
-}
 .main-content {
     text-align: center;
     margin: 1%;
-    margin-top: 50px;
 }
 
 .player-view {

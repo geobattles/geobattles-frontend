@@ -1,16 +1,16 @@
 <template>
     <div>
         <Toast />
-        <div class="flex flex-col md:flex-row">
+        <div class="flex flex-wrap">
             <div class="w-full md:w-5/12 flex flex-col items-center justify-center gap-3 py-5">
-                <div class="flex flex-col gap-2">
+                <FloatLabel class="mb-4">
+                    <InputText id="username" v-model="username" type="text" required />
                     <label for="username">Username</label>
-                    <InputText id="username" type="text" v-model="username" />
-                </div>
-                <div class="flex flex-col gap-2">
-                    <label for="password">Password</label>
-                    <InputText id="password" type="password" v-model="password" />
-                </div>
+                </FloatLabel>
+                <FloatLabel>
+                    <Password id="password" v-model="password" required />
+                    <label for="username">Password</label>
+                </FloatLabel>
                 <div class="flex">
                     <Button label="Login" :loading="isLoginLoading" icon="pi pi-user" class="w-full max-w-[17.35rem] mx-auto" @click="handleLogin" />
                 </div>
