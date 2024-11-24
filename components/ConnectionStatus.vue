@@ -5,12 +5,10 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-
-const { connectionStatus } = useWebSocket();
+const socketStore = useWebSocketStore();
 
 const statusMessage = computed(() => {
-    switch (connectionStatus.value) {
+    switch (socketStore.connectionStatus) {
         case "connected":
             return "Connected";
         case "reconnecting":
@@ -23,7 +21,7 @@ const statusMessage = computed(() => {
 });
 
 const severity = computed(() => {
-    switch (connectionStatus.value) {
+    switch (socketStore.connectionStatus) {
         case "connected":
             return "success";
         case "reconnecting":

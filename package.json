@@ -11,6 +11,7 @@
     "devDependencies": {
         "@nuxt/devtools": "latest",
         "@nuxtjs/tailwindcss": "^6.12.1",
+        "@pinia/nuxt": "^0.7.0",
         "@primevue/nuxt-module": "^4.0.7",
         "@types/google.maps": "^3.50.5",
         "nuxt": "^3.13.2",

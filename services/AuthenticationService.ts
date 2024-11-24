@@ -50,8 +50,8 @@ export class AuthenticationService {
         usePlayerInfo().value = {} as User; // Clear player info
         this.isAuthenticated = false; // Set authentication status to false
 
-        const { closeConnection } = useWebSocket();
-        closeConnection();
+        const socketStore = useWebSocketStore();
+        socketStore.closeConnection();
 
         // Redirect to the main page
         this.router.push({ path: "/" });

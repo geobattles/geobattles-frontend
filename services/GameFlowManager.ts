@@ -63,8 +63,8 @@ export class GameFlowManager {
         const game = {
             command: "start",
         };
-        const { sendMessage } = useWebSocket();
-        if (sendMessage) sendMessage(game);
+        const socketStore = useWebSocketStore();
+        socketStore.sendMessage(game);
     }
 
     /**
@@ -113,8 +113,8 @@ export class GameFlowManager {
             location: this.currentMapPin.value,
         };
 
-        const { sendMessage } = useWebSocket();
-        if (sendMessage) sendMessage(socket_message);
+        const socketStore = useWebSocketStore();
+        socketStore.sendMessage(socket_message);
     }
 
     isSubmitButtonDisabled(): boolean {

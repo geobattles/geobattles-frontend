@@ -52,8 +52,8 @@ export class CountryBattle implements GameMode {
             location: { ...coordinates },
         };
 
-        const { sendMessage } = useWebSocket();
-        sendMessage(socket_message);
+        const socketStore = useWebSocketStore();
+        socketStore.sendMessage(socket_message);
     }
 
     /**
