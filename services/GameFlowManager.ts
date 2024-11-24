@@ -12,6 +12,8 @@ export enum GameState {
 
 export class GameFlowManager {
     public gameMode: GameMode;
+    public gameRound: number = 0;
+
     public currentState: GameState;
     public currentMapPin: Ref<Coordinates>;
     public searchedLocationCoords: Ref<Coordinates>;

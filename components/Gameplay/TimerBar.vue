@@ -9,39 +9,33 @@
     </div>
 </template>
 
-<script lang="ts">
-export default {
-    setup() {
-        const lobby_settings = useLobbySettings();
-        const timer_sound = ref(10); // Default timer sound starts 10s before round ends
+<script setup lang="ts">
+const lobby_settings = useLobbySettings();
+const timer_sound = ref(10); // Default timer sound starts 10s before round ends
 
-        // Template refs
-        const progress_bar = ref<HTMLElement | null>(null);
-        const ref_sound = ref<HTMLAudioElement | null>(null);
-        const bar_ref = ref<HTMLElement | null>(null);
+// Template refs
+const progress_bar = ref<HTMLElement | null>(null);
+const ref_sound = ref<HTMLAudioElement | null>(null);
+const bar_ref = ref<HTMLElement | null>(null);
 
-        // Timers
-        let interval_id: NodeJS.Timeout;
-        let timeout_id: NodeJS.Timeout;
+// Timers
+let interval_id: NodeJS.Timeout;
+let timeout_id: NodeJS.Timeout;
 
-        onMounted(() => {
-            // Default tick-tock is 10s before end. If round time is less than 20s, then tick-tock is 5s before end.
-            if (lobby_settings.value.conf.roundTime <= 20) timer_sound.value = 5;
+onMounted(() => {
+    // Default tick-tock is 10s before end. If round time is less than 20s, then tick-tock is 5s before end.
+    if (lobby_settings.value.conf.roundTime <= 20) timer_sound.value = 5;
 
-            // Start timer after (roundTime - timer_sound) seconds
-            timeout_id = setTimeout(() => {
-                interval_id = setInterval(() => ref_sound.value?.play(), 1000); // Tick on every second after timeout
-            }, (lobby_settings.value.conf.roundTime - timer_sound.value) * 1000);
-        });
+    // Start timer after (roundTime - timer_sound) seconds
+    timeout_id = setTimeout(() => {
+        interval_id = setInterval(() => ref_sound.value?.play(), 1000); // Tick on every second after timeout
+    }, (lobby_settings.value.conf.roundTime - timer_sound.value) * 1000);
+});
 
-        onUnmounted(() => {
-            clearTimeout(timeout_id);
-            clearInterval(interval_id);
-        });
-
-        return { lobby_settings, progress_bar, ref_sound, bar_ref, timer_sound };
-    },
-};
+onUnmounted(() => {
+    clearTimeout(timeout_id);
+    clearInterval(interval_id);
+});
 </script>
 
 <style scoped>

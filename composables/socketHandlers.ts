@@ -34,18 +34,21 @@ export const messageHandlers: {
 };
 
 // Implement handlers for each message type
-function handleJoinedLobby(data: MsgJoinedLobbyData) {
+function handleJoinedLobby(message: MsgJoinedLobbyData) {
+    const data = message.payload;
     if (!data.lobby || !data.user) return console.error("Missing data in JOINED_LOBBY message", data);
     joinedLobby(data.lobby, data.user);
 }
 
-function handleLeftLobby(data: MsgLeftLobbyData) {
+function handleLeftLobby(message: MsgLeftLobbyData) {
+    const data = message.payload;
     if (!data.lobby || !data.user) return console.error("Missing data in LEFT_LOBBY message", data);
     useUIManager().value.showPlayerLeftToast(getPlayerNameFromID(data.user) ?? "Unknown Player");
     leftLobby(data.lobby, data.user);
 }
 
-function handleUpdatedLobby(data: MsgUpdatedLobbyData) {
+function handleUpdatedLobby(message: MsgUpdatedLobbyData) {
+    const data = message.payload;
     if (!data.lobby) return console.error("Missing lobby data in UPDATED_LOBBY message", data);
     fetchLobbySettings(data.lobby);
 }
@@ -57,7 +60,8 @@ function handleUpdatedLobby(data: MsgUpdatedLobbyData) {
  *
  * @param data - The data received from the START_ROUND message
  */
-function handleStartRound(data: MsgStartRoundData) {
+function handleStartRound(message: MsgStartRoundData) {
+    const data = message.payload;
     if (!data.location || !data.players) return console.error("Missing data in START_ROUND message", data);
 
     const gameFlowManager = useGameFlowManager().value;
@@ -83,7 +87,8 @@ function handleStartRound(data: MsgStartRoundData) {
     console.log(`New round started. Game type: ${gameType}, Players:`, data.players);
 }
 
-function handleNewResult(data: MsgNewResultData) {
+function handleNewResult(message: MsgNewResultData) {
+    const data = message.payload;
     if (!data.playerRes || !data.user) return console.error("Missing data in NEW_RESULT message", data);
     const gameFlowManager = useGameFlowManager().value;
     if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
@@ -96,11 +101,16 @@ function handleNewResult(data: MsgNewResultData) {
     }
 }
 
-function handleRoundResult(data: MsgRoundResultData) {
+function handleRoundResult(message: MsgRoundResultData) {
+    const data = message.payload;
     if (!data.totalResults || !data.roundRes) return console.error("Missing data in ROUND_RESULT message", data);
     const gameFlowManager = useGameFlowManager().value;
     if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
+    // Update gameRound in ganeFlowManager
+    gameFlowManager.gameRound = data.round;
+
+    // Call gameType finishRound
     const gameType = gameFlowManager.gameMode.gameType;
     switch (gameType) {
         case "BattleRoyale":
@@ -123,7 +133,8 @@ function handleRoundFinished(data: MsgRoundFinishedData) {
     return;
 }
 
-function handleCC(data: MsgCCData) {
+function handleCC(messsage: MsgCCData) {
+    const data = messsage.payload;
     const gameFlowManager = useGameFlowManager().value;
     if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
@@ -136,13 +147,15 @@ function handleCC(data: MsgCCData) {
     if (gameType === "CountryBattle") gameFlowManager.gameMode.processClickedCountry?.(data.polygon, data.cc);
 }
 
-function handleGameEnd(data: MsgGameEndData) {
+function handleGameEnd(messsge: MsgGameEndData) {
+    const data = messsge.payload;
     if (!data.totalResults) return console.error("Missing data in GAME_END message", data);
 
     const gameFlowManager = useGameFlowManager().value;
     if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
     gameFlowManager.finishGame();
+    gameFlowManager.gameRound = 0;
     // TODO: Process endgame results and display them
 }
 
