@@ -18,7 +18,8 @@ export default defineNuxtConfig({
         strict: true,
     },
 
-    modules: ["@nuxtjs/tailwindcss", "@primevue/nuxt-module"],
+    modules: ["@nuxtjs/tailwindcss", "@primevue/nuxt-module", "@pinia/nuxt"],
+
     css: ["primeicons/primeicons.css"],
 
     vite: {

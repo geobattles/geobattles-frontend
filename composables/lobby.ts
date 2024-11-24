@@ -1,9 +1,9 @@
 import type { LobbyInfo, Results, TotalResults } from "~/types";
-import { WebSocketService } from "~/services/WebSocketService";
+import { useWebSocketStore } from "~/stores/WebSocketStore";
 
 // LOBBY STATES
-export const useLobbySettings = () => useState<LobbyInfo>("lobby_settings", () => ({} as LobbyInfo));
-export const useLobbySettingsOriginal = () => useState<LobbyInfo>("lobby_settings_original", () => ({} as LobbyInfo));
+export const useLobbySettings = () => useState<LobbyInfo>("lobbySettings", () => ({} as LobbyInfo));
+export const useLobbySettingsOriginal = () => useState<LobbyInfo>("lobbySettings_original", () => ({} as LobbyInfo));
 export const useLobbyList = () => useState<string[]>("lobby_list", () => []);
 export const useModifySettingsModal = () => useState<boolean>("modify_settings_modal", () => false);
 
@@ -14,13 +14,14 @@ export const useTotalResults = () => useState<TotalResults>("total_results", () 
  * Function handles lobby creation
  */
 export const createLobby = async () => {
-    const player_info = usePlayerInfo();
-    const lobby_settings = useLobbySettings();
+    const playerInfo = usePlayerInfo();
+    const lobbySettings = useLobbySettings();
     const router = useRouter();
     const auth = useAuthenticationService().value;
+    const socketStore = useWebSocketStore();
 
     const lobby_post_params = {
-        name: `${player_info.value.displayName}'s Lobby`,
+        name: `${playerInfo.value.displayName}'s Lobby`,
         roundTime: 100,
     };
 
@@ -38,14 +39,13 @@ export const createLobby = async () => {
         if (!response.ok) throw new Error(`Failed to create lobby: ${response.statusText}`);
 
         // Await for created lobby data
-        lobby_settings.value = await response.json();
+        lobbySettings.value = await response.json();
 
         // Initialize WebSocket connection to created lobby
-        const { initializeWebSocket } = useWebSocket();
-        await initializeWebSocket(() => WebSocketService.getSocketUrl(lobby_settings.value.ID, player_info.value.username));
+        socketStore.initWebSocket(lobbySettings.value.ID);
 
         // Redirect to created lobby
-        router.push({ path: `/lobby/${lobby_settings.value.ID}` });
+        router.push({ path: `/lobby/${lobbySettings.value.ID}` });
     } catch (error) {
         console.error("Error creating lobby:", error);
         throw error; // Re-throw the error for the caller to handle
@@ -60,9 +60,10 @@ export const createLobby = async () => {
  */
 export const joinLobby = async (lobby_id: string) => {
     const router = useRouter();
+    const socketStore = useWebSocketStore();
     try {
-        const { initializeWebSocket } = useWebSocket();
-        await initializeWebSocket(() => WebSocketService.getSocketUrl(lobby_id, usePlayerInfo().value.username));
+        // Initialize WebSocket connection to created lobby
+        socketStore.initWebSocket(lobby_id);
         router.push({ path: `/lobby/${lobby_id}` });
     } catch (error: any) {
         console.error("Error joining lobby:", error);
@@ -74,10 +75,9 @@ export const joinLobby = async (lobby_id: string) => {
  * Function will set user ID to undefined and close connection to the lobby.
  */
 export const leaveLobby = () => {
+    const socketStore = useWebSocketStore();
     try {
-        // usePlayerInfo().value.ID = undefined;
-        const { closeConnection } = useWebSocket();
-        closeConnection();
+        socketStore.closeConnection();
     } catch (error: any) {
         console.log(error.message);
         throw new Error("Could not leave lobby.");
@@ -132,6 +132,7 @@ export const fetchLobbySettings = (lobby_info: LobbyInfo) => {
 export const applyLobbySettings = () => {
     const ls = useLobbySettings();
     const lso = useLobbySettingsOriginal();
+    const socketStore = useWebSocketStore();
 
     //@ts-ignore If ccList is empty (=wrong input) dont send it so it wont update on server. Empty arrray if every country is selected
     if (ls.value.conf.ccList.length === 0) delete lso.value.conf.ccList;
@@ -151,12 +152,11 @@ export const applyLobbySettings = () => {
         }
     }
     const settings = {
-        command: "update_lobby_settings",
+        command: "update_lobbySettings",
         conf: { ...lso.value.conf },
     };
 
-    const { sendMessage } = useWebSocket();
-    sendMessage(settings);
+    socketStore.sendMessage(settings);
 };
 
 /**
