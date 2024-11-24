@@ -21,61 +21,64 @@ export enum SocketType {
 }
 
 // Main socket type interface
-export interface SocketMessage {
+export interface SocketMessage<T = any> {
     status: number;
     type: SocketType;
+    payload: T;
 }
 
 // Define types for each message type
-export type MsgJoinedLobbyData = SocketMessage & {
+export type MsgJoinedLobbyData = SocketMessage<{
     lobby: LobbyInfo;
     user: string;
-};
+}>;
 
-export type MsgLeftLobbyData = SocketMessage & {
+export type MsgLeftLobbyData = SocketMessage<{
     lobby: LobbyInfo;
     user: string;
-};
+}>;
 
-export type MsgUpdatedLobbyData = SocketMessage & {
+export type MsgUpdatedLobbyData = SocketMessage<{
     lobby: LobbyInfo;
-};
+}>;
 
-export type MsgStartRoundData = SocketMessage & {
+export type MsgStartRoundData = SocketMessage<{
     location: Coordinates;
     players: Results;
-};
+}>;
 
-export type MsgNewResultData = SocketMessage & {
+export type MsgNewResultData = SocketMessage<{
     playerRes: ResultsInfo;
     user: string;
-};
+}>;
 
-export type MsgRoundResultData = SocketMessage & {
+export type MsgRoundResultData = SocketMessage<{
+    powerLog: any;
+    round: number;
     totalResults: TotalResults;
     roundRes: any;
     polygon?: any;
-};
+}>;
 
-export type MsgTimesUpData = SocketMessage & {
+export type MsgTimesUpData = SocketMessage<{
     polygon: any;
     cc: string;
-};
+}>;
 
-export type MsgRoundFinishedData = SocketMessage & {
+export type MsgRoundFinishedData = SocketMessage<{
     polygon: any;
     cc: string;
-};
+}>;
 
-export type MsgCCData = SocketMessage & {
+export type MsgCCData = SocketMessage<{
     polygon: any;
     cc: string;
-};
+}>;
 
-export type MsgGameEndData = SocketMessage & {
+export type MsgGameEndData = SocketMessage<{
     totalResults: TotalResults;
-};
+}>;
 
-export type MsgNoCountryData = SocketMessage & {
+export type MsgNoCountryData = SocketMessage<{
     no_country: any;
-};
+}>;

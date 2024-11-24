@@ -1,14 +1,22 @@
 <template>
-    <div class="timer">
-        <span>
-            {{ counter }}
-        </span>
+    <div class="content">
+        <div class="timer">
+            <span>
+                {{ counter }}
+            </span>
+        </div>
+        <Divider />
+        Starting Round
+        <Knob v-model="knobValue" :min="0" :max="lobbySettings.conf.numRounds" readonly />
     </div>
 </template>
 
 <script setup lang="ts">
 let counter = ref(3);
 let interval: string | number | NodeJS.Timeout | undefined;
+const lobbySettings = useLobbySettings();
+const gameFlowManager = useGameFlowManager();
+const knobValue = computed(() => (gameFlowManager?.value?.gameRound || 0) + 1);
 onMounted(() => {
     interval = setInterval(() => {
         if (counter.value > 1) {
@@ -26,7 +34,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.timer {
+.content {
     position: fixed;
     top: 0;
     left: 0;
@@ -34,13 +42,15 @@ onUnmounted(() => {
     height: 100vh;
 
     background-color: var(--p-surface-900);
-    color: var(--p-primary-400);
-
-    font-size: 10rem;
+    z-index: 9999;
 
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 9999;
+}
+.timer {
+    font-size: 10rem;
+    color: var(--p-primary-400);
 }
 </style>
