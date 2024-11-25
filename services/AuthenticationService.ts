@@ -1,5 +1,5 @@
 import type { Router } from "vue-router";
-import type { User } from "@/types";
+import type { User } from "@/types/appTypes";
 
 export class AuthenticationService {
     private isAuthenticated = false;

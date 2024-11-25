@@ -1,4 +1,4 @@
-import type { CountryFlagMap } from "../types";
+import type { CountryFlagMap } from "../types/appTypes";
 
 // Countries states
 export const useCountryList = () => useState<string[]>("country_list", () => [] as string[]);
@@ -23,13 +23,17 @@ export const filterCountryList = () => {
 };
 
 export const toggleAllCountries = () => {
-    const ls = useLobbySettings();
-    if (useCountryList().value.length !== ls.value.conf.ccList.length) {
-        ls.value.conf.ccList = [];
+    const { updateLobbySetting, lobbySettings } = useLobbyStore();
+
+    if (useCountryList().value.length !== lobbySettings?.conf.ccList.length) {
+        updateLobbySetting("ccList", []);
+
         // Fill selected countries array with all countries
-        useCountryList().value.forEach((value) => ls.value.conf.ccList.push(value));
+        const newSettingsCountryList: string[] = [];
+        useCountryList().value.forEach((value) => newSettingsCountryList.push(value));
+        updateLobbySetting("ccList", newSettingsCountryList);
     } else {
-        ls.value.conf.ccList = []; // Empty selected countries array
+        updateLobbySetting("ccList", []);
     }
 };
 

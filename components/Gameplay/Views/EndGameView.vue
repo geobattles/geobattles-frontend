@@ -10,23 +10,28 @@
             <div class="endgame-menu">
                 <Button type="button" label="NEXT GAME" icon="pi pi-play-circle" @click="gameFlowManager?.sendStartRoundSocketMessage" severity="" />
                 <div style="text-align: center">
-                    <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify Lobby Settings" icon="pi pi-cog" severity="contrast" />
+                    <Button @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal" type="button" label="Modify Lobby Settings" icon="pi pi-cog" severity="contrast" />
                 </div>
             </div>
         </div>
-        <Dialog v-model:visible="modify_settings_modal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
+        <Dialog v-model:visible="lobbyStore.modifySettingsModal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
             <LobbyModifySettings />
         </Dialog>
     </div>
 </template>
 
 <script setup lang="ts">
-const modify_settings_modal = useModifySettingsModal();
+// External services
 const gameFlowManager = useGameFlowManager();
+const lobbyStore = useLobbyStore();
 
-watch(modify_settings_modal, (newVal) => {
-    if (!newVal) applyLobbySettings();
-});
+// Watch for lobby settings modal
+watch(
+    () => lobbyStore.modifySettingsModal,
+    (newVal) => {
+        if (!newVal) lobbyStore.applyLobbySettings();
+    }
+);
 </script>
 
 <style scoped>

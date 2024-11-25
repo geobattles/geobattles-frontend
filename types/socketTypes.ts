@@ -1,4 +1,4 @@
-import { type Coordinates, type LobbyInfo, type Results, type ResultsInfo, type TotalResults } from "~/types";
+import { type Coordinates, type LobbyInfo, type Results, type ResultsInfo, type TotalResults } from "~/types/appTypes";
 
 export enum SocketStatus {
     NORMAL = "OK",

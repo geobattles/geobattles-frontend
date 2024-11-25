@@ -44,10 +44,10 @@ export type playerListObject = {
     };
 };
 
-type CountryFlagMap = Map<string, { name: string; x: number; y: number }>;
+export type CountryFlagMap = Map<string, { name: string; x: number; y: number }>;
 
 // Used for coordinates. Same as google.maps.LatLng
-type Coordinates = {
+export type Coordinates = {
     lat: number;
     lng: number;
 };
@@ -56,7 +56,8 @@ type Coordinates = {
 export type Results = {
     [key: string]: ResultsInfo;
 };
-interface ResultsInfo {
+
+export interface ResultsInfo {
     attempt: number;
     baseScr: number;
     distance: number;
@@ -70,15 +71,15 @@ export type TotalResults = {
     [key: string]: TotalResultInfo;
 };
 
-interface TotalResultInfo extends ResultInfo {
+interface TotalResultInfo extends ResultsInfo {
     total: number | undefined; // Not defined by backend if user scores 0 points
 }
 
-type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINISHED" | undefined; // Undefined when not connected to a lobby (socket)
+export type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINISHED" | undefined; // Undefined when not connected to a lobby (socket)
 
-type GameType = "BattleRoyale" | "CountryBattle" | undefined; // Undefined when not connected to a lobby (socket)
+export type GameType = "BattleRoyale" | "CountryBattle" | undefined; // Undefined when not connected to a lobby (socket)
 
-interface GameMode {
+export interface GameMode {
     startRound(): void;
     finishRound(totalResults: TotalResults, roundResults: Results, polygon?: any): void;
     finishGame(): void;

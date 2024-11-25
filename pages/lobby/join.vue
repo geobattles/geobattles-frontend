@@ -26,6 +26,10 @@
 </template>
 
 <script setup lang="ts">
+const lobbyURLParameter = ref("");
+const isLoading = ref(false);
+
+// Input refs and variables
 const input_parent = ref<HTMLInputElement | null>(null);
 const input_1 = ref<HTMLInputElement | null>(null);
 const input_2 = ref<HTMLInputElement | null>(null);
@@ -34,12 +38,13 @@ const input_4 = ref<HTMLInputElement | null>(null);
 const input_5 = ref<HTMLInputElement | null>(null);
 const input_6 = ref<HTMLInputElement | null>(null);
 let inputs_array: Ref<HTMLInputElement | null>[] = [];
+
+// External services
 const router = useRouter();
 const auth = useAuthenticationService().value;
 const isLoginDialogVisible = useIsLoginDialogVisible();
-const lobbyURLParameter = ref("");
 const toast = useToast();
-const isLoading = ref(false);
+const { checkIfLobby, joinLobby } = useLobbyStore();
 
 onMounted(() => {
     input_1.value?.focus(); // Focus first input

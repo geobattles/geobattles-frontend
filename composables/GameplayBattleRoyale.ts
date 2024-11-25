@@ -1,4 +1,4 @@
-import type { Coordinates, TotalResults, ResultsInfo, Results, GameMode, GameType } from "~/types";
+import type { Coordinates, TotalResults, ResultsInfo, Results, GameMode, GameType } from "~/types/appTypes";
 import { GameFlowManager, GameState } from "../services/GameFlowManager";
 
 export class BattleRoyale implements GameMode {
@@ -14,8 +14,11 @@ export class BattleRoyale implements GameMode {
         const router = useRouter();
         const route_name = router.currentRoute.value.name as string;
 
+        const { lobbySettings } = useLobbyStore();
+        if (!lobbySettings) return console.error("Lobby settings are not defined in startRound method in GameplayBattleRoyale class.");
+
         // Redirect to gampeplay route if not already there
-        if (!route_name.includes("gameplay")) router.push({ path: `/gameplay-${useLobbySettings().value.ID}` });
+        if (!route_name.includes("gameplay")) router.push({ path: `/gameplay-${lobbySettings.ID}` });
 
         // Reset panorama and map views
         if (useGoogleMapHTML().value && useGooglePanoramaHTML().value) {
@@ -75,14 +78,16 @@ export class BattleRoyale implements GameMode {
         const player_id = usePlayerInfo().value.ID;
         if (!player_id) throw new Error("Player ID is not defined");
 
+        const liveResults = useLiveResults().value;
+
         // START OF PIN PLACEMENT LOGIC
-        if (useResults().value[player_id].lives === 0) {
+        if (liveResults[player_id].lives === 0) {
             console.warn("All lives are used!!"); // TODO: Make toast that all lives are used.
             return;
         }
 
         // Place first pin if no pins yet, or if pins and submits are the same
-        if (used_pins === 0 || useResults().value[player_id].attempt === used_pins) {
+        if (used_pins === 0 || liveResults[player_id].attempt === used_pins) {
             // get player color from name
             const color = getPlayerColorByID(player_id);
             if (!color) throw new Error("Player color is not defined");
@@ -92,7 +97,7 @@ export class BattleRoyale implements GameMode {
         }
 
         // If no submitted results yet || there are stil lives left, change last marker position
-        if (!useResults().value[player_id] || useResults().value[player_id].lives > 0) {
+        if (!liveResults[player_id] || liveResults[player_id].lives > 0) {
             const last_marker = useMapMarkers().value[used_pins - 1]; // Get last marker
             last_marker.setPosition(coordinates); // Change last marker position
             return;
@@ -132,19 +137,19 @@ export class BattleRoyale implements GameMode {
      * @param player_result - Object that contains information about player's processing result
      */
     processNewResult(user_id: string, player_result: ResultsInfo): void {
-        const results = useResults().value; // Get results from state
-        const leader_before = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID
+        const liveResults = useLiveResults();
+        const leader_before = Object.keys(liveResults.value).reduce((a, b) => (liveResults.value[a].distance < liveResults.value[b].distance ? a : b)); // Returns player ID
 
-        if (player_result.baseScr < results[user_id]?.baseScr || (player_result.baseScr === 0 && player_result.distance > results[user_id].distance)) {
+        if (player_result.baseScr < liveResults.value[user_id]?.baseScr || (player_result.baseScr === 0 && player_result.distance > liveResults.value[user_id].distance)) {
             // Update attempts and lives, not the score or distance
-            results[user_id].lives = player_result.lives;
-            results[user_id].attempt = player_result.attempt;
+            liveResults.value[user_id].lives = player_result.lives;
+            liveResults.value[user_id].attempt = player_result.attempt;
         } else {
-            results[user_id] = player_result; // Update everything because the new user's result is better than current best
-            useResults().value = Object.fromEntries(Object.entries(results).sort(([, a], [, b]) => (a.distance ?? 999999999) - (b.distance ?? 999999999))); // Sort results by score
+            liveResults.value[user_id] = player_result; // Update everything because the new user's result is better than current best
+            liveResults.value = Object.fromEntries(Object.entries(liveResults.value).sort(([, a], [, b]) => (a.distance ?? 999999999) - (b.distance ?? 999999999))); // Sort results by score
         }
 
-        const new_leader = Object.keys(results).reduce((a, b) => (results[a].distance < results[b].distance ? a : b)); // Returns player ID
+        const new_leader = Object.keys(liveResults.value).reduce((a, b) => (liveResults.value[a].distance < liveResults.value[b].distance ? a : b)); // Returns player ID
 
         GameFlowManager.applyGuessStyles(user_id, leader_before, new_leader);
     }

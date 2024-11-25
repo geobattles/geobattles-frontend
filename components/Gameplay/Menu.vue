@@ -5,22 +5,20 @@
             <ConnectionStatus label="Contrast" class="text-center" />
         </div>
         <div class="text-center m-auto">
-            <p class="text-xs text-center text-white">Round: {{ knobValue }} / {{ lobbySettings.conf.numRounds }}</p>
+            <p class="text-xs text-center text-white">Round: {{ knobValue }} / {{ lobbySettings?.conf.numRounds }}</p>
             <Button label="Leave" severity="warn" outlined icon="pi pi-sign-out" size="small" @click="handleButtonClicked" />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { defineEmits } from "vue";
-
 const emit = defineEmits(["leaveLobbyClicked"]);
 
 const handleButtonClicked = () => {
     emit("leaveLobbyClicked");
 };
 
-const lobbySettings = useLobbySettings();
+const { lobbySettings } = useLobbyStore();
 const gameFlowManager = useGameFlowManager();
 const knobValue = computed(() => (gameFlowManager?.value?.gameRound || 0) + 1);
 </script>

@@ -35,12 +35,14 @@ export const messageHandlers: {
 
 // Implement handlers for each message type
 function handleJoinedLobby(message: MsgJoinedLobbyData) {
+    const { joinedLobby } = useLobbyStore();
     const data = message.payload;
     if (!data.lobby || !data.user) return console.error("Missing data in JOINED_LOBBY message", data);
     joinedLobby(data.lobby, data.user);
 }
 
 function handleLeftLobby(message: MsgLeftLobbyData) {
+    const { leftLobby } = useLobbyStore();
     const data = message.payload;
     if (!data.lobby || !data.user) return console.error("Missing data in LEFT_LOBBY message", data);
     useUIManager().value.showPlayerLeftToast(getPlayerNameFromID(data.user) ?? "Unknown Player");
@@ -48,6 +50,7 @@ function handleLeftLobby(message: MsgLeftLobbyData) {
 }
 
 function handleUpdatedLobby(message: MsgUpdatedLobbyData) {
+    const { fetchLobbySettings } = useLobbyStore();
     const data = message.payload;
     if (!data.lobby) return console.error("Missing lobby data in UPDATED_LOBBY message", data);
     fetchLobbySettings(data.lobby);
@@ -68,7 +71,7 @@ function handleStartRound(message: MsgStartRoundData) {
     if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
     gameFlowManager.searchedLocationCoords.value = data.location;
 
-    useResults().value = data.players; // Set new player results for live statistics
+    useLiveResults().value = data.players; // Set new player results for live statistics
 
     const gameType = gameFlowManager.gameMode.gameType;
 
