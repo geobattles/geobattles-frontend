@@ -7,7 +7,7 @@
                     <div class="font-bold text-base">Lobby Settings</div>
                 </template>
                 <template #icons>
-                    <Button @click="modify_settings_modal = !modify_settings_modal" type="button" label="Modify" icon="pi pi-cog" severity="contrast" />
+                    <Button @click="modifySettingsModal = !modifySettingsModal" type="button" label="Modify" icon="pi pi-cog" severity="contrast" />
                 </template>
                 <LobbyDisplaySettings />
             </Panel>
@@ -17,7 +17,7 @@
                 <div class="flex justify-evenly mt-5">
                     <div class="flex flex-col">
                         <div class="mb-1">Lobby code</div>
-                        <div class="text-base lg:text-xl" style="letter-spacing: 2px">{{ lobby_settings.ID }}</div>
+                        <div class="text-base lg:text-xl" style="letter-spacing: 2px">{{ lobbySettings?.ID }}</div>
                     </div>
                     <div class="flex flex-col">
                         <div class="mb-1">Connection Status</div>
@@ -30,40 +30,46 @@
                 <LobbyPlayerList class="text-sm lg:text-base m-auto mt-5" style="max-width: 300px" />
             </div>
         </div>
-        <Dialog v-model:visible="modify_settings_modal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
+        <Dialog v-model:visible="modifySettingsModal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
             <LobbyModifySettings />
         </Dialog>
     </div>
 </template>
 
 <script lang="ts" setup>
-const lobby_settings = useLobbySettings();
-const country_list = useCountryList();
-const filtered_country_list = useFilteredCountryList();
-const is_guard_disabled = ref(false);
-const modify_settings_modal = useModifySettingsModal();
-const gameFlowManager = useGameFlowManager();
+const isGuardDisabled = ref(false);
 const isPlayNowLoading = ref(false);
 const inviteLink = ref("");
 const inviteLinkTagSettings = ref({ value: "Copy Invite Link", severity: "info", icon: "pi pi-copy" });
 
+// External services
+const { lobbySettings, applyLobbySettings, leaveLobby, isPlayerAdmin } = useLobbyStore();
+const modifySettingsModal = ref(useLobbyStore().modifySettingsModal);
+const country_list = useCountryList();
+const filtered_country_list = useFilteredCountryList();
+const gameFlowManager = useGameFlowManager();
+
 onMounted(async () => {
+    // Fetch country list
     try {
         await fetchCountryList();
     } catch (error) {
         console.error("Failed to fetch country list:", error);
     }
+
     // If ccList is empty it populate it with all ccodes. Happend only on first load.
-    if (lobby_settings.value.conf.ccList.length === 0) lobby_settings.value.conf.ccList = Object.values(country_list.value);
+    if (!lobbySettings) return console.error("Lobby settings not found");
+    if (lobbySettings.conf.ccList.length === 0) lobbySettings.conf.ccList = Object.values(country_list.value);
     filtered_country_list.value = country_list.value;
 
-    initGameFlowManager("BattleRoyale"); // Initialize GameFlowManager with default BattleRoyale game mode
+    // Initialize GameFlowManager with default BattleRoyale game mode
+    initGameFlowManager("BattleRoyale");
 
     // Generate invite link
-    inviteLink.value = `${window.location.origin}/lobby/join?id=${lobby_settings.value.ID}`;
+    inviteLink.value = `${window.location.origin}/lobby/join?id=${lobbySettings.ID}`;
 });
 
-watch(modify_settings_modal, (newVal) => {
+watch(modifySettingsModal, (newVal) => {
     if (!newVal) applyLobbySettings();
 });
 
@@ -92,12 +98,12 @@ const copyInviteLink = () => {
 };
 
 onBeforeRouteLeave((to, from, next) => {
-    if (is_guard_disabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
+    if (isGuardDisabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
     if (to.name === "gameplay-id") return next(); // If next route is gameplay, allow navigation
 
     // Ask if user really wants to leave lobby
     if (confirm("Are you sure you want to leave the lobby?")) {
-        is_guard_disabled.value = true;
+        isGuardDisabled.value = true;
         leaveLobby();
         next();
         return navigateTo(to.path);

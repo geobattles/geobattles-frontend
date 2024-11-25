@@ -37,12 +37,15 @@ import { useToast } from "primevue/usetoast";
 const submit_button = ref<HTMLElement | null>(null);
 const toggle_map_mobile = ref<HTMLElement | null>(null);
 const show_map_button = ref(false);
+const wantsToLeaveLobby = ref(false);
+const gameplay_page = ref<HTMLElement | null>(null);
+
+// External services
+const { leaveLobby } = useLobbyStore();
 const gameFlowManager = useGameFlowManager();
 const toast = useToast();
 const UIManager = useUIManager();
 const router = useRouter();
-const wantsToLeaveLobby = ref(false);
-const gameplay_page = ref<HTMLElement | null>(null);
 
 onMounted(() => {
     if (!gameFlowManager.value) return console.error("GameFlowManager is not initialized in the lobby");

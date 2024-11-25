@@ -1,5 +1,5 @@
 import { BattleRoyale } from "../composables/GameplayBattleRoyale";
-import type { GameType, GameFlow, Coordinates, Results, TotalResults, ResultsInfo, GameMode } from "~/types";
+import type { GameType, GameFlow, Coordinates, Results, TotalResults, ResultsInfo, GameMode } from "~/types/appTypes";
 import { UIManager } from "./UIManager";
 
 export enum GameState {
@@ -118,13 +118,16 @@ export class GameFlowManager {
     }
 
     isSubmitButtonDisabled(): boolean {
+        const liveResults = useLiveResults().value;
         try {
             if (this.gameMode.gameType === "BattleRoyale") {
-                if (useMapMarkers().value.length === 0) return true; // Disable if no markers
+                // Disable if there are not markers on the map
+                if (useMapMarkers().value.length === 0) return true;
+
                 // Disable if number of markers equals number of attempts
                 const player_id = usePlayerInfo().value.ID;
                 if (!player_id) throw new Error("Player ID not found probably because left lobby");
-                const playerAttempt = useResults().value[player_id].attempt;
+                const playerAttempt = liveResults[player_id].attempt;
                 if (useMapMarkers().value.length === playerAttempt) return true;
             } else if (this.gameMode.gameType === "CountryBattle") {
                 return false; // Always enable for CountryBattle

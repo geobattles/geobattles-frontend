@@ -1,5 +1,4 @@
-import type { Coordinates, ResultsInfo, TotalResults, Results, GameType } from "~/types";
-import type { GameMode } from "~/types";
+import type { Coordinates, ResultsInfo, TotalResults, Results, GameType, GameMode } from "~/types/appTypes";
 import { GameFlowManager, GameState } from "../services/GameFlowManager";
 
 export class CountryBattle implements GameMode {
@@ -18,9 +17,11 @@ export class CountryBattle implements GameMode {
     startRound(): void {
         const router = useRouter();
         const route_name = router.currentRoute.value.name as string;
+        const { lobbySettings } = useLobbyStore();
+        if (!lobbySettings) return console.error("Lobby settings are not defined in CountryBattle startRound method.");
 
         // Redirect to gameplay routes if not already there
-        if (!route_name.includes("gameplay")) router.push({ path: `/gameplay-${useLobbySettings().value.ID}` });
+        if (!route_name.includes("gameplay")) router.push({ path: `/gameplay-${lobbySettings.ID}` });
 
         // Reset panorama and map views
         if (useGoogleMapHTML().value && useGooglePanoramaHTML().value) {
@@ -63,13 +64,13 @@ export class CountryBattle implements GameMode {
      */
     processClickedCountry(polygon: any, country_code: string): void {
         const player_id = usePlayerInfo().value.ID;
-        const results = useResults().value;
+        const liveResults = useLiveResults().value;
         if (!player_id) throw new Error("Player ID is not defined");
 
         const nr_polygons = this.numberOfDrawnPolygons();
 
         // If there are no lives available, return
-        if (useResults().value[player_id].lives === 0) {
+        if (liveResults.player_id.lives === 0) {
             console.log("All lives are used!!"); // TODO: Make toast that all lives are used.
             return;
         }
@@ -78,7 +79,7 @@ export class CountryBattle implements GameMode {
         if (country_code === this.selected_country) return;
 
         // Place first pin if no pins yet, or if pins and submits are the same
-        if (nr_polygons === 0 || results[player_id].attempt === nr_polygons) {
+        if (nr_polygons === 0 || liveResults[player_id].attempt === nr_polygons) {
             // Draw polygon to map and push to selected countries
             this.drawCountryPolygon(polygon, country_code);
             this.selected_country = country_code;
@@ -86,7 +87,7 @@ export class CountryBattle implements GameMode {
         }
 
         // If no submitted results yet || there are stii lives left, change last marker position
-        if (!results[player_id] || results[player_id].lives > 0) {
+        if (!liveResults[player_id] || liveResults[player_id].lives > 0) {
             const map_instance = isGoogleMap();
             map_instance.data.forEach((e) => {
                 // @ts-ignore
@@ -104,25 +105,25 @@ export class CountryBattle implements GameMode {
      * @param player_result
      */
     processNewResult(user: string, player_result: ResultsInfo): void {
-        const results = useResults().value; // Get results from state
+        const liveResults = useLiveResults(); // Get results from state
 
         // Remove click event listner if player guessed country or ran out of lives
         if (player_result.lives === 0 || player_result.cc === "XX") removeMapEventListener("click");
 
         // Update results
-        if (player_result.baseScr < results[user]?.baseScr || player_result.baseScr === 0) {
+        if (player_result.baseScr < liveResults.value[user]?.baseScr || player_result.baseScr === 0) {
             // Update attempts and lives, not the score or distance
-            results[user].lives = player_result.lives;
-            results[user].attempt = player_result.attempt;
+            liveResults.value[user].lives = player_result.lives;
+            liveResults.value[user].attempt = player_result.attempt;
         } else {
-            results[user] = player_result; // Update everything
+            liveResults.value[user] = player_result; // Update everything
             // Sort results by score
-            useResults().value = Object.fromEntries(Object.entries(results).sort(([, a], [, b]) => a.distance - b.distance));
+            liveResults.value = Object.fromEntries(Object.entries(liveResults.value).sort(([, a], [, b]) => a.distance - b.distance));
         }
 
         // Create or update player countries array
-        if (!results[user].player_countries) results[user].player_countries = [player_result.cc];
-        else results[user].player_countries.push(player_result.cc);
+        if (!liveResults.value[user].player_countries) liveResults.value[user].player_countries = [player_result.cc];
+        else liveResults.value[user].player_countries.push(player_result.cc);
     }
 
     /**

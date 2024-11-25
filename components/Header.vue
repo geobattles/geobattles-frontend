@@ -30,10 +30,13 @@
 </template>
 
 <script setup lang="ts">
+const userMenu = ref();
+
+// External services
 const playerInfo = usePlayerInfo();
+const { lobbyList, fetchLobbyList } = useLobbyStore();
 const router = useRouter();
 const route = useRoute();
-const userMenu = ref();
 const isLoginDialogVisible = useIsLoginDialogVisible();
 const auth = useAuthenticationService().value;
 
@@ -48,7 +51,7 @@ const items = ref([
     {
         label: "Online Lobbies",
         icon: "pi pi-map-marker",
-        badge: Object.keys(useLobbyList().value).length,
+        badge: Object.keys(lobbyList).length,
         command: () => {
             router.push("/lobby/list");
         },
@@ -98,7 +101,7 @@ onMounted(async () => {
     } catch (error) {
         console.error("Failed to fetch lobby list in Header component:", error);
     }
-    items.value[1].badge = Object.keys(useLobbyList().value).length;
+    items.value[1].badge = Object.keys(lobbyList).length;
 });
 </script>
 

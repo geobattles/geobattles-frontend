@@ -35,6 +35,12 @@ export const useWebSocketStore = defineStore("web_socket_store", () => {
         // Save connection ID as lobby ID
         connectionID.value = lobbyId;
 
+        // Check if a WebSocket connection is already open
+        if (socket.value && socket.value.readyState === WebSocket.OPEN) {
+            console.warn("WebSocket connection is already open. Cannot initialize a new connection.");
+            return;
+        }
+
         // Connect to Server
         await connect();
     };

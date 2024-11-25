@@ -2,7 +2,7 @@
     <div>
         <Header />
         <Panel class="main-content">
-            <DataTable :value="Object.values(useLobbyList().value)" class="text-xs md:text-base" size="small" :loading="is_table_loading">
+            <DataTable :value="Object.values(lobbyList)" class="text-xs md:text-base" size="small" :loading="is_table_loading">
                 <template #header>
                     <div class="flex align-items-center">
                         <span class="text-xl font-bold">Active Lobbies</span>
@@ -22,36 +22,33 @@
     </div>
 </template>
 
-<script lang="ts">
-export default {
-    setup() {
-        const is_table_loading = ref(false);
-        const auth = useAuthenticationService().value;
-        const isLoginDialogVisible = useIsLoginDialogVisible();
-        const isJoiningLobby = ref(false);
+<script setup lang="ts">
+const is_table_loading = ref(false);
+const isJoiningLobby = ref(false);
 
-        const handleJoinLobbyClick = async (lobby_id: string) => {
-            if (!auth.isPlayerAuthenticated()) return (isLoginDialogVisible.value = true);
-            isJoiningLobby.value = true;
+// External services
+const { lobbyList, fetchLobbyList, checkIfLobby, joinLobby } = useLobbyStore();
+const auth = useAuthenticationService().value;
+const isLoginDialogVisible = useIsLoginDialogVisible();
 
-            try {
-                await checkIfLobby(lobby_id);
-                await joinLobby(lobby_id);
-            } catch (error: unknown) {
-                if (error instanceof Error) {
-                    console.log(error.message);
-                }
-            }
-        };
+const handleJoinLobbyClick = async (lobby_id: string) => {
+    if (!auth.isPlayerAuthenticated()) return (isLoginDialogVisible.value = true);
+    isJoiningLobby.value = true;
 
-        const handleRefreshClick = async () => {
-            is_table_loading.value = true;
-            await fetchLobbyList();
-            is_table_loading.value = false;
-        };
+    try {
+        await checkIfLobby(lobby_id);
+        await joinLobby(lobby_id);
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            console.log(error.message);
+        }
+    }
+};
 
-        return { is_table_loading, isJoiningLobby, handleJoinLobbyClick, handleRefreshClick };
-    },
+const handleRefreshClick = async () => {
+    is_table_loading.value = true;
+    await fetchLobbyList();
+    is_table_loading.value = false;
 };
 </script>
 

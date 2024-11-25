@@ -1,48 +1,48 @@
 <template>
     <div class="component-content">
-        <div class="flex justify-center items-center gap-2 mb-5 mt-1">
-            <div style="display: inline-block; vertical-align: top">
-                <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
-                <div style="position: relative">
-                    <FloatLabel>
-                        <InputText id="search" v-model="country_input" @keyup="filterCountryList" />
-                        <label for="username">Search country</label>
-                    </FloatLabel>
+        <div v-if="lobbySettings" style="overflow: scroll">
+            <div class="flex justify-center items-center gap-2 mb-5 mt-1">
+                <div style="display: inline-block; vertical-align: top">
+                    <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
+                    <div style="position: relative">
+                        <FloatLabel>
+                            <InputText id="search" v-model="country_input" @keyup="filterCountryList" />
+                            <label for="username">Search country</label>
+                        </FloatLabel>
+                    </div>
+                </div>
+                <div class="text-xs flex flex-col justify-between items-center">
+                    <div>
+                        <label>All&nbsp;</label>
+                        <input type="checkbox" @click="toggleAllCountries" :checked="(lobbySettings.conf.ccList.length ?? 0) == Object.entries(country_list).length" />
+                    </div>
+                    <div>
+                        <span>Selected: </span>
+                        <span>{{ (lobbySettings.conf.ccList.length ?? 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
+                    </div>
                 </div>
             </div>
-            <div class="text-xs flex flex-col justify-between items-center">
-                <div>
-                    <label>All&nbsp;</label>
-                    <input type="checkbox" @click="toggleAllCountries" :checked="(lobby_settings.conf.ccList.length | 0) == Object.entries(country_list).length" />
-                </div>
-                <div>
-                    <span>Selected: </span>
-                    <span>{{ (lobby_settings.conf.ccList.length | 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
-                </div>
+            <div class="ccode-list">
+                <label v-for="(ccode, id) in filtered_list" :key="id" class="country-row">
+                    <Checkbox :value="ccode" v-model="lobbySettings.conf.ccList" style="float: left; vertical-align: top" />
+                    <div class="country-flag" :style="{ backgroundPosition: flag_map.get(ccode)?.x + 'px ' + flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
+                    <div class="country-name">{{ flag_map.get(ccode)?.name }}</div>
+                </label>
             </div>
         </div>
-        <div class="ccode-list">
-            <label v-for="(ccode, id) in filtered_list" :key="id" class="country-row">
-                <Checkbox :value="ccode" v-model="lobby_settings.conf.ccList" style="float: left; vertical-align: top" />
-                <div class="country-flag" :style="{ backgroundPosition: flag_map.get(ccode)?.x + 'px ' + flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
-                <div class="country-name">{{ flag_map.get(ccode)?.name }}</div>
-            </label>
+        <div v-else>
+            <p>LobbySettings is not Defined...</p>
         </div>
     </div>
 </template>
 
-<script lang="ts">
-export default {
-    setup() {
-        const filtered_list = useFilteredCountryList();
-        const lobby_settings = useLobbySettings();
-        const country_list = useCountryList();
-        const flag_map = useCountriesFlagMap();
-        const country_input = useCountryInput();
-
-        return { lobby_settings, country_list, filtered_list, flag_map, country_input, filterCountryList, toggleAllCountries };
-    },
-};
+<script setup lang="ts">
+const filtered_list = useFilteredCountryList();
+const lobbyStore = useLobbyStore();
+const { lobbySettings } = toRefs(lobbyStore);
+const country_list = useCountryList();
+const flag_map = useCountriesFlagMap();
+const country_input = useCountryInput();
 </script>
 
 <style scoped>
@@ -56,8 +56,6 @@ export default {
 }
 
 .ccode-list {
-    overflow-y: scroll;
-
     display: flex;
     flex-direction: column;
 }

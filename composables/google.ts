@@ -1,4 +1,4 @@
-import type { Coordinates } from "~/types";
+import type { Coordinates } from "~/types/appTypes";
 
 // Google map states
 export const useGoogleMap = () => useState<google.maps.Map | undefined>("google_map", () => undefined);

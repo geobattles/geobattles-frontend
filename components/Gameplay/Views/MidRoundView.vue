@@ -14,17 +14,11 @@
     </div>
 </template>
 
-<script lang="ts">
-export default {
-    setup() {
-        const gameFlowManager = useGameFlowManager();
-        if (!gameFlowManager.value) throw new Error("GameFlowManager is not initialized");
-        const total_results = useTotalResults();
+<script setup lang="ts">
+const gameFlowManager = useGameFlowManager();
+if (!gameFlowManager.value) throw new Error("GameFlowManager is not initialized");
 
-        onMounted(() => {});
-        return { total_results, gameFlowManager };
-    },
-};
+const { isPlayerAdmin } = useLobbyStore();
 </script>
 
 <style scoped>

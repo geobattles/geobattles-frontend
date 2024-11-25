@@ -3,14 +3,14 @@
         <audio ref="ref_sound">
             <source src="/sounds/clock-tick.mp3" type="audio/mpeg" />
         </audio>
-        <div id="bar" ref="bar_ref" data-style="smooth" :style="{ '--duration': lobby_settings.conf.roundTime, '--delay': lobby_settings.conf.roundTime - timer_sound }">
+        <div id="bar" ref="bar_ref" data-style="smooth" :style="{ '--duration': lobbySettings?.conf.roundTime, '--delay': lobbySettings?.conf.roundTime ?? 0 - timer_sound }">
             <div></div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-const lobby_settings = useLobbySettings();
+const { lobbySettings } = useLobbyStore();
 const timer_sound = ref(10); // Default timer sound starts 10s before round ends
 
 // Template refs
@@ -23,13 +23,16 @@ let interval_id: NodeJS.Timeout;
 let timeout_id: NodeJS.Timeout;
 
 onMounted(() => {
+    if (!lobbySettings) return console.error("Lobby settings are not set!");
+    if (!lobbySettings.conf.roundTime) return console.error("Round time is not set in lobbySettings!");
+
     // Default tick-tock is 10s before end. If round time is less than 20s, then tick-tock is 5s before end.
-    if (lobby_settings.value.conf.roundTime <= 20) timer_sound.value = 5;
+    if (lobbySettings.conf.roundTime <= 20) timer_sound.value = 5;
 
     // Start timer after (roundTime - timer_sound) seconds
     timeout_id = setTimeout(() => {
         interval_id = setInterval(() => ref_sound.value?.play(), 1000); // Tick on every second after timeout
-    }, (lobby_settings.value.conf.roundTime - timer_sound.value) * 1000);
+    }, (lobbySettings.conf.roundTime - timer_sound.value) * 1000);
 });
 
 onUnmounted(() => {

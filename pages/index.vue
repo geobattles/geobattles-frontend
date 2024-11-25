@@ -13,10 +13,13 @@
 </template>
 
 <script setup lang="ts">
+const isjoiningLobby = ref(false);
+
+// External services
 const router = useRouter();
+const { createLobby } = useLobbyStore();
 const auth = useAuthenticationService().value;
 const isLoginDialogVisible = useIsLoginDialogVisible();
-const isjoiningLobby = ref(false);
 
 const handlePlayNowClick = async () => {
     if (!auth.isPlayerAuthenticated()) return (isLoginDialogVisible.value = true);
@@ -27,8 +30,9 @@ const handlePlayNowClick = async () => {
         await createLobby();
     } catch (error) {
         console.error("Failed to create lobby:", error);
-        isjoiningLobby.value = false;
         return window.alert("Failed to create lobby. Please try again later.\n" + error);
+    } finally {
+        isjoiningLobby.value = false;
     }
 };
 

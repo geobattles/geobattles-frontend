@@ -43,7 +43,7 @@
 import { GameState } from "~/services/GameFlowManager";
 export default {
     setup() {
-        const results = useResults();
+        const results = useLiveResults();
         const flag_map = useCountriesFlagMap();
         const total_attempts = ref(new Map<string | number, number>());
         const gameFlowManager = useGameFlowManager();

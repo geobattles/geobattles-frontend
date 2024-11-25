@@ -7,14 +7,14 @@
         </div>
         <Divider />
         Starting Round
-        <Knob v-model="knobValue" :min="0" :max="lobbySettings.conf.numRounds" readonly />
+        <Knob v-model="knobValue" :min="0" :max="lobbySettings?.conf.numRounds" readonly />
     </div>
 </template>
 
 <script setup lang="ts">
 let counter = ref(3);
 let interval: string | number | NodeJS.Timeout | undefined;
-const lobbySettings = useLobbySettings();
+const { lobbySettings } = useLobbyStore();
 const gameFlowManager = useGameFlowManager();
 const knobValue = computed(() => (gameFlowManager?.value?.gameRound || 0) + 1);
 onMounted(() => {
