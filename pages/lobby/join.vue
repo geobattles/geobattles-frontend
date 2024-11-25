@@ -8,8 +8,6 @@
                 <input ref="input_2" class="sign-input" @keyup="handleKeyUpEvent($event)" @keydown="handleKeyDownEvent($event)" type="text" />
                 <input ref="input_3" class="sign-input" @keyup="handleKeyUpEvent($event)" @keydown="handleKeyDownEvent($event)" type="text" />
                 <input ref="input_4" class="sign-input" @keyup="handleKeyUpEvent($event)" @keydown="handleKeyDownEvent($event)" type="text" />
-                <input ref="input_5" class="sign-input" @keyup="handleKeyUpEvent($event)" @keydown="handleKeyDownEvent($event)" type="text" />
-                <input ref="input_6" class="sign-input" @keyup="handleKeyUpEvent($event)" @keydown="handleKeyDownEvent($event)" type="text" />
             </div>
             <div class="flex items-center gap-5">
                 <div class="text-white">Insert or paste lobby code to join the game!</div>
@@ -35,8 +33,6 @@ const input_1 = ref<HTMLInputElement | null>(null);
 const input_2 = ref<HTMLInputElement | null>(null);
 const input_3 = ref<HTMLInputElement | null>(null);
 const input_4 = ref<HTMLInputElement | null>(null);
-const input_5 = ref<HTMLInputElement | null>(null);
-const input_6 = ref<HTMLInputElement | null>(null);
 let inputs_array: Ref<HTMLInputElement | null>[] = [];
 
 // External services
@@ -48,7 +44,7 @@ const { checkIfLobby, joinLobby } = useLobbyStore();
 
 onMounted(() => {
     input_1.value?.focus(); // Focus first input
-    inputs_array = [input_1, input_2, input_3, input_4, input_5, input_6]; // Create array of inputs for logic\
+    inputs_array = [input_1, input_2, input_3, input_4]; // Create array of inputs for logic\
 
     handePasteEvent(); // Activate paste event
 
@@ -113,9 +109,9 @@ const handleKeyUpEvent = async (event: KeyboardEvent) => {
     const input_element = event.target as HTMLInputElement;
     input_element.value = input_element.value.toUpperCase();
 
-    if (input_1.value?.value && input_2.value?.value && input_3.value?.value && input_4.value?.value && input_5.value?.value && input_6.value?.value) {
+    if (input_1.value?.value && input_2.value?.value && input_3.value?.value && input_4.value?.value) {
         // Get all inputs text and combine it to one string
-        const lobby_id = input_1.value.value + input_2.value.value + input_3.value.value + input_4.value.value + input_5.value.value + input_6.value.value;
+        const lobby_id = input_1.value.value + input_2.value.value + input_3.value.value + input_4.value.value;
 
         // Try joining a lobby
         await handleJoinLobby(lobby_id);
