@@ -41,6 +41,7 @@ export type playerListObject = {
         color: string;
         lives: number;
         powerups: number[];
+        connected: boolean;
     };
 };
 

@@ -1,6 +1,6 @@
 <template>
     <div class="component-content">
-        <div v-if="lobbySettings" style="overflow: scroll">
+        <div v-if="lobbyStore.lobbySettings" style="overflow: scroll">
             <div class="flex justify-center items-center gap-2 mb-5 mt-1">
                 <div style="display: inline-block; vertical-align: top">
                     <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
@@ -14,32 +14,32 @@
                 <div class="text-xs flex flex-col justify-between items-center">
                     <div>
                         <label>All&nbsp;</label>
-                        <input type="checkbox" @click="toggleAllCountries" :checked="(lobbySettings.conf.ccList.length ?? 0) == Object.entries(country_list).length" />
+                        <input type="checkbox" @click="toggleAllCountries" :checked="(lobbyStore.lobbySettings.conf.ccList.length ?? 0) == Object.entries(country_list).length" />
                     </div>
                     <div>
                         <span>Selected: </span>
-                        <span>{{ (lobbySettings.conf.ccList.length ?? 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
+                        <span>{{ (lobbyStore.lobbySettings.conf.ccList.length ?? 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
                     </div>
                 </div>
             </div>
             <div class="ccode-list">
                 <label v-for="(ccode, id) in filtered_list" :key="id" class="country-row">
-                    <Checkbox :value="ccode" v-model="lobbySettings.conf.ccList" style="float: left; vertical-align: top" />
+                    <Checkbox :value="ccode" v-model="lobbyStore.lobbySettings.conf.ccList" style="float: left; vertical-align: top" />
                     <div class="country-flag" :style="{ backgroundPosition: flag_map.get(ccode)?.x + 'px ' + flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
                     <div class="country-name">{{ flag_map.get(ccode)?.name }}</div>
                 </label>
             </div>
         </div>
         <div v-else>
-            <p>LobbySettings is not Defined...</p>
+            <p>lobbyStore.LobbySettings is not Defined...</p>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
+// External services
 const filtered_list = useFilteredCountryList();
 const lobbyStore = useLobbyStore();
-const { lobbySettings } = toRefs(lobbyStore);
 const country_list = useCountryList();
 const flag_map = useCountriesFlagMap();
 const country_input = useCountryInput();

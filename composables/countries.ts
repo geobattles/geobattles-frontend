@@ -23,17 +23,17 @@ export const filterCountryList = () => {
 };
 
 export const toggleAllCountries = () => {
-    const { updateLobbySetting, lobbySettings } = useLobbyStore();
+    const { updateLobbyConfigSetting, lobbySettings } = useLobbyStore();
 
     if (useCountryList().value.length !== lobbySettings?.conf.ccList.length) {
-        updateLobbySetting("ccList", []);
+        updateLobbyConfigSetting("ccList", []);
 
         // Fill selected countries array with all countries
         const newSettingsCountryList: string[] = [];
         useCountryList().value.forEach((value) => newSettingsCountryList.push(value));
-        updateLobbySetting("ccList", newSettingsCountryList);
+        updateLobbyConfigSetting("ccList", newSettingsCountryList);
     } else {
-        updateLobbySetting("ccList", []);
+        updateLobbyConfigSetting("ccList", []);
     }
 };
 

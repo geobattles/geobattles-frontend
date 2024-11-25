@@ -35,7 +35,6 @@
                     <label for="attempts-per-rounds-input" class="text-xs"> Attempts </label>
                     <InputNumber class="m-auto w-12" inputId="attempts-per-rounds-input" v-model="lobbyStore.lobbySettings.conf.numAttempt" showButtons buttonLayout="vertical" :min="0" :max="5" @focus="handleFocus" />
                 </div>
-                {{ lobbyStore.lobbySettings.conf.numAttempt }}
                 <div class="flex flex-col gap-1">
                     <label for="stacked-buttons" class="text-xs"> Max players </label>
                     <InputNumber class="m-auto w-12" v-model="lobbyStore.lobbySettings.conf.maxPlayers" style="width: 3rem" buttonLayout="vertical" inputId="stacked-buttons" :min="0" :max="20" showButtons mode="decimal" @focus="handleFocus" />
@@ -94,11 +93,11 @@ const gameFlowManager = useGameFlowManager();
 onMounted(() => {
     score_factor.value.oninput = function () {
         // lobbySettings.value.conf.scoreFactor = parseInt(this.value);
-        lobbyStore.updateLobbySetting("scoreFactor", parseInt(this.value));
+        lobbyStore.updateLobbyConfigSetting("scoreFactor", parseInt(this.value));
     };
     timer_slider.value.oninput = function () {
         // lobbySettings.value.conf.roundTime = parseInt(this.value);
-        lobbyStore.updateLobbySetting("roundTime", parseInt(this.value));
+        lobbyStore.updateLobbyConfigSetting("roundTime", parseInt(this.value));
     };
 });
 

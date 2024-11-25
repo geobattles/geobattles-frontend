@@ -33,8 +33,8 @@
 const userMenu = ref();
 
 // External services
+const lobbyStore = useLobbyStore();
 const playerInfo = usePlayerInfo();
-const { lobbyList, fetchLobbyList } = useLobbyStore();
 const router = useRouter();
 const route = useRoute();
 const isLoginDialogVisible = useIsLoginDialogVisible();
@@ -51,7 +51,7 @@ const items = ref([
     {
         label: "Online Lobbies",
         icon: "pi pi-map-marker",
-        badge: Object.keys(lobbyList).length,
+        badge: Object.keys(lobbyStore.lobbyList).length,
         command: () => {
             router.push("/lobby/list");
         },
@@ -97,11 +97,11 @@ const showLogoutButton = computed(() => {
 
 onMounted(async () => {
     try {
-        await fetchLobbyList();
+        await lobbyStore.fetchLobbyList();
     } catch (error) {
         console.error("Failed to fetch lobby list in Header component:", error);
     }
-    items.value[1].badge = Object.keys(lobbyList).length;
+    items.value[1].badge = Object.keys(lobbyStore.lobbyList).length;
 });
 </script>
 

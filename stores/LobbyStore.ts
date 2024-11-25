@@ -11,10 +11,6 @@ export const useLobbyStore = defineStore("lobby", () => {
     const lobbyList = ref<string[]>([]);
     const modifySettingsModal = ref<boolean>(false); // Modify settings modal (show or hide modal to change lobby settings)
 
-    // Results states
-    // const liveResults = ref<Results>({} as Results);
-    // const totalResults = ref<TotalResults>({} as TotalResults);
-
     /**
      * Create a new lobby. It will make a post request to the backend.
      * If successful, it will initialize a WebSocket connection to the lobby and redirect to the lobby page.
@@ -102,7 +98,10 @@ export const useLobbyStore = defineStore("lobby", () => {
         const liveResults = useLiveResults();
         const totalResults = useTotalResults();
 
-        updateNestedLobbySettings(lobbyInfo);
+        // Update only player list
+        updateLobbySetting("playerList", lobbyInfo.playerList);
+
+        // Remove player from live and total results
         if (liveResults.value[userId]) {
             delete liveResults.value[userId];
         }
@@ -153,9 +152,14 @@ export const useLobbyStore = defineStore("lobby", () => {
         socketStore.sendMessage(settings);
     };
 
-    const updateLobbySetting = <K extends keyof LobbyInfo["conf"]>(key: K, value: LobbyInfo["conf"][K]) => {
+    const updateLobbyConfigSetting = <K extends keyof LobbyInfo["conf"]>(key: K, value: LobbyInfo["conf"][K]) => {
         if (!lobbySettings.value) return console.error("Lobby settings are not initialized");
         lobbySettings.value.conf[key] = value;
+    };
+
+    const updateLobbySetting = <K extends keyof LobbyInfo>(key: K, value: LobbyInfo[K]) => {
+        if (!lobbySettings.value) return console.error("Lobby settings are not initialized");
+        lobbySettings.value[key] = value;
     };
 
     const updateNestedLobbySettings = (lobbyInfo: LobbyInfo) => {
@@ -193,7 +197,7 @@ export const useLobbyStore = defineStore("lobby", () => {
 
     const checkIfLobby = async (lobbyId: string) => {
         await fetchLobbyList();
-        if (!lobbyList.value.includes(lobbyId)) throw new Error("Lobby does not exist");
+        if (!Object.keys(lobbyList.value).includes(lobbyId)) throw new Error("Lobby does not exist");
     };
 
     const isPlayerAdmin = () => {
@@ -213,7 +217,7 @@ export const useLobbyStore = defineStore("lobby", () => {
         leftLobby,
         fetchLobbySettings,
         applyLobbySettings,
-        updateLobbySetting,
+        updateLobbyConfigSetting,
         fetchLobbyList,
         checkIfLobby,
         isPlayerAdmin,
