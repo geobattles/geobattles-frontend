@@ -47,6 +47,15 @@ const toast = useToast();
 const UIManager = useUIManager();
 const router = useRouter();
 
+useHead({
+    title: "GeoBattles | Gameplay",
+    meta: [
+        { name: "description", content: "My amazing site." },
+        { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" },
+        { name: "touch-action", content: "manipulation" },
+    ],
+});
+
 onMounted(() => {
     if (!gameFlowManager.value) return console.error("GameFlowManager is not initialized in the lobby");
     gameFlowManager.value.mountingProcess(toggle_map_mobile, show_map_button, submit_button);

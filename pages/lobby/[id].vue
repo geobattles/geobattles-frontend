@@ -7,7 +7,7 @@
                     <div class="font-bold text-base">Lobby Settings</div>
                 </template>
                 <template v-if="isPlayerAdmin()" #icons>
-                    <Button @click="modifySettingsModal = !modifySettingsModal" type="button" label="Modify" icon="pi pi-cog" severity="contrast" />
+                    <Button @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal" type="button" label="Modify" icon="pi pi-cog" severity="contrast" />
                 </template>
                 <LobbyDisplaySettings />
             </Panel>
@@ -30,21 +30,21 @@
                 <LobbyPlayerList class="text-sm lg:text-base m-auto mt-5" style="max-width: 300px" />
             </div>
         </div>
-        <Dialog v-model:visible="modifySettingsModal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
+        <Dialog v-model:visible="lobbyStore.modifySettingsModal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
             <LobbyModifySettings />
         </Dialog>
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 const isGuardDisabled = ref(false);
 const isPlayNowLoading = ref(false);
 const inviteLink = ref("");
 const inviteLinkTagSettings = ref({ value: "Copy Invite Link", severity: "info", icon: "pi pi-copy" });
 
 // External services
-const { lobbySettings, applyLobbySettings, leaveLobby, isPlayerAdmin } = useLobbyStore();
-const modifySettingsModal = ref(useLobbyStore().modifySettingsModal);
+const { lobbySettings, leaveLobby, isPlayerAdmin } = useLobbyStore();
+const lobbyStore = useLobbyStore();
 const country_list = useCountryList();
 const filtered_country_list = useFilteredCountryList();
 const gameFlowManager = useGameFlowManager();
@@ -59,6 +59,8 @@ onMounted(async () => {
 
     // If ccList is empty it populate it with all ccodes. Happend only on first load.
     if (!lobbySettings) return console.error("Lobby settings not found");
+
+    // Populate ccList
     if (lobbySettings.conf.ccList.length === 0) lobbySettings.conf.ccList = Object.values(country_list.value);
     filtered_country_list.value = country_list.value;
 
@@ -67,10 +69,6 @@ onMounted(async () => {
 
     // Generate invite link
     inviteLink.value = `${window.location.origin}/lobby/join?id=${lobbySettings.ID}`;
-});
-
-watch(modifySettingsModal, (newVal) => {
-    if (!newVal) applyLobbySettings();
 });
 
 const handleStartGameButton = () => {

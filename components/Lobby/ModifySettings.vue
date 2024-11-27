@@ -43,7 +43,7 @@
             <!-- Define lobby score factor section -->
             <div class="mt-4">
                 <span>Score factor: {{ lobbyStore.lobbySettings.conf.scoreFactor || 150 }}</span>
-                <Slider ref="score_factor" v-model="lobbyStore.lobbySettings.conf.scoreFactor" :min="50" :max="200" class="w-14rem mt-3" />
+                <Slider ref="score_factor" v-model="lobbyStore.lobbySettings.conf.scoreFactor" :min="1" :max="200" class="w-14rem mt-3" />
             </div>
             <!-- Define lobby dynamic lives and place bonus section -->
             <div style="display: flex; flex-direction: row; gap: 10px; scale: 0.9">
@@ -82,7 +82,7 @@
     </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 const timer_slider = ref();
 const score_factor = ref();
 
@@ -91,14 +91,18 @@ const lobbyStore = useLobbyStore();
 const gameFlowManager = useGameFlowManager();
 
 onMounted(() => {
-    score_factor.value.oninput = function () {
-        // lobbySettings.value.conf.scoreFactor = parseInt(this.value);
-        lobbyStore.updateLobbyConfigSetting("scoreFactor", parseInt(this.value));
-    };
-    timer_slider.value.oninput = function () {
-        // lobbySettings.value.conf.roundTime = parseInt(this.value);
-        lobbyStore.updateLobbyConfigSetting("roundTime", parseInt(this.value));
-    };
+    // Will lock lobbySettings for the user if he is modifying the settings
+    lobbyStore.isUpdatingSettings = true;
+
+    // Set the initial values for the sliders
+    score_factor.value.oninput = () => lobbyStore.updateLobbyConfigSetting("scoreFactor", parseInt(score_factor.value.value));
+    timer_slider.value.oninput = () => lobbyStore.updateLobbyConfigSetting("roundTime", parseInt(timer_slider.value.value));
+});
+
+onUnmounted(() => {
+    // Apply the lobby settings when user closes the modify settings dialog and unlock the settings
+    lobbyStore.applyLobbySettings();
+    lobbyStore.isUpdatingSettings = false;
 });
 
 const handleFocus = (event: Event) => {
