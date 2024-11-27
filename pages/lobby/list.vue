@@ -1,8 +1,9 @@
 <template>
     <div>
+        <Toast />
         <Header />
         <Panel class="main-content">
-            <DataTable :value="Object.values(lobbyList)" class="text-xs md:text-base" size="small" :loading="is_table_loading">
+            <DataTable :value="Object.values(lobbyStore.lobbyList)" class="text-xs md:text-base" size="small" :loading="is_table_loading">
                 <template #header>
                     <div class="flex align-items-center">
                         <span class="text-xl font-bold">Active Lobbies</span>
@@ -25,9 +26,11 @@
 <script setup lang="ts">
 const is_table_loading = ref(false);
 const isJoiningLobby = ref(false);
+const toast = useToast();
 
 // External services
-const { lobbyList, fetchLobbyList, checkIfLobby, joinLobby } = useLobbyStore();
+const { fetchLobbyList, checkIfLobby, joinLobby } = useLobbyStore();
+const lobbyStore = useLobbyStore();
 const auth = useAuthenticationService().value;
 const isLoginDialogVisible = useIsLoginDialogVisible();
 
@@ -40,8 +43,10 @@ const handleJoinLobbyClick = async (lobby_id: string) => {
         await joinLobby(lobby_id);
     } catch (error: unknown) {
         if (error instanceof Error) {
-            console.log(error.message);
+            toast.add({ severity: "error", summary: "Error", detail: error.message, life: 3000 });
         }
+    } finally {
+        isJoiningLobby.value = false;
     }
 };
 

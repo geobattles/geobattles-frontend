@@ -1,11 +1,12 @@
 // stores/LobbyStore.ts
-import type { LobbyInfo, Results, TotalResults } from "~/types/appTypes";
+import type { LobbyInfo } from "~/types/appTypes";
 import { useWebSocketStore } from "~/stores/WebSocketStore";
 
 export const useLobbyStore = defineStore("lobby", () => {
     // Lobby settings states
     const lobbySettings = ref<LobbyInfo | null>(null);
     const lobbySettingsOriginal = ref<LobbyInfo | null>(null);
+    const isUpdatingSettings = ref(false);
 
     // Lobby list state
     const lobbyList = ref<string[]>([]);
@@ -64,13 +65,13 @@ export const useLobbyStore = defineStore("lobby", () => {
 
         try {
             // Initialize WebSocket connection to lobby
-            socketStore.initWebSocket(lobbyId);
+            await socketStore.initWebSocket(lobbyId);
 
             // Redirect to lobby page
-            router.push({ path: `/lobby/${lobbyId}` });
+            await router.push({ path: `/lobby/${lobbyId}` });
         } catch (error) {
             console.error("Error joining lobby:", error);
-            throw new Error("Could not connect to a lobby.");
+            throw new Error("This lobby is currently not joinable.");
         }
     };
 
@@ -164,6 +165,10 @@ export const useLobbyStore = defineStore("lobby", () => {
     };
 
     const updateNestedLobbySettings = (lobbyInfo: LobbyInfo) => {
+        // Do not update lobby settings if isUpdatingSettings is true
+        if (isUpdatingSettings.value) return;
+
+        // Update lobby settings
         lobbySettings.value = structuredClone(lobbyInfo);
         lobbySettings.value.conf = structuredClone(lobbyInfo.conf);
         lobbySettingsOriginal.value = structuredClone(lobbyInfo);
@@ -209,6 +214,7 @@ export const useLobbyStore = defineStore("lobby", () => {
     return {
         lobbySettings,
         lobbySettingsOriginal,
+        isUpdatingSettings,
         lobbyList,
         modifySettingsModal,
         createLobby,
