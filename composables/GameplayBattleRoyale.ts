@@ -53,7 +53,7 @@ export class BattleRoyale implements GameMode {
             const color = getPlayerColorByID(key);
             if (!color) throw new Error("Player color is not defined");
 
-            const marker = addNewMapMarker(round_res[key].location, color);
+            const marker = addNewMapMarker(round_res[key].location, color); // Create new marker
             useMapMarkers().value.push(marker); // Save marker to state
         }
 

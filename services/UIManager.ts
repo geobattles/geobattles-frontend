@@ -5,9 +5,19 @@ export class UIManager {
     private googleMap: HTMLElement | null = null;
     private googlePanorama: HTMLElement | null = null;
     private eventListeners: { [key: string]: EventCallback[] } = {};
+    private submitButton: HTMLElement | null = null;
 
     constructor() {}
 
+    /**
+     * Will handle the mounting process of Gameplay
+     * Will setup the map listeners based on the screen size for mobile or desktop.
+     * Listeners like hover on map, click on map button (mobile), etc.
+     *
+     * @param toggle_map_mobile
+     * @param show_map_button
+     * @param submit_button
+     */
     mountingProcess(toggle_map_mobile: Ref<HTMLElement | null>, show_map_button: Ref<boolean>, submit_button: Ref<HTMLElement | null>): void {
         const google_map = useGoogleMapHTML();
         const google_pan = useGooglePanoramaHTML();
@@ -16,6 +26,7 @@ export class UIManager {
 
         this.googleMap = google_map.value;
         this.googlePanorama = google_pan.value;
+        this.submitButton = submit_button.value;
 
         this.setupMapListeners(toggle_map_mobile, show_map_button, submit_button);
     }
@@ -33,13 +44,15 @@ export class UIManager {
         toggle_map_mobile.value?.addEventListener("click", () => {
             const gameFlowManager = useGameFlowManager().value;
             if (gameFlowManager && gameFlowManager.currentState === GameState.PLAYING) {
-                this.googleMap?.classList.toggle("google-map-hover");
+                this.googleMap?.classList.toggle("google-map-gameplay-container-mobile");
             }
         });
         show_map_button.value = true;
     }
 
     private setupDesktopView(submit_button: Ref<HTMLElement | null>): void {
+        this.googleMap?.classList.add("google-map-gameplay-container");
+
         if (this.googleMap) {
             this.googleMap.addEventListener("mouseenter", () => this.handleMapHover(true, submit_button));
             this.googleMap.addEventListener("mouseleave", () => {});
@@ -53,11 +66,11 @@ export class UIManager {
         const gameFlowManager = useGameFlowManager().value;
         if (gameFlowManager && gameFlowManager.currentState === GameState.PLAYING) {
             if (isHovering) {
-                this.googleMap?.classList.add("google-map-hover");
-                submit_button.value?.classList.add("submit-button-hover");
+                this.googleMap?.classList.add("google-map-gameplay-container-hovered");
+                submit_button.value?.classList.add("submit-button-hovered-map");
             } else {
-                this.googleMap?.classList.remove("google-map-hover");
-                submit_button.value?.classList.remove("submit-button-hover");
+                this.googleMap?.classList.remove("google-map-gameplay-container-hovered");
+                submit_button.value?.classList.remove("submit-button-hovered-map");
             }
         }
     }
@@ -84,28 +97,72 @@ export class UIManager {
         );
     }
 
+    /**
+     * Will move map back to playing state for Desktop view.
+     * For mobile, the click on Map Button alone will handle everything.
+     */
     private moveMapToPlaying(): void {
-        const gameplay_container = document.getElementById("gameplay_container");
-        if (this.googleMap && gameplay_container) {
-            gameplay_container.appendChild(this.googleMap);
-            this.googleMap.classList.remove("google-map-midround");
-            this.googleMap.classList.add("google-map-gameplay");
+        // Handle Mobile Gameplay
+        if (window.innerWidth < 1024) {
+            const gameplayMapContainerMobile = document.getElementsByClassName("gameplay-map-mobile-position")[0];
+
+            if (this.googleMap && gameplayMapContainerMobile) {
+                gameplayMapContainerMobile.insertBefore(this.googleMap, gameplayMapContainerMobile.firstChild);
+
+                // Remove midround class
+                this.googleMap.classList.remove("google-map-midround-container");
+
+                // Gameplay class for mobile map will be handled by Map Button click
+            }
+        } else {
+            // Get gameplay container and insert map as first child
+            const gamePlayMapContainer = document.getElementsByClassName("gameplay-map-wrapper")[0];
+            if (this.googleMap && gamePlayMapContainer) {
+                gamePlayMapContainer.insertBefore(this.googleMap, gamePlayMapContainer.firstChild);
+
+                // Remove midround class
+                this.googleMap.classList.remove("google-map-midround-container", "google-map-endgame-container");
+                this.submitButton?.classList.remove("submit-button-hovered-map");
+
+                // Add gameplay class
+                this.googleMap.classList.add("google-map-gameplay-container");
+            }
         }
     }
 
+    /**
+     * Will move map to mid round state.
+     */
     private moveMapToMidRound(): void {
-        const mid_round_map_window = document.querySelector(".google-map-window");
-        if (this.googleMap && mid_round_map_window) {
-            mid_round_map_window.appendChild(this.googleMap);
-            this.googleMap.classList.remove("google-map-hover", "google-map-gameplay");
-            this.googleMap.classList.add("google-map-midround");
+        // Get MidRound map positional container
+        const midRoundGameMapPosition = document.getElementsByClassName("google-map-midround-position")[0];
+
+        // Remove and add required classes and append map to the positional container
+        if (this.googleMap && midRoundGameMapPosition) {
+            midRoundGameMapPosition.appendChild(this.googleMap);
+            this.googleMap.classList.remove("google-map-gameplay-container", "google-map-gameplay-container-hovered", "google-map-gameplay-container-mobile");
+            this.googleMap.classList.add("google-map-midround-container");
         }
     }
 
+    /**
+     * Will move map to finished game state. (currently similiar to midround)
+     */
     private moveMapToFinished(): void {
-        const gameplay_container = document.getElementById("google-map-finished");
-        if (this.googleMap && gameplay_container) {
-            gameplay_container.appendChild(this.googleMap);
+        // Get EndGame map positional container
+        const finishedGameMapPosition = document.getElementsByClassName("google-map-finished-position")[0];
+
+        // Remove and add required classes and append map to the positional container
+        if (this.googleMap && finishedGameMapPosition) {
+            // Remove midroung and gameplay classes
+            this.googleMap.classList.remove("google-map-midround-container", "google-map-gameplay-container", "google-map-gameplay-container-hovered");
+
+            // Add endgame class
+            if (window.innerWidth < 768) this.googleMap.classList.add("google-map-endgame-container-vertical");
+            else this.googleMap.classList.add("google-map-endgame-container");
+
+            // Append map to the positional container
+            finishedGameMapPosition.appendChild(this.googleMap);
         }
     }
 

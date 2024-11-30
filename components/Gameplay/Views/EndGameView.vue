@@ -1,19 +1,16 @@
 <template>
-    <div id="end_game_container">
-        <div id="google-map-finished" style="width: 70vw"></div>
-        <div class="flex flex-col justify-center gap-5 p-1" style="width: 30vw">
-            <div class="results-section">
-                <Panel header="Total Results" pt:header:class="text-xs lg:text-base">
-                    <GameplayTotalStatistics class="text-xs lg:text-base" />
-                </Panel>
-            </div>
-            <div class="endgame-menu">
-                <Button type="button" label="NEXT GAME" icon="pi pi-play-circle" @click="gameFlowManager?.sendStartRoundSocketMessage" severity="" />
-                <div style="text-align: center">
-                    <Button @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal" type="button" label="Modify Lobby Settings" icon="pi pi-cog" severity="contrast" />
-                </div>
+    <div class="flex flex-col md:flex-row">
+        <div class="flex flex-col justify-center gap-5 p-1 w-full md:w-[30vw] h-[50vh] md:h-auto">
+            <Panel pt:header:class="text-xs lg:text-base" header="Total Results">
+                <GameplayTotalStatistics class="text-xs lg:text-base" />
+            </Panel>
+            <div class="flex flex-col gap-2">
+                <Button type="button" class="m-auto" label="NEXT GAME" icon="pi pi-play-circle" @click="gameFlowManager?.sendStartRoundSocketMessage" severity="primary" size="small" />
+                <Button @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal" type="button" class="m-auto" label="Modify Lobby Settings" icon="pi pi-cog" severity="info" size="small" />
             </div>
         </div>
+        <div class="google-map-finished-position"></div>
+
         <Dialog v-model:visible="lobbyStore.modifySettingsModal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
             <LobbyModifySettings />
         </Dialog>
@@ -24,6 +21,7 @@
 // External services
 const gameFlowManager = useGameFlowManager();
 const lobbyStore = useLobbyStore();
+const googleMapHTML = useGoogleMapHTML();
 
 // Watch for lobby settings modal
 watch(
@@ -32,31 +30,41 @@ watch(
         if (!newVal) lobbyStore.applyLobbySettings();
     }
 );
+
+const isVertical = ref(window.innerWidth < window.innerHeight);
+
+const updateOrientation = () => {
+    isVertical.value = window.innerWidth < window.innerHeight;
+
+    const mapHTML = googleMapHTML;
+    if (mapHTML.value) {
+        if (isVertical.value) {
+            mapHTML.value.classList.add("google-map-endgame-container-vertical");
+            mapHTML.value.classList.remove("google-map-endgame-container");
+        } else {
+            mapHTML.value.classList.add("google-map-endgame-container");
+            mapHTML.value.classList.remove("google-map-endgame-container-vertical");
+        }
+    }
+};
+
+onMounted(() => {
+    window.addEventListener("resize", updateOrientation);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener("resize", updateOrientation);
+});
 </script>
 
-<style scoped>
-#end_game_container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 3;
-    background-color: var(--p-surface-900);
-    color: var(--p-surface-0);
-
-    display: flex;
-    flex-direction: row;
+<style>
+.google-map-endgame-container {
+    width: 70vw;
+    height: 100vh;
 }
 
-.endgame-menu {
-    z-index: 1;
-
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-
-    width: 100%;
-    max-width: 400px;
+.google-map-endgame-container-vertical {
+    width: 100vw;
+    height: 50vh;
 }
 </style>

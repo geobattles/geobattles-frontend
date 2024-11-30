@@ -3,7 +3,7 @@
         <Menubar :model="items">
             <template #start></template>
             <template #item="{ item, props, root }">
-                <a v-ripple class="flex align-items-center" v-bind="props.action">
+                <a v-ripple class="flex align-items-center" v-bind="props.action" :class="{ 'active-menuitem': isActive(item) }">
                     <span :class="item.icon" />
                     <span class="ml-2">{{ item.label }}</span>
                     <Badge v-if="item.badge !== undefined" :value="item.badge" />
@@ -30,6 +30,7 @@
 </template>
 
 <script setup lang="ts">
+import type { MenuItem } from "primevue/menuitem";
 const userMenu = ref();
 
 // External services
@@ -40,13 +41,14 @@ const route = useRoute();
 const isLoginDialogVisible = useIsLoginDialogVisible();
 const auth = useAuthenticationService().value;
 
-const items = ref([
+const items: Ref<MenuItem[]> = ref([
     {
         label: "Home",
         icon: "pi pi-home",
         command: () => {
             router.push("/");
         },
+        path: "/",
     },
     {
         label: "Online Lobbies",
@@ -55,6 +57,7 @@ const items = ref([
         command: () => {
             router.push("/lobby/list");
         },
+        path: "/lobby/list",
     },
     {
         label: "About",
@@ -62,47 +65,62 @@ const items = ref([
         command: () => {
             router.push("/about");
         },
+        path: "/about",
+    },
+    {
+        label: "Test",
+        icon: "pi pi-info-circle",
+        command: () => {
+            router.push("/test");
+        },
+        path: "/test",
     },
 ]);
 
-const itemsProfile = ref([
+const itemsProfile: Ref<MenuItem[]> = ref([
     {
         label: "Profile",
         icon: "pi pi-user",
         command: () => {
             router.push("/profile");
         },
+        path: "/profile",
     },
-    // {
-    //     label: "Settings",
-    //     icon: "pi pi-cog",
-    //     command: () => {
-    //         router.push("/settings");
-    //     },
-    // },
 ]);
 
-const toggleUserMenu = (event: any) => {
-    userMenu.value.toggle(event);
-};
+// Toggle user menu
+const toggleUserMenu = (event: any) => userMenu.value.toggle(event);
 
-const handleLoginClick = () => {
-    isLoginDialogVisible.value = true;
-};
+// Open Login dialog on Login button click
+const handleLoginClick = () => (isLoginDialogVisible.value = true);
 
+// Check if Logout button should be shown
 const showLogoutButton = computed(() => {
     const routeName = route.name as string;
     return !["lobby-id", "gameplay-id"].some((word) => routeName.includes(word));
 });
 
+// Check if current item in MenuBar is active (only for styling)
+const isActive = (item: MenuItem) => route.path === item.path;
+
 onMounted(async () => {
+    // Fetch lobby list
     try {
         await lobbyStore.fetchLobbyList();
     } catch (error) {
         console.error("Failed to fetch lobby list in Header component:", error);
     }
+
+    // Update active lobbies badge value
     items.value[1].badge = Object.keys(lobbyStore.lobbyList).length;
 });
 </script>
 
-<style scoped></style>
+<style scoped>
+.active-menuitem {
+    font-weight: 600;
+    color: var(--p-primary-color);
+    background-color: var(--p-menubar-item-focus-background);
+    border-radius: 4px;
+}
+</style>
