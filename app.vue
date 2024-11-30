@@ -69,7 +69,6 @@ body {
 }
 
 #my_vue_app {
-    background-color: var(--p-surface-900);
     min-height: 100vh;
 }
 

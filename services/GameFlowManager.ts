@@ -153,6 +153,7 @@ export class GameFlowManager {
         this.uiManager.mountingProcess(toggle_map_mobile, show_map_button, submit_button);
         this.uiManager.googleMapDOMTracker();
     }
+
     /**
      * Will apply guess styles to a player who guessed.
      *

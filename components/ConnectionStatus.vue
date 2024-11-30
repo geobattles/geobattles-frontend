@@ -1,6 +1,6 @@
 <template>
     <div>
-        <Tag :severity="severity" :value="statusMessage" rounded />
+        <Tag :severity="severity" pt:label:class="text-xs lg:text-base" :value="statusMessage" rounded />
     </div>
 </template>
 

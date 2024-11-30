@@ -3,9 +3,9 @@
         <Header />
         <div class="page-container">
             <div>
-                <Button class="play-button w-56 md:w-80" @click="handlePlayNowClick" label="PLAY NOW" icon="pi pi-map-marker" :loading="isjoiningLobby" size="large" />
+                <Button class="play-button w-56 md:w-80" @click="handlePlayNowClick" label="PLAY NOW" icon="pi pi-map-marker" :loading="isjoiningLobby" severity="contrast" size="large" raised />
                 <div class="m-auto text-center mt-4">
-                    <span class="text-white">or join a lobby by <a class="clickable" @click="handleJoinByCodeClick()">game code!</a></span>
+                    <span>or join a lobby by <a class="clickable" @click="handleJoinByCodeClick()">game code!</a></span>
                 </div>
             </div>
         </div>

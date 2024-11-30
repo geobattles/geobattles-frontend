@@ -3,36 +3,40 @@
         <TransitionGroup name="list" tag="ul" class="flex flex-col gap-1">
             <div v-for="(value, index) in results" :key="index">
                 <div class="table__row" :id="index.toString()">
+                    <!-- Player Information -->
                     <div class="table__row-element">
                         <div class="player-name">
                             {{ getPlayerNameFromID(index) }}
                         </div>
                         <div>
-                            <SvgsUserIcon class="svg-user-icon w-4" :color="getPlayerColorByID(index)" />
+                            <SvgsUserIcon class="svg-user-icon h-4" :color="getPlayerColorByID(index)" />
                         </div>
                     </div>
+
+                    <!-- Lives Display -->
                     <div class="table__row-element">
                         <div>Lives</div>
-                        <div class="flex gap-1 m-auto">
-                            <div v-for="life in total_attempts.get(index)" :key="life">
-                                <div v-if="value.lives >= life">
-                                    <SvgsHeartIcon class="svg-heart-icon h-4" :color="'#FF0000'" />
-                                </div>
-                                <div v-else>
-                                    <SvgsHeartIcon class="svg-heart-icon h-4" :color="'#8e7777'" />
-                                </div>
+                        <div class="flex gap-0 lg:gap-1 m-auto">
+                            <div v-for="life in totalAttempts.get(index)" :key="life">
+                                <SvgsHeartIcon class="svg-heart-icon h-4" :color="value.lives >= life ? '#FF0000' : '#8e7777'" />
                             </div>
                         </div>
                     </div>
+
+                    <!-- Distance Display -->
                     <div class="table__row-element distance" style="flex: 35%">
                         <div>Distance</div>
                         <div class="value m-auto">
-                            {{ processDistance(value.distance) }}
+                            {{ formatDistance(value.distance) }}
                         </div>
                     </div>
+
+                    <!-- Score Display -->
                     <div class="table__row-element score">
                         <div>Score</div>
-                        <div class="value m-auto">{{ value.baseScr || 0 }}</div>
+                        <div class="value m-auto">
+                            {{ value.baseScr || 0 }}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -45,71 +49,70 @@ import { GameState } from "~/services/GameFlowManager";
 export default {
     setup() {
         const results = useLiveResults();
-        const total_attempts = ref(new Map<string | number, number>());
+        const totalAttempts = ref(new Map<string | number, number>());
         const gameFlowManager = useGameFlowManager();
 
         /**
-         * Process distance to display in results table
-         * @param distance Distance in meters
-         * @returns Distance in meters or km
+         * Format distance for display in results table.
+         * @param distance Distance in meters.
+         * @returns Formatted distance in meters or kilometers.
          */
-        const processDistance = (distance: number | undefined): string => {
-            if (!distance) return "--"; // This means no guess yet from player
-            const distanceInMeters = distance < 1000 ? distance : distance / 1000; // Convert to km unit if neccesary
-            return `${Math.round(distanceInMeters * 10) / 10} ${distance < 1000 ? "m" : "km"}`; // Return distance in corret units
+        const formatDistance = (distance: number | undefined): string => {
+            if (!distance) return "--"; // No guess yet from player
+
+            const isMeters = distance < 1000;
+            const formattedDistance = isMeters ? distance : distance / 1000;
+
+            return `${Math.round(formattedDistance * 10) / 10} ${isMeters ? "m" : "km"}`;
         };
 
         /**
-         * Function creates total attempts constant variable for every player
-         * at the start of every round. This is used to display lives in results table.
+         * Initialize total attempts for every player at the start of each round.
          */
-        const createTotalAttempts = () => {
-            // Create an array map of total lives for every player
-            for (const player_id in results.value) total_attempts.value.set(player_id, results.value[player_id].lives);
+        const initializeTotalAttempts = () => {
+            for (const player_id in results.value) totalAttempts.value.set(player_id, results.value[player_id].lives);
         };
 
-        // Watch game flow to create total attempts
+        // Watch game flow state to initialize total attempts
         watch(
             () => gameFlowManager.value?.currentState,
-            (new_val) => (new_val === GameState.PLAYING ? createTotalAttempts() : null)
+            (newVal) => {
+                if (newVal === GameState.PLAYING) {
+                    initializeTotalAttempts();
+                }
+            }
         );
 
-        return { results, total_attempts, getPlayerColorByID, processDistance, getPlayerNameFromID };
+        return {
+            results,
+            totalAttempts,
+            getPlayerColorByID,
+            formatDistance,
+            getPlayerNameFromID,
+        };
     },
 };
 </script>
 
 <style scoped>
 .statistics {
-    background-color: var(--p-surface-900);
+    background-color: var(--p-surface-950);
     color: var(--p-surface-0);
-    z-index: 4;
 
     border-radius: 8px;
     padding: 10px;
-
-    position: absolute;
-    top: 5rem;
-    right: 1rem;
 }
 
 .table__row {
     height: 45px;
-
+    padding: 3px 6px;
     display: flex;
-    flex-direction: row;
     justify-content: space-around;
     align-items: center;
     gap: 5px;
     z-index: 3;
-
-    color: var(--text-color);
-
     border-radius: 4px;
-    overflow: hidden;
-
-    /* For applied guess animation */
-    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-surface-700) 50%);
+    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-surface-800) 50%);
     background-size: 200% 100%;
     background-position: right bottom;
     transition: all 0.4s ease-out;
@@ -117,39 +120,36 @@ export default {
 
 .table__row-element {
     flex: 25%;
-
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-
     z-index: 3;
+
+    overflow-x: hidden;
 }
 
 .score .value {
     font-weight: 600;
-    color: var(--p-primary-300);
+    color: var(--p-primary-600);
+    font-size: 1rem;
 }
 
-/* APPLIED GUESS ROW STYLE */
+/* Applied Guess Row Style */
 .applied-guess {
-    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-surface-700) 50%);
+    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-surface-800) 50%);
     background-size: 200% 100%;
-    width: 100%;
-
     background-position: left;
 }
 
 .applied-guess-lead {
-    background: linear-gradient(to right, var(--p-green-400) 50%, var(--p-surface-700) 50%);
+    background: linear-gradient(to right, var(--p-green-400) 50%, var(--p-surface-800) 50%);
     background-size: 200% 100%;
-    width: 100%;
-
     background-position: left;
 }
 
-/* LIVE STATS ANIMATION LIST */
-.list-move, /* apply transition to moving elements */
+/* Live Stats Animation */
+.list-move,
 .list-enter-active,
 .list-leave-active {
     transition: all 0.4s ease-out;
@@ -161,42 +161,43 @@ export default {
     transform: translateX(45px);
 }
 
-/* ensure leaving items are taken out of layout flow so that moving
-   animations can be calculated correctly. */
 .list-leave-active {
     position: absolute;
 }
 
-/* MOBILE VIEW */
+/* Mobile View */
 @media (max-width: 1000px) {
     .statistics {
         padding: 5px;
-
         min-width: 180px;
     }
+
     .table__row {
         height: 28px;
         font-size: 8px;
         margin-bottom: 3px;
     }
+
     .player-name {
-        font-size: 8px;
+        font-size: 7px;
     }
+
     .svg-user-icon {
         width: 8px;
     }
+
     .svg-heart-icon {
         width: 7px;
     }
+
     .distance .value {
-        font-size: 8px;
+        font-size: 7px;
     }
-    .distance span {
-        font-size: 8px;
-    }
+
     .score {
-        font-size: 8px;
+        font-size: 7px;
     }
+
     .score .value {
         font-size: 8px;
     }

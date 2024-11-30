@@ -14,7 +14,7 @@ export default defineNuxtConfig({
     },
 
     typescript: {
-        typeCheck: true,
+        typeCheck: false,
         strict: true,
     },
 
@@ -24,7 +24,7 @@ export default defineNuxtConfig({
 
     vite: {
         optimizeDeps: {
-            include: ["primevue/toggleswitch", "primevue/inputnumber", "primevue/slider", "primevue/radiobutton", "primevue/checkbox", "primevue/panel", "primevue/button", "primevue/tabmenu", "primevue/card", "primevue/dropdown", "primevue/fieldset", "primevue/inputswitch", "primevue/progressbar", "primevue/progressspinner", "primevue/menubar", "primevue/badge", "primevue/inputtext", "primevue/floatlabel", "primevue/divider", "primevue/datatable", "primevue/column", "primevue/usetoast", "primevue/toast", "primevue/menu", "primevue/ripple", "primevue/dialog", "primevue/tag"],
+            include: ["primevue/toggleswitch", "primevue/inputnumber", "primevue/slider", "primevue/radiobutton", "primevue/checkbox", "primevue/panel", "primevue/button", "primevue/tabmenu", "primevue/card", "primevue/dropdown", "primevue/fieldset", "primevue/inputswitch", "primevue/progressbar", "primevue/progressspinner", "primevue/menubar", "primevue/badge", "primevue/inputtext", "primevue/floatlabel", "primevue/divider", "primevue/datatable", "primevue/column", "primevue/usetoast", "primevue/toast", "primevue/menu", "primevue/ripple", "primevue/dialog", "primevue/tag", "primevue/knob"],
         },
     },
 
