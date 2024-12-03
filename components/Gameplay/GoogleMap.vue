@@ -8,7 +8,7 @@ export default {
         default_class: String,
     },
     setup(props) {
-        const google_map = ref<HTMLElement | null>(null);
+        const google_map = useTemplateRef<HTMLElement>("google_map");
 
         onMounted(() => {
             if (!google_map.value) throw new Error("Google Map DOM element not found");
