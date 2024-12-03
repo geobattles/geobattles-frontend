@@ -1,25 +1,22 @@
 import type { Coordinates } from "~/types/appTypes";
 
 // Google map states
-export const useGoogleMap = () => useState<google.maps.Map | undefined>("google_map", () => undefined);
+export const useGoogleMap = shallowRef<google.maps.Map | undefined>(undefined);
 export const useGoogleMapHTML = () => useState<HTMLElement | null>("google_map_html", () => null);
 export const useGooglePanorama = () => useState<google.maps.StreetViewPanorama>("google_panorama", () => ({} as google.maps.StreetViewPanorama));
 export const useGooglePanoramaHTML = () => useState<HTMLElement | null>("google_panorama_html", () => null);
-export const useMapMarkers = () => useState<google.maps.Marker[]>("map_markers", () => [] as google.maps.Marker[]);
+export const useMapMarkers = () => useState<google.maps.marker.AdvancedMarkerElement[]>("map_markers", () => [] as google.maps.marker.AdvancedMarkerElement[]);
 
 const map_starting_view_position: Coordinates = { lat: 0, lng: 0 }; // Constant
 
 /// GOOGLE MAP ///
-export const initalizeNewGoogleMap = (map_html: HTMLElement): void => {
-    useGoogleMap().value = new google.maps.Map(map_html as HTMLElement, {
+export const initalizeNewGoogleMap = async (map_html: HTMLElement) => {
+    const { Map } = (await google.maps.importLibrary("maps")) as google.maps.MapsLibrary;
+
+    useGoogleMap.value = new Map(map_html as HTMLElement, {
         center: { ...map_starting_view_position },
         zoom: 2,
-        styles: [
-            {
-                featureType: "poi",
-                stylers: [{ visibility: "off" }],
-            },
-        ],
+        mapId: "DEMO_MAP_ID",
         clickableIcons: false,
         streetViewControl: false,
         mapTypeControl: false,
@@ -95,47 +92,101 @@ export const updatePanoramaView = (coordinates: Coordinates) => useGooglePanoram
 /// END GOOGLE PANORAMA ///
 
 /// MAP MARKERS ///
-export const addNewMapMarker = (coordinates: Coordinates, marker_color: string): google.maps.Marker => {
+export const addNewMapMarker = async (coordinates: Coordinates, marker_color: string, playerName?: string) => {
+    const { AdvancedMarkerElement, PinElement } = (await google.maps.importLibrary("marker")) as google.maps.MarkerLibrary;
+
+    // Get marker content
+    const markerContent = await getMarkerContent(marker_color, playerName);
+
     // Create marker
-    const marker = new google.maps.Marker({
+    const marker = new AdvancedMarkerElement({
+        map: isGoogleMap(),
         position: coordinates,
         title: "Pin",
-        icon: {
-            path: "M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 256c-35.3 0-64-28.7-64-64s28.7-64 64-64s64 28.7 64 64s-28.7 64-64 64z",
-            fillColor: marker_color,
-            fillOpacity: 1,
-            anchor: new google.maps.Point(192, 512),
-            strokeWeight: 1,
-            strokeColor: "#000000",
-            scale: 0.07,
-        },
+        content: markerContent,
     });
-    marker.setMap(isGoogleMap()); // Append marker to active googleMap
     return marker;
 };
 
 export const removeMarkersFromMap = (delete_markers: Boolean) => {
-    for (let i = 0; i < useMapMarkers().value.length; i++) toRaw(useMapMarkers().value[i]).setMap(null);
+    for (let i = 0; i < useMapMarkers().value.length; i++) toRaw(useMapMarkers().value[i]).map = null;
     if (delete_markers) useMapMarkers().value = [];
 };
 
-export const createSearchedLocationMarker = (coordinates: Coordinates) => {
-    const marker = new google.maps.Marker({
+export const createSearchedLocationMarker = async (coordinates: Coordinates) => {
+    const { AdvancedMarkerElement, PinElement } = (await google.maps.importLibrary("marker")) as google.maps.MarkerLibrary;
+
+    // Change the background color.
+    const pinBackground = new PinElement({
+        background: "black",
+        borderColor: "white",
+        glyphColor: "white",
+        scale: 1.5,
+    });
+
+    const marker = new AdvancedMarkerElement({
         position: coordinates,
         title: "Searched location",
-        icon: {
-            path: "M215.7 499.2C267 435 384 279.4 384 192C384 86 298 0 192 0S0 86 0 192c0 87.4 117 243 168.3 307.2c12.3 15.3 35.1 15.3 47.4 0zM192 256c-35.3 0-64-28.7-64-64s28.7-64 64-64s64 28.7 64 64s-28.7 64-64 64z",
-            fillColor: "black",
-            fillOpacity: 1,
-            anchor: new google.maps.Point(192, 512),
-            strokeWeight: 1,
-            strokeColor: "#000000",
-            scale: 0.07,
-        },
+        map: isGoogleMap(),
+        content: pinBackground.element,
     });
-    marker.setMap(isGoogleMap());
+
     return marker;
 };
+
+/**
+ * Function to shade a color by a given percentage.
+ * @param color The color to shade.
+ * @param percent The percentage to shade the color.
+ * @returns The shaded color.
+ */
+const shadeColor = (color: string, percent: number): string => {
+    let R = parseInt(color.substring(1, 3), 16);
+    let G = parseInt(color.substring(3, 5), 16);
+    let B = parseInt(color.substring(5, 7), 16);
+
+    R = Math.min(255, Math.max(0, R + (R * percent) / 100));
+    G = Math.min(255, Math.max(0, G + (G * percent) / 100));
+    B = Math.min(255, Math.max(0, B + (B * percent) / 100));
+
+    return `#${((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1).toUpperCase()}`;
+};
+
+const getMarkerContent = async (playerColor: string, playerName: string | undefined) => {
+    const { PinElement } = (await google.maps.importLibrary("marker")) as google.maps.MarkerLibrary;
+
+    // Change the background color.
+    const pinBackground = new PinElement({
+        background: playerColor,
+        borderColor: shadeColor(playerColor, -10),
+        glyphColor: shadeColor(playerColor, -20),
+        scale: 1.2,
+    });
+
+    if (!playerName) return pinBackground.element;
+
+    // Create marker content with player name
+    const markerContent = document.createElement("div");
+    markerContent.style.display = "flex";
+    markerContent.style.flexDirection = "column";
+    markerContent.style.alignItems = "center";
+    markerContent.appendChild(pinBackground.element);
+    const nameElement = document.createElement("div");
+    nameElement.style.textAlign = "center";
+    nameElement.style.marginTop = "1px";
+    nameElement.style.fontWeight = "bold";
+    nameElement.style.fontSize = "11px";
+    nameElement.style.color = "var(--p-surface-0)";
+    nameElement.style.backgroundColor = "var(--p-surface-900)";
+    nameElement.style.borderRadius = "3px";
+    nameElement.style.padding = "1px 3px";
+    nameElement.style.letterSpacing = "0.5px";
+    nameElement.innerText = playerName;
+    markerContent.appendChild(nameElement);
+
+    return markerContent;
+};
+
 /// END MAP MARKERS ///
 
 /// MAP POLYLINES ///
@@ -159,7 +210,7 @@ export const drawPolyLine = (from: Coordinates, to: Coordinates) => {
         ],
     });
     BattleRoyale.poly_lines_array.value.push(polyline); // State where all polylines are saved
-    if (!useGoogleMap().value) throw new Error("Google map is not defined");
+    if (!useGoogleMap.value) throw new Error("Google map is not defined");
     polyline.setMap(isGoogleMap()); // Add to map
 };
 
@@ -174,7 +225,7 @@ export const removePolyLinesFromMap = (delete_lines: Boolean) => {
  * @returns Google map object
  */
 export const isGoogleMap = () => {
-    const google_map = useGoogleMap().value;
+    const google_map = useGoogleMap.value;
     if (!google_map) throw new Error("Google map is not defined when trying to access it.");
     return google_map;
 };

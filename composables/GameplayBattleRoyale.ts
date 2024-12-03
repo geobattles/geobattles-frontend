@@ -32,7 +32,7 @@ export class BattleRoyale implements GameMode {
         removeMarkersFromMap(true);
     }
 
-    finishRound(total_results: TotalResults, round_results: Results): void {
+    async finishRound(total_results: TotalResults, round_results: Results) {
         // Apply total results
         useTotalResults().value = total_results;
         useTotalResults().value = Object.fromEntries(Object.entries(useTotalResults().value).sort(([, a], [, b]) => (b.total || 0) - (a.total || 0)));
@@ -40,7 +40,7 @@ export class BattleRoyale implements GameMode {
         removeMarkersFromMap(true); // Remove all markers from map
 
         // Add searched location marker
-        const marker = createSearchedLocationMarker(this.gameFlowManager.searchedLocationCoords.value);
+        const marker = await createSearchedLocationMarker(this.gameFlowManager.searchedLocationCoords.value);
         useMapMarkers().value.push(marker); // Save marker to state
 
         // Draw player pins and polylines to searched location
@@ -53,7 +53,7 @@ export class BattleRoyale implements GameMode {
             const color = getPlayerColorByID(key);
             if (!color) throw new Error("Player color is not defined");
 
-            const marker = addNewMapMarker(round_res[key].location, color); // Create new marker
+            const marker = await addNewMapMarker(round_res[key].location, color, getPlayerNameFromID(key)); // Create new marker
             useMapMarkers().value.push(marker); // Save marker to state
         }
 
@@ -67,31 +67,30 @@ export class BattleRoyale implements GameMode {
 
     // Keyword this wont work at start?
     // Yes, this is true at the start. The 'this' keyword won't work as expected because this method is called by GoogleMap.addListener
-    processMapPin(coordinates: Coordinates): void {
+    async processMapPin(coordinates: Coordinates) {
         const gameFlowManager = useGameFlowManager().value;
         if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
-
         if (gameFlowManager.currentState !== GameState.PLAYING) return;
-        gameFlowManager.currentMapPin.value = coordinates;
 
+        gameFlowManager.currentMapPin.value = coordinates;
         const used_pins = useMapMarkers().value.length; // Number of guesses already made in current round
         const player_id = usePlayerInfo().value.ID;
         if (!player_id) throw new Error("Player ID is not defined");
 
         const liveResults = useLiveResults().value;
-
         // START OF PIN PLACEMENT LOGIC
         if (liveResults[player_id].lives === 0) {
             console.warn("All lives are used!!"); // TODO: Make toast that all lives are used.
             return;
         }
+        console.log("Used pins: ", used_pins);
 
         // Place first pin if no pins yet, or if pins and submits are the same
         if (used_pins === 0 || liveResults[player_id].attempt === used_pins) {
             // get player color from name
             const color = getPlayerColorByID(player_id);
             if (!color) throw new Error("Player color is not defined");
-            const marker = addNewMapMarker(coordinates, color); // Create new marker
+            const marker = await addNewMapMarker(coordinates, color); // Create new marker
             useMapMarkers().value.push(marker); // Add marker to markers state
             return;
         }
@@ -99,7 +98,9 @@ export class BattleRoyale implements GameMode {
         // If no submitted results yet || there are stil lives left, change last marker position
         if (!liveResults[player_id] || liveResults[player_id].lives > 0) {
             const last_marker = useMapMarkers().value[used_pins - 1]; // Get last marker
-            last_marker.setPosition(coordinates); // Change last marker position
+            // @ts-ignore
+            console.log("Last marker position: ", last_marker);
+            last_marker.position = coordinates; // Change last marker position
             return;
         }
         // END OF PIN PLACEMENT LOGIC
