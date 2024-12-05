@@ -4,8 +4,12 @@ type EventCallback = (event: CustomEvent) => void;
 export class UIManager {
     private googleMap: HTMLElement | null = null;
     private googlePanorama: HTMLElement | null = null;
+
     private eventListeners: { [key: string]: EventCallback[] } = {};
-    private submitButton: HTMLElement | null = null;
+
+    private submitButton: HTMLElement | null = null; // Used to properly handle submit button on map hover effect
+    private gameplayPageContainer: HTMLElement | null = null; // Gameplay container (element to be fullscreened on user request)
+    private isMobile: boolean = false; // Flag to check if the current device is mobile or desktop
 
     constructor() {}
 
@@ -32,7 +36,7 @@ export class UIManager {
     }
 
     private setupMapListeners(toggle_map_mobile: Ref<HTMLElement | null>, show_map_button: Ref<boolean>, submit_button: Ref<HTMLElement | null>): void {
-        if (window.innerWidth < 1024) {
+        if (this.isMobile) {
             this.setupMobileView(toggle_map_mobile, show_map_button);
         } else {
             this.setupDesktopView(submit_button);
@@ -51,17 +55,17 @@ export class UIManager {
     }
 
     private setupDesktopView(submit_button: Ref<HTMLElement | null>): void {
+        // Add default gameplay map desktop class
         this.googleMap?.classList.add("google-map-gameplay-container");
 
-        if (this.googleMap) {
-            this.googleMap.addEventListener("mouseenter", () => this.handleMapHover(true, submit_button));
-            this.googleMap.addEventListener("mouseleave", () => {});
-        }
-        if (this.googlePanorama) {
-            this.googlePanorama.addEventListener("click", () => this.handleMapHover(false, submit_button));
-        }
+        // Add hover effect on map
+        if (this.googleMap) this.googleMap.addEventListener("mouseenter", () => this.handleMapHover(true, submit_button));
+
+        // Remove map hover effect on panorama click
+        if (this.googlePanorama) this.googlePanorama.addEventListener("click", () => this.handleMapHover(false, submit_button));
     }
 
+    // Applied only for Desktop view for hover effect on map
     private handleMapHover(isHovering: boolean, submit_button: Ref<HTMLElement | null>): void {
         const gameFlowManager = useGameFlowManager().value;
         if (gameFlowManager && gameFlowManager.currentState === GameState.PLAYING) {
@@ -75,6 +79,9 @@ export class UIManager {
         }
     }
 
+    /**
+     * Will track the game flow and move the map to the required position based on the game state.
+     */
     googleMapDOMTracker(): void {
         const gameFlowManager = useGameFlowManager().value;
         if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
@@ -103,16 +110,18 @@ export class UIManager {
      */
     private moveMapToPlaying(): void {
         // Handle Mobile Gameplay
-        if (window.innerWidth < 1024) {
+        if (this.isMobile) {
             const gameplayMapContainerMobile = document.getElementsByClassName("gameplay-map-mobile-position")[0];
 
             if (this.googleMap && gameplayMapContainerMobile) {
                 gameplayMapContainerMobile.insertBefore(this.googleMap, gameplayMapContainerMobile.firstChild);
 
                 // Remove midround class
-                this.googleMap.classList.remove("google-map-midround-container");
+                this.googleMap.classList.remove("google-map-midround-container", "google-map-midround-container-vertical");
 
                 // Gameplay class for mobile map will be handled by Map Button click
+            } else {
+                console.error("Google Map or Gameplay Map Container not found for mobile gameplay");
             }
         } else {
             // Get gameplay container and insert map as first child
@@ -141,7 +150,12 @@ export class UIManager {
         if (this.googleMap && midRoundGameMapPosition) {
             midRoundGameMapPosition.appendChild(this.googleMap);
             this.googleMap.classList.remove("google-map-gameplay-container", "google-map-gameplay-container-hovered", "google-map-gameplay-container-mobile");
-            this.googleMap.classList.add("google-map-midround-container");
+
+            if (window.innerWidth < window.innerHeight && this.isMobile) {
+                this.googleMap.classList.add("google-map-midround-container-vertical");
+            } else {
+                this.googleMap.classList.add("google-map-midround-container");
+            }
         }
     }
 
@@ -166,6 +180,32 @@ export class UIManager {
         }
     }
 
+    setGameplayPageContainer(container: HTMLElement): void {
+        this.gameplayPageContainer = container;
+    }
+
+    setMobile(isMobile: boolean): void {
+        this.isMobile = isMobile;
+    }
+
+    getIsMobile(): boolean {
+        return this.isMobile;
+    }
+
+    toggleFullscreen(): void {
+        // const elem = this.gameplayPageContainer;
+        if (this.gameplayPageContainer) {
+            if (!document.fullscreenElement) {
+                this.gameplayPageContainer.requestFullscreen().catch((err) => {
+                    console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
+                });
+            } else {
+                document.exitFullscreen().catch((err) => {
+                    console.error(`Error attempting to exit full-screen mode: ${err.message} (${err.name})`);
+                });
+            }
+        }
+    }
     // Method to add event listeners
     on(event: string, callback: EventCallback): void {
         if (!this.eventListeners[event]) {

@@ -57,6 +57,10 @@ export default {
             `;
             document.head.appendChild(script);
 
+            // Add primitive check for mobile devices
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) useUIManager().value.setMobile(true);
+
             // const img = new Image();
             // img.src = "/images/earth.webp";
             // img.onload = () => (vue_app.value !== null ? (vue_app.value.style.backgroundImage = "url(/images/earth.webp)") : "");

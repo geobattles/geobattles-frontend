@@ -37,6 +37,8 @@ export const initalizeNewGoogleMap = async (map_html: HTMLElement) => {
 
         keyboardShortcuts: false,
     });
+
+    console.log("GOOGLE MAP INITIALIZED");
 };
 
 /**
@@ -170,10 +172,10 @@ const getMarkerContent = async (playerColor: string, playerName: string | undefi
     markerContent.style.display = "flex";
     markerContent.style.flexDirection = "column";
     markerContent.style.alignItems = "center";
-    markerContent.appendChild(pinBackground.element);
+
     const nameElement = document.createElement("div");
     nameElement.style.textAlign = "center";
-    nameElement.style.marginTop = "1px";
+    nameElement.style.marginBottom = "1px";
     nameElement.style.fontWeight = "bold";
     nameElement.style.fontSize = "11px";
     nameElement.style.color = "var(--p-surface-0)";
@@ -182,7 +184,9 @@ const getMarkerContent = async (playerColor: string, playerName: string | undefi
     nameElement.style.padding = "1px 3px";
     nameElement.style.letterSpacing = "0.5px";
     nameElement.innerText = playerName;
+
     markerContent.appendChild(nameElement);
+    markerContent.appendChild(pinBackground.element);
 
     return markerContent;
 };

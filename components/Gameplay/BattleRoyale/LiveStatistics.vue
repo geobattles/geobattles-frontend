@@ -1,6 +1,6 @@
 <template>
-    <div class="statistics text-xs">
-        <TransitionGroup name="list" tag="ul" class="flex flex-col gap-1">
+    <div class="text-xs" style="color: var(--p-surface-0)">
+        <TransitionGroup name="list" tag="ul" class="flex flex-col gap-1 lg:gap-1">
             <div v-for="(value, index) in results" :key="index">
                 <div class="table__row" :id="index.toString()">
                     <!-- Player Information -->
@@ -95,27 +95,22 @@ export default {
 </script>
 
 <style scoped>
-.statistics {
-    background-color: var(--p-surface-950);
-    color: var(--p-surface-0);
-
-    border-radius: 8px;
-    padding: 10px;
-}
-
 .table__row {
     height: 45px;
     padding: 3px 6px;
+
     display: flex;
     justify-content: space-around;
     align-items: center;
-    gap: 5px;
+
     z-index: 3;
     border-radius: 4px;
     background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-surface-800) 50%);
     background-size: 200% 100%;
     background-position: right bottom;
     transition: all 0.4s ease-out;
+
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.9);
 }
 
 .table__row-element {
@@ -168,14 +163,12 @@ export default {
 /* Mobile View */
 @media (max-width: 1000px) {
     .statistics {
-        padding: 5px;
         min-width: 180px;
     }
 
     .table__row {
         height: 28px;
         font-size: 8px;
-        margin-bottom: 3px;
     }
 
     .player-name {

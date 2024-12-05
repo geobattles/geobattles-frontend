@@ -1,5 +1,5 @@
 <template>
-    <div ref="gameplayPage">
+    <div ref="gameplayPageContainer">
         <!-- Toast when player leaves lobby -->
         <Toast position="bottom-right" />
 
@@ -14,14 +14,12 @@
 
         <!-- EndGame View (when game is finished) -->
         <GameplayViewsEndGameView v-show="gameFlowManager?.currentState === 'FINISHED'" />
-        <button @click="toggleFullscreen" class="fullscreen-button">Fullscreen</button>
     </div>
 </template>
 
 <script setup lang="ts">
-import { useToast } from "primevue/usetoast";
 const wantsToLeaveLobby = ref(false);
-const gameplayPage = ref<HTMLElement | null>(null);
+const gameplayPageContainer = useTemplateRef<HTMLElement>("gameplayPageContainer");
 
 // External services
 const { leaveLobby } = useLobbyStore();
@@ -43,12 +41,8 @@ onMounted(() => {
     // Add listener when player leaves lobby to show toast
     UIManager.value.on("showPlayerLeftToast", handlePlayerLeftToast);
 
-    // Go fullscreen on less than 1024px
-    if (gameplayPage.value && window.innerWidth < 1024) {
-        gameplayPage.value.requestFullscreen({ navigationUI: "show" }).catch((err) => {
-            alert(`Error switching to fullscreen: ${err.message} (${err.name})`);
-        });
-    }
+    // Set the gameplay page container in UIManager
+    if (gameplayPageContainer.value) UIManager.value.setGameplayPageContainer(gameplayPageContainer.value);
 });
 
 onUnmounted(() => {
@@ -75,21 +69,6 @@ const handleClickLeaveLobby = () => {
 // When player leaves lobby, show toast
 const handlePlayerLeftToast = (event: CustomEvent) => {
     toast.add({ severity: "warn", summary: `Player ${event.detail.playerName} Left`, detail: `Player ${event.detail.playerName} has left the lobby`, life: 3000 });
-};
-
-const toggleFullscreen = () => {
-    const elem = gameplayPage.value;
-    if (elem) {
-        if (!document.fullscreenElement) {
-            elem.requestFullscreen().catch((err) => {
-                console.error(`Error attempting to enable full-screen mode: ${err.message} (${err.name})`);
-            });
-        } else {
-            document.exitFullscreen().catch((err) => {
-                console.error(`Error attempting to exit full-screen mode: ${err.message} (${err.name})`);
-            });
-        }
-    }
 };
 </script>
 

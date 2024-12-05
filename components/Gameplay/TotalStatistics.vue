@@ -9,11 +9,11 @@
             <TransitionGroup name="list">
                 <div v-for="(value, player_id, index) in total_results" :key="player_id" class="table__row p-2 md:p-2.5">
                     <div class="table__row-element">
-                        <SvgsTrophyIcon :color="trophy_color[index]" class="w-4 md:w-6" />
+                        <SvgsTrophyIcon :color="trophy_color[index]" class="w-4 lg:w-6" />
                     </div>
                     <div class="table__row-element">
                         <div class="flex">
-                            <SvgsUserIcon :color="getPlayerColorByID(player_id)" class="mr-2 w-3 md:w-5" />
+                            <SvgsUserIcon :color="getPlayerColorByID(player_id)" class="mr-2 w-3 lg:w-5" />
                             <div>
                                 {{ getPlayerNameFromID(player_id) }}
                             </div>
