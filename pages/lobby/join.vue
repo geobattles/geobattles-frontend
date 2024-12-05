@@ -145,7 +145,7 @@ const handleKeyDownEvent = (event: KeyboardEvent) => {
 <style scoped>
 .sign-input {
     background: transparent;
-    border: 0.15rem solid #fff;
+    border: 0.15rem solid var(--p-primary-400);
     border-radius: 0.75rem;
     font-size: 3rem;
     font-weight: 700;
@@ -155,7 +155,7 @@ const handleKeyDownEvent = (event: KeyboardEvent) => {
     transition: all 0.2s ease-out;
     width: 6rem;
 
-    color: white;
+    color: var(--p-primary-400);
     outline: none;
 
     text-transform: uppercase;

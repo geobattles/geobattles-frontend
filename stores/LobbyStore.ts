@@ -100,15 +100,15 @@ export const useLobbyStore = defineStore("lobby", () => {
         const liveResults = useLiveResults();
         const totalResults = useTotalResults();
 
-        // Update only player list
+        // Update player list
         updateLobbySetting("playerList", lobbyInfo.playerList);
+
+        // Update admin
+        updateLobbySetting("admin", lobbyInfo.admin);
 
         // Remove player from live and total results
         if (liveResults.value[userId]) {
             delete liveResults.value[userId];
-        }
-        if (totalResults.value[userId]) {
-            delete totalResults.value[userId];
         }
     };
 
