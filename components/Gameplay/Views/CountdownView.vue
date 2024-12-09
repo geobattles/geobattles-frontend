@@ -73,6 +73,12 @@ onUnmounted(() => {
     margin-bottom: 1rem;
 }
 
+@media (max-width: 1024px) {
+    .timer {
+        font-size: 5rem;
+    }
+}
+
 p {
     margin: 1rem 0;
     text-align: center;

@@ -2,7 +2,7 @@
     <div class="h-screen relative">
         <Toast position="bottom-right" />
         <Header class="absolute w-full" />
-        <div class="flex flex-col justify-center items-center h-full bg-p-surface-900">
+        <div class="flex flex-col justify-center items-center h-full">
             <div class="flex flex-wrap justify-center scale-75 lg:scale-100" ref="input_parent">
                 <input ref="input_1" class="sign-input" @keyup="handleKeyUpEvent($event)" @keydown="handleKeyDownEvent($event)" type="text" />
                 <input ref="input_2" class="sign-input" @keyup="handleKeyUpEvent($event)" @keydown="handleKeyDownEvent($event)" type="text" />

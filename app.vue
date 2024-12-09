@@ -1,5 +1,6 @@
 <template>
     <div id="vue-app">
+        <VitePwaManifest />
         <div class="initial-loader" v-if="is_loading">
             <span>Loading...</span>
             <ProgressSpinner />
@@ -10,31 +11,50 @@
     </div>
 </template>
 
-<script lang="ts">
-export default {
-    setup() {
-        const vue_app = ref<HTMLElement | null>(null);
-        const auth = useAuthenticationService().value;
+<script setup lang="ts">
+const vue_app = ref<HTMLElement | null>(null);
+const auth = useAuthenticationService().value;
 
-        // Read ENV variables
-        const runtimeConfig = useRuntimeConfig();
+// Read ENV variables
+const runtimeConfig = useRuntimeConfig();
 
-        useHead({
-            title: `GeoBattles`,
-        });
+// useHead({
+//     title: "GeoBattles",
+//     meta: [
+//         { name: "apple-mobile-web-app-capable", content: "yes" },
+//         { name: "apple-mobile-web-app-status-bar-style", content: "black" },
+//         { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" },
+//     ],
+// });
 
-        useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
+useHead({
+    title: "GeoBattles",
+    meta: [
+        { name: "apple-mobile-web-app-capable", content: "yes" },
+        { name: "apple-mobile-web-app-status-bar-style", content: "black" },
+        { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" },
+        { name: "description", content: "Geolocation Guessing Game" },
+        { name: "theme-color", content: "#ffffff" },
+    ],
+    link: [
+        { rel: "icon", href: "/logo.png" },
+        { rel: "apple-touch-icon", href: "/logo.png", sizes: "1024x1024" },
+        { rel: "mask-icon", href: "/logo.png", color: "#FFFFFF" },
+    ],
+});
 
-        onMounted(() => {
-            try {
-                auth.saveTokenData();
-            } catch (error) {
-                console.log("Failed to save token data:", error);
-            }
+useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
 
-            // Dynamically load the provided Google Maps script
-            const script = document.createElement("script");
-            script.innerHTML = `
+onMounted(() => {
+    try {
+        auth.saveTokenData();
+    } catch (error) {
+        console.log("Failed to save token data:", error);
+    }
+
+    // Dynamically load the provided Google Maps script
+    const script = document.createElement("script");
+    script.innerHTML = `
                 (g => {
                     var h, a, k, p = "The Google Maps JavaScript API", c = "google", l = "importLibrary", q = "__ib__", m = document, b = window;
                     b = b[c] || (b[c] = {});
@@ -55,35 +75,33 @@ export default {
                     v: "weekly",
                 });
             `;
-            document.head.appendChild(script);
+    document.head.appendChild(script);
 
-            // Add primitive check for mobile devices
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile) useUIManager().value.setMobile(true);
+    // Add confirmation dialog when leaving the page
+    window.onbeforeunload = function () {
+        return "Are you sure you want to leave? Progress may be lost.";
+    };
 
-            // const img = new Image();
-            // img.src = "/images/earth.webp";
-            // img.onload = () => (vue_app.value !== null ? (vue_app.value.style.backgroundImage = "url(/images/earth.webp)") : "");
-        });
+    // Add primitive check for mobile devices
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile) useUIManager().value?.setMobile(true);
 
-        const is_loading = ref(true);
-        const nuxtApp = useNuxtApp();
+    // const img = new Image();
+    // img.src = "/images/earth.webp";
+    // img.onload = () => (vue_app.value !== null ? (vue_app.value.style.backgroundImage = "url(/images/earth.webp)") : "");
+});
 
-        onBeforeMount(() => {
-            nuxtApp.hooks.hook("page:start", () => {
-                is_loading.value = true;
-            });
-            nuxtApp.hooks.hook("page:finish", () => {
-                is_loading.value = false;
-            });
-        });
+const is_loading = ref(true);
+const nuxtApp = useNuxtApp();
 
-        return {
-            vue_app,
-            is_loading,
-        };
-    },
-};
+onBeforeMount(() => {
+    nuxtApp.hooks.hook("page:start", () => {
+        is_loading.value = true;
+    });
+    nuxtApp.hooks.hook("page:finish", () => {
+        is_loading.value = false;
+    });
+});
 </script>
 
 <style>

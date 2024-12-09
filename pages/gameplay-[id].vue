@@ -1,5 +1,8 @@
 <template>
     <div ref="gameplayPageContainer">
+        <!-- Screen dimensions display (debug purposes) -->
+        <!-- <div class="screen-dimensions">Width: {{ screenWidth }}px, Height: {{ screenHeight }}px</div> -->
+
         <!-- Toast when player leaves lobby -->
         <Toast position="bottom-right" />
 
@@ -24,29 +27,39 @@ const gameplayPageContainer = useTemplateRef<HTMLElement>("gameplayPageContainer
 // External services
 const { leaveLobby } = useLobbyStore();
 const gameFlowManager = useGameFlowManager(); // To track the game state
-const UIManager = useUIManager(); // To show toasts on player leave
+const uiManager = useUIManager(); // To show toasts on player leave
 const toast = useToast();
 const router = useRouter();
 
+// Screen width debugging
+const screenWidth = ref(window.innerWidth);
+const screenHeight = ref(window.innerHeight);
+const updateDimensions = () => {
+    screenWidth.value = window.innerWidth;
+    screenHeight.value = window.innerHeight;
+};
+
 useHead({
     title: "GeoBattles | Gameplay",
-    meta: [
-        { name: "description", content: "My amazing site." },
-        { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" },
-        { name: "touch-action", content: "manipulation" },
-    ],
 });
 
 onMounted(() => {
     // Add listener when player leaves lobby to show toast
-    UIManager.value.on("showPlayerLeftToast", handlePlayerLeftToast);
+    uiManager.value.on("showPlayerLeftToast", handlePlayerLeftToast);
 
     // Set the gameplay page container in UIManager
-    if (gameplayPageContainer.value) UIManager.value.setGameplayPageContainer(gameplayPageContainer.value);
+    if (gameplayPageContainer.value) uiManager.value.setGameplayPageContainer(gameplayPageContainer.value);
+
+    // Add event listener for window resize
+    window.addEventListener("resize", updateDimensions);
+    updateDimensions();
 });
 
 onUnmounted(() => {
-    UIManager.value.off("showPlayerLeftToast", handlePlayerLeftToast);
+    uiManager.value.off("showPlayerLeftToast", handlePlayerLeftToast);
+
+    // Remove event listener for window resize
+    window.removeEventListener("resize", updateDimensions);
 });
 
 onBeforeRouteLeave((to, from, next) => {
@@ -83,5 +96,17 @@ const handlePlayerLeftToast = (event: CustomEvent) => {
     background-color: var(--p-surface-950);
     color: var(--p-surface-0);
     border-radius: 5px;
+}
+
+.screen-dimensions {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    z-index: 1000;
 }
 </style>

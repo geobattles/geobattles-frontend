@@ -49,6 +49,10 @@ const country_list = useCountryList();
 const filtered_country_list = useFilteredCountryList();
 const gameFlowManager = useGameFlowManager();
 
+useHead({
+    title: "GeoBattles | Lobby",
+});
+
 onMounted(async () => {
     // Fetch country list
     try {

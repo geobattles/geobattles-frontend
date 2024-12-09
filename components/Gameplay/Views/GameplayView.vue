@@ -56,7 +56,7 @@ const uiManager = useUIManager();
 onMounted(() => {
     setTimeout(() => {
         // Timeout added temporary to make sure google map is loaded before mounting process
-        if (!gameFlowManager.value) return console.error("GameFlowManager is not initialized in the lobby");
+        if (!gameFlowManager.value) return console.error("gameFlowManager is not initialized in the gameplayView");
         gameFlowManager.value.mountingProcess(toggleMapMobile, showMapButtonMobile, submitButton);
     }, 3000);
 });
@@ -73,7 +73,7 @@ watch(
 );
 </script>
 
-<style scoped>
+<style>
 /* Game Container */
 .gameplay-container {
     position: relative; /* Enable absolute positioning for children */
