@@ -15,6 +15,7 @@
         "@pinia/nuxt": "^0.7.0",
         "@primevue/nuxt-module": "^4.0.7",
         "@types/google.maps": "^3.58.1",
+        "@vite-pwa/nuxt": "^0.10.6",
         "nuxt": "^3.13.2",
         "typescript": "^5.2.2",
         "vue-tsc": "^2.1.6"

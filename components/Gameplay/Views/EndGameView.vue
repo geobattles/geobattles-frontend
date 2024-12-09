@@ -1,12 +1,27 @@
 <template>
     <div class="endgame-container">
-        <div class="flex flex-col md:flex-row">
-            <div class="flex flex-col justify-center gap-5 p-1 w-full md:w-[30dvw] h-[50dvh] md:h-auto">
-                <Panel pt:header:class="text-xs lg:text-base" header="Total Results">
-                    <GameplayTotalStatistics class="text-xs lg:text-base" />
-                </Panel>
+        <div id="endgame-map-and-results">
+            <div id="endgame-results-container">
+                <Tabs value="0" class="text-xs lg:text-base">
+                    <TabList>
+                        <Tab value="0">Round Results</Tab>
+                        <Tab value="1">Total Results</Tab>
+                    </TabList>
+                    <TabPanels>
+                        <!-- Round Results Table -->
+                        <TabPanel value="0">
+                            <GameplayBattleRoyaleLiveStatistics class="text-xs lg:text-base" />
+                        </TabPanel>
+
+                        <!-- Total Results Table -->
+                        <TabPanel value="1">
+                            <GameplayTotalStatistics class="text-xs lg:text-base" />
+                        </TabPanel>
+                    </TabPanels>
+                </Tabs>
             </div>
-            <div class="google-map-finished-position"></div>
+
+            <!-- Google Map Gets Appended here in ENDGAME -->
         </div>
         <div v-if="isPlayerAdmin()" class="endgame-menu-container">
             <Button type="button" class="m-auto" label="NEXT GAME" icon="pi pi-play-circle" @click="gameFlowManager?.sendStartRoundSocketMessage" severity="primary" size="small" />
@@ -26,8 +41,6 @@
 // External services
 const gameFlowManager = useGameFlowManager();
 const lobbyStore = useLobbyStore();
-const googleMapHTML = useGoogleMapHTML();
-const uiManager = useUIManager();
 const { isPlayerAdmin } = useLobbyStore();
 
 // Watch for lobby settings modal
@@ -37,33 +50,6 @@ watch(
         if (!newVal) lobbyStore.applyLobbySettings();
     }
 );
-
-const isVertical = ref(window.innerWidth < window.innerHeight);
-
-const updateOrientation = () => {
-    console.log("Orientation UPDATE is vertical: ", window.innerWidth < window.innerHeight);
-
-    isVertical.value = window.innerWidth < window.innerHeight;
-
-    const mapHTML = googleMapHTML;
-    if (mapHTML.value && uiManager.value.getIsMobile()) {
-        if (isVertical.value) {
-            mapHTML.value.classList.add("google-map-endgame-container-vertical");
-            mapHTML.value.classList.remove("google-map-endgame-container");
-        } else {
-            mapHTML.value.classList.add("google-map-endgame-container");
-            mapHTML.value.classList.remove("google-map-endgame-container-vertical");
-        }
-    }
-};
-
-onMounted(() => {
-    window.addEventListener("resize", updateOrientation);
-});
-
-onBeforeUnmount(() => {
-    window.removeEventListener("resize", updateOrientation);
-});
 </script>
 
 <style>
@@ -87,15 +73,5 @@ onBeforeUnmount(() => {
 
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-}
-
-.google-map-endgame-container {
-    width: 70dvw;
-    height: 100dvh;
-}
-
-.google-map-endgame-container-vertical {
-    width: 100dvw;
-    height: 50dvh;
 }
 </style>
