@@ -1,12 +1,9 @@
-import type { Router } from "vue-router";
 import type { User } from "@/types/appTypes";
 
-export class AuthenticationService {
-    private isAuthenticated = false;
+export const useAuthStore = defineStore("auth", () => {
+    const isAuthenticated = ref(false);
 
-    constructor(private readonly router: Router) {}
-
-    public saveToken(token: string, expire: number): void {
+    const saveToken = (token: string, expire: number): void => {
         const maxAge = expire - Math.floor(Date.now() / 1000);
         const expiryDate = new Date(expire * 1000);
         console.log("Token will expire on:", expiryDate.toLocaleString()); //! Dev
@@ -18,55 +15,51 @@ export class AuthenticationService {
             // httpOnly: true, // Prevent JavaScript access to the cookie
         });
         playerTokenCookie.value = token;
-    }
+    };
 
-    public getToken(): string | null {
+    const getToken = (): string | null => {
         const playerTokenCookie = useCookie("saved_token");
         if (!playerTokenCookie.value) return null;
-        this.isAuthenticated = true; // Set authentication status to true
-        return playerTokenCookie.value;
-    }
+        console.log("Token DEV:", playerTokenCookie.value); //! Dev
+        console.log("Setting isAuthenticated to true"); //! Dev
 
-    public clearToken(): void {
+        isAuthenticated.value = true; // Set authentication status to true
+        return playerTokenCookie.value;
+    };
+
+    const clearToken = (): void => {
         const playerTokenCookie = useCookie("saved_token");
         playerTokenCookie.value = null; // Clear the player token cookie
-    }
+    };
 
-    public isPlayerAuthenticated(): boolean {
-        const token = this.getToken();
-        const isAuthenticated = this.isAuthenticated && token !== null;
-        if (!isAuthenticated) {
+    const isPlayerAuthenticated = (): boolean => {
+        const token = getToken();
+        const authenticated = isAuthenticated.value && token !== null;
+        if (!authenticated) {
             console.log("Authentication check failed. Missing:", {
-                isAuthenticated: this.isAuthenticated,
+                isAuthenticated: isAuthenticated.value,
                 token: token,
             });
         } //! Dev
-        return isAuthenticated;
-    }
+        return authenticated;
+    };
 
-    public logout(): void {
-        this.clearToken(); // Clear the player token
+    const logout = (): void => {
+        clearToken(); // Clear the player token
 
         usePlayerInfo().value = {} as User; // Clear player info
-        this.isAuthenticated = false; // Set authentication status to false
+        isAuthenticated.value = false; // Set authentication status to false
 
         const socketStore = useWebSocketStore();
         socketStore.closeConnection();
 
-        // Redirect to the main page
-        this.router.push({ path: "/" });
+        const router = useRouter();
+        router.push({ path: "/" }); // Redirect to the main page
 
         console.log("Player has been logged out successfully"); //! Dev
-    }
+    };
 
-    /**
-     * Logs in a user with the provided username and password.
-     *
-     * @param username - The username of the user.
-     * @param password - The password of the user.
-     * @throws Will throw an error if the login fails.
-     */
-    public async login(username: string, password: string): Promise<void> {
+    const login = async (username: string, password: string): Promise<void> => {
         const backendAPI = useBackendAPI().value;
         if (!backendAPI) return console.error("Backend API is not defined");
 
@@ -87,18 +80,18 @@ export class AuthenticationService {
             const responseData: { Auth_token: string; Expiry: number } = await response.json();
 
             // Save the player token in a cookie
-            this.saveToken(responseData.Auth_token, responseData.Expiry);
+            saveToken(responseData.Auth_token, responseData.Expiry);
 
             // Parse the JWT to get data from it and save data
-            this.saveTokenData(responseData.Auth_token);
+            saveTokenData(responseData.Auth_token);
         } catch (error) {
             console.error("Login failed:", error);
-            this.isAuthenticated = false;
+            isAuthenticated.value = false;
             throw error; // Re-throw the error to be caught in the component
         }
-    }
+    };
 
-    public async register(username: string | null, password: string | null, displayName: string | null): Promise<void> {
+    const register = async (username: string | null, password: string | null, displayName: string | null): Promise<void> => {
         const backendAPI = useBackendAPI().value;
         if (!backendAPI) return console.error("Backend API is not defined");
 
@@ -122,22 +115,22 @@ export class AuthenticationService {
             const responseData: { Auth_token: string; Expiry: number } = await response.json();
 
             // Save the guest token in a cookie
-            this.saveToken(responseData.Auth_token, responseData.Expiry);
+            saveToken(responseData.Auth_token, responseData.Expiry);
 
             // Parse the JWT to get data from it and save data
-            this.saveTokenData(responseData.Auth_token);
+            saveTokenData(responseData.Auth_token);
         } catch (error) {
             console.error("Registering failed:", error);
-            this.isAuthenticated = false;
+            isAuthenticated.value = false;
             throw error; // Re-throw the error to be caught in the component
         }
-    }
+    };
 
-    public saveTokenData(token?: string): void {
-        const tokenToUse = token || this.getToken();
+    const saveTokenData = (token?: string): void => {
+        const tokenToUse = token || getToken();
         if (!tokenToUse) throw new Error("Token is not defined");
 
-        const tokenData = this.parseJwt(tokenToUse);
+        const tokenData = parseJwt(tokenToUse);
         if (!tokenData) throw new Error("Invalid token data");
 
         console.log("Token data DEV:", tokenData); //! Dev
@@ -147,10 +140,10 @@ export class AuthenticationService {
         usePlayerInfo().value.displayName = tokenData.display_name; // Display name
         usePlayerInfo().value.guest = tokenData.guest;
 
-        this.isAuthenticated = true;
-    }
+        isAuthenticated.value = true;
+    };
 
-    private parseJwt(token: string): any | null {
+    const parseJwt = (token: string): any | null => {
         try {
             const base64Url = token.split(".")[1];
             const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
@@ -167,5 +160,18 @@ export class AuthenticationService {
             console.error("Error parsing JWT:", error);
             return null;
         }
-    }
-}
+    };
+
+    return {
+        isAuthenticated,
+        saveToken,
+        getToken,
+        clearToken,
+        isPlayerAuthenticated,
+        logout,
+        login,
+        register,
+        saveTokenData,
+        parseJwt,
+    };
+});

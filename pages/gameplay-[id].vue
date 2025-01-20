@@ -53,6 +53,11 @@ onMounted(() => {
     // Add event listener for window resize
     window.addEventListener("resize", updateDimensions);
     updateDimensions();
+
+    // Add confirmation dialog when leaving the page
+    window.onbeforeunload = function () {
+        return "Are you sure you want to leave? Progress may be lost.";
+    };
 });
 
 onUnmounted(() => {

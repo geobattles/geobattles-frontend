@@ -41,7 +41,7 @@
 const emit = defineEmits(["userLogged"]);
 const toast = useToast();
 const router = useRouter();
-const auth = useAuthenticationService().value;
+const { login, register } = useAuthStore();
 const username = ref("");
 const password = ref("");
 const isGuestFormVisible = ref(false);
@@ -58,7 +58,7 @@ guestDisplayName.value = generateGuestUsername();
 const handleLogin = async () => {
     isLoginLoading.value = true;
     try {
-        await auth.login(username.value, password.value);
+        await login(username.value, password.value);
         // Handle successful login to close the dialog
         emit("userLogged");
     } catch (error) {
@@ -72,7 +72,7 @@ const handleLogin = async () => {
 const handleRegisterGuest = async () => {
     isGuestRegisterLoading.value = true;
     try {
-        await auth.register(null, null, guestDisplayName.value);
+        await register(null, null, guestDisplayName.value);
         // Handle successful login to close the dialog
         isGuestFormVisible.value = false;
         emit("userLogged");

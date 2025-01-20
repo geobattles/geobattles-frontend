@@ -37,7 +37,7 @@ let inputs_array: Ref<HTMLInputElement | null>[] = [];
 
 // External services
 const router = useRouter();
-const auth = useAuthenticationService().value;
+const auth = useAuthStore();
 const isLoginDialogVisible = useIsLoginDialogVisible();
 const toast = useToast();
 const { checkIfLobby, joinLobby } = useLobbyStore();
@@ -58,7 +58,7 @@ onMounted(() => {
         inputs_array.forEach((input, id) => {
             if (input.value) input.value.value = lobby_id[id];
         });
-        if (!auth.isPlayerAuthenticated()) return (isLoginDialogVisible.value = true);
+        if (!auth.isAuthenticated) return (isLoginDialogVisible.value = true);
         handleJoinLobby(lobbyURLParameter.value);
     }
 });

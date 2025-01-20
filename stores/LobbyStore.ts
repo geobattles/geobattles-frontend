@@ -23,7 +23,8 @@ export const useLobbyStore = defineStore("lobby", () => {
     const createLobby = async (): Promise<void> => {
         const playerInfo = usePlayerInfo();
         const router = useRouter();
-        const auth = useAuthenticationService().value;
+        const { getToken } = useAuthStore();
+
         const socketStore = useWebSocketStore();
 
         const lobbyPostParams = {
@@ -33,7 +34,7 @@ export const useLobbyStore = defineStore("lobby", () => {
 
         try {
             // Make authenticated post request to create lobby
-            const authToken = auth.getToken();
+            const authToken = getToken();
             const response = await fetch(`${useBackendAPI().value}/lobby`, {
                 method: "POST",
                 headers: {
@@ -86,7 +87,6 @@ export const useLobbyStore = defineStore("lobby", () => {
     };
 
     const joinedLobby = (lobbyInfo: LobbyInfo, userId: string) => {
-        //TODO: Do not update lobbySettings if ModifySettings Modal is open!!
         updateNestedLobbySettings(lobbyInfo);
 
         if (!lobbySettings.value) return console.error("Lobby settings are not initialized");
