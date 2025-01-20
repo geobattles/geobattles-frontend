@@ -23,15 +23,18 @@
 <script setup lang="ts">
 import { ref } from "vue";
 
+// Form fields
 const username = ref("");
 const displayName = ref("");
 const password = ref("");
+const isRegisterLoading = ref(false);
+
+// External services
 const playerInfo = usePlayerInfo();
+const { register } = useAuthStore();
 const router = useRouter();
-const auth = useAuthenticationService().value;
 const toast = useToast();
 const isLoginDialogVisible = useIsLoginDialogVisible();
-const isRegisterLoading = ref(false);
 
 const onSubmit = async () => {
     isRegisterLoading.value = true;
@@ -50,7 +53,7 @@ const onSubmit = async () => {
             return;
         }
 
-        await auth.register(username.value, password.value, displayName.value);
+        await register(username.value, password.value, displayName.value);
         console.log("Registration successful");
 
         // Update the player info

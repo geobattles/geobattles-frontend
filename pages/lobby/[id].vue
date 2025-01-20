@@ -73,6 +73,11 @@ onMounted(async () => {
 
     // Generate invite link
     inviteLink.value = `${window.location.origin}/lobby/join?id=${lobbySettings.ID}`;
+
+    // Add confirmation dialog when leaving the page
+    window.onbeforeunload = function () {
+        return "Are you sure you want to leave? Progress may be lost.";
+    };
 });
 
 const handleStartGameButton = () => {

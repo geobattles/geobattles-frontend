@@ -21,7 +21,7 @@ export default defineNuxtConfig({
     },
 
     typescript: {
-        typeCheck: false,
+        typeCheck: true,
         strict: true,
     },
 

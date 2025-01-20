@@ -10,7 +10,7 @@
                 </a>
             </template>
             <template #end>
-                <div v-if="!auth.isPlayerAuthenticated()" class="flex">
+                <div v-if="!auth.isAuthenticated" class="flex">
                     <div>
                         <Button label="Login" size="small" severity="contrast" @click="handleLoginClick" />
                     </div>
@@ -39,7 +39,7 @@ const playerInfo = usePlayerInfo();
 const router = useRouter();
 const route = useRoute();
 const isLoginDialogVisible = useIsLoginDialogVisible();
-const auth = useAuthenticationService().value;
+const auth = useAuthStore();
 
 const items: Ref<MenuItem[]> = ref([
     {

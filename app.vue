@@ -1,10 +1,15 @@
 <template>
     <div id="vue-app">
-        <VitePwaManifest />
+        <!-- Import PWA Manifest (currently disabled) -->
+        <!-- <VitePwaManifest /> -->
+
+        <!-- Initial loader -->
         <div class="initial-loader" v-if="is_loading">
             <span>Loading...</span>
             <ProgressSpinner />
         </div>
+
+        <!-- Main content -->
         <div id="my_vue_app" ref="vue_app">
             <NuxtPage />
         </div>
@@ -13,19 +18,10 @@
 
 <script setup lang="ts">
 const vue_app = ref<HTMLElement | null>(null);
-const auth = useAuthenticationService().value;
+const authStore = useAuthStore();
 
 // Read ENV variables
 const runtimeConfig = useRuntimeConfig();
-
-// useHead({
-//     title: "GeoBattles",
-//     meta: [
-//         { name: "apple-mobile-web-app-capable", content: "yes" },
-//         { name: "apple-mobile-web-app-status-bar-style", content: "black" },
-//         { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" },
-//     ],
-// });
 
 useHead({
     title: "GeoBattles",
@@ -47,7 +43,8 @@ useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
 
 onMounted(() => {
     try {
-        auth.saveTokenData();
+        // auth.saveTokenData();
+        authStore.saveTokenData();
     } catch (error) {
         console.log("Failed to save token data:", error);
     }
@@ -76,11 +73,6 @@ onMounted(() => {
                 });
             `;
     document.head.appendChild(script);
-
-    // Add confirmation dialog when leaving the page
-    window.onbeforeunload = function () {
-        return "Are you sure you want to leave? Progress may be lost.";
-    };
 
     // Add primitive check for mobile devices
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
