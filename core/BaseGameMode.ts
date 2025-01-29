@@ -22,5 +22,5 @@ export abstract class BaseGameMode {
     abstract processMapPin(coordinates: Coordinates): void;
     abstract processNewResult(user_id: string, player_result: ResultsInfo): void;
     abstract clearMap(): void;
-    abstract isSubmitButtonDisabled(): boolean;
+    abstract isSubmitButtonDisabled: ComputedRef<boolean>;
 }

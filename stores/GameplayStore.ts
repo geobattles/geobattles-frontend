@@ -104,43 +104,6 @@ export const useGameplayStore = defineStore("gameplay", () => {
         google.maps.event.clearListeners(gMap, "click");
     };
 
-    const isSubmitButtonDisabled = (): boolean => {
-        const liveResults = useLiveResults().value;
-
-        try {
-            if (currentMode.value === "BattleRoyale") {
-                // const mapMarkers = useMapMarkers().value;
-                const mapMarkers = BattleRoyaleMode.getMapMarkers();
-                const playerID = usePlayerInfo().value.ID;
-
-                // Disable if there are no markers on the map
-                if (mapMarkers.value.length === 0) return true;
-
-                // Disable if number of markers equals number of attempts
-                if (!playerID) throw new Error("Player ID not found, probably because left lobby");
-                const playerAttempt = liveResults[playerID]?.attempt;
-                if (mapMarkers.value.length === playerAttempt) return true;
-            } else if (currentMode.value === "CountryBattle") {
-                // Always enable for CountryBattle mode
-                return false;
-            }
-        } catch (error) {
-            console.error("Error in isSubmitButtonDisabled:", error);
-        }
-
-        // Enable button for other game modes
-        return false;
-
-        // if (!modeLogic.value) throw new Error("Mode store is not initialized");
-
-        // try {
-        //     return modeLogic.value.isSubmitButtonDisabled();
-        // } catch (error) {
-        //     console.error("Error in isSubmitButtonDisabled:", error);
-        //     return true;
-        // }
-    };
-
     const processClickedCountry = (polygon: any, countryCode: string): void => {
         if (modeLogic.value instanceof CountryBattleMode) {
             modeLogic.value.processClickedCountry(polygon, countryCode);
@@ -184,7 +147,6 @@ export const useGameplayStore = defineStore("gameplay", () => {
         submitGuess,
         finishRound,
         finishGame,
-        isSubmitButtonDisabled,
         processClickedCountry,
         processNewResult,
         mountingProcess,

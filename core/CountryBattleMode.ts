@@ -114,10 +114,9 @@ export class CountryBattleMode extends BaseGameMode {
         this.deleteAllPolygons();
     }
 
-    override isSubmitButtonDisabled(): boolean {
-        // TODO: Implement logic
+    override isSubmitButtonDisabled: ComputedRef<boolean> = computed(() => {
         return false;
-    }
+    });
 
     public processClickedCountry(polygon: any, countryCode: string): void {
         console.log("Processing clicked country:", countryCode);
