@@ -6,8 +6,8 @@ export class BattleRoyaleMode extends BaseGameMode {
     private static instance: BattleRoyaleMode | null = null;
     private static polylinesArray: google.maps.Polyline[] = [];
     private static mapMarkersArray: Ref<google.maps.marker.AdvancedMarkerElement[]> = ref([]);
-    static isSubmitButtonDisabled: Ref<boolean> = ref(true);
 
+    // We only want to hold one instance of this class
     static getInstance(): BattleRoyaleMode {
         if (!BattleRoyaleMode.instance) {
             BattleRoyaleMode.instance = new BattleRoyaleMode();
@@ -17,26 +17,19 @@ export class BattleRoyaleMode extends BaseGameMode {
 
     constructor() {
         super();
-        console.log("BattleRoyaleMode instance created");
+
+        // Needs to be binded because it is used as a callback in addMapClickListener
+        this.processMapPin = this.processMapPin.bind(this);
     }
 
-    // Add cleanup method
     public cleanup(): void {
         if (BattleRoyaleMode.instance) {
             this.clearMap();
-            BattleRoyaleMode.polylinesArray = [];
-            BattleRoyaleMode.mapMarkersArray.value = [];
             BattleRoyaleMode.instance = null;
         }
     }
 
-    public static getMapMarkers(): Ref<google.maps.marker.AdvancedMarkerElement[]> {
-        return BattleRoyaleMode.mapMarkersArray;
-    }
-
     override startRound(): void {
-        console.log("START ROUND IN BATTLE ROYALE MODE");
-
         const router = useRouter();
         const routeName = router.currentRoute.value.name as string;
 
@@ -53,7 +46,6 @@ export class BattleRoyaleMode extends BaseGameMode {
             isGoogleMap().setZoom(2);
         }
 
-        // Remove any left stuff from Map
         this.clearMap();
     }
 
@@ -81,8 +73,7 @@ export class BattleRoyaleMode extends BaseGameMode {
             const color = getPlayerColorByID(key);
             if (!color) throw new Error("Player color is not defined");
 
-            const marker = await addNewMapMarker(round_res[key].location, color, getPlayerNameFromID(key)); // Create new marker
-            BattleRoyaleMode.mapMarkersArray.value.push(marker); // Save marker to static array
+            this.drawMarker(round_res[key].location, color, getPlayerNameFromID(key)); // Create new marker
         }
 
         setMapZoom(3);
@@ -91,45 +82,36 @@ export class BattleRoyaleMode extends BaseGameMode {
         }, 300);
     }
 
+    // Gets binded to map click event
     override async processMapPin(coordinates: Coordinates): Promise<void> {
         const gameStore = useGameplayStore();
         if (gameStore.currentState !== GameState.PLAYING) return;
-
         gameStore.currentMapPin = coordinates;
-        // const used_pins = useMapMarkers().value.length; // Number of guesses already made in current round
-        const usedPins = BattleRoyaleMode.mapMarkersArray.value.length;
+
+        const usedPins = BattleRoyaleMode.mapMarkersArray.value.length; // Number of guesses already made in current round
         const player_id = usePlayerInfo().value.ID;
         if (!player_id) throw new Error("Player ID is not defined");
 
         const liveResults = useLiveResults().value;
-        // START OF PIN PLACEMENT LOGIC
-        if (liveResults[player_id].lives === 0) {
-            console.warn("All lives are used!!"); // TODO: Make toast that all lives are used.
-            return;
-        }
-        console.log("Used pins: ", usedPins);
+        if (liveResults[player_id].lives === 0) return console.warn("All lives are used!!");
+        console.log("Used pins: ", usedPins); //! Dev
 
         // Place first pin if no pins yet, or if pins and submits are the same
         if (usedPins === 0 || liveResults[player_id].attempt === usedPins) {
-            // get player color from name
             const color = getPlayerColorByID(player_id);
             if (!color) throw new Error("Player color is not defined");
-            const marker = await addNewMapMarker(coordinates, color); // Create new marker
-            // useMapMarkers().value.push(marker); // Add marker to markers state
-            BattleRoyaleMode.mapMarkersArray.value.push(marker); // Add marker to static array
+
+            this.drawMarker(coordinates, color);
             return;
         }
 
         // If no submitted results yet || there are stil lives left, change last marker position
         if (!liveResults[player_id] || liveResults[player_id].lives > 0) {
-            // const last_marker = useMapMarkers().value[used_pins - 1]; // Get last marker
-            const lastMarker = BattleRoyaleMode.mapMarkersArray.value[BattleRoyaleMode.mapMarkersArray.value.length - 1]; // Get last marker
-            // @ts-ignore
-            console.log("Last marker position: ", lastMarker);
-            lastMarker.position = coordinates; // Change last marker position
+            const lastMarker = BattleRoyaleMode.mapMarkersArray.value[BattleRoyaleMode.mapMarkersArray.value.length - 1];
+            console.log("Last marker position: ", lastMarker); //! Dev
+            lastMarker.position = coordinates;
             return;
         }
-        // END OF PIN PLACEMENT LOGIC
     }
 
     override finishGame(): void {}
@@ -157,30 +139,25 @@ export class BattleRoyaleMode extends BaseGameMode {
         this.removePolyLinesFromMap(true);
     }
 
-    override isSubmitButtonDisabled(): boolean {
-        // console.log("IS SUBMIT BUTTON DISABLED");
-        // const liveResults = useLiveResults().value;
-        // const playerID = usePlayerInfo().value.ID;
-        // const mapMarkers = BattleRoyaleMode.mapMarkersArray;
-        // // Disable if there are no markers on the map
-        // if (mapMarkers.length === 0) return true;
-        // if (mapMarkers.length === 0) return true;
-        // // Disable if number of markers equals number of attempts
-        // if (!playerID) throw new Error("Player ID not found, probably because left lobby");
-        // const playerAttempt = liveResults[playerID]?.attempt;
-        // if (mapMarkers.length === playerAttempt) return true;
-        return false;
-    }
+    override isSubmitButtonDisabled: ComputedRef<boolean> = computed(() => {
+        const liveResults = useLiveResults().value;
+        const playerID = usePlayerInfo().value.ID;
+        const mapMarkers = BattleRoyaleMode.mapMarkersArray;
 
-    /**
-     * When round is finished, this method will set map bounds to fit all best markers on the map.
-     *
-     * @param roundResults - Results object from round
-     * @returns
-     */
+        // Disable if there are no markers on the map
+        if (mapMarkers.value.length === 0) return true;
+
+        // Disable if number of markers equals number of attempts
+        if (!playerID) throw new Error("Player ID not found, probably because left lobby");
+        const playerAttempt = liveResults[playerID]?.attempt;
+        if (mapMarkers.value.length === playerAttempt) return true;
+
+        return false;
+    });
+
     private setMapBounds(roundResults: Results): void {
         const gameStore = useGameplayStore();
-        let bounds = new google.maps.LatLngBounds();
+        const bounds = new google.maps.LatLngBounds();
 
         for (const key in roundResults) {
             if (Object.keys(roundResults[key].location).length === 0) continue; // Skip if location object is empty
@@ -189,13 +166,21 @@ export class BattleRoyaleMode extends BaseGameMode {
         bounds.extend(gameStore.searchedLocationCoords);
 
         // Dont fit bounds if there is only one marker on map (only searched location marker)
-        // if (useMapMarkers().value.length === 1) {
         if (BattleRoyaleMode.mapMarkersArray.value.length === 1) {
             isGoogleMap().setCenter(gameStore.searchedLocationCoords);
             return;
         } else {
             if (bounds) fitCustomBounds(bounds, 50); // Fit all displayed markers bounds
         }
+    }
+
+    private async drawMarker(coordinates: Coordinates, color: string, playerName?: string): Promise<void> {
+        // Create new marker and render it on map
+        const marker = await addNewMapMarker(coordinates, color, playerName);
+        marker.map = isGoogleMap();
+
+        // Save marker to static array
+        BattleRoyaleMode.mapMarkersArray.value.push(marker);
     }
 
     private drawPolyLine(from: Coordinates, to: Coordinates): void {
@@ -207,12 +192,6 @@ export class BattleRoyaleMode extends BaseGameMode {
         BattleRoyaleMode.polylinesArray.push(polyline);
     }
 
-    /**
-     * Method remove all polylines from map and optionally from array
-     * ? Removal only works if polylines array is defined as static property. //! Dev
-     *
-     * @param deletePolylines - If true, all polylines will be removed from map and array
-     */
     private removePolyLinesFromMap(deletePolylines: boolean): void {
         BattleRoyaleMode.polylinesArray.forEach((polyline) => polyline.setMap(null));
         if (deletePolylines) BattleRoyaleMode.polylinesArray = [];

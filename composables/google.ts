@@ -101,7 +101,6 @@ export const addNewMapMarker = async (coordinates: Coordinates, marker_color: st
 
     // Create marker
     const marker = new AdvancedMarkerElement({
-        map: isGoogleMap(),
         position: coordinates,
         title: "Pin",
         content: markerContent,

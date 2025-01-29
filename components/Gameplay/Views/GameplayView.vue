@@ -15,11 +15,11 @@
             <GameplayGoogleMap id="map" />
 
             <!-- SUBMIT BUTTON -->
-            <button ref="submitButton" severity="primary" class="submit-button" v-if="gameStore.currentMode === 'BattleRoyale'" @click="gameStore.submitGuess()" :disabled="gameStore.isSubmitButtonDisabled()">
-                {{ gameStore.isSubmitButtonDisabled() ? "Place your pin" : "GUESS" }}
+            <button ref="submitButton" severity="primary" class="submit-button" v-if="gameStore.currentMode === 'BattleRoyale'" @click="gameStore.submitGuess()" :disabled="gameStore.modeLogic?.isSubmitButtonDisabled">
+                {{ gameStore.modeLogic?.isSubmitButtonDisabled ? "Place your pin" : "GUESS" }}
             </button>
-            <button ref="submit_button" v-if="gameStore.currentMode === 'CountryBattle'" class="submit-button" @click="gameStore.submitGuess()" :disabled="false">
-                {{ false ? "Place your guess on the map" : "GUESS" }}
+            <button ref="submit_button" v-if="gameStore.currentMode === 'CountryBattle'" class="submit-button" @click="gameStore.submitGuess()" :disabled="gameStore.modeLogic?.isSubmitButtonDisabled">
+                {{ gameStore.modeLogic?.isSubmitButtonDisabled ? "Place your guess on the map" : "GUESS" }}
             </button>
         </div>
 
