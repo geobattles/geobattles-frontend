@@ -64,68 +64,39 @@ function handleUpdatedLobby(message: MsgUpdatedLobbyData) {
  * @param data - The data received from the START_ROUND message
  */
 function handleStartRound(message: MsgStartRoundData) {
+    // Extract and validate data from the message
     const data = message.payload;
     if (!data.location || !data.players) return console.error("Missing data in START_ROUND message", data);
 
-    const gameFlowManager = useGameFlowManager().value;
-    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
-    gameFlowManager.searchedLocationCoords.value = data.location;
+    // Apply the searched location coordinates and start the round
+    const gameStore = useGameplayStore();
+    gameStore.searchedLocationCoords = data.location;
+    gameStore.startRound();
 
-    useLiveResults().value = data.players; // Set new player results for live statistics
-
-    const gameType = gameFlowManager.gameMode.gameType;
-
-    switch (gameType) {
-        case "CountryBattle":
-            gameFlowManager.startRound();
-            break;
-        case "BattleRoyale":
-            gameFlowManager.startRound();
-            break;
-        default:
-            console.warn(`Unhandled game type: ${gameType}`);
-    }
-
-    // Log the start of the new round
-    console.log(`New round started. Game type: ${gameType}, Players:`, data.players);
+    // Set new player results for live statistics
+    useLiveResults().value = data.players;
 }
 
 function handleNewResult(message: MsgNewResultData) {
+    // Extract and validate data from the message
     const data = message.payload;
     if (!data.playerRes || !data.user) return console.error("Missing data in NEW_RESULT message", data);
-    const gameFlowManager = useGameFlowManager().value;
-    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
 
-    const gameType = gameFlowManager.gameMode.gameType;
-    if (gameType === "BattleRoyale") {
-        gameFlowManager.processNewResult(data.user, data.playerRes);
-    } else if (gameType === "CountryBattle") {
-        gameFlowManager.processNewResult(data.user, data.playerRes);
-    }
+    // Process the new result
+    const gameStore = useGameplayStore();
+    gameStore.processNewResult(data.user, data.playerRes);
 }
 
 function handleRoundResult(message: MsgRoundResultData) {
+    const gameStore = useGameplayStore();
     const data = message.payload;
+
     if (!data.totalResults || !data.roundRes) return console.error("Missing data in ROUND_RESULT message", data);
-    const gameFlowManager = useGameFlowManager().value;
-    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
+    if (!data.polygon && gameStore.currentMode === "CountryBattle") return console.error("Missing polygon data in ROUND_RESULT message for CountryBattle", data);
 
-    // Update gameRound in ganeFlowManager
-    gameFlowManager.gameRound = data.round;
-
-    // Call gameType finishRound
-    const gameType = gameFlowManager.gameMode.gameType;
-    switch (gameType) {
-        case "BattleRoyale":
-            gameFlowManager.finishRound(data.totalResults, data.roundRes);
-            break;
-        case "CountryBattle":
-            if (!data.polygon) return console.error("Missing polygon data in ROUND_RESULT message for CountryBattle", data);
-            gameFlowManager.finishRound(data.totalResults, data.roundRes, data.polygon);
-            break;
-        default:
-            console.warn(`Unhandled game type in handleRoundResult: ${gameType}`);
-    }
+    // Apply the total results and finish the round
+    gameStore.currentRound = data.round;
+    gameStore.finishRound(data.totalResults, data.roundRes);
 }
 
 function handleTimesUp(data: MsgTimesUpData) {
@@ -138,27 +109,21 @@ function handleRoundFinished(data: MsgRoundFinishedData) {
 
 function handleCC(messsage: MsgCCData) {
     const data = messsage.payload;
-    const gameFlowManager = useGameFlowManager().value;
-    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
-
+    const gameStore = useGameplayStore();
     if (!data.polygon || !data.cc) {
         console.error("Missing data in CC message", data);
         return;
     }
-
-    const gameType = gameFlowManager.gameMode.gameType;
-    if (gameType === "CountryBattle") gameFlowManager.gameMode.processClickedCountry?.(data.polygon, data.cc);
+    gameStore.processClickedCountry(data.polygon, data.cc);
 }
 
 function handleGameEnd(messsge: MsgGameEndData) {
+    // Extract and validate data from the message
     const data = messsge.payload;
     if (!data.totalResults) return console.error("Missing data in GAME_END message", data);
 
-    const gameFlowManager = useGameFlowManager().value;
-    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
-
-    gameFlowManager.finishGame();
-    gameFlowManager.gameRound = 0;
+    const gameStore = useGameplayStore();
+    gameStore.finishGame();
     // TODO: Process endgame results and display them
 }
 

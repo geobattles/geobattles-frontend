@@ -80,6 +80,14 @@ export type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINIS
 
 export type GameType = "BattleRoyale" | "CountryBattle" | undefined; // Undefined when not connected to a lobby (socket)
 
+export enum GameState {
+    WAITING = "WAITING",
+    STARTING = "STARTING",
+    PLAYING = "PLAYING",
+    MID_ROUND = "MID-ROUND",
+    FINISHED = "FINISHED",
+}
+
 export interface GameMode {
     startRound(): void;
     finishRound(totalResults: TotalResults, roundResults: Results, polygon?: any): void;

@@ -1,3 +1,4 @@
+import { BattleRoyaleMode } from "~/core/BattleRoyaleMode";
 import type { Coordinates } from "~/types/appTypes";
 
 // Google map states
@@ -5,7 +6,6 @@ export const useGoogleMap = shallowRef<google.maps.Map | undefined>(undefined);
 export const useGoogleMapHTML = () => useState<HTMLElement | null>("google_map_html", () => null);
 export const useGooglePanorama = () => useState<google.maps.StreetViewPanorama>("google_panorama", () => ({} as google.maps.StreetViewPanorama));
 export const useGooglePanoramaHTML = () => useState<HTMLElement | null>("google_panorama_html", () => null);
-export const useMapMarkers = () => useState<google.maps.marker.AdvancedMarkerElement[]>("map_markers", () => [] as google.maps.marker.AdvancedMarkerElement[]);
 
 const map_starting_view_position: Coordinates = { lat: 0, lng: 0 }; // Constant
 
@@ -71,13 +71,12 @@ export const removeMapEventListener = (type: string) => google.maps.event.clearL
 /// GOOGLE PANORAMA ///
 export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): void => {
     if (!panorama_html) throw new Error("Panorama html element is not defined");
-    const gameFlowManager = useGameFlowManager().value;
-    if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
+    const gameStore = useGameplayStore();
 
     // Timeout heres is added just to track Google Maps API billing (so panorama is alomst for sure loaded after map)
     setTimeout(() => {
         useGooglePanorama().value = new google.maps.StreetViewPanorama(panorama_html as HTMLElement, {
-            position: gameFlowManager.searchedLocationCoords.value,
+            position: gameStore.searchedLocationCoords,
             pov: {
                 heading: 34,
                 pitch: 10,
@@ -95,7 +94,7 @@ export const updatePanoramaView = (coordinates: Coordinates) => useGooglePanoram
 
 /// MAP MARKERS ///
 export const addNewMapMarker = async (coordinates: Coordinates, marker_color: string, playerName?: string) => {
-    const { AdvancedMarkerElement, PinElement } = (await google.maps.importLibrary("marker")) as google.maps.MarkerLibrary;
+    const { AdvancedMarkerElement } = (await google.maps.importLibrary("marker")) as google.maps.MarkerLibrary;
 
     // Get marker content
     const markerContent = await getMarkerContent(marker_color, playerName);
@@ -108,11 +107,6 @@ export const addNewMapMarker = async (coordinates: Coordinates, marker_color: st
         content: markerContent,
     });
     return marker;
-};
-
-export const removeMarkersFromMap = (delete_markers: Boolean) => {
-    for (let i = 0; i < useMapMarkers().value.length; i++) toRaw(useMapMarkers().value[i]).map = null;
-    if (delete_markers) useMapMarkers().value = [];
 };
 
 export const createSearchedLocationMarker = async (coordinates: Coordinates) => {
@@ -194,13 +188,14 @@ const getMarkerContent = async (playerColor: string, playerName: string | undefi
 /// END MAP MARKERS ///
 
 /// MAP POLYLINES ///
-export const drawPolyLine = (from: Coordinates, to: Coordinates) => {
+export const makePolyline = (from: Coordinates, to: Coordinates) => {
     // Create polyline object
     const lineSymbol = {
         path: "M 0,-1 0,1",
         strokeOpacity: 1,
         scale: 2,
     };
+
     const polyline = new google.maps.Polyline({
         path: [from, to],
         strokeColor: "#000000",
@@ -213,14 +208,8 @@ export const drawPolyLine = (from: Coordinates, to: Coordinates) => {
             },
         ],
     });
-    BattleRoyale.poly_lines_array.value.push(polyline); // State where all polylines are saved
-    if (!useGoogleMap.value) throw new Error("Google map is not defined");
-    polyline.setMap(isGoogleMap()); // Add to map
-};
 
-export const removePolyLinesFromMap = (delete_lines: Boolean) => {
-    for (let i = 0; i < BattleRoyale.poly_lines_array.value.length; i++) toRaw(BattleRoyale.poly_lines_array.value[i]).setMap(null); // Remove from map
-    if (delete_lines) BattleRoyale.poly_lines_array.value = []; // Remove from saved polylines
+    return polyline;
 };
 /// END MAP POLYLINES ///
 

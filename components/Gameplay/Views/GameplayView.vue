@@ -15,26 +15,26 @@
             <GameplayGoogleMap id="map" />
 
             <!-- SUBMIT BUTTON -->
-            <button ref="submitButton" severity="primary" class="submit-button" v-if="gameFlowManager?.gameMode.gameType === 'BattleRoyale'" @click="gameFlowManager.submitGuess()" :disabled="gameFlowManager.isSubmitButtonDisabled()">
-                {{ gameFlowManager.isSubmitButtonDisabled() ? "Place your pin" : "GUESS" }}
+            <button ref="submitButton" severity="primary" class="submit-button" v-if="gameStore.currentMode === 'BattleRoyale'" @click="gameStore.submitGuess()" :disabled="gameStore.isSubmitButtonDisabled()">
+                {{ gameStore.isSubmitButtonDisabled() ? "Place your pin" : "GUESS" }}
             </button>
-            <!-- <button ref="submit_button" v-if="gameFlowManager?.gameMode.gameType === 'CountryBattle'" class="submit-button" @click="gameFlowManager.submitGuess()" :disabled="false">
-                    {{ false ? "Place your pin on the map" : "GUESS" }}
-                </button> -->
+            <button ref="submit_button" v-if="gameStore.currentMode === 'CountryBattle'" class="submit-button" @click="gameStore.submitGuess()" :disabled="false">
+                {{ false ? "Place your guess on the map" : "GUESS" }}
+            </button>
         </div>
 
         <!-- MAP MOBILE -->
         <div class="gameplay-map-mobile-position"></div>
 
         <!-- LIVE STATISTICS -->
-        <GameplayBattleRoyaleLiveStatistics v-if="gameFlowManager?.gameMode.gameType === 'BattleRoyale'" class="gameplay-live-results" />
-        <GameplayCountryBattleLiveStatistics v-if="gameFlowManager?.gameMode.gameType === 'CountryBattle'" class="live-stats" />
+        <GameplayBattleRoyaleLiveStatistics v-if="gameStore.currentMode === 'BattleRoyale'" class="gameplay-live-results" />
+        <GameplayCountryBattleLiveStatistics v-if="gameStore.currentMode === 'CountryBattle'" class="gameplay-live-results" />
 
         <!-- BAR TIMER -->
-        <GameplayTimerBar v-if="gameFlowManager?.currentState === 'PLAYING'" class="timer-bar-container" />
+        <GameplayTimerBar v-if="gameStore.currentState === 'PLAYING'" class="timer-bar-container" />
 
         <!-- MAP MOBILE BUTTON -->
-        <button ref="toggleMapMobile" v-show="uiManager.getIsMobile() && gameFlowManager?.currentState === 'PLAYING'" class="mobile-map-button">
+        <button ref="toggleMapMobile" v-show="uiManager.getIsMobile() && gameStore.currentState === 'PLAYING'" class="mobile-map-button">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-8 lg:w-10" viewBox="0 0 576 512">
                 <path d="M565.6 36.24C572.1 40.72 576 48.11 576 56V392C576 401.1 569.8 410.9 560.5 414.4L392.5 478.4C387.4 480.4 381.7 480.5 376.4 478.8L192.5 417.5L32.54 478.4C25.17 481.2 16.88 480.2 10.38 475.8C3.882 471.3 0 463.9 0 456V120C0 110 6.15 101.1 15.46 97.57L183.5 33.57C188.6 31.6 194.3 31.48 199.6 33.23L383.5 94.52L543.5 33.57C550.8 30.76 559.1 31.76 565.6 36.24H565.6zM48 421.2L168 375.5V90.83L48 136.5V421.2zM360 137.3L216 89.3V374.7L360 422.7V137.3zM408 421.2L528 375.5V90.83L408 136.5V421.2z" />
             </svg>
@@ -50,14 +50,13 @@ const toggleMapMobile = ref<HTMLElement | null>(null);
 const showMapButtonMobile = ref(false);
 
 // External services
-const gameFlowManager = useGameFlowManager();
+const gameStore = useGameplayStore();
 const uiManager = useUIManager();
 
 onMounted(() => {
     setTimeout(() => {
         // Timeout added temporary to make sure google map is loaded before mounting process
-        if (!gameFlowManager.value) return console.error("gameFlowManager is not initialized in the gameplayView");
-        gameFlowManager.value.mountingProcess(toggleMapMobile, showMapButtonMobile, submitButton);
+        gameStore.mountingProcess(toggleMapMobile, showMapButtonMobile, submitButton);
     }, 3000);
 });
 
@@ -68,7 +67,7 @@ const handleClickLeaveLobby = () => {
 
 // Resize panorama to re-render it when the game state changes
 watch(
-    () => gameFlowManager.value?.currentState,
+    () => gameStore.currentState,
     (newVal) => newVal && setTimeout(() => google.maps.event.trigger(useGooglePanorama().value, "resize"), 100)
 );
 </script>

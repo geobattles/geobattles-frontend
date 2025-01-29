@@ -40,13 +40,13 @@
 </template>
 
 <script lang="ts">
-import { GameState } from "~/services/GameFlowManager";
+import { GameState } from "~/types/appTypes";
 export default {
     setup() {
         const results = useLiveResults();
         const flag_map = useCountriesFlagMap();
         const total_attempts = ref(new Map<string | number, number>());
-        const gameFlowManager = useGameFlowManager();
+        const gameStore = useGameplayStore();
 
         /**
          * Process distance to display in results table
@@ -70,7 +70,7 @@ export default {
 
         // Watch game flow to create total attempts
         watch(
-            () => gameFlowManager.value?.currentState,
+            () => gameStore.currentState,
             (new_val) => (new_val === GameState.PLAYING ? createTotalAttempts() : null)
         );
 

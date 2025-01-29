@@ -19,8 +19,8 @@ const handleButtonClicked = () => {
 };
 
 const { lobbySettings } = useLobbyStore();
-const gameFlowManager = useGameFlowManager();
-const knobValue = computed(() => (gameFlowManager?.value?.gameRound || 0) + 1);
+const gameStore = useGameplayStore();
+const knobValue = computed(() => (gameStore.currentRound || 0) + 1);
 </script>
 
 <style scoped></style>

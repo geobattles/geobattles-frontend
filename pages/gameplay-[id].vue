@@ -7,16 +7,16 @@
         <Toast position="bottom-right" />
 
         <!-- Countdown View (before starting next round) -->
-        <GameplayViewsCountdownView v-if="gameFlowManager?.currentState === 'STARTING'" />
+        <GameplayViewsCountdownView v-if="gameStore.currentState === 'STARTING'" />
 
         <!-- Gameplay View (when game is playing) -->
-        <GameplayViewsGameplayView v-show="gameFlowManager?.currentState === 'PLAYING'" @leaveLobby="handleClickLeaveLobby()" />
+        <GameplayViewsGameplayView v-show="gameStore.currentState === 'PLAYING'" @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- MidRound View (when game is in mid-round) -->
-        <GameplayViewsMidRoundView v-show="gameFlowManager?.currentState === 'MID-ROUND'" />
+        <GameplayViewsMidRoundView v-show="gameStore.currentState === 'MID-ROUND'" />
 
         <!-- EndGame View (when game is finished) -->
-        <GameplayViewsEndGameView v-show="gameFlowManager?.currentState === 'FINISHED'" />
+        <GameplayViewsEndGameView v-show="gameStore.currentState === 'FINISHED'" />
     </div>
 </template>
 
@@ -26,7 +26,7 @@ const gameplayPageContainer = useTemplateRef<HTMLElement>("gameplayPageContainer
 
 // External services
 const { leaveLobby } = useLobbyStore();
-const gameFlowManager = useGameFlowManager(); // To track the game state
+const gameStore = useGameplayStore(); // To get the current game state
 const uiManager = useUIManager(); // To show toasts on player leave
 const toast = useToast();
 const router = useRouter();

@@ -1,6 +1,7 @@
 // stores/LobbyStore.ts
 import type { LobbyInfo } from "~/types/appTypes";
 import { useWebSocketStore } from "~/stores/WebSocketStore";
+import { SOCKET_COMMANDS } from "~/core/constants";
 
 export const useLobbyStore = defineStore("lobby", () => {
     // Lobby settings states
@@ -147,7 +148,7 @@ export const useLobbyStore = defineStore("lobby", () => {
         }
 
         const settings = {
-            command: "update_lobby_settings",
+            command: SOCKET_COMMANDS.UPDATE_LOBBY_SETTINGS,
             conf: { ...lso.value.conf },
         };
 
@@ -174,15 +175,16 @@ export const useLobbyStore = defineStore("lobby", () => {
         lobbySettingsOriginal.value = structuredClone(lobbyInfo);
         lobbySettingsOriginal.value.conf = structuredClone(lobbyInfo.conf);
 
-        const gameFlowManager = useGameFlowManager().value;
-        if (gameFlowManager) {
-            if (lobbySettings.value.conf.mode === 1) {
-                gameFlowManager.updateGameMode("BattleRoyale");
-            } else if (lobbySettings.value.conf.mode === 2) {
-                gameFlowManager.updateGameMode("CountryBattle");
-            } else {
-                console.warn("Unknown game mode");
-            }
+        const gameStore = useGameplayStore();
+        switch (lobbySettings.value.conf.mode) {
+            case 1:
+                gameStore.updateGameMode("BattleRoyale");
+                break;
+            case 2:
+                gameStore.updateGameMode("CountryBattle");
+                break;
+            default:
+                console.error("Unknown game mode in updateNestedLobbySettings()");
         }
     };
 
