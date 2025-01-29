@@ -27,14 +27,13 @@
 
         <!-- Start Next Round Button -->
         <div v-if="isPlayerAdmin()" class="next-round-button-container bg-p-surface-200">
-            <Button @click="gameFlowManager?.sendStartRoundSocketMessage" label="Next Round" icon="pi pi-forward" severity="primary" />
+            <Button @click="gameStore.sendStartRoundSocketMessage" label="Next Round" icon="pi pi-forward" severity="primary" />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-const gameFlowManager = useGameFlowManager();
-if (!gameFlowManager.value) throw new Error("GameFlowManager is not initialized");
+const gameStore = useGameplayStore();
 
 const { isPlayerAdmin } = useLobbyStore();
 </script>

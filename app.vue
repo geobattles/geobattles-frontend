@@ -43,7 +43,6 @@ useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
 
 onMounted(() => {
     try {
-        // auth.saveTokenData();
         authStore.saveTokenData();
     } catch (error) {
         console.log("Failed to save token data:", error);

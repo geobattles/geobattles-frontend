@@ -22,10 +22,10 @@ let intervalId: ReturnType<typeof setInterval> | null = null;
 
 // Store references
 const { lobbySettings } = useLobbyStore();
-const gameFlowManager = useGameFlowManager();
+const gameStore = useGameplayStore();
 
 // Computed properties
-const knobValue = computed(() => (gameFlowManager?.value?.gameRound || 0) + 1);
+const knobValue = computed(() => (gameStore.currentRound || 0) + 1);
 
 // Function to handle countdown logic
 const startCountdown = () => {

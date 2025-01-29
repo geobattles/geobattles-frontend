@@ -1,4 +1,5 @@
-import { GameState } from "./GameFlowManager";
+import { GameState } from "~/types/appTypes";
+
 type EventCallback = (event: CustomEvent) => void;
 
 export class UIManager {
@@ -56,8 +57,8 @@ export class UIManager {
 
     // Method toggles class for mobile map (to show or hide the map)
     private handleMapToggleMobile(): void {
-        const gameFlowManager = useGameFlowManager().value;
-        if (gameFlowManager && gameFlowManager.currentState === GameState.PLAYING) {
+        const gameStore = useGameplayStore();
+        if (gameStore && gameStore.currentState === GameState.PLAYING) {
             this.googleMap?.classList.toggle("google-map-gameplay-container-mobile");
         }
     }
@@ -78,12 +79,11 @@ export class UIManager {
         // Update orientation flag
         this.isVertical = window.innerWidth < window.innerHeight;
 
-        const gameFlowManager = useGameFlowManager().value;
-        if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
+        const gameStore = useGameplayStore();
 
         // Get results container to update (either midRound or endGame)
         let resultsContainer: HTMLElement | null = null;
-        if (gameFlowManager.currentState === GameState.MID_ROUND) resultsContainer = document.getElementById("midround-results-container");
+        if (gameStore.currentState === GameState.MID_ROUND) resultsContainer = document.getElementById("midround-results-container");
         else resultsContainer = document.getElementById("endgame-results-container");
 
         // Apply classes based on orientation
@@ -109,8 +109,8 @@ export class UIManager {
     }
     // Applied only for Desktop view for hover effect on map
     private handleMapHover(isHovering: boolean, submit_button: Ref<HTMLElement | null>): void {
-        const gameFlowManager = useGameFlowManager().value;
-        if (gameFlowManager && gameFlowManager.currentState === GameState.PLAYING) {
+        const gameStore = useGameplayStore();
+        if (gameStore && gameStore.currentState === GameState.PLAYING) {
             if (isHovering) {
                 this.googleMap?.classList.add("google-map-gameplay-container-hovered");
                 submit_button.value?.classList.add("submit-button-hovered-map");
@@ -125,11 +125,10 @@ export class UIManager {
      * Will track the game flow and move the map to the required position based on the game state.
      */
     googleMapDOMTracker(): void {
-        const gameFlowManager = useGameFlowManager().value;
-        if (!gameFlowManager) throw new Error("GameFlowManager is not initialized");
+        const gameStore = useGameplayStore();
 
         watch(
-            () => gameFlowManager.currentState,
+            () => gameStore.currentState,
             (newVal) => {
                 console.warn("Game flow changed to: " + newVal);
                 if (newVal === GameState.MID_ROUND) {

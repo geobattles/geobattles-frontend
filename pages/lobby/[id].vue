@@ -47,7 +47,7 @@ const { lobbySettings, leaveLobby, isPlayerAdmin } = useLobbyStore();
 const lobbyStore = useLobbyStore();
 const country_list = useCountryList();
 const filtered_country_list = useFilteredCountryList();
-const gameFlowManager = useGameFlowManager();
+const gameStore = useGameplayStore();
 
 useHead({
     title: "GeoBattles | Lobby",
@@ -68,8 +68,8 @@ onMounted(async () => {
     if (lobbySettings.conf.ccList.length === 0) lobbySettings.conf.ccList = Object.values(country_list.value);
     filtered_country_list.value = country_list.value;
 
-    // Initialize GameFlowManager with default BattleRoyale game mode
-    initGameFlowManager("BattleRoyale");
+    // Initialize Gameplay
+    gameStore.initializeGameplay();
 
     // Generate invite link
     inviteLink.value = `${window.location.origin}/lobby/join?id=${lobbySettings.ID}`;
@@ -82,7 +82,7 @@ onMounted(async () => {
 
 const handleStartGameButton = () => {
     isPlayNowLoading.value = true;
-    gameFlowManager.value?.sendStartRoundSocketMessage();
+    gameStore.sendStartRoundSocketMessage();
 };
 
 const copyInviteLink = () => {

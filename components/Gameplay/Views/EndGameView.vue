@@ -24,7 +24,7 @@
             <!-- Google Map Gets Appended here in ENDGAME -->
         </div>
         <div v-if="isPlayerAdmin()" class="endgame-menu-container">
-            <Button type="button" class="m-auto" label="NEXT GAME" icon="pi pi-play-circle" @click="gameFlowManager?.sendStartRoundSocketMessage" severity="primary" size="small" />
+            <Button type="button" class="m-auto" label="NEXT GAME" icon="pi pi-play-circle" @click="gameStore.sendStartRoundSocketMessage" severity="primary" size="small" />
             <Button @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal" type="button" class="m-auto" label="Modify Lobby Settings" icon="pi pi-cog" severity="info" size="small" />
         </div>
         <div v-else class="next-round-button-container">
@@ -39,7 +39,7 @@
 
 <script setup lang="ts">
 // External services
-const gameFlowManager = useGameFlowManager();
+const gameStore = useGameplayStore();
 const lobbyStore = useLobbyStore();
 const { isPlayerAdmin } = useLobbyStore();
 

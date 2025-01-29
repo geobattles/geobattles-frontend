@@ -3,7 +3,7 @@
         <Header />
         <div class="page-container">
             <div>
-                <Button class="play-button w-56 md:w-80" @click="handlePlayNowClick" label="PLAY NOW" icon="pi pi-map-marker" :loading="isjoiningLobby" severity="contrast" size="large" raised />
+                <Button class="play-button w-56 md:w-80" @click="handlePlayNowClick" label="PLAY NOW" icon="pi pi-map-marker" :loading="isJoiningLobby" severity="contrast" size="large" raised />
                 <div class="m-auto text-center mt-4">
                     <span>or join a lobby by <a class="clickable" @click="handleJoinByCodeClick()">game code!</a></span>
                 </div>
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-const isjoiningLobby = ref(false);
+const isJoiningLobby = ref(false); // Handle loader
 
 // External services
 const router = useRouter();
@@ -23,7 +23,7 @@ const isLoginDialogVisible = useIsLoginDialogVisible();
 
 const handlePlayNowClick = async () => {
     if (!auth.isAuthenticated) return (isLoginDialogVisible.value = true);
-    isjoiningLobby.value = true;
+    isJoiningLobby.value = true;
 
     // Try to create a lobby
     try {
@@ -32,7 +32,7 @@ const handlePlayNowClick = async () => {
         console.error("Failed to create lobby:", error);
         return window.alert("Failed to create lobby. Please try again later.\n" + error);
     } finally {
-        isjoiningLobby.value = false;
+        isJoiningLobby.value = false;
     }
 };
 
