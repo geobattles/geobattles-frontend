@@ -1,5 +1,5 @@
 <template>
-    <div class="content">
+    <div class="countdown-container">
         <!-- Countdown Timer -->
         <div class="timer">
             <span>{{ counter }}</span>
@@ -14,11 +14,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from "vue";
-
-// Reactive state and store dependencies
-const counter = ref<number>(3);
-let intervalId: ReturnType<typeof setInterval> | null = null;
+const COUNTDOWN_SECONDS = 3;
+const { counter, startCountdown } = useCountdown(COUNTDOWN_SECONDS);
 
 // Store references
 const { lobbySettings } = useLobbyStore();
@@ -27,30 +24,14 @@ const gameStore = useGameplayStore();
 // Computed properties
 const knobValue = computed(() => (gameStore.currentRound || 0) + 1);
 
-// Function to handle countdown logic
-const startCountdown = () => {
-    intervalId = setInterval(() => {
-        if (counter.value > 1) {
-            counter.value--;
-        } else {
-            clearInterval(intervalId!); // Stop countdown when it reaches 0
-            intervalId = null;
-        }
-    }, 1000);
-};
-
 // Lifecycle hooks
 onMounted(() => {
     startCountdown();
 });
-
-onUnmounted(() => {
-    if (intervalId) clearInterval(intervalId); // Cleanup interval on unmount
-});
 </script>
 
 <style scoped>
-.content {
+.countdown-container {
     position: fixed;
     top: 0;
     left: 0;
