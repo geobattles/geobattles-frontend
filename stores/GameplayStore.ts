@@ -16,9 +16,6 @@ export const useGameplayStore = defineStore("gameplay", () => {
 
     const COUNTDOWN = 3000;
 
-    /**
-     * Function initializes the gameplay store based on the lobby settings.
-     */
     const initializeGameplay = () => {
         const gameMode = useLobbyStore().lobbySettings?.conf.mode;
         currentMode.value = gameMode === 1 ? "BattleRoyale" : gameMode === 2 ? "CountryBattle" : null;
@@ -33,8 +30,7 @@ export const useGameplayStore = defineStore("gameplay", () => {
 
     const updateGameMode = (newGameType: "BattleRoyale" | "CountryBattle") => {
         if (currentMode.value !== newGameType) {
-            // Clear Map from previous game mode
-            modeLogic.value?.cleanup();
+            modeLogic.value?.cleanup(); // Clear Map and instance from previous game mode
 
             // Update game mode
             currentMode.value = newGameType;

@@ -1,4 +1,3 @@
-import { BattleRoyaleMode } from "~/core/BattleRoyaleMode";
 import type { Coordinates } from "~/types/appTypes";
 
 // Google map states
