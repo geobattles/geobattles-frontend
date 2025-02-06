@@ -30,7 +30,10 @@
                 <LobbyPlayerList class="text-sm lg:text-base m-auto mt-5" style="max-width: 300px" />
             </div>
         </div>
-        <Dialog v-model:visible="lobbyStore.modifySettingsModal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
+        <Dialog v-model:visible="lobbyStore.modifySettingsModal" header="Lobby Settings" modal :style="{ width: '95%' }" pt:header:class="!p-3 lg:!p-5">
+            <template #header>
+                <span class="text-base lg:text-xl font-bold">Lobby Settings</span>
+            </template>
             <LobbyModifySettings />
         </Dialog>
     </div>
