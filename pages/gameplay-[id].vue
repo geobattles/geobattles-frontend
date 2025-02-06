@@ -1,11 +1,5 @@
 <template>
     <div ref="gameplayPageContainer">
-        <!-- Screen dimensions display (debug purposes) -->
-        <!-- <div class="screen-dimensions">Width: {{ screenWidth }}px, Height: {{ screenHeight }}px</div> -->
-
-        <!-- Toast when player leaves lobby -->
-        <Toast position="bottom-right" />
-
         <!-- Countdown View (before starting next round) -->
         <GameplayViewsCountdownView v-if="gameStore.currentState === 'STARTING'" />
 
@@ -17,6 +11,12 @@
 
         <!-- EndGame View (when game is finished) -->
         <GameplayViewsEndGameView v-show="gameStore.currentState === 'FINISHED'" />
+
+        <!-- Screen dimensions display (debug purposes) -->
+        <!-- <div class="screen-dimensions">Width: {{ screenWidth }}px, Height: {{ screenHeight }}px</div> -->
+
+        <!-- Toast when player leaves lobby -->
+        <Toast position="bottom-right" />
     </div>
 </template>
 
