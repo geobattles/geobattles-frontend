@@ -2,6 +2,7 @@
     <div class="h-screen overflow-scroll">
         <Header />
         <div class="main-content flex flex-wrap gap-0 justify-center lg:gap-5 text-xs lg:text-base">
+            <!-- Lobby Settings Content -->
             <Panel class="basis-1/2 lg:basis-1/3" header="Lobby Settings" style="min-width: 250px; max-width: 500px">
                 <template #header class="flex justify-around">
                     <div class="font-bold text-base">Lobby Settings</div>
@@ -11,9 +12,10 @@
                 </template>
                 <LobbyDisplaySettings />
             </Panel>
+
+            <!-- Game Info Content -->
             <div class="basis-1/2 lg:basis-1/3 text-sm lg:text-base">
-                <Button v-if="isPlayerAdmin()" @click="handleStartGameButton()" size="large" label="Start Game" icon="pi pi-play-circle" badgeSeverity="contrast" :loading="isPlayNowLoading" />
-                <div v-else style="color: white">Waiting for admin to start the game</div>
+                <LobbyStartGame />
                 <div class="flex justify-evenly mt-5">
                     <div class="flex flex-col">
                         <div class="mb-1">Lobby code</div>
@@ -24,12 +26,12 @@
                         <ConnectionStatus />
                     </div>
                 </div>
-                <div class="flex flex-col mt-2">
-                    <Tag class="mt-2 m-auto cursor-pointer" :icon="inviteLinkTagSettings.icon" :severity="inviteLinkTagSettings.severity" :value="inviteLinkTagSettings.value" @click="copyInviteLink()" />
-                </div>
+                <LobbyInviteLink class="mt-3" />
                 <LobbyPlayerList class="text-sm lg:text-base m-auto mt-5" style="max-width: 300px" />
             </div>
         </div>
+
+        <!-- Dialog to update Lobby Settings -->
         <Dialog v-model:visible="lobbyStore.modifySettingsModal" header="Lobby Settings" modal :style="{ width: '95%' }" pt:header:class="!p-3 lg:!p-5">
             <template #header>
                 <span class="text-base lg:text-xl font-bold">Lobby Settings</span>
@@ -41,9 +43,6 @@
 
 <script setup lang="ts">
 const isGuardDisabled = ref(false);
-const isPlayNowLoading = ref(false);
-const inviteLink = ref("");
-const inviteLinkTagSettings = ref({ value: "Copy Invite Link", severity: "info", icon: "pi pi-copy" });
 
 // External services
 const { lobbySettings, leaveLobby, isPlayerAdmin } = useLobbyStore();
@@ -74,38 +73,11 @@ onMounted(async () => {
     // Initialize Gameplay
     gameStore.initializeGameplay();
 
-    // Generate invite link
-    inviteLink.value = `${window.location.origin}/lobby/join?id=${lobbySettings.ID}`;
-
     // Add confirmation dialog when leaving the page
     window.onbeforeunload = function () {
         return "Are you sure you want to leave? Progress may be lost.";
     };
 });
-
-const handleStartGameButton = () => {
-    isPlayNowLoading.value = true;
-    gameStore.sendStartRoundSocketMessage();
-};
-
-const copyInviteLink = () => {
-    navigator.clipboard
-        .writeText(inviteLink.value)
-        .then(() => {
-            inviteLinkTagSettings.value.value = "Copied";
-            inviteLinkTagSettings.value.severity = "success";
-            inviteLinkTagSettings.value.icon = "pi pi-check";
-
-            setTimeout(() => {
-                inviteLinkTagSettings.value.value = "Copy Invite Link";
-                inviteLinkTagSettings.value.severity = "info";
-                inviteLinkTagSettings.value.icon = "pi pi-copy";
-            }, 2000);
-        })
-        .catch((err) => {
-            console.error("Failed to copy invite link:", err);
-        });
-};
 
 onBeforeRouteLeave((to, from, next) => {
     if (isGuardDisabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)
