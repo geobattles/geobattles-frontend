@@ -52,6 +52,14 @@ export const fetchCountryList = async () => {
     }
 };
 
+export const getFlagBackgroundPosition = (countryCode: string) => {
+    const flag = useCountriesFlagMap().value.get(countryCode);
+    if (flag) {
+        return `${flag.x}px ${flag.y}px`;
+    }
+    return "0px 0px";
+};
+
 /**
  * State is used to store a Map of country codes and their flag coordinates.
  */

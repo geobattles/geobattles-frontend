@@ -46,8 +46,6 @@ const { isPlayerAdmin } = useLobbyStore();
 
     height: 100dvh; /* Fullscreen height */
     width: 100dvw; /* Fullscreen width */
-
-    background-color: var(--p-surface-800);
 }
 
 /* Google Map MidRound Styles */
@@ -86,7 +84,7 @@ const { isPlayerAdmin } = useLobbyStore();
     left: 50%;
     transform: translateX(-50%);
 
-    background-color: var(--p-surface-800);
+    background-color: var(--surface-background);
     padding: 15px 20px;
 
     border-top-left-radius: 10px;

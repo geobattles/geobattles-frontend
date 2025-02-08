@@ -108,6 +108,22 @@ body {
     min-height: 100vh;
 }
 
+:root {
+    --surface-light: var(--p-surface-100);
+    --surface-dark: var(--p-surface-800);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --surface-background: var(--surface-dark);
+    }
+}
+@media (prefers-color-scheme: light) {
+    :root {
+        --surface-background: var(--surface-light);
+    }
+}
+
 .initial-loader {
     position: fixed;
     z-index: 9999;

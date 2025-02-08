@@ -1,16 +1,11 @@
 <template>
     <div class="component-content">
         <div v-if="lobbyStore.lobbySettings" style="overflow: scroll">
-            <div class="flex justify-center items-center gap-2 mb-5 mt-1">
-                <div style="display: inline-block; vertical-align: top">
-                    <label for="search" class="mb-2 text-xl font-medium text-gray-900 sr-only dark:text-white">Search</label>
-                    <div style="position: relative">
-                        <FloatLabel>
-                            <InputText id="search" v-model="country_input" @keyup="filterCountryList" />
-                            <label for="username">Search country</label>
-                        </FloatLabel>
-                    </div>
-                </div>
+            <div class="flex justify-center items-center gap-5 mb-5 mt-5">
+                <FloatLabel>
+                    <InputText id="search" v-model="country_input" @keyup="filterCountryList" size="small" />
+                    <label for="username">Search country</label>
+                </FloatLabel>
                 <div class="text-xs flex flex-col justify-between items-center">
                     <div>
                         <label>All&nbsp;</label>
@@ -23,11 +18,11 @@
                 </div>
             </div>
             <div class="ccode-list">
-                <label v-for="(ccode, id) in filtered_list" :key="id" class="country-row">
-                    <Checkbox :value="ccode" v-model="lobbyStore.lobbySettings.conf.ccList" style="float: left; vertical-align: top" />
-                    <div class="country-flag" :style="{ backgroundPosition: flag_map.get(ccode)?.x + 'px ' + flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
-                    <div class="country-name">{{ flag_map.get(ccode)?.name }}</div>
-                </label>
+                <div v-for="(ccode, id) in filtered_list" :key="id" class="country-row text-xs lg:text-sm w-[180px] h-[40px] lg:w-[250px] lg:h-[40px]">
+                    <Checkbox :value="ccode" v-model="lobbyStore.lobbySettings.conf.ccList" />
+                    <div class="country-flag" :style="{ backgroundPosition: getFlagBackgroundPosition(ccode) }"></div>
+                    <div class="text-left">{{ flag_map.get(ccode)?.name }}</div>
+                </div>
             </div>
         </div>
         <div v-else>
@@ -57,7 +52,8 @@ const country_input = useCountryInput();
 
 .ccode-list {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
+    gap: 5px;
 }
 
 input[type="checkbox"] {
@@ -72,22 +68,21 @@ input[type="checkbox"] {
 .country-flag {
     width: 32px;
     height: 24px;
-    margin-left: 10px;
-    margin-right: 10px;
+    margin: 0 10px;
     background-image: url("/images/flags32.webp");
 }
 
 .country-row {
     cursor: pointer;
-    margin-bottom: 10px;
 
-    width: 250px;
-    max-block-size: 100px;
-}
+    border-radius: 20px;
+    padding: 10px 8px;
+    background-color: var(--surface-background);
 
-.country-name {
-    float: inline-end;
-    padding-right: 10px;
+    display: flex;
+    align-items: center;
+
+    margin: auto;
 }
 
 /* CHANGE SCROLLBAR */
