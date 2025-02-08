@@ -78,8 +78,6 @@ watch(
     position: relative; /* Enable absolute positioning for children */
     height: 100dvh; /* Fullscreen height */
     width: 100dvw; /* Fullscreen width */
-
-    background-color: white;
 }
 
 /* Panorama (Fullscreen) */
@@ -107,8 +105,7 @@ watch(
 
 /* Connection Status and leave button Styling */
 .gameplay-connection-and-leave {
-    background-color: var(--p-surface-800);
-    color: var(--p-surface-0);
+    background-color: var(--surface-background);
 
     padding: 7px 10px;
     border-radius: 4px;
@@ -119,9 +116,9 @@ watch(
     width: 45px;
     height: 45px;
 
-    background-color: var(--p-surface-800);
-    color: var(--p-surface-0);
-    border-color: var(--p-surface-800);
+    background-color: var(--surface-background);
+
+    border-color: var(--surface-background);
 }
 
 /* Results (Absolute) */
@@ -203,8 +200,7 @@ watch(
     border: none;
     border-radius: 4px;
     cursor: pointer;
-    background-color: var(--p-surface-800);
-    color: var(--p-surface-0);
+    background-color: var(--surface-background);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
     transition: width 0.3s, height 0.3s; /* Smooth transition for hover effect when hovering Google Map */
 }
@@ -215,7 +211,7 @@ watch(
 }
 
 .submit-button:disabled {
-    background-color: var(--p-surface-800);
+    background-color: var(--surface-background);
     cursor: not-allowed;
     opacity: 0.8;
 }
@@ -268,7 +264,7 @@ watch(
         left: 10px;
         z-index: 2;
 
-        background-color: var(--p-surface-800);
+        background-color: var(--surface-background);
         fill: var(--p-primary-400);
 
         padding: 10px 15px;

@@ -40,7 +40,7 @@ onMounted(() => {
     z-index: 9999;
 
     color: var(--p-primary-400);
-    background-color: var(--p-surface-950);
+    background-color: var(--surface-background);
 
     display: flex;
     flex-direction: column;

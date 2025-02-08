@@ -13,7 +13,7 @@ const { countdown, roundTime, countdownColor, knobSize, valueTemplate, refSound 
 
 <style scoped>
 #progress-bar {
-    background-color: var(--p-surface-900);
+    background-color: var(--surface-background);
     border-radius: 50%;
     width: fit-content;
 }

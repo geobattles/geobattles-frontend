@@ -1,5 +1,5 @@
 <template>
-    <div class="text-xs" style="color: var(--p-surface-0)">
+    <div class="text-xs">
         <TransitionGroup name="list" tag="ul" class="flex flex-col gap-1 lg:gap-1">
             <div v-for="(value, index) in results" :key="index">
                 <div class="table__row" :id="index.toString()">
@@ -18,7 +18,7 @@
                         <div>Lives</div>
                         <div class="flex gap-0 lg:gap-1 m-auto">
                             <div v-for="life in totalAttempts.get(index)" :key="life">
-                                <SvgsHeartIcon class="svg-heart-icon h-4" :color="value.lives >= life ? '#FF0000' : '#8e7777'" />
+                                <SvgsHeartIcon class="svg-heart-icon h-4" :color="value.lives >= life ? 'var(--p-red-500)' : 'var(--p-gray-400)'" />
                             </div>
                         </div>
                     </div>
@@ -106,7 +106,7 @@ export default {
 
     z-index: 3;
     border-radius: 4px;
-    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-surface-800) 50%);
+    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--surface-background) 50%);
     background-size: 200% 100%;
     background-position: right bottom;
     transition: all 0.4s ease-out;
@@ -133,13 +133,13 @@ export default {
 
 /* Applied Guess Row Style */
 .applied-guess {
-    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--p-surface-800) 50%);
+    background: linear-gradient(to right, var(--p-blue-400) 50%, var(--surface-background) 50%);
     background-size: 200% 100%;
     background-position: left;
 }
 
 .applied-guess-lead {
-    background: linear-gradient(to right, var(--p-green-400) 50%, var(--p-surface-800) 50%);
+    background: linear-gradient(to right, var(--p-green-400) 50%, var(--surface-background) 50%);
     background-size: 200% 100%;
     background-position: left;
 }

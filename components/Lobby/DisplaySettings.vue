@@ -57,9 +57,9 @@
                 <b>Selected Countries</b>
             </Divider>
             <div class="country-list-preview">
-                <div v-for="(ccode, id) in lobbyStore.lobbySettings?.conf.ccList" :key="id" :title="countries_flag_map.get(ccode)?.name" style="margin: 10px">
+                <div class="m-auto" v-for="(ccode, id) in lobbyStore.lobbySettings?.conf.ccList" :key="id" :title="countries_flag_map.get(ccode)?.name">
                     <div class="tooltip bottom">
-                        <div class="flag m-0 lg:m-1 scale-75 lg:scale-100" :style="{ backgroundPosition: countries_flag_map.get(ccode)?.x + 'px ' + countries_flag_map.get(ccode)?.y + 'px' }" style="display: inline-block; float: left; vertical-align: top"></div>
+                        <div class="flag m-0 lg:m-1 scale-75 lg:scale-100" :style="{ backgroundPosition: getFlagBackgroundPosition(ccode) }"></div>
                     </div>
                 </div>
             </div>
@@ -77,6 +77,9 @@ const countries_flag_map = useCountriesFlagMap();
 .country-list-preview {
     max-height: 200px;
     overflow-y: scroll;
+
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .flag {
