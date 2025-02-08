@@ -1,6 +1,7 @@
 <template>
     <div>
         <Toast />
+        <!-- Main Login Component content -->
         <div class="flex flex-wrap">
             <div class="w-full md:w-5/12 flex flex-col items-center justify-center gap-3 py-5">
                 <FloatLabel class="mb-4">
@@ -25,6 +26,8 @@
                 <Button label="Continue as Guest" severity="secondary" icon="pi pi-user" class="w-full max-w-[17.35rem] mx-auto" @click="isGuestFormVisible = true" />
             </div>
         </div>
+
+        <!-- Guest username Dialog -->
         <Dialog v-model:visible="isGuestFormVisible" class="w-80" pt:header:class="text-xs" header="Confirm Display Name" modal>
             <div class="flex flex-col gap-2 items-center justify-center">
                 <FloatLabel>
@@ -38,16 +41,20 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits(["userLogged"]);
+// External states
 const toast = useToast();
 const router = useRouter();
 const { login, register } = useAuthStore();
+
+// Component state
 const username = ref("");
 const password = ref("");
 const isGuestFormVisible = ref(false);
 const guestDisplayName = ref("");
 const isLoginLoading = ref(false);
 const isGuestRegisterLoading = ref(false);
+const emit = defineEmits(["userLogged"]);
+
 const generateGuestUsername = () => {
     const randomDigits = Math.floor(1000 + Math.random() * 9000);
     return `Guest${randomDigits}`;

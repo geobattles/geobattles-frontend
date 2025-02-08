@@ -2,20 +2,25 @@ import { GameState, type Coordinates, type Results, type ResultsInfo, type Total
 import { BattleRoyaleMode } from "~/core/BattleRoyaleMode";
 import { CountryBattleMode } from "~/core/CountryBattleMode";
 import { GameModeFactory } from "~/core/GameModeFactory";
-import { SOCKET_COMMANDS } from "~/core/constants";
 
 export const useGameplayStore = defineStore("gameplay", () => {
+    // GameMode and GameMode Logic
     const currentMode = ref<"BattleRoyale" | "CountryBattle" | null>(null);
+    const modeLogic = ref<BattleRoyaleMode | CountryBattleMode | null>(null);
+
+    // Gameplay state
     const currentState = ref(GameState.WAITING);
     const currentRound = ref(0);
-    const modeLogic = ref<BattleRoyaleMode | CountryBattleMode | null>(null);
-    const uiManager = useUIManager().value;
-
     const currentMapPin = ref<Coordinates>({} as Coordinates);
     const searchedLocationCoords = ref<Coordinates>({} as Coordinates);
 
+    // UI Manager
+    const uiManager = useUIManager().value;
+
+    // Constants
     const COUNTDOWN = 3000;
 
+    // Initialized once plyer joins the lobby
     const initializeGameplay = () => {
         const gameMode = useLobbyStore().lobbySettings?.conf.mode;
         currentMode.value = gameMode === 1 ? "BattleRoyale" : gameMode === 2 ? "CountryBattle" : null;

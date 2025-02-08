@@ -1,27 +1,30 @@
 <template>
     <div class="component-content">
         <div v-if="lobbyStore.lobbySettings" style="overflow: scroll">
+            <!-- Search field and Select all button -->
             <div class="flex justify-center items-center gap-5 mb-5 mt-5">
                 <FloatLabel>
-                    <InputText id="search" v-model="country_input" @keyup="filterCountryList" size="small" />
+                    <InputText id="search" v-model="countryInput" @keyup="filterCountryList" size="small" />
                     <label for="username">Search country</label>
                 </FloatLabel>
                 <div class="text-xs flex flex-col justify-between items-center">
                     <div>
                         <label>All&nbsp;</label>
-                        <input type="checkbox" @click="toggleAllCountries" :checked="(lobbyStore.lobbySettings.conf.ccList.length ?? 0) == Object.entries(country_list).length" />
+                        <input type="checkbox" @click="toggleAllCountries" :checked="(lobbyStore.lobbySettings.conf.ccList.length ?? 0) == Object.entries(countryList).length" />
                     </div>
                     <div>
                         <span>Selected: </span>
-                        <span>{{ (lobbyStore.lobbySettings.conf.ccList.length ?? 0) + "&nbsp;/&nbsp;" + Object.keys(country_list).length }}</span>
+                        <span>{{ (lobbyStore.lobbySettings.conf.ccList.length ?? 0) + "&nbsp;/&nbsp;" + Object.keys(countryList).length }}</span>
                     </div>
                 </div>
             </div>
+
+            <!-- Country list -->
             <div class="ccode-list">
                 <div v-for="(ccode, id) in filtered_list" :key="id" class="country-row text-xs lg:text-sm w-[180px] h-[40px] lg:w-[250px] lg:h-[40px]">
                     <Checkbox :value="ccode" v-model="lobbyStore.lobbySettings.conf.ccList" />
                     <div class="country-flag" :style="{ backgroundPosition: getFlagBackgroundPosition(ccode) }"></div>
-                    <div class="text-left">{{ flag_map.get(ccode)?.name }}</div>
+                    <div class="text-left">{{ flagMap.get(ccode)?.name }}</div>
                 </div>
             </div>
         </div>
@@ -35,9 +38,9 @@
 // External services
 const filtered_list = useFilteredCountryList();
 const lobbyStore = useLobbyStore();
-const country_list = useCountryList();
-const flag_map = useCountriesFlagMap();
-const country_input = useCountryInput();
+const countryList = useCountryList();
+const flagMap = useCountriesFlagMap();
+const countryInput = useCountryInput();
 </script>
 
 <style scoped>
