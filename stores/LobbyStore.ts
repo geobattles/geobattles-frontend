@@ -1,7 +1,6 @@
 // stores/LobbyStore.ts
 import type { LobbyInfo } from "~/types/appTypes";
 import { useWebSocketStore } from "~/stores/WebSocketStore";
-import { SOCKET_COMMANDS } from "~/core/constants";
 
 export const useLobbyStore = defineStore("lobby", () => {
     // Lobby settings states

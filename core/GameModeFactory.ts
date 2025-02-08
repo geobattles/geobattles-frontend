@@ -1,4 +1,3 @@
-// GameModeFactory.ts
 import { BattleRoyaleMode } from "~/core/BattleRoyaleMode";
 import { CountryBattleMode } from "~/core/CountryBattleMode";
 

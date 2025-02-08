@@ -38,7 +38,7 @@
             <!-- Component to select countries which user wants to play -->
             <div class="w-full md:w-1/2 max-w-[40rem] m-auto">
                 <Panel header="Country Settings">
-                    <LobbyCountrySettings style="max-height: 800px" />
+                    <LobbySettingsCountries style="max-height: 800px" />
                 </Panel>
             </div>
         </div>

@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-const { lobbySettings, leaveLobby, isPlayerAdmin } = useLobbyStore();
+const { isPlayerAdmin } = useLobbyStore();
 const gameStore = useGameplayStore();
 const isPlayNowLoading = ref(false);
 

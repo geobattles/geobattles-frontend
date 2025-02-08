@@ -89,11 +89,9 @@ export const useWebSocketStore = defineStore("web_socket_store", () => {
         console.log("RECEIVED SOCKET MESSAGE:", data); //! Dev
 
         // Handle PONG message type
-        if (data.type === "PONG") {
-            if (pongTimeoutId !== null) {
-                clearTimeout(pongTimeoutId);
-                pongTimeoutId = null;
-            }
+        if (data.type === "PONG" && pongTimeoutId !== null) {
+            clearTimeout(pongTimeoutId);
+            pongTimeoutId = null;
         } else {
             // Handle other message types
             parseSocketMessage(data);

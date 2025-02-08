@@ -1,6 +1,14 @@
 import type { MsgJoinedLobbyData, MsgLeftLobbyData, MsgUpdatedLobbyData, MsgStartRoundData, MsgNewResultData, MsgRoundResultData, MsgCCData, MsgGameEndData, MsgTimesUpData, MsgRoundFinishedData, MsgNoCountryData } from "~/types/socketTypes"; // Adjust the path according to your project structure
 import { SocketType } from "~/types/socketTypes"; // Adjust the path according to your project structure
 
+// Messages that client sends to the server
+export const SOCKET_COMMANDS = {
+    START: "start",
+    SUBMIT_LOCATION: "submit_location",
+    LOC_TO_CC: "loc_to_cc",
+    UPDATE_LOBBY_SETTINGS: "update_lobby_settings",
+};
+
 // Map SocketType to the corresponding message data types
 interface SocketMessageMap {
     [SocketType.JOINED_LOBBY]: MsgJoinedLobbyData;
