@@ -3,8 +3,8 @@ import { BaseGameMode } from "./BaseGameMode";
 
 export class BattleRoyaleMode extends BaseGameMode {
     private static instance: BattleRoyaleMode | null = null;
-    private static polylinesArray: google.maps.Polyline[] = [];
-    private static mapMarkersArray: Ref<google.maps.marker.AdvancedMarkerElement[]> = ref([]);
+    private mapMarkersArray: Ref<google.maps.marker.AdvancedMarkerElement[]> = ref([]);
+    private polylinesArray: Ref<google.maps.Polyline[]> = shallowRef([]);
 
     // We only want to hold one instance of this class
     static getInstance(): BattleRoyaleMode {
@@ -60,7 +60,7 @@ export class BattleRoyaleMode extends BaseGameMode {
 
         // Add searched location marker
         const marker = await createSearchedLocationMarker(gameStore.searchedLocationCoords);
-        BattleRoyaleMode.mapMarkersArray.value.push(marker); // Save marker to static array
+        this.mapMarkersArray.value.push(marker); // Save marker to static array
 
         // Draw player pins and polylines to searched location
         const round_res = roundResults;
@@ -87,7 +87,7 @@ export class BattleRoyaleMode extends BaseGameMode {
         if (gameStore.currentState !== GameState.PLAYING) return;
         gameStore.currentMapPin = coordinates;
 
-        const usedPins = BattleRoyaleMode.mapMarkersArray.value.length; // Number of guesses already made in current round
+        const usedPins = this.mapMarkersArray.value.length; // Number of guesses already made in current round
         const player_id = usePlayerInfo().value.ID;
         if (!player_id) throw new Error("Player ID is not defined");
 
@@ -106,7 +106,7 @@ export class BattleRoyaleMode extends BaseGameMode {
 
         // If no submitted results yet || there are stil lives left, change last marker position
         if (!liveResults[player_id] || liveResults[player_id].lives > 0) {
-            const lastMarker = BattleRoyaleMode.mapMarkersArray.value[BattleRoyaleMode.mapMarkersArray.value.length - 1];
+            const lastMarker = this.mapMarkersArray.value[this.mapMarkersArray.value.length - 1];
             console.log("Last marker position: ", lastMarker); //! Dev
             lastMarker.position = coordinates;
             return;
@@ -139,16 +139,16 @@ export class BattleRoyaleMode extends BaseGameMode {
     }
 
     override isSubmitButtonDisabled: ComputedRef<boolean> = computed(() => {
-        const liveResults = useLiveResults().value;
+        const liveResults = useLiveResults();
         const playerID = usePlayerInfo().value.ID;
-        const mapMarkers = BattleRoyaleMode.mapMarkersArray;
+        const mapMarkers = this.mapMarkersArray;
 
         // Disable if there are no markers on the map
         if (mapMarkers.value.length === 0) return true;
 
         // Disable if number of markers equals number of attempts
         if (!playerID) throw new Error("Player ID not found, probably because left lobby");
-        const playerAttempt = liveResults[playerID]?.attempt;
+        const playerAttempt = liveResults.value[playerID]?.attempt;
         if (mapMarkers.value.length === playerAttempt) return true;
 
         return false;
@@ -165,7 +165,7 @@ export class BattleRoyaleMode extends BaseGameMode {
         bounds.extend(gameStore.searchedLocationCoords);
 
         // Dont fit bounds if there is only one marker on map (only searched location marker)
-        if (BattleRoyaleMode.mapMarkersArray.value.length === 1) {
+        if (this.mapMarkersArray.value.length === 1) {
             isGoogleMap().setCenter(gameStore.searchedLocationCoords);
             return;
         } else {
@@ -179,7 +179,7 @@ export class BattleRoyaleMode extends BaseGameMode {
         marker.map = isGoogleMap();
 
         // Save marker to static array
-        BattleRoyaleMode.mapMarkersArray.value.push(marker);
+        this.mapMarkersArray.value.push(marker);
     }
 
     private drawPolyLine(from: Coordinates, to: Coordinates): void {
@@ -188,16 +188,16 @@ export class BattleRoyaleMode extends BaseGameMode {
         polyline.setMap(isGoogleMap());
 
         // Save polyline to static array
-        BattleRoyaleMode.polylinesArray.push(polyline);
+        this.polylinesArray.value.push(polyline);
     }
 
     private removePolyLinesFromMap(deletePolylines: boolean): void {
-        BattleRoyaleMode.polylinesArray.forEach((polyline) => polyline.setMap(null));
-        if (deletePolylines) BattleRoyaleMode.polylinesArray = [];
+        this.polylinesArray.value.forEach((polyline) => polyline.setMap(null));
+        if (deletePolylines) this.polylinesArray.value = [];
     }
 
     private removeMarkersFromMap(deleteMarkers: boolean): void {
-        BattleRoyaleMode.mapMarkersArray.value.forEach((marker) => (marker.map = null));
-        if (deleteMarkers) BattleRoyaleMode.mapMarkersArray.value = [];
+        this.mapMarkersArray.value.forEach((marker) => (marker.map = null));
+        if (deleteMarkers) this.mapMarkersArray.value = [];
     }
 }

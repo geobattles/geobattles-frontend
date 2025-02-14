@@ -6,7 +6,7 @@ import { GameModeFactory } from "~/core/GameModeFactory";
 export const useGameplayStore = defineStore("gameplay", () => {
     // GameMode and GameMode Logic
     const currentMode = ref<"BattleRoyale" | "CountryBattle" | null>(null);
-    const modeLogic = ref<BattleRoyaleMode | CountryBattleMode | null>(null);
+    const modeLogic = shallowRef<BattleRoyaleMode | CountryBattleMode | null>(null);
 
     // Gameplay state
     const currentState = ref(GameState.WAITING);

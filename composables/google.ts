@@ -35,6 +35,7 @@ export const initalizeNewGoogleMap = async (map_html: HTMLElement) => {
         gestureHandling: "greedy", // Does not need 2 fingers to move on map when using touchscreen
 
         keyboardShortcuts: false,
+        disableDefaultUI: true,
     });
 
     console.log("GOOGLE MAP INITIALIZED");
@@ -85,6 +86,7 @@ export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): voi
             addressControl: false,
             motionTracking: false,
             motionTrackingControl: false,
+            // disableDefaultUI: true,
         });
     }, 2000);
 };
