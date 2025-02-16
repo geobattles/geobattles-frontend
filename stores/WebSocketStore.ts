@@ -43,7 +43,6 @@ export const useWebSocketStore = defineStore("web_socket_store", () => {
 
         // Connect to Server
         await connect();
-        // TODO: Maybe I should push here to the lobby page after connection is established or actually in the connect function
     };
 
     /**
