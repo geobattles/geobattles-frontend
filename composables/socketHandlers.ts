@@ -64,13 +64,6 @@ function handleUpdatedLobby(message: MsgUpdatedLobbyData) {
     fetchLobbySettings(data.lobby);
 }
 
-/**
- * This function is called when a START_ROUND message is received from the server.
- * It sets up the new searched location for the round and inits the frontend results
- * based on the players of the lobby aka data.players.
- *
- * @param data - The data received from the START_ROUND message
- */
 function handleStartRound(message: MsgStartRoundData) {
     // Extract and validate data from the message
     const data = message.payload;
@@ -103,8 +96,7 @@ function handleRoundResult(message: MsgRoundResultData) {
     if (!data.polygon && gameStore.currentMode === "CountryBattle") return console.error("Missing polygon data in ROUND_RESULT message for CountryBattle", data);
 
     // Apply the total results and finish the round
-    gameStore.currentRound = data.round;
-    gameStore.finishRound(data.totalResults, data.roundRes);
+    gameStore.finishRound(data.totalResults, data.roundRes, data.round);
 }
 
 function handleTimesUp(data: MsgTimesUpData) {
@@ -118,10 +110,8 @@ function handleRoundFinished(data: MsgRoundFinishedData) {
 function handleCC(messsage: MsgCCData) {
     const data = messsage.payload;
     const gameStore = useGameplayStore();
-    if (!data.polygon || !data.cc) {
-        console.error("Missing data in CC message", data);
-        return;
-    }
+    if (!data.polygon || !data.cc) return console.error("Missing data in CC message", data);
+
     gameStore.processClickedCountry(data.polygon, data.cc);
 }
 

@@ -87,14 +87,3 @@ export enum GameState {
     MID_ROUND = "MID-ROUND",
     FINISHED = "FINISHED",
 }
-
-export interface GameMode {
-    startRound(): void;
-    finishRound(totalResults: TotalResults, roundResults: Results, polygon?: any): void;
-    finishGame(): void;
-    processMapPin(coordinates: Coordinates): void;
-    processNewResult(user: string, player_result: ResultsInfo): void;
-    processClickedCountry?(polygon: any, country_code: string): void;
-    gameType: GameType;
-    // Add other common methods here
-}

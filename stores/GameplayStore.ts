@@ -1,12 +1,9 @@
 import { GameState, type Coordinates, type Results, type ResultsInfo, type TotalResults } from "~/types/appTypes";
-import { BattleRoyaleMode } from "~/core/BattleRoyaleMode";
-import { CountryBattleMode } from "~/core/CountryBattleMode";
-import { GameModeFactory } from "~/core/GameModeFactory";
 
 export const useGameplayStore = defineStore("gameplay", () => {
     // GameMode and GameMode Logic
     const currentMode = ref<"BattleRoyale" | "CountryBattle" | null>(null);
-    const modeLogic = shallowRef<BattleRoyaleMode | CountryBattleMode | null>(null);
+    const modeLogic = ref<ReturnType<typeof useBattleRoyaleMode> | ReturnType<typeof useCountryBattleMode> | null>(null);
 
     // Gameplay state
     const currentState = ref(GameState.WAITING);
@@ -20,14 +17,13 @@ export const useGameplayStore = defineStore("gameplay", () => {
     // Constants
     const COUNTDOWN = 3000;
 
-    // Initialized once plyer joins the lobby
+    // Initialized once player joins the lobby
     const initializeGameplay = () => {
         const gameMode = useLobbyStore().lobbySettings?.conf.mode;
         currentMode.value = gameMode === 1 ? "BattleRoyale" : gameMode === 2 ? "CountryBattle" : null;
+        if (!currentMode.value) throw new Error("No game mode selected when initializing gameplay");
 
-        if (!currentMode.value) throw new Error("No game mode selected");
-
-        modeLogic.value = GameModeFactory.createGameMode(currentMode.value);
+        modeLogic.value = currentMode.value === "BattleRoyale" ? useBattleRoyaleMode() : useCountryBattleMode();
 
         currentState.value = GameState.WAITING;
         currentRound.value = 0;
@@ -35,11 +31,9 @@ export const useGameplayStore = defineStore("gameplay", () => {
 
     const updateGameMode = (newGameType: "BattleRoyale" | "CountryBattle") => {
         if (currentMode.value !== newGameType) {
-            modeLogic.value?.cleanup(); // Clear Map and instance from previous game mode
-
             // Update game mode
             currentMode.value = newGameType;
-            modeLogic.value = GameModeFactory.createGameMode(newGameType);
+            modeLogic.value = newGameType === "BattleRoyale" ? useBattleRoyaleMode() : useCountryBattleMode();
             console.info(`Game mode updated to: ${newGameType}`);
 
             // Reset game state
@@ -49,16 +43,12 @@ export const useGameplayStore = defineStore("gameplay", () => {
         }
     };
 
-    /**
-     * Function sends a start round message to the server that the lobby admin would like to start a new round.
-     */
+    // Function sends a start round message to the server that the lobby admin would like to start a new round.
     const sendStartRoundSocketMessage = () => {
         useWebSocketStore().sendMessage({ command: SOCKET_COMMANDS.START });
     };
 
-    /**
-     * Function starts a new round for the current game mode.
-     */
+    // Function starts a new round for the current game mode.
     const startRound = () => {
         // Set gameplay to STARTING
         currentState.value = GameState.STARTING;
@@ -73,9 +63,7 @@ export const useGameplayStore = defineStore("gameplay", () => {
         }, COUNTDOWN);
     };
 
-    /**
-     * Function submits the current guess to the server.
-     */
+    // Function submits the current guess to the server.
     const submitGuess = () => {
         const socket_message = {
             command: SOCKET_COMMANDS.SUBMIT_LOCATION,
@@ -86,9 +74,10 @@ export const useGameplayStore = defineStore("gameplay", () => {
         socketStore.sendMessage(socket_message);
     };
 
-    const finishRound = (totalResults: TotalResults, roundResults: Results, polygon?: any) => {
+    const finishRound = (totalResults: TotalResults, roundResults: Results, round: number, polygon?: any) => {
         if (!modeLogic.value) throw new Error("Mode store is not initialized");
         currentState.value = GameState.MID_ROUND;
+        currentRound.value = round;
         modeLogic.value.finishRound(totalResults, roundResults, polygon); // Finish round for the game mode
     };
 
@@ -99,14 +88,10 @@ export const useGameplayStore = defineStore("gameplay", () => {
 
         if (!modeLogic.value) throw new Error("Mode store is not initialized");
         modeLogic.value.finishGame();
-
-        // Clear click listeners after game ends
-        const gMap = isGoogleMap();
-        google.maps.event.clearListeners(gMap, "click");
     };
 
     const processClickedCountry = (polygon: any, countryCode: string): void => {
-        if (modeLogic.value instanceof CountryBattleMode) {
+        if (modeLogic.value && "processClickedCountry" in modeLogic.value) {
             modeLogic.value.processClickedCountry(polygon, countryCode);
         }
     };
@@ -135,10 +120,10 @@ export const useGameplayStore = defineStore("gameplay", () => {
     };
 
     return {
-        currentMode,
-        currentState,
-        currentRound,
-        modeLogic,
+        currentMode: readonly(currentMode),
+        currentState: readonly(currentState),
+        currentRound: readonly(currentRound),
+        modeLogic: readonly(modeLogic),
         currentMapPin,
         searchedLocationCoords,
         initializeGameplay,
