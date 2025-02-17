@@ -3,7 +3,7 @@
         <Header />
         <div class="page-container">
             <div>
-                <Button class="play-button w-56 md:w-80" @click="handlePlayNowClick" label="PLAY NOW" icon="pi pi-map-marker" :loading="isJoiningLobby" severity="contrast" size="large" raised />
+                <Button class="play-button w-56 md:w-80" @click="handlePlayNowClick" label="PLAY NOW" icon="pi pi-map-marker" :loading="isJoiningLobby" severity="primary" size="large" raised />
                 <div class="m-auto text-center mt-4">
                     <span>or join a lobby by <a class="clickable" @click="handleJoinByCodeClick()">game code!</a></span>
                 </div>
@@ -17,9 +17,9 @@ const isJoiningLobby = ref(false); // Handle loader
 
 // External services
 const router = useRouter();
-const { createLobby } = useLobbyStore();
 const auth = useAuthStore();
 const isLoginDialogVisible = useIsLoginDialogVisible();
+const { createLobby } = useLobbyStore();
 
 const handlePlayNowClick = async () => {
     if (!auth.isAuthenticated) return (isLoginDialogVisible.value = true);

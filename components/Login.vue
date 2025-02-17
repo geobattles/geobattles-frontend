@@ -21,7 +21,7 @@
                 <Divider layout="horizontal" class="!flex md:!hidden" align="center"><b>OR</b></Divider>
             </div>
             <div class="w-full md:w-5/12 flex flex-col gap-3 items-center justify-center py-5">
-                <Button label="Sign Up" icon="pi pi-user-plus" severity="success" class="w-full max-w-[17.35rem] mx-auto" @click="router.push('/signup')" />
+                <Button label="Sign Up" icon="pi pi-user-plus" severity="primary" class="w-full max-w-[17.35rem] mx-auto" @click="router.push('/signup')" />
                 <span>or</span>
                 <Button label="Continue as Guest" severity="secondary" icon="pi pi-user" class="w-full max-w-[17.35rem] mx-auto" @click="isGuestFormVisible = true" />
             </div>
