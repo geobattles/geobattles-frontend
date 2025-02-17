@@ -57,19 +57,17 @@ onMounted(() => {
     setTimeout(() => {
         // Timeout added temporary to make sure google map is loaded before mounting process
         gameStore.mountingProcess(toggleMapMobile, showMapButtonMobile, submitButton);
-    }, 3000);
+    }, 2000);
 });
-
-// Handle leaving the lobby
-const handleClickLeaveLobby = () => {
-    emit("leaveLobby");
-};
 
 // Resize panorama to re-render it when the game state changes
 watch(
     () => gameStore.currentState,
     (newVal) => newVal && setTimeout(() => google.maps.event.trigger(useGooglePanorama().value, "resize"), 300)
 );
+
+// Handle leaving the lobby
+const handleClickLeaveLobby = () => emit("leaveLobby");
 </script>
 
 <style>

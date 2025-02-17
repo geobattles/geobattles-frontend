@@ -4,7 +4,7 @@ const sw = process.env.SW === "true";
 
 export default defineNuxtConfig({
     devtools: { enabled: true },
-    ssr: false,
+    ssr: true,
 
     app: {
         head: {

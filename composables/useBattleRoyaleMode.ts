@@ -46,7 +46,7 @@ export function useBattleRoyaleMode() {
         }
 
         // Bound map view to players locations
-        setTimeout(() => setMapBounds(roundResults), 800);
+        setTimeout(() => setMapBounds(roundResults), 1500);
     };
 
     const finishGame = () => {
@@ -143,22 +143,25 @@ export function useBattleRoyaleMode() {
     };
 
     const setMapBounds = (roundResults: Results): void => {
-        // TODO: Logic should be separated for this function!!!
         const gameStore = useGameplayStore();
         const bounds = new google.maps.LatLngBounds();
+        let locationCount = 0;
 
         for (const key in roundResults) {
             if (Object.keys(roundResults[key].location).length === 0) continue; // Skip if location object is empty
             bounds.extend(roundResults[key].location);
+            locationCount++;
         }
         bounds.extend(gameStore.searchedLocationCoords);
+        locationCount++;
 
-        // Dont fit bounds if there is only one marker on map (only searched location marker)
-        if (mapMarkers.value.length === 1) {
+        console.log(bounds);
+
+        // If there are only two locations (including the searched location), set the center instead of fitting bounds
+        if (locationCount === 1) {
             isGoogleMap().setCenter(gameStore.searchedLocationCoords);
-            return;
         } else {
-            if (bounds) fitCustomBounds(bounds, 50); // Fit all displayed markers bounds
+            fitCustomBounds(bounds, 50); // Fit all displayed markers bounds
         }
     };
 

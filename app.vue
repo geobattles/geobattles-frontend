@@ -1,23 +1,19 @@
 <template>
-    <div id="vue-app">
-        <!-- Import PWA Manifest (currently disabled) -->
-        <!-- <VitePwaManifest /> -->
+    <div>
+        <VitePwaManifest />
 
-        <!-- Initial loader -->
-        <div class="initial-loader" v-if="is_loading">
-            <span>Loading...</span>
-            <ProgressSpinner />
-        </div>
+        <NuxtLoadingIndicator color="#4f46e5" />
 
         <!-- Main content -->
-        <div id="my_vue_app" ref="vue_app">
-            <NuxtPage />
-        </div>
+        <NuxtLayout>
+            <ClientOnly>
+                <NuxtPage />
+            </ClientOnly>
+        </NuxtLayout>
     </div>
 </template>
 
 <script setup lang="ts">
-const vue_app = ref<HTMLElement | null>(null);
 const authStore = useAuthStore();
 
 // Read ENV variables
@@ -26,7 +22,7 @@ const runtimeConfig = useRuntimeConfig();
 useHead({
     title: "GeoBattles",
     meta: [
-        { name: "apple-mobile-web-app-capable", content: "yes" },
+        { name: "mobile-web-app-capable", content: "yes" },
         { name: "apple-mobile-web-app-status-bar-style", content: "black" },
         { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" },
         { name: "description", content: "Geolocation Guessing Game" },
@@ -41,13 +37,16 @@ useHead({
 
 useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
 
-onMounted(() => {
+onBeforeMount(() => {
+    // Authenticate user if possible
     try {
         authStore.saveTokenData();
     } catch (error) {
         console.log("Failed to save token data:", error);
     }
+});
 
+onMounted(() => {
     // Dynamically load the provided Google Maps script
     const script = document.createElement("script");
     script.innerHTML = `
@@ -76,22 +75,6 @@ onMounted(() => {
     // Add primitive check for mobile devices
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     if (isMobile) useUIManager().value?.setMobile(true);
-
-    // const img = new Image();
-    // img.src = "/images/earth.webp";
-    // img.onload = () => (vue_app.value !== null ? (vue_app.value.style.backgroundImage = "url(/images/earth.webp)") : "");
-});
-
-const is_loading = ref(true);
-const nuxtApp = useNuxtApp();
-
-onBeforeMount(() => {
-    nuxtApp.hooks.hook("page:start", () => {
-        is_loading.value = true;
-    });
-    nuxtApp.hooks.hook("page:finish", () => {
-        is_loading.value = false;
-    });
 });
 </script>
 
@@ -99,13 +82,10 @@ onBeforeMount(() => {
 html {
     font-size: 14px;
 }
+
 body {
     /* background: url("/images/earth.webp") no-repeat center center fixed; */
     background-size: cover; /* Resize the background image to cover the entire container */
-}
-
-#my_vue_app {
-    min-height: 100vh;
 }
 
 :root {
@@ -122,23 +102,5 @@ body {
     :root {
         --surface-background: var(--surface-light);
     }
-}
-
-.initial-loader {
-    position: fixed;
-    z-index: 9999;
-
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: var(--p-zinc-950);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    gap: 20px;
-
-    font-size: 20px;
 }
 </style>
