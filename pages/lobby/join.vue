@@ -58,6 +58,7 @@ onMounted(() => {
         inputs_array.forEach((input, id) => {
             if (input.value) input.value.value = lobby_id[id];
         });
+
         if (!auth.isAuthenticated) return (isLoginDialogVisible.value = true);
         handleJoinLobby(lobbyURLParameter.value);
     }
