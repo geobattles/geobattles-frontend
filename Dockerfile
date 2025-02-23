@@ -1,30 +1,25 @@
-# Dockerfile
-FROM node:alpine as builder
+FROM node:22-alpine as builder
 
-# create destination directory
-RUN mkdir -p /usr/src/nuxt-app
 WORKDIR /usr/src/nuxt-app
 
-# update and install dependency
-RUN apk update && apk upgrade
-RUN apk add git
-
-# copy the app, note .dockerignore
-COPY . /usr/src/nuxt-app/
+# Copy necessary files
+COPY package*.json ./
 RUN npm ci
+
+# Copy the rest of the app & build
+COPY . .
 RUN npm run build
 
-EXPOSE 3000
 
-FROM node:alpine
-
-ENV NODE_ENV=production
+FROM node:22-alpine
 
 WORKDIR /app
 
-COPY --from=builder /usr/src/nuxt-app/.output  .
+ENV NODE_ENV=production \
+    HOST=0.0.0.0
 
-ENV HOST 0.0.0.0
+COPY --from=builder /usr/src/nuxt-app/.output  ./
+
 EXPOSE 3000
 
 CMD [ "node", "server/index.mjs" ]
