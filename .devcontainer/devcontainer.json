@@ -1,13 +1,15 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
 {
-	"name": "Node.js & TypeScript",
+	"name": "Geo Frontend",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/typescript-node:1-22-bookworm",
+	"image": "mcr.microsoft.com/devcontainers/typescript-node:1-22",
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"Vue.volar"
+				"Vue.volar",
+				"esbenp.prettier-vscode",
+				"dbaeumer.vscode-eslint"
 			]
 		}
 	},
@@ -16,10 +18,6 @@
 	// "features": {},
 
 	"forwardPorts": [3000],
-
-	"mounts": [
-		"source=${localEnv:HOME}/.ssh,target=/home/node/.ssh,type=bind,consistency=cached"
-	],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
