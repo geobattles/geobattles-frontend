@@ -7,7 +7,11 @@
 <script setup lang="ts">
 const lobbyStore = useLobbyStore();
 const inviteLink = ref("");
-const inviteLinkTagSettings = ref({ value: "Copy Invite Link", severity: "info", icon: "pi pi-copy" });
+const inviteLinkTagSettings = ref({
+    value: "Copy Invite Link",
+    severity: "info",
+    icon: "pi pi-copy",
+});
 
 onMounted(() => {
     // Generate invite link

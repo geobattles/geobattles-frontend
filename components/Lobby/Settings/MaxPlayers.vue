@@ -1,7 +1,18 @@
 <template>
     <div class="flex flex-col gap-1">
         <label for="stacked-buttons" class="text-xs"> Max players </label>
-        <InputNumber class="m-auto w-12" v-model="lobbyStore.lobbySettings!.conf.maxPlayers" style="width: 3rem" buttonLayout="vertical" inputId="stacked-buttons" :min="0" :max="20" showButtons mode="decimal" @focus="handleFocus" />
+        <InputNumber
+            class="m-auto w-12"
+            v-model="lobbyStore.lobbySettings!.conf.maxPlayers"
+            style="width: 3rem"
+            buttonLayout="vertical"
+            inputId="stacked-buttons"
+            :min="0"
+            :max="20"
+            showButtons
+            mode="decimal"
+            @focus="handleFocus"
+        />
     </div>
 </template>
 

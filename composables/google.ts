@@ -3,7 +3,7 @@ import type { Coordinates } from "~/types/appTypes";
 // Google map states
 export const useGoogleMap = shallowRef<google.maps.Map | undefined>(undefined);
 export const useGoogleMapHTML = () => useState<HTMLElement | null>("google_map_html", () => null);
-export const useGooglePanorama = () => useState<google.maps.StreetViewPanorama>("google_panorama", () => ({} as google.maps.StreetViewPanorama));
+export const useGooglePanorama = () => useState<google.maps.StreetViewPanorama>("google_panorama", () => ({}) as google.maps.StreetViewPanorama);
 export const useGooglePanoramaHTML = () => useState<HTMLElement | null>("google_panorama_html", () => null);
 
 const map_starting_view_position: Coordinates = { lat: 0, lng: 0 }; // Constant

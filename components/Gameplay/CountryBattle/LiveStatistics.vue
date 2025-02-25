@@ -12,7 +12,9 @@
             <tbody>
                 <!-- <TransitionGroup name="list" tag="tr"> -->
                 <tr v-for="(player_data, player_id) in results" :key="player_id" class="bg-white border-b">
-                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">{{ player_id }}</th>
+                    <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+                        {{ player_id }}
+                    </th>
                     <td class="px-6 py-4">
                         <div v-for="life in total_attempts.get(player_id)" :key="life" style="display: inline-block">
                             <div v-if="player_data.lives >= life">
@@ -26,7 +28,13 @@
                     <td class="px-6 py-4">
                         <div v-if="player_data.player_countries?.length > 0" class="countries">
                             <div v-for="(country_code, id) in player_data.player_countries" :key="id">
-                                <div class="flag" style="margin-right: 15px" :style="{ backgroundPosition: flag_map.get(country_code)?.x + 'px ' + flag_map.get(country_code)?.y + 'px' }"></div>
+                                <div
+                                    class="flag"
+                                    style="margin-right: 15px"
+                                    :style="{
+                                        backgroundPosition: flag_map.get(country_code)?.x + 'px ' + flag_map.get(country_code)?.y + 'px',
+                                    }"
+                                ></div>
                             </div>
                         </div>
                         <div v-else>Waiting for first guess...</div>

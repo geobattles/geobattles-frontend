@@ -218,5 +218,10 @@ export const useWebSocketStore = defineStore("web_socket_store", () => {
         return `${apiUrl}/lobbySocket?id=${encodeURIComponent(connectionID.value)}`;
     };
 
-    return { connectionStatus: readonly(connectionStatus), initWebSocket, sendMessage, closeConnection };
+    return {
+        connectionStatus: readonly(connectionStatus),
+        initWebSocket,
+        sendMessage,
+        closeConnection,
+    };
 });

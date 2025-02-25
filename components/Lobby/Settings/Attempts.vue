@@ -1,7 +1,16 @@
 <template>
     <div class="flex flex-col gap-1">
         <label for="attempts-per-rounds-input" class="text-xs"> Attempts </label>
-        <InputNumber class="m-auto w-12" inputId="attempts-per-rounds-input" v-model="lobbyStore.lobbySettings!.conf.numAttempt" showButtons buttonLayout="vertical" :min="0" :max="5" @focus="handleFocus" />
+        <InputNumber
+            class="m-auto w-12"
+            inputId="attempts-per-rounds-input"
+            v-model="lobbyStore.lobbySettings!.conf.numAttempt"
+            showButtons
+            buttonLayout="vertical"
+            :min="0"
+            :max="5"
+            @focus="handleFocus"
+        />
     </div>
 </template>
 

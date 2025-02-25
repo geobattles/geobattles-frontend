@@ -19,7 +19,9 @@
                             </div>
                         </div>
                     </div>
-                    <div class="table__row-element"><HelpersAnimateScore :startAmount="0" :endAmount="value.total" :duration="3" separator="" :autoinit="true" /></div>
+                    <div class="table__row-element">
+                        <HelpersAnimateScore :startAmount="0" :endAmount="value.total" :duration="3" separator="" :autoinit="true" />
+                    </div>
                     <!-- <PowerupDuel v-if="setting_store.lobby_settings.powerups[1] == true" :player_id="value[0]" /> -->
                 </div>
             </TransitionGroup>

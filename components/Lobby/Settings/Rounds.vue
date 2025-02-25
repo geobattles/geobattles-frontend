@@ -1,7 +1,16 @@
 <template>
     <div class="flex flex-col gap-1">
         <label for="number-of-rounds-input" class="text-xs"> Rounds </label>
-        <InputNumber class="m-auto w-12" inputId="number-of-rounds-input" v-model="lobbyStore.lobbySettings!.conf.numRounds" showButtons buttonLayout="vertical" :min="0" :max="10" @focus="handleFocus" />
+        <InputNumber
+            class="m-auto w-12"
+            inputId="number-of-rounds-input"
+            v-model="lobbyStore.lobbySettings!.conf.numRounds"
+            showButtons
+            buttonLayout="vertical"
+            :min="0"
+            :max="10"
+            @focus="handleFocus"
+        />
     </div>
 </template>
 

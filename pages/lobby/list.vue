@@ -43,7 +43,12 @@ const handleJoinLobbyClick = async (lobby_id: string) => {
         await joinLobby(lobby_id);
     } catch (error: unknown) {
         if (error instanceof Error) {
-            toast.add({ severity: "error", summary: "Error", detail: error.message, life: 3000 });
+            toast.add({
+                severity: "error",
+                summary: "Error",
+                detail: error.message,
+                life: 3000,
+            });
         }
     } finally {
         isJoiningLobby.value = false;

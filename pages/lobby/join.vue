@@ -73,7 +73,12 @@ const handleJoinLobby = async (lobby_id: string) => {
         if (error instanceof Error) {
             console.log(error.message);
             inputs_array.forEach((input) => input.value?.classList.add("error-lobby")); // Add error class to inputs
-            toast.add({ severity: "error", summary: "Error Joining Lobby", detail: error.message, life: 2000 });
+            toast.add({
+                severity: "error",
+                summary: "Error Joining Lobby",
+                detail: error.message,
+                life: 2000,
+            });
         }
     } finally {
         isLoading.value = false;
