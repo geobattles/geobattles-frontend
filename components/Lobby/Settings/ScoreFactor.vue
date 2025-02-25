@@ -1,6 +1,6 @@
 <template>
     <div class="flex flex-col gap-1">
-        <span>Score factor: {{ lobbyStore.lobbySettings!.conf.scoreFactor || 150 }}</span>
+        <span class="m-auto">Score factor: {{ lobbyStore.lobbySettings!.conf.scoreFactor || 150 }}</span>
         <Slider ref="score-factor" v-model="lobbyStore.lobbySettings!.conf.scoreFactor" :min="1" :max="200" class="w-14rem mt-3" />
     </div>
 </template>

@@ -1,7 +1,7 @@
 <template>
     <div class="flex flex-col gap-1">
-        <span>Round timer: {{ lobbyStore.lobbySettings!.conf.roundTime || 60 }} seconds</span>
-        <Slider ref="timer-slider" v-model="lobbyStore.lobbySettings!.conf.roundTime" :min="1" :max="1000" class="w-14rem mt-3" />
+        <span class="m-auto">Round timer: {{ lobbyStore.lobbySettings!.conf.roundTime || 60 }} seconds</span>
+        <Slider ref="timer-slider" v-model="lobbyStore.lobbySettings!.conf.roundTime" :min="20" :max="200" class="w-14rem mt-3" />
     </div>
 </template>
 
