@@ -67,14 +67,6 @@ const items: Ref<MenuItem[]> = ref([
         },
         path: "/about",
     },
-    {
-        label: "Test",
-        icon: "pi pi-info-circle",
-        command: () => {
-            router.push("/test");
-        },
-        path: "/test",
-    },
 ]);
 
 const itemsProfile: Ref<MenuItem[]> = ref([
