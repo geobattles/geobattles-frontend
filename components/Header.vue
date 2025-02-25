@@ -1,6 +1,6 @@
 <template>
     <header>
-        <Menubar :model="items">
+        <Menubar :model="items" breakpoint="600px">
             <template #start></template>
             <template #item="{ item, props, root }">
                 <a v-ripple class="flex align-items-center" v-bind="props.action" :class="{ 'active-menuitem': isActive(item) }">
