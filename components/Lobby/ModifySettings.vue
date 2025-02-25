@@ -1,12 +1,12 @@
 <template>
     <div class="container mx-auto">
         <div class="flex flex-col md:flex-row justify-evenly flex-wrap">
-            <div v-if="lobbyStore.lobbySettings" class="w-full md:w-1/2 flex flex-col gap-5 pr-0 md:pr-3 max-w-[40rem] m-auto">
+            <div v-if="lobbyStore.lobbySettings" class="w-full md:w-1/2 flex flex-col gap-5 pr-0 md:pr-3 max-w-[40rem]">
                 <!-- Define lobby name section -->
                 <LobbySettingsName />
 
                 <!-- Define lobby GameMode section -->
-                <LobbySettingsGameMode />
+                <!-- <LobbySettingsGameMode /> -->
 
                 <!-- Define lobby round timer section -->
                 <LobbySettingsTimer />
@@ -29,10 +29,10 @@
                 </div>
 
                 <!-- Define lobby powerups section -->
-                <div class="flex flex-row gap-2 mt-2" style="scale: 0.9">
+                <!-- <div class="flex flex-row gap-2 mt-2" style="scale: 0.9">
                     <LobbySettingsToggle label="Double score" v-model="lobbyStore.lobbySettings.conf.powerups[0]" />
                     <LobbySettingsToggle label="Duel battle" v-model="lobbyStore.lobbySettings.conf.powerups[1]" />
-                </div>
+                </div> -->
             </div>
 
             <!-- Component to select countries which user wants to play -->
