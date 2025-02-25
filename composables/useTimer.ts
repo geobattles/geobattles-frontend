@@ -26,10 +26,13 @@ export function useTimer() {
     }
 
     function startSoundTimer() {
-        timeoutSound = setTimeout(() => {
-            intervalSound = setInterval(() => refSound.value?.play(), 1000);
-            countdownColor.value = "var(--p-red-600)";
-        }, (roundTime.value - timerSoundThreshold.value) * 1000);
+        timeoutSound = setTimeout(
+            () => {
+                intervalSound = setInterval(() => refSound.value?.play(), 1000);
+                countdownColor.value = "var(--p-red-600)";
+            },
+            (roundTime.value - timerSoundThreshold.value) * 1000
+        );
     }
 
     function setupResizeListener() {

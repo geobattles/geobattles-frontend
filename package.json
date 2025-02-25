@@ -6,7 +6,8 @@
         "dev": "nuxt dev --host",
         "generate": "nuxt generate",
         "preview": "nuxt preview",
-        "postinstall": "nuxt prepare"
+        "postinstall": "nuxt prepare",
+        "format": "prettier --write ."
     },
     "devDependencies": {
         "@nuxt/devtools": "latest",
@@ -17,6 +18,7 @@
         "@types/google.maps": "^3.58.1",
         "@vite-pwa/nuxt": "^0.10.6",
         "nuxt": "^3.15.4",
+        "prettier": "^3.5.2",
         "typescript": "^5.2.2",
         "vue-tsc": "^2.1.6"
     },

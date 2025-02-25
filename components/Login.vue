@@ -71,7 +71,12 @@ const handleLogin = async () => {
     } catch (error) {
         // Handle login error
         const errorMessage = (error instanceof Error && error.message) || "Unknown error";
-        toast.add({ severity: "error", summary: "Error logging in", detail: errorMessage, life: 5000 });
+        toast.add({
+            severity: "error",
+            summary: "Error logging in",
+            detail: errorMessage,
+            life: 5000,
+        });
         isLoginLoading.value = false;
     }
 };
@@ -86,7 +91,12 @@ const handleRegisterGuest = async () => {
     } catch (error) {
         // Handle login error
         console.error("Registering guest failed", error);
-        toast.add({ severity: "error", summary: "Error registering guest", detail: "Failed to register guest. Please try again later.", life: 5000 });
+        toast.add({
+            severity: "error",
+            summary: "Error registering guest",
+            detail: "Failed to register guest. Please try again later.",
+            life: 5000,
+        });
         isGuestRegisterLoading.value = false;
     }
 };

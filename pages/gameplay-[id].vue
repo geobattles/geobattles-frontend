@@ -86,7 +86,12 @@ const handleClickLeaveLobby = () => {
 
 // When player leaves lobby, show toast
 const handlePlayerLeftToast = (event: CustomEvent) => {
-    toast.add({ severity: "warn", summary: `Player ${event.detail.playerName} Left`, detail: `Player ${event.detail.playerName} has left the lobby`, life: 3000 });
+    toast.add({
+        severity: "warn",
+        summary: `Player ${event.detail.playerName} Left`,
+        detail: `Player ${event.detail.playerName} has left the lobby`,
+        life: 3000,
+    });
 };
 </script>
 

@@ -1,4 +1,16 @@
-import type { MsgJoinedLobbyData, MsgLeftLobbyData, MsgUpdatedLobbyData, MsgStartRoundData, MsgNewResultData, MsgRoundResultData, MsgCCData, MsgGameEndData, MsgTimesUpData, MsgRoundFinishedData, MsgNoCountryData } from "~/types/socketTypes"; // Adjust the path according to your project structure
+import type {
+    MsgJoinedLobbyData,
+    MsgLeftLobbyData,
+    MsgUpdatedLobbyData,
+    MsgStartRoundData,
+    MsgNewResultData,
+    MsgRoundResultData,
+    MsgCCData,
+    MsgGameEndData,
+    MsgTimesUpData,
+    MsgRoundFinishedData,
+    MsgNoCountryData,
+} from "~/types/socketTypes"; // Adjust the path according to your project structure
 import { SocketType } from "~/types/socketTypes"; // Adjust the path according to your project structure
 
 // Messages that client sends to the server

@@ -19,7 +19,9 @@
                 <div class="flex justify-evenly mt-5">
                     <div class="flex flex-col">
                         <div class="mb-1">Lobby code</div>
-                        <div class="text-base lg:text-xl" style="letter-spacing: 2px">{{ lobbySettings?.ID }}</div>
+                        <div class="text-base lg:text-xl" style="letter-spacing: 2px">
+                            {{ lobbySettings?.ID }}
+                        </div>
                     </div>
                     <div class="flex flex-col">
                         <div class="mb-1">Connection Status</div>

@@ -48,7 +48,12 @@ const onSubmit = async () => {
             if (!displayName.value) missingFields.push("Display Name");
             if (!password.value) missingFields.push("Password");
 
-            toast.add({ severity: "warn", summary: "Missing Fields", detail: `Please fill in the following fields: ${missingFields.join(", ")}`, life: 5000 });
+            toast.add({
+                severity: "warn",
+                summary: "Missing Fields",
+                detail: `Please fill in the following fields: ${missingFields.join(", ")}`,
+                life: 5000,
+            });
             isRegisterLoading.value = false;
             return;
         }
@@ -66,7 +71,12 @@ const onSubmit = async () => {
     } catch (error) {
         // Handle register error
         const errorMessage = (error instanceof Error && error.message) || "Unknown error";
-        toast.add({ severity: "error", summary: "Error registering", detail: errorMessage, life: 5000 });
+        toast.add({
+            severity: "error",
+            summary: "Error registering",
+            detail: errorMessage,
+            life: 5000,
+        });
         isRegisterLoading.value = false;
     }
 };

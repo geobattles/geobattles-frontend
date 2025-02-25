@@ -137,11 +137,17 @@ export const useLobbyStore = defineStore("lobby", () => {
             //@ts-ignore  Nested objects (ccList) are always different so they are stringified and compared as such
             if (typeof lso.value.conf[field] === "object") {
                 //@ts-ignore
-                if (JSON.stringify(lso.value.conf[field]) === JSON.stringify(ls.value.conf[field])) delete lso.value.conf[field]; //@ts-ignore
+                if (JSON.stringify(lso.value.conf[field]) === JSON.stringify(ls.value.conf[field]))
+                    //@ts-ignore
+                    delete lso.value.conf[field];
+                //@ts-ignore
                 else lso.value.conf[field] = ls.value.conf[field];
             } else {
                 //@ts-ignore
-                if (lso.value.conf[field] === ls.value.conf[field]) delete lso.value.conf[field]; //@ts-ignore
+                if (lso.value.conf[field] === ls.value.conf[field])
+                    //@ts-ignore
+                    delete lso.value.conf[field];
+                //@ts-ignore
                 else lso.value.conf[field] = ls.value.conf[field];
             }
         }

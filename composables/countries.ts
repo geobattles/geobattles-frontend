@@ -144,7 +144,14 @@ export const useCountriesFlagMap = () =>
                 ["FO", { name: "Faroe Islands", x: -320, y: -96 }],
                 ["FR", { name: "France", x: -352, y: -96 }],
                 ["GA", { name: "Gabon", x: -384, y: -96 }],
-                ["GB", { name: "United Kingdom of Great Britain and Northern Ireland", x: -416, y: -96 }],
+                [
+                    "GB",
+                    {
+                        name: "United Kingdom of Great Britain and Northern Ireland",
+                        x: -416,
+                        y: -96,
+                    },
+                ],
                 ["GD", { name: "Grenada", x: -448, y: -96 }],
                 ["GE", { name: "Georgia", x: -480, y: -96 }],
                 ["GF", { name: "French Guiana", x: -0, y: -120 }],
@@ -157,7 +164,14 @@ export const useCountriesFlagMap = () =>
                 ["GP", { name: "Guadeloupe", x: -224, y: -120 }],
                 ["GQ", { name: "Equatorial Guinea", x: -256, y: -120 }],
                 ["GR", { name: "Greece", x: -288, y: -120 }],
-                ["GS", { name: "South Georgia and the South Sandwich Islands", x: -320, y: -120 }],
+                [
+                    "GS",
+                    {
+                        name: "South Georgia and the South Sandwich Islands",
+                        x: -320,
+                        y: -120,
+                    },
+                ],
                 ["GT", { name: "Guatemala", x: -352, y: -120 }],
                 ["GU", { name: "Guam", x: -384, y: -120 }],
                 ["GW", { name: "Guinea-Bissau", x: -416, y: -120 }],
@@ -266,7 +280,14 @@ export const useCountriesFlagMap = () =>
                 ["SD", { name: "Sudan", x: -128, y: -288 }],
                 ["SE", { name: "Sweden", x: -160, y: -288 }],
                 ["SG", { name: "Singapore", x: -192, y: -288 }],
-                ["SH", { name: "Saint Helena, Ascension and Tristan da Cunha", x: -224, y: -288 }],
+                [
+                    "SH",
+                    {
+                        name: "Saint Helena, Ascension and Tristan da Cunha",
+                        x: -224,
+                        y: -288,
+                    },
+                ],
                 ["SI", { name: "Slovenia", x: -256, y: -288 }],
                 ["SJ", { name: "Svalbard and Jan Mayen", x: -288, y: -288 }],
                 ["SK", { name: "Slovakia", x: -320, y: -288 }],
