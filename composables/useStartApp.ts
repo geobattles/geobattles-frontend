@@ -1,7 +1,7 @@
 export const useStartApp = () => {
     // Read ENV variables
     const runtimeConfig = useRuntimeConfig();
-    useBackendAPI().value = runtimeConfig.public.DEV_BACKEND_API_HOST;
+    useBackendAPI().value = runtimeConfig.public.BACKEND_HOST;
 
     // Define the app's head metadata
     useHead({
