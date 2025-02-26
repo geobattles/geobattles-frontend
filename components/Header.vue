@@ -18,7 +18,16 @@
                 <div v-else class="flex gap-2 items-center">
                     <Button v-if="showLogoutButton" label="Logout" size="small" severity="primary" raised @click="auth.logout()" />
                     <Tag icon="pi pi-user" severity="info" :value="playerInfo.displayName" />
-                    <Button v-if="showLogoutButton" size="small" severity="primary" type="button" icon="pi pi-user-edit" @click="toggleUserMenu" aria-haspopup="true" aria-controls="overlay_menu" />
+                    <Button
+                        v-if="showLogoutButton"
+                        size="small"
+                        severity="primary"
+                        type="button"
+                        icon="pi pi-user-edit"
+                        @click="toggleUserMenu"
+                        aria-haspopup="true"
+                        aria-controls="overlay_menu"
+                    />
                     <Menu ref="userMenu" id="overlay_menu" :model="itemsProfile" :popup="true" />
                 </div>
             </template>

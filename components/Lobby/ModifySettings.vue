@@ -62,7 +62,7 @@ onUnmounted(() => {
 
 <style scoped>
 .container {
-    max-width: 100%;;
+    max-width: 100%;
     height: 900px;
 }
 </style>

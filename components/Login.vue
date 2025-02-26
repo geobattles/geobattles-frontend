@@ -34,7 +34,14 @@
                     <InputText id="guest-username" type="text" v-model="guestDisplayName" />
                     <label for="guest-username">Guest Username</label>
                 </FloatLabel>
-                <Button label="Submit" icon="pi pi-check" severity="info" class="w-full max-w-[17.35rem] mx-auto" @click="handleRegisterGuest()" :loading="isGuestRegisterLoading" />
+                <Button
+                    label="Submit"
+                    icon="pi pi-check"
+                    severity="info"
+                    class="w-full max-w-[17.35rem] mx-auto"
+                    @click="handleRegisterGuest()"
+                    :loading="isGuestRegisterLoading"
+                />
             </div>
         </Dialog>
     </div>
