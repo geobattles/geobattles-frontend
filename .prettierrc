@@ -17,5 +17,13 @@
     "endOfLine": "lf",
     "experimentalTernaries": false,
     "insertPragma": false,
-    "withNodeModules": false
+    "withNodeModules": false,
+    "overrides": [
+        {
+            "files": "*.yml",
+            "options": {
+                "tabWidth": 2
+            }
+        }
+    ]
 }
