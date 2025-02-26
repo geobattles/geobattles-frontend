@@ -14,8 +14,8 @@ export default defineNuxtConfig({
 
     runtimeConfig: {
         public: {
-            GMAPS_API: process.env.GMAPS_API || "",
-            BACKEND_HOST: process.env.BACKEND_HOST || "",
+            GMAPS_API: "",
+            BACKEND_HOST: "",
         },
     },
 
