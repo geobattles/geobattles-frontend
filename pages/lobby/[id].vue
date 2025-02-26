@@ -1,20 +1,20 @@
 <template>
     <div class="h-screen overflow-scroll">
         <Header />
-        <div class="main-content flex flex-wrap gap-0 justify-center lg:gap-5 text-xs lg:text-base">
+        <div class="main-content flex flex-wrap gap-1 justify-center lg:gap-5 text-xs lg:text-base">
             <!-- Lobby Settings Content -->
-            <Panel class="basis-1/2 lg:basis-1/3" header="Lobby Settings" style="min-width: 250px; max-width: 500px">
-                <template #header class="flex justify-around">
-                    <div class="font-bold text-base">Lobby Settings</div>
-                </template>
-                <template v-if="isPlayerAdmin()" #icons>
-                    <Button @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal" type="button" label="Modify" icon="pi pi-cog" severity="contrast" />
-                </template>
-                <LobbyDisplaySettings />
+            <Panel class="basis-full sm:basis-1/3 w-screen" header="Lobby Settings">
+            <template #header class="flex justify-around">
+                <div class="font-bold text-base">Lobby Settings</div>
+            </template>
+            <template v-if="isPlayerAdmin()" #icons>
+                <Button @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal" type="button" label="Modify" icon="pi pi-cog" severity="contrast" />
+            </template>
+            <LobbyDisplaySettings />
             </Panel>
 
             <!-- Game Info Content -->
-            <div class="basis-1/2 lg:basis-1/3 text-sm lg:text-base">
+            <div class="basis-full sm:basis-1/3 text-sm lg:text-base">
                 <LobbyStartGame />
                 <div class="flex justify-evenly mt-5">
                     <div class="flex flex-col">

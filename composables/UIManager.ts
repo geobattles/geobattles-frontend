@@ -1,3 +1,4 @@
+import type { WatchStopHandle } from "vue";
 import { GameState } from "~/types/appTypes";
 
 type EventCallback = (event: CustomEvent) => void;
@@ -5,6 +6,7 @@ type EventCallback = (event: CustomEvent) => void;
 export class UIManager {
     private googleMap: HTMLElement | null = null;
     private googlePanorama: HTMLElement | null = null;
+    private stateWatcher: WatchStopHandle | null = null;
 
     private eventListeners: { [key: string]: EventCallback[] } = {};
 
@@ -125,9 +127,11 @@ export class UIManager {
      * Will track the game flow and move the map to the required position based on the game state.
      */
     googleMapDOMTracker(): void {
-        const gameStore = useGameplayStore();
+        // Stop previous watcher if it exists
+        if (this.stateWatcher) this.stateWatcher();
 
-        watch(
+        const gameStore = useGameplayStore();
+        this.stateWatcher = watch(
             () => gameStore.currentState,
             (newVal) => {
                 console.warn("Game flow changed to: " + newVal);

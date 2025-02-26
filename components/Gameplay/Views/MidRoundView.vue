@@ -26,16 +26,32 @@
         </div>
 
         <!-- Start Next Round Button -->
-        <div v-if="isPlayerAdmin()" class="next-round-button-container bg-p-surface-200">
-            <Button @click="gameStore.sendStartRoundSocketMessage" label="Next Round" icon="pi pi-forward" severity="primary" />
+        <div class="midround-menu">
+            <Button
+                v-if="isPlayerAdmin()"
+                pt:root:class="!text-xs !lg:text-sm"
+                class="m-auto"
+                @click="gameStore.sendStartRoundSocketMessage"
+                label="Next Round"
+                icon="pi pi-forward"
+                variant="outlined"
+                severity="primary"
+            />
+            <LobbyLeave class="gameplay-connection-and-leave text-xs lg:text-sm m-auto" @click="handleClickLeaveLobby" />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
+import { LobbyLeave } from "#components";
+
+const emit = defineEmits(["leaveLobby"]);
 const gameStore = useGameplayStore();
 
 const { isPlayerAdmin } = useLobbyStore();
+
+// Handle leaving the lobby
+const handleClickLeaveLobby = () => emit("leaveLobby");
 </script>
 
 <style>
@@ -78,7 +94,7 @@ const { isPlayerAdmin } = useLobbyStore();
 }
 
 /* Next Round Button Styles */
-.next-round-button-container {
+.midround-menu {
     position: absolute;
     bottom: 0;
     left: 50%;
@@ -89,5 +105,7 @@ const { isPlayerAdmin } = useLobbyStore();
 
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
+
+    display: flex;
 }
 </style>

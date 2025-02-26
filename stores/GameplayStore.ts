@@ -106,6 +106,13 @@ export const useGameplayStore = defineStore("gameplay", () => {
         uiManager.googleMapDOMTracker();
     };
 
+    const exitGameplay = () => {
+        // Clear click listeners after game ends
+        const gMap = isGoogleMap();
+        google.maps.event.clearListeners(gMap, "click");
+        modeLogic.value?.clearMap();
+    };
+
     /**
      * TODO: Should be moved to UI manager maybe? Or idk something needs to be changed here.
      * @param playerID
@@ -137,6 +144,7 @@ export const useGameplayStore = defineStore("gameplay", () => {
         processClickedCountry,
         processNewResult,
         mountingProcess,
+        exitGameplay,
         applyGuessStyles,
     };
 });

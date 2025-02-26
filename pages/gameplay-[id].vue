@@ -7,7 +7,7 @@
         <GameplayViewsGameplayView v-show="gameStore.currentState === 'PLAYING'" @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- MidRound View (when game is in mid-round) -->
-        <GameplayViewsMidRoundView v-show="gameStore.currentState === 'MID-ROUND'" />
+        <GameplayViewsMidRoundView v-show="gameStore.currentState === 'MID-ROUND'" @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- EndGame View (when game is finished) -->
         <GameplayViewsEndGameView v-show="gameStore.currentState === 'FINISHED'" />

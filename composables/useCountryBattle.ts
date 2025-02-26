@@ -26,6 +26,10 @@ export function useCountryBattleMode() {
         // Add logic to process clicked country
     };
 
+    const clearMap = () => {
+        // Add logic to clear the map
+    };
+
     return {
         isSubmitDisabled,
         startRound,
@@ -34,5 +38,6 @@ export function useCountryBattleMode() {
         processMapPin,
         processNewResult,
         processClickedCountry,
+        clearMap,
     };
 }
