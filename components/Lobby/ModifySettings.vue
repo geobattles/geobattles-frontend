@@ -36,7 +36,7 @@
             </div>
 
             <!-- Component to select countries which user wants to play -->
-            <div class="w-full md:w-1/2 max-w-[40rem] m-auto">
+            <div class="w-full md:w-1/2 max-w-[40rem]">
                 <Panel header="Country Settings">
                     <LobbySettingsCountries style="max-height: 800px" />
                 </Panel>
@@ -62,6 +62,7 @@ onUnmounted(() => {
 
 <style scoped>
 .container {
-    max-width: 100%;
+    max-width: 100%;;
+    height: 900px;
 }
 </style>

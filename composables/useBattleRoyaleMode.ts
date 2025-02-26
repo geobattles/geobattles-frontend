@@ -188,6 +188,7 @@ export function useBattleRoyaleMode() {
 
     return {
         isSubmitDisabled,
+        clearMap,
         startRound,
         finishRound,
         finishGame,

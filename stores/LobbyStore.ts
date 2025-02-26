@@ -79,7 +79,24 @@ export const useLobbyStore = defineStore("lobby", () => {
     const leaveLobby = () => {
         const socketStore = useWebSocketStore();
         try {
+            // Close WebSocket connection
             socketStore.closeConnection();
+
+            // Exit Gameplay
+            const gameStore = useGameplayStore();
+            try {
+                gameStore.exitGameplay();
+            } catch (error) {
+                // console.error("Error exiting gameplay:", error);
+            }
+
+            // Reset lobby settings
+            lobbySettings.value = null;
+            lobbySettingsOriginal.value = null;
+
+            // Reset results
+            useLiveResults().value = {};
+            useTotalResults().value = {};
         } catch (error) {
             console.error("Error leaving lobby:", error);
             throw new Error("Could not leave lobby.");
