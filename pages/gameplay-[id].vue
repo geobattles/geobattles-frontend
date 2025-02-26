@@ -10,7 +10,7 @@
         <GameplayViewsMidRoundView v-show="gameStore.currentState === 'MID-ROUND'" @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- EndGame View (when game is finished) -->
-        <GameplayViewsEndGameView v-show="gameStore.currentState === 'FINISHED'" />
+        <GameplayViewsEndGameView v-show="gameStore.currentState === 'FINISHED'" @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- Screen dimensions display (debug purposes) -->
         <!-- <div class="screen-dimensions">Width: {{ screenWidth }}px, Height: {{ screenHeight }}px</div> -->

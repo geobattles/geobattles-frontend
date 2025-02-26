@@ -43,8 +43,6 @@
 </template>
 
 <script setup lang="ts">
-import { LobbyLeave } from "#components";
-
 const emit = defineEmits(["leaveLobby"]);
 const gameStore = useGameplayStore();
 

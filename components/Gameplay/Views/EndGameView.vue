@@ -24,21 +24,37 @@
             <!-- Google Map Gets Appended here in ENDGAME -->
         </div>
         <div v-if="isPlayerAdmin()" class="endgame-menu-container">
-            <Button type="button" class="m-auto" label="NEXT GAME" icon="pi pi-play-circle" @click="gameStore.sendStartRoundSocketMessage" severity="primary" size="small" />
             <Button
-                @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal"
                 type="button"
-                class="m-auto"
-                label="Modify Lobby Settings"
-                icon="pi pi-cog"
-                severity="info"
-                size="small"
+                label="New Game"
+                severity="primary"
+                icon="pi pi-play-circle"
+                variant="outlined"
+                size="large"
+                @click="gameStore.sendStartRoundSocketMessage"
+                pt:root:class="!text-xs lg:!text-base m-auto"
             />
+            <Button
+                type="button"
+                label="Settings"
+                severity="info"
+                icon="pi pi-cog"
+                variant="outlined"
+                @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal"
+                pt:root:class="!text-xs lg:!text-base m-auto"
+            />
+            <LobbyLeave class="m-auto" @click="handleClickLeaveLobby" />
         </div>
-        <div v-else class="next-round-button-container">
-            <p class="text-center">GAMEOVER</p>
-            <p class="text-xs text-center">Waiting for admin to start next...</p>
+        <div v-else class="endgame-menu-container">
+            <div class="flex gap-3">
+                <div class="flex flex-col">
+                    <p class="text-center">GAMEOVER</p>
+                    <p class="text-xs text-center">Waiting for admin to start next...</p>
+                </div>
+                <LobbyLeave class="m-auto" @click="handleClickLeaveLobby" />
+            </div>
         </div>
+        <div></div>
         <Dialog v-model:visible="lobbyStore.modifySettingsModal" header="Lobby Settings" modal class="m-3" :style="{ width: '95%' }">
             <LobbyModifySettings />
         </Dialog>
@@ -46,6 +62,8 @@
 </template>
 
 <script setup lang="ts">
+const emit = defineEmits(["leaveLobby"]);
+
 // External services
 const gameStore = useGameplayStore();
 const lobbyStore = useLobbyStore();
@@ -58,6 +76,9 @@ watch(
         if (!newVal) lobbyStore.applyLobbySettings();
     }
 );
+
+// Handle leaving the lobby
+const handleClickLeaveLobby = () => emit("leaveLobby");
 </script>
 
 <style>
@@ -65,7 +86,6 @@ watch(
     position: relative;
     height: 100dvh;
     width: 100dvw;
-    background-color: var(--p-surface-800);
 }
 
 .endgame-menu-container {
@@ -74,9 +94,10 @@ watch(
     left: 50%;
     transform: translateX(-50%);
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background-color: var(--p-surface-900);
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 5px;
+    background-color: var(--surface-background);
     padding: 10px 20px;
 
     border-top-left-radius: 10px;
