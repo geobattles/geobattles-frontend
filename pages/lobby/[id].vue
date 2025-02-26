@@ -4,13 +4,13 @@
         <div class="main-content flex flex-wrap gap-1 justify-center lg:gap-5 text-xs lg:text-base">
             <!-- Lobby Settings Content -->
             <Panel class="basis-full sm:basis-1/3 w-screen" header="Lobby Settings">
-            <template #header class="flex justify-around">
-                <div class="font-bold text-base">Lobby Settings</div>
-            </template>
-            <template v-if="isPlayerAdmin()" #icons>
-                <Button @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal" type="button" label="Modify" icon="pi pi-cog" severity="contrast" />
-            </template>
-            <LobbyDisplaySettings />
+                <template #header class="flex justify-around">
+                    <div class="font-bold text-base">Lobby Settings</div>
+                </template>
+                <template v-if="isPlayerAdmin()" #icons>
+                    <Button @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal" type="button" label="Modify" icon="pi pi-cog" severity="contrast" />
+                </template>
+                <LobbyDisplaySettings />
             </Panel>
 
             <!-- Game Info Content -->

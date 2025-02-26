@@ -121,7 +121,8 @@ export const useGameplayStore = defineStore("gameplay", () => {
      */
     const applyGuessStyles = (playerID: string, previousLeader: string, newLeader: string) => {
         const player_dom: HTMLElement | null = document.getElementById(playerID);
-        if (newLeader === playerID) setTimeout(() => (newLeader === previousLeader ? player_dom?.classList.add("applied-guess") : player_dom?.classList.add("applied-guess-lead")), 100);
+        if (newLeader === playerID)
+            setTimeout(() => (newLeader === previousLeader ? player_dom?.classList.add("applied-guess") : player_dom?.classList.add("applied-guess-lead")), 100);
         // Apply winning styles for new leader
         else setTimeout(() => player_dom?.classList.add("applied-guess"), 100); // Apply gray styles for guess
         setTimeout(() => player_dom?.classList.remove("applied-guess-lead", "applied-guess"), newLeader === playerID ? 1400 : 1200); // Remove guess styles

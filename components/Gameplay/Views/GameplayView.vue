@@ -25,7 +25,13 @@
             >
                 {{ gameStore.modeLogic?.isSubmitDisabled ? "Place your pin" : "GUESS" }}
             </button>
-            <button ref="submit_button" v-if="gameStore.currentMode === 'CountryBattle'" class="submit-button" @click="gameStore.submitGuess()" :disabled="gameStore.modeLogic?.isSubmitDisabled">
+            <button
+                ref="submit_button"
+                v-if="gameStore.currentMode === 'CountryBattle'"
+                class="submit-button"
+                @click="gameStore.submitGuess()"
+                :disabled="gameStore.modeLogic?.isSubmitDisabled"
+            >
                 {{ gameStore.modeLogic?.isSubmitDisabled ? "Place your guess on the map" : "GUESS" }}
             </button>
         </div>
