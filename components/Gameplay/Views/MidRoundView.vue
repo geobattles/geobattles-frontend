@@ -29,7 +29,7 @@
         <div class="midround-menu">
             <Button
                 v-if="isPlayerAdmin()"
-                pt:root:class="!text-xs !lg:text-sm"
+                pt:root:class="!text-xs lg:!text-base"
                 class="m-auto"
                 @click="gameStore.sendStartRoundSocketMessage"
                 label="Next Round"

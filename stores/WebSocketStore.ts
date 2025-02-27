@@ -1,3 +1,4 @@
+import { GameState } from "~/types/appTypes";
 import { SocketType } from "~/types/socketTypes";
 
 enum ConnectionStatus {
@@ -104,8 +105,12 @@ export const useWebSocketStore = defineStore("web_socket_store", () => {
     const handleClose = (event: CloseEvent): void => {
         console.info("WebSocket connection closed");
         stopPinging();
-        if (!event.wasClean) attemptReconnect();
-        else connectionStatus.value = ConnectionStatus.Disconnected;
+
+        if (!event.wasClean && useGameplayStore().currentState === GameState.PLAYING) {
+            attemptReconnect();
+        } else {
+            connectionStatus.value = ConnectionStatus.Disconnected;
+        }
     };
 
     /**
