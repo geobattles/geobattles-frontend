@@ -15,7 +15,7 @@ export const useWebSocketStore = defineStore("web_socket_store", () => {
     const connectionStatus = ref(ConnectionStatus.Disconnected);
     const reconnectAttempts = ref(0);
 
-    const MAX_RECONNECT_ATTEMPTS = 5;
+    const MAX_RECONNECT_ATTEMPTS = 10;
     const INITIAL_RECONNECT_DELAY = 2000;
     let reconnectTimeout: number | null = null;
 
@@ -201,7 +201,7 @@ export const useWebSocketStore = defineStore("web_socket_store", () => {
             console.log(`Reconnection attempt ${reconnectAttempts.value} of ${MAX_RECONNECT_ATTEMPTS}`);
 
             // Set delay and try to reconnect
-            const delay = INITIAL_RECONNECT_DELAY * Math.pow(2, reconnectAttempts.value - 1);
+            const delay = INITIAL_RECONNECT_DELAY * Math.pow(1, reconnectAttempts.value - 1);
             reconnectTimeout = window.setTimeout(() => connect(), delay);
         } else {
             console.log("Max reconnection attempts reached. Stopping reconnection.");

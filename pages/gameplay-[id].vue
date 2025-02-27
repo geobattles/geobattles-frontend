@@ -15,6 +15,9 @@
         <!-- Screen dimensions display (debug purposes) -->
         <!-- <div class="screen-dimensions">Width: {{ screenWidth }}px, Height: {{ screenHeight }}px</div> -->
 
+        <!-- Connection Status Dialog -->
+        <GameplayLostConnectionDialog @leaveLobby="handleClickLeaveLobby()" />
+
         <!-- Toast when player leaves lobby -->
         <Toast position="bottom-right" />
     </div>
