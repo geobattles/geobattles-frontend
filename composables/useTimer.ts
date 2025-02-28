@@ -1,70 +1,122 @@
-const DEFAULT_TIMER_SOUND_THRESHOLD = 10;
-const SHORT_ROUND_THRESHOLD = 20;
-const SHORT_ROUND_SOUND_THRESHOLD = 5;
-const LARGE_SCREEN_SIZE = 1024;
-const LARGE_KNOB_SIZE = 80;
-const SMALL_KNOB_SIZE = 50;
+// Timer configuration constants
+const TIMER_CONFIG = {
+    DEFAULT_SOUND_THRESHOLD: 15,
+    SHORT_ROUND_THRESHOLD: 20,
+    SHORT_ROUND_SOUND_THRESHOLD: 10,
+    LARGE_SCREEN_SIZE: 1024,
+    LARGE_KNOB_SIZE: 80,
+    SMALL_KNOB_SIZE: 50,
+};
+
+type TimerSound = {
+    isLastTick?: boolean;
+};
 
 export function useTimer() {
     const { lobbySettings } = useLobbyStore();
     const screenWidth = ref(window.innerWidth);
-    const countdown = ref(lobbySettings?.conf.roundTime ?? 0);
-    const timerSoundThreshold = ref(DEFAULT_TIMER_SOUND_THRESHOLD);
-    const refSound = ref<HTMLAudioElement | null>(null);
-
     const roundTime = computed(() => lobbySettings?.conf.roundTime ?? 0);
+    const countdown = ref(roundTime.value);
+    const timerSoundThreshold = ref(roundTime.value <= TIMER_CONFIG.SHORT_ROUND_THRESHOLD ? TIMER_CONFIG.SHORT_ROUND_SOUND_THRESHOLD : TIMER_CONFIG.DEFAULT_SOUND_THRESHOLD);
     const countdownColor = ref("var(--p-primary-500)");
-    const knobSize = computed(() => (screenWidth.value > LARGE_SCREEN_SIZE ? LARGE_KNOB_SIZE : SMALL_KNOB_SIZE));
-    const valueTemplate = (value: number) => `${value}s`;
 
-    function startCountdown() {
-        const start = Date.now();
-        return setInterval(() => {
-            const delta = Date.now() - start;
-            countdown.value = Math.max(roundTime.value - Math.floor(delta / 1000), 0);
-        }, 1000);
-    }
+    // Computed properties
+    const knobSize = computed(() => (screenWidth.value > TIMER_CONFIG.LARGE_SCREEN_SIZE ? TIMER_CONFIG.LARGE_KNOB_SIZE : TIMER_CONFIG.SMALL_KNOB_SIZE));
 
-    function startSoundTimer() {
-        timeoutSound = setTimeout(
-            () => {
-                intervalSound = setInterval(() => refSound.value?.play(), 1000);
-                countdownColor.value = "var(--p-red-600)";
-            },
-            (roundTime.value - timerSoundThreshold.value) * 1000
-        );
-    }
-
-    function setupResizeListener() {
-        const resizeListener = () => (screenWidth.value = window.innerWidth);
-        window.addEventListener("resize", resizeListener);
-        return resizeListener;
-    }
-
+    // Audio Context for Web Audio API
+    let audioContext: AudioContext | null = null;
     let intervalSound: ReturnType<typeof setInterval>;
     let intervalCountdown: ReturnType<typeof setInterval>;
     let timeoutSound: ReturnType<typeof setTimeout>;
 
-    onMounted(() => {
-        if (!lobbySettings || !lobbySettings.conf.roundTime) {
+    /**
+     * Plays a tick sound using Web Audio API
+     */
+    function playTickSound({ isLastTick = false }: TimerSound = {}) {
+        try {
+            // Lazy initialize audio context (needs user interaction)
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+            }
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            if (isLastTick) {
+                // Final timer sound - clear game-ending tone
+                oscillator.type = "sine";
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5 note
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime + 0.3); // A4 note
+                oscillator.frequency.linearRampToValueAtTime(330, audioContext.currentTime + 0.8); // E4 note
+
+                gainNode.gain.setValueAtTime(0.01, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.2, audioContext.currentTime + 0.4);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1.0);
+
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 1.0);
+            } else {
+                // Regular tick sound
+                oscillator.type = "sine";
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }
+        } catch (error) {
+            console.error("Error playing tick sound:", error);
+        }
+    }
+
+    /**
+     * Sets up and starts the countdown timer
+     */
+    function initializeTimer() {
+        if (!lobbySettings?.conf.roundTime) {
             console.error("Lobby settings or round time are not set!");
             return;
         }
 
-        if (roundTime.value <= SHORT_ROUND_THRESHOLD) {
-            timerSoundThreshold.value = SHORT_ROUND_SOUND_THRESHOLD;
-        }
+        // Start countdown
+        const startTime = Date.now();
+        intervalCountdown = setInterval(() => {
+            countdown.value = Math.max(roundTime.value - Math.floor((Date.now() - startTime) / 1000), 0);
+        }, 1000);
 
-        startSoundTimer();
-        intervalCountdown = startCountdown();
+        // Start sound timer
+        const delayBeforeSound = (roundTime.value - timerSoundThreshold.value) * 1000;
+        timeoutSound = setTimeout(() => {
+            countdownColor.value = "var(--p-red-600)";
+            intervalSound = setInterval(() => {
+                if (countdown.value > 0) {
+                    playTickSound();
+                }
+            }, 1000);
+        }, delayBeforeSound);
+    }
 
-        const resizeListener = setupResizeListener();
+    onMounted(() => {
+        initializeTimer();
+
+        // Handle window resize
+        const handleResize = () => (screenWidth.value = window.innerWidth);
+        window.addEventListener("resize", handleResize);
 
         onUnmounted(() => {
             clearTimeout(timeoutSound);
             clearInterval(intervalSound);
             clearInterval(intervalCountdown);
-            window.removeEventListener("resize", resizeListener);
+            window.removeEventListener("resize", handleResize);
+
+            // Clean up audio context
+            if (audioContext) {
+                audioContext.close().catch(console.error);
+            }
         });
     });
 
@@ -73,7 +125,7 @@ export function useTimer() {
         roundTime,
         countdownColor,
         knobSize,
-        valueTemplate,
-        refSound,
+        valueTemplate: (value: number) => `${value}s`,
+        playRoundFinishSound: () => playTickSound({ isLastTick: true }),
     };
 }
