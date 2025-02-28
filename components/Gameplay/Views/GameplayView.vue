@@ -5,7 +5,10 @@
 
         <!-- GAMEPLAY MENU -->
         <div class="gameplay-menu-container">
-            <GameplayMenu class="gameplay-connection-and-leave text-xs lg:text-sm" @leaveLobbyClicked="handleClickLeaveLobby" />
+            <div class="flex flex-row gap-2">
+                <GameplayMenu class="gameplay-connection-and-leave text-xs lg:text-sm" @leaveLobbyClicked="handleClickLeaveLobby" />
+                <GameplayTimerBar v-if="gameStore.currentState === 'PLAYING'" />
+            </div>
             <Button class="gameplay-fullscreen-button" @click="uiManager.toggleFullscreen()" type="button" icon="pi pi-expand" severity="secondary" size="large" />
         </div>
 
@@ -44,7 +47,7 @@
         <GameplayCountryBattleLiveStatistics v-if="gameStore.currentMode === 'CountryBattle'" class="gameplay-live-results" />
 
         <!-- BAR TIMER -->
-        <GameplayTimerBar v-if="gameStore.currentState === 'PLAYING'" class="timer-bar-container" />
+        <!-- <GameplayTimerBar v-if="gameStore.currentState === 'PLAYING'" class="timer-bar-container" /> -->
 
         <!-- MAP MOBILE BUTTON -->
         <button ref="toggleMapMobile" v-show="uiManager.getIsMobile() && gameStore.currentState === 'PLAYING'" class="mobile-map-button">
@@ -240,7 +243,7 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     position: absolute;
     z-index: 2; /* Above panorama */
 
-    bottom: 5px;
+    top: 5px;
     left: 50%;
     transform: translateX(-50%);
     margin-left: auto;
