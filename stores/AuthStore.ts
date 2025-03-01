@@ -51,7 +51,7 @@ export const useAuthStore = defineStore("auth", () => {
         isAuthenticated.value = false; // Set authentication status to false
 
         const socketStore = useWebSocketStore();
-        socketStore.closeConnection();
+        socketStore.disconnect();
 
         const router = useRouter();
         router.push({ path: "/" }); // Redirect to the main page

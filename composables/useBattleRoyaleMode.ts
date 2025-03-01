@@ -9,7 +9,7 @@ export function useBattleRoyaleMode() {
 
     const startRound = () => {
         const { lobbySettings } = useLobbyStore();
-        if (!lobbySettings) return console.error("Lobby settings are not defined in startRound method in GameplayBattleRoyale class.");
+        if (!lobbySettings) return console.error("Lobby settings are not defined in startRound method in useBattleRoyaleMode.");
 
         // Redirect to gampeplay route if not already there
         const routeName = router.currentRoute.value.name as string;

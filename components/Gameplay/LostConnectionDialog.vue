@@ -2,9 +2,9 @@
     <div>
         <Dialog v-model:visible="isConnected" class="w-96" :closable="false" modal header="Connection Lost">
             <div class="flex flex-col items-center gap-4 p-4">
-                <ConnectionStatus />
-                <ProgressSpinner v-if="socketStore.connectionStatus === 'reconnecting'" />
-                <Button v-if="socketStore.connectionStatus === 'disconnected'" label="Return to Home" severity="danger" @click="handleReturnHomeClick" />
+                <SocketConnectionStatus />
+                <ProgressSpinner v-if="socketStore.connectionState === 'reconnecting'" />
+                <Button v-if="socketStore.connectionState === 'disconnected'" label="Return to Home" severity="danger" @click="handleReturnHomeClick" />
             </div>
         </Dialog>
     </div>
@@ -14,7 +14,7 @@
 const emit = defineEmits(["leaveLobby"]);
 
 const socketStore = useWebSocketStore();
-const isConnected = computed(() => socketStore.connectionStatus !== "connected");
+const isConnected = computed(() => socketStore.connectionState !== "connected");
 
 const handleReturnHomeClick = () => emit("leaveLobby");
 </script>

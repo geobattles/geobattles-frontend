@@ -1,6 +1,5 @@
 // stores/LobbyStore.ts
 import type { LobbyInfo } from "~/types/appTypes";
-import { useWebSocketStore } from "~/stores/WebSocketStore";
 
 export const useLobbyStore = defineStore("lobby", () => {
     // Lobby settings states
@@ -50,7 +49,7 @@ export const useLobbyStore = defineStore("lobby", () => {
 
             // Initialize WebSocket connection to created lobby
             if (!lobbySettings.value) return console.error("Lobby settings are not initialized");
-            await socketStore.initWebSocket(lobbySettings.value.ID);
+            await socketStore.connect(lobbySettings.value.ID);
 
             // Redirect to lobby page
             await router.push({ path: `/lobby/${lobbySettings.value.ID}` });
@@ -66,7 +65,7 @@ export const useLobbyStore = defineStore("lobby", () => {
 
         try {
             // Initialize WebSocket connection to lobby
-            await socketStore.initWebSocket(lobbyId);
+            await socketStore.connect(lobbyId);
 
             // Redirect to lobby page
             await router.push({ path: `/lobby/${lobbyId}` });
@@ -80,7 +79,7 @@ export const useLobbyStore = defineStore("lobby", () => {
         const socketStore = useWebSocketStore();
         try {
             // Close WebSocket connection
-            socketStore.closeConnection();
+            socketStore.disconnect();
 
             // Exit Gameplay
             const gameStore = useGameplayStore();
