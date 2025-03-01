@@ -25,7 +25,7 @@
                     </div>
                     <div class="flex flex-col">
                         <div class="mb-1">Connection Status</div>
-                        <ConnectionStatus />
+                        <SocketConnectionStatus />
                     </div>
                 </div>
                 <LobbyInviteLink class="mt-3" />

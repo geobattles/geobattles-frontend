@@ -8,7 +8,7 @@
 const socketStore = useWebSocketStore();
 
 const statusMessage = computed(() => {
-    switch (socketStore.connectionStatus) {
+    switch (socketStore.connectionState) {
         case "connected":
             return "Connected";
         case "reconnecting":
@@ -21,7 +21,7 @@ const statusMessage = computed(() => {
 });
 
 const severity = computed(() => {
-    switch (socketStore.connectionStatus) {
+    switch (socketStore.connectionState) {
         case "connected":
             return "success";
         case "reconnecting":
