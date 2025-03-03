@@ -37,6 +37,7 @@ export class UIManager {
         this.submitButton = submit_button.value;
 
         this.setupMapListeners(toggle_map_mobile, show_map_button, submit_button);
+        this.googleMapDOMTracker();
     }
 
     private setupMapListeners(toggle_map_mobile: Ref<HTMLElement | null>, show_map_button: Ref<boolean>, submit_button: Ref<HTMLElement | null>): void {
@@ -59,8 +60,8 @@ export class UIManager {
 
     // Method toggles class for mobile map (to show or hide the map)
     private handleMapToggleMobile(): void {
-        const gameStore = useGameplayStore();
-        if (gameStore && gameStore.currentState === GameState.PLAYING) {
+        const gameMode = useGameMode();
+        if (gameMode && gameMode.modeLogic.currentState === GameState.PLAYING) {
             this.googleMap?.classList.toggle("google-map-gameplay-container-mobile");
         }
     }
@@ -81,11 +82,11 @@ export class UIManager {
         // Update orientation flag
         this.isVertical = window.innerWidth < window.innerHeight;
 
-        const gameStore = useGameplayStore();
+        const gameMode = useGameMode();
 
         // Get results container to update (either midRound or endGame)
         let resultsContainer: HTMLElement | null = null;
-        if (gameStore.currentState === GameState.MID_ROUND) resultsContainer = document.getElementById("midround-results-container");
+        if (gameMode.modeLogic.currentState === GameState.MID_ROUND) resultsContainer = document.getElementById("midround-results-container");
         else resultsContainer = document.getElementById("endgame-results-container");
 
         // Apply classes based on orientation
@@ -111,8 +112,8 @@ export class UIManager {
     }
     // Applied only for Desktop view for hover effect on map
     private handleMapHover(isHovering: boolean, submit_button: Ref<HTMLElement | null>): void {
-        const gameStore = useGameplayStore();
-        if (gameStore && gameStore.currentState === GameState.PLAYING) {
+        const gameMode = useGameMode();
+        if (gameMode && gameMode.modeLogic.currentState === GameState.PLAYING) {
             if (isHovering) {
                 this.googleMap?.classList.add("google-map-gameplay-container-hovered");
                 submit_button.value?.classList.add("submit-button-hovered-map");
@@ -130,9 +131,9 @@ export class UIManager {
         // Stop previous watcher if it exists
         if (this.stateWatcher) this.stateWatcher();
 
-        const gameStore = useGameplayStore();
+        const gameMode = useGameMode();
         this.stateWatcher = watch(
-            () => gameStore.currentState,
+            () => gameMode.modeLogic.currentState,
             (newVal) => {
                 console.warn("Game flow changed to: " + newVal);
                 if (newVal === GameState.MID_ROUND) {
@@ -284,6 +285,15 @@ export class UIManager {
                 });
             }
         }
+    }
+
+    applyGuessStyles(playerID: string, previousLeader: string, newLeader: string): void {
+        const player_dom: HTMLElement | null = document.getElementById(playerID);
+        if (newLeader === playerID)
+            setTimeout(() => (newLeader === previousLeader ? player_dom?.classList.add("applied-guess") : player_dom?.classList.add("applied-guess-lead")), 100);
+        // Apply winning styles for new leader
+        else setTimeout(() => player_dom?.classList.add("applied-guess"), 100); // Apply gray styles for guess
+        setTimeout(() => player_dom?.classList.remove("applied-guess-lead", "applied-guess"), newLeader === playerID ? 1400 : 1200); // Remove guess styles
     }
 
     // Method to add event listeners

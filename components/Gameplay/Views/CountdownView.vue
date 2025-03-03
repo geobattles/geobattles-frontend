@@ -19,10 +19,10 @@ const { counter, startCountdown } = useCountdown(COUNTDOWN_SECONDS);
 
 // Store references
 const { lobbySettings } = useLobbyStore();
-const gameStore = useGameplayStore();
+const gameMode = useGameMode();
 
 // Computed properties
-const knobValue = computed(() => (gameStore.currentRound || 0) + 1);
+const knobValue = computed(() => (gameMode.modeLogic.currentRound || 0) + 1);
 
 // Lifecycle hooks
 onMounted(() => {

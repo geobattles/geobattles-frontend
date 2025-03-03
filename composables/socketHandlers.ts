@@ -82,9 +82,9 @@ function handleStartRound(message: MsgStartRoundData) {
     if (!data.location || !data.players) return console.error("Missing data in START_ROUND message", data);
 
     // Apply the searched location coordinates and start the round
-    const gameStore = useGameplayStore();
-    gameStore.searchedLocationCoords = data.location;
-    gameStore.startRound();
+    const gameMode = useGameMode();
+    gameMode.modeLogic.setSearchedLocationCoords(data.location);
+    gameMode.startRound();
 
     // Set new player results for live statistics
     useLiveResults().value = data.players;
@@ -96,19 +96,19 @@ function handleNewResult(message: MsgNewResultData) {
     if (!data.playerRes || !data.user) return console.error("Missing data in NEW_RESULT message", data);
 
     // Process the new result
-    const gameStore = useGameplayStore();
-    gameStore.processNewResult(data.user, data.playerRes);
+    const gameMode = useGameMode();
+    gameMode.processNewResult(data.user, data.playerRes);
 }
 
 function handleRoundResult(message: MsgRoundResultData) {
-    const gameStore = useGameplayStore();
+    const gameMode = useGameMode();
     const data = message.payload;
 
     if (!data.totalResults || !data.roundRes) return console.error("Missing data in ROUND_RESULT message", data);
-    if (!data.polygon && gameStore.currentMode === "CountryBattle") return console.error("Missing polygon data in ROUND_RESULT message for CountryBattle", data);
+    if (!data.polygon && gameMode.currentMode === "CountryBattle") return console.error("Missing polygon data in ROUND_RESULT message for CountryBattle", data);
 
     // Apply the total results and finish the round
-    gameStore.finishRound(data.totalResults, data.roundRes, data.round);
+    gameMode.finishRound(data.totalResults, data.roundRes, data.round);
 }
 
 function handleTimesUp(data: MsgTimesUpData) {
@@ -123,10 +123,10 @@ function handleRoundFinished(data: MsgRoundFinishedData) {
 
 function handleCC(messsage: MsgCCData) {
     const data = messsage.payload;
-    const gameStore = useGameplayStore();
+    const gameMode = useGameMode();
     if (!data.polygon || !data.cc) return console.error("Missing data in CC message", data);
 
-    gameStore.processClickedCountry(data.polygon, data.cc);
+    gameMode.processClickedCountry(data.polygon, data.cc);
 }
 
 function handleGameEnd(messsge: MsgGameEndData) {
@@ -134,8 +134,8 @@ function handleGameEnd(messsge: MsgGameEndData) {
     const data = messsge.payload;
     if (!data.totalResults) return console.error("Missing data in GAME_END message", data);
 
-    const gameStore = useGameplayStore();
-    gameStore.finishGame();
+    const gameMode = useGameMode();
+    gameMode.finishGame();
     // TODO: Process endgame results and display them
 }
 

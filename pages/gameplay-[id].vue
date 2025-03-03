@@ -1,16 +1,16 @@
 <template>
     <div ref="gameplayPageContainer">
         <!-- Countdown View (before starting next round) -->
-        <GameplayViewsCountdownView v-if="gameStore.currentState === 'STARTING'" />
+        <GameplayViewsCountdownView v-if="gameMode.modeLogic.currentState === 'STARTING'" />
 
         <!-- Gameplay View (when game is playing) -->
-        <GameplayViewsGameplayView v-show="gameStore.currentState === 'PLAYING'" @leaveLobby="handleClickLeaveLobby()" />
+        <GameplayViewsGameplayView v-show="gameMode.modeLogic.currentState === 'PLAYING'" @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- MidRound View (when game is in mid-round) -->
-        <GameplayViewsMidRoundView v-show="gameStore.currentState === 'MID-ROUND'" @leaveLobby="handleClickLeaveLobby()" />
+        <GameplayViewsMidRoundView v-show="gameMode.modeLogic.currentState === 'MID-ROUND'" @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- EndGame View (when game is finished) -->
-        <GameplayViewsEndGameView v-show="gameStore.currentState === 'FINISHED'" @leaveLobby="handleClickLeaveLobby()" />
+        <GameplayViewsEndGameView v-show="gameMode.modeLogic.currentState === 'FINISHED'" @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- Screen dimensions display (debug purposes) -->
         <!-- <div class="screen-dimensions">Width: {{ screenWidth }}px, Height: {{ screenHeight }}px</div> -->
@@ -29,7 +29,7 @@ const gameplayPageContainer = useTemplateRef<HTMLElement>("gameplayPageContainer
 
 // External services
 const { leaveLobby } = useLobbyStore();
-const gameStore = useGameplayStore(); // To get the current game state
+const gameMode = useGameMode(); // To get the current game state
 const uiManager = useUIManager(); // To show toasts on player leave
 const toast = useToast();
 const router = useRouter();

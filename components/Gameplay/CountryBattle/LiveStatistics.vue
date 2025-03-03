@@ -54,7 +54,7 @@ export default {
         const results = useLiveResults();
         const flag_map = useCountriesFlagMap();
         const total_attempts = ref(new Map<string | number, number>());
-        const gameStore = useGameplayStore();
+        const gameMode = useGameMode();
 
         /**
          * Process distance to display in results table
@@ -78,7 +78,7 @@ export default {
 
         // Watch game flow to create total attempts
         watch(
-            () => gameStore.currentState,
+            () => gameMode.modeLogic.currentState,
             (new_val) => (new_val === GameState.PLAYING ? createTotalAttempts() : null)
         );
 

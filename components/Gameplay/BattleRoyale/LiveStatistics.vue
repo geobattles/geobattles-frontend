@@ -51,7 +51,7 @@ export default {
     setup() {
         const results = useLiveResults();
         const totalAttempts = ref(new Map<string | number, number>());
-        const gameStore = useGameplayStore();
+        const gameMode = useGameMode();
 
         /**
          * Format distance for display in results table.
@@ -76,7 +76,7 @@ export default {
 
         // Watch game flow state to initialize total attempts
         watch(
-            () => gameStore.currentState,
+            () => gameMode.modeLogic.currentState,
             (newVal) => {
                 if (newVal === GameState.PLAYING) {
                     initializeTotalAttempts();

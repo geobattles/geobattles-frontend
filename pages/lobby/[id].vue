@@ -51,7 +51,7 @@ const { lobbySettings, leaveLobby, isPlayerAdmin } = useLobbyStore();
 const lobbyStore = useLobbyStore();
 const country_list = useCountryList();
 const filtered_country_list = useFilteredCountryList();
-const gameStore = useGameplayStore();
+const gameMode = useGameMode();
 
 useHead({
     title: "GeoBattles | Lobby",
@@ -73,7 +73,7 @@ onMounted(async () => {
     filtered_country_list.value = country_list.value;
 
     // Initialize Gameplay
-    gameStore.initializeGameplay();
+    gameMode.initGameMode();
 
     // Add confirmation dialog when leaving the page
     window.onbeforeunload = function () {

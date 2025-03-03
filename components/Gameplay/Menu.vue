@@ -13,8 +13,8 @@ const handleButtonClicked = () => {
 };
 
 const { lobbySettings } = useLobbyStore();
-const gameStore = useGameplayStore();
-const knobValue = computed(() => (gameStore.currentRound || 0) + 1);
+const gameMode = useGameMode();
+const knobValue = computed(() => (gameMode.modeLogic.currentRound || 0) + 1);
 </script>
 
 <style scoped></style>

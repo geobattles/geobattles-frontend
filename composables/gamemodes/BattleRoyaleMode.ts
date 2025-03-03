@@ -1,6 +1,15 @@
 import { GameState, type Coordinates, type Results, type ResultsInfo, type TotalResults } from "~/types/appTypes";
+import type { BattleRoyaleLogic } from "~/types/GameModeLogic";
 
-export function useBattleRoyaleMode() {
+export function useBattleRoyaleMode(): BattleRoyaleLogic {
+    // GamePlay State // TODO: Make this object so state can be simply reset and return as computed
+    const currentState = ref(GameState.WAITING);
+    const currentRound = ref(0);
+    const currentMapPin = ref<Coordinates>({} as Coordinates);
+    const searchedLocationCoords = ref<Coordinates>({} as Coordinates);
+    const setSearchedLocationCoords = (coordinates: Coordinates): Coordinates => (searchedLocationCoords.value = coordinates);
+
+    // GameMode Specifics
     const mapMarkers: Ref<google.maps.marker.AdvancedMarkerElement[]> = ref([]);
     const mapPolylines: Ref<google.maps.Polyline[]> = shallowRef([]);
 
@@ -8,6 +17,14 @@ export function useBattleRoyaleMode() {
     const router = useRouter();
 
     const startRound = () => {
+        currentState.value = GameState.STARTING;
+
+        // Set to PLAYING after countdown
+        setTimeout(() => {
+            currentState.value = GameState.PLAYING;
+            setMapClickEventListener();
+        }, 3000);
+
         const { lobbySettings } = useLobbyStore();
         if (!lobbySettings) return console.error("Lobby settings are not defined in startRound method in useBattleRoyaleMode.");
 
@@ -20,8 +37,9 @@ export function useBattleRoyaleMode() {
         clearMap();
     };
 
-    const finishRound = async (totalResults: TotalResults, roundResults: Results) => {
-        const gameStore = useGameplayStore();
+    const finishRound = async (totalResults: TotalResults, roundResults: Results, round: number) => {
+        currentState.value = GameState.MID_ROUND;
+        currentRound.value = round;
 
         // Apply total results and sort them
         useTotalResults().value = totalResults;
@@ -31,7 +49,7 @@ export function useBattleRoyaleMode() {
         clearMap();
 
         // Add searched location marker
-        const marker = await createSearchedLocationMarker(gameStore.searchedLocationCoords);
+        const marker = await createSearchedLocationMarker(searchedLocationCoords.value);
         mapMarkers.value.push(marker); // Save marker to static array
 
         // Draw player pins and polylines to searched location
@@ -41,7 +59,7 @@ export function useBattleRoyaleMode() {
             const color = getPlayerColorByID(key);
             if (!color) throw new Error("Player color is not defined");
 
-            drawPolyLine(gameStore.searchedLocationCoords, roundResults[key].location);
+            drawPolyLine(searchedLocationCoords.value, roundResults[key].location);
             drawMarker(roundResults[key].location, color, getPlayerNameFromID(key)); // Create new marker
         }
 
@@ -50,17 +68,19 @@ export function useBattleRoyaleMode() {
     };
 
     const finishGame = () => {
+        currentState.value = GameState.FINISHED;
+        currentRound.value = 0;
+
         // Clear click listeners after game ends
         const gMap = isGoogleMap();
         google.maps.event.clearListeners(gMap, "click");
     };
 
     const processMapPin = async (coordinates: Coordinates): Promise<void> => {
-        const gameStore = useGameplayStore();
-        if (gameStore.currentState !== GameState.PLAYING) return;
+        if (currentState.value !== GameState.PLAYING) return;
 
         // Update current map pin
-        gameStore.currentMapPin = coordinates;
+        currentMapPin.value = coordinates;
 
         const usedPins = mapMarkers.value.length; // Number of guesses already made in current round
         const playerID = usePlayerInfo().value.ID;
@@ -100,7 +120,17 @@ export function useBattleRoyaleMode() {
 
         const new_leader = Object.keys(liveResults.value).reduce((a, b) => (liveResults.value[a].distance < liveResults.value[b].distance ? a : b)); // Returns player ID
 
-        useGameplayStore().applyGuessStyles(userID, leader_before, new_leader);
+        useUIManager().value.applyGuessStyles(userID, leader_before, new_leader);
+    };
+
+    const submitGuess = () => {
+        const socket_message = {
+            command: SOCKET_COMMANDS.SUBMIT_LOCATION,
+            location: currentMapPin.value,
+        };
+
+        const socketStore = useWebSocketStore();
+        socketStore.sendMessage(socket_message);
     };
 
     const clearMap = () => {
@@ -143,7 +173,6 @@ export function useBattleRoyaleMode() {
     };
 
     const setMapBounds = (roundResults: Results): void => {
-        const gameStore = useGameplayStore();
         const bounds = new google.maps.LatLngBounds();
         let locationCount = 0;
 
@@ -152,14 +181,14 @@ export function useBattleRoyaleMode() {
             bounds.extend(roundResults[key].location);
             locationCount++;
         }
-        bounds.extend(gameStore.searchedLocationCoords);
+        bounds.extend(searchedLocationCoords.value);
         locationCount++;
 
         console.log(bounds);
 
         // If there are only two locations (including the searched location), set the center instead of fitting bounds
         if (locationCount === 1) {
-            isGoogleMap().setCenter(gameStore.searchedLocationCoords);
+            isGoogleMap().setCenter(searchedLocationCoords.value);
         } else {
             fitCustomBounds(bounds, 50); // Fit all displayed markers bounds
         }
@@ -178,7 +207,7 @@ export function useBattleRoyaleMode() {
     const resetMapAndPanorama = (): void => {
         if (useGoogleMapHTML().value && useGooglePanoramaHTML().value) {
             // Set Panorama to a location that needs to be guessed
-            updatePanoramaView(useGameplayStore().searchedLocationCoords);
+            updatePanoramaView(searchedLocationCoords.value);
 
             // Set GoogleMap to center and define zoom
             isGoogleMap().setCenter({ lat: 0, lng: 0 });
@@ -186,7 +215,21 @@ export function useBattleRoyaleMode() {
         }
     };
 
+    const setMapClickEventListener = () => {
+        const gMap = isGoogleMap();
+
+        // Remove existing listeners
+        google.maps.event.clearListeners(gMap, "click");
+
+        addMapClickListener(processMapPin);
+    };
+
     return {
+        currentState: readonly(currentState),
+        currentRound: readonly(currentRound),
+        currentMapPin: readonly(currentMapPin),
+        searchedLocationCoords: readonly(searchedLocationCoords),
+        setSearchedLocationCoords,
         isSubmitDisabled,
         clearMap,
         startRound,
@@ -194,5 +237,6 @@ export function useBattleRoyaleMode() {
         finishGame,
         processMapPin,
         processNewResult,
+        submitGuess,
     };
 }
