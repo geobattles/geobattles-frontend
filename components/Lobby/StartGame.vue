@@ -15,12 +15,11 @@
 
 <script setup lang="ts">
 const { isPlayerAdmin } = useLobbyStore();
-const gameStore = useGameplayStore();
 const isPlayNowLoading = ref(false);
 
 const handleStartGameButton = () => {
     isPlayNowLoading.value = true;
-    gameStore.sendStartRoundSocketMessage();
+    useWebSocketStore().sendMessage({ command: SOCKET_COMMANDS.START });
 };
 </script>
 

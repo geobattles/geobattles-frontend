@@ -31,7 +31,7 @@
                 icon="pi pi-play-circle"
                 variant="outlined"
                 size="large"
-                @click="gameStore.sendStartRoundSocketMessage"
+                @click="useWebSocketStore().sendMessage({ command: SOCKET_COMMANDS.START })"
                 pt:root:class="!text-xs lg:!text-base m-auto"
             />
             <Button
@@ -65,7 +65,6 @@
 const emit = defineEmits(["leaveLobby"]);
 
 // External services
-const gameStore = useGameplayStore();
 const lobbyStore = useLobbyStore();
 const { isPlayerAdmin } = useLobbyStore();
 

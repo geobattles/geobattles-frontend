@@ -17,7 +17,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
 
     // Reconnection configuration
     const reconnectConfig = {
-        maxAttempts: 5,
+        maxAttempts: 10,
         baseDelay: 2000,
         currentAttempts: 0,
         timerId: null as number | null,
@@ -162,7 +162,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
 
         // Only attempt reconnection if the connection wasn't closed cleanly
         // and we're in a game session
-        const gameState = useGameplayStore().currentState;
+        const gameState = useGameMode().modeLogic.currentState;
         if (!event.wasClean && gameState === GameState.PLAYING && lobbyId.value) {
             attemptReconnection();
         } else {

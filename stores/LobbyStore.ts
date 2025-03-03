@@ -82,9 +82,9 @@ export const useLobbyStore = defineStore("lobby", () => {
             socketStore.disconnect();
 
             // Exit Gameplay
-            const gameStore = useGameplayStore();
+            const gameMode = useGameMode();
             try {
-                gameStore.exitGameplay();
+                gameMode.exitGameplay();
             } catch (error) {
                 // console.error("Error exiting gameplay:", error);
             }
@@ -196,13 +196,13 @@ export const useLobbyStore = defineStore("lobby", () => {
         lobbySettingsOriginal.value = structuredClone(lobbyInfo);
         lobbySettingsOriginal.value.conf = structuredClone(lobbyInfo.conf);
 
-        const gameStore = useGameplayStore();
+        const gameMode = useGameMode();
         switch (lobbySettings.value.conf.mode) {
             case 1:
-                gameStore.updateGameMode("BattleRoyale");
+                gameMode.updateGameMode("BattleRoyale");
                 break;
             case 2:
-                gameStore.updateGameMode("CountryBattle");
+                gameMode.updateGameMode("CountryBattle");
                 break;
             default:
                 console.error("Unknown game mode in updateNestedLobbySettings()");

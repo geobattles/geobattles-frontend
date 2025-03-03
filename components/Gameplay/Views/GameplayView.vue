@@ -7,7 +7,7 @@
         <div class="gameplay-menu-container">
             <div class="flex flex-row gap-2">
                 <GameplayMenu class="gameplay-connection-and-leave text-xs lg:text-sm" @leaveLobbyClicked="handleClickLeaveLobby" />
-                <GameplayTimerBar v-if="gameStore.currentState === 'PLAYING'" />
+                <GameplayTimerBar v-if="gameMode.modeLogic.currentState === 'PLAYING'" />
             </div>
             <Button class="gameplay-fullscreen-button" @click="uiManager.toggleFullscreen()" type="button" icon="pi pi-expand" severity="secondary" size="large" />
         </div>
@@ -22,20 +22,20 @@
                 ref="submitButton"
                 severity="primary"
                 class="submit-button"
-                v-if="gameStore.currentMode === 'BattleRoyale'"
-                @click="gameStore.submitGuess()"
-                :disabled="gameStore.modeLogic?.isSubmitDisabled"
+                v-if="gameMode.currentMode === 'BattleRoyale'"
+                @click="gameMode.submitGuess()"
+                :disabled="gameMode.modeLogic.isSubmitDisabled"
             >
-                {{ gameStore.modeLogic?.isSubmitDisabled ? "Place your pin" : "GUESS" }}
+                {{ gameMode.modeLogic.isSubmitDisabled ? "Place your pin" : "GUESS" }}
             </button>
             <button
                 ref="submit_button"
-                v-if="gameStore.currentMode === 'CountryBattle'"
+                v-if="gameMode.currentMode === 'CountryBattle'"
                 class="submit-button"
-                @click="gameStore.submitGuess()"
-                :disabled="gameStore.modeLogic?.isSubmitDisabled"
+                @click="gameMode.submitGuess()"
+                :disabled="gameMode.modeLogic.isSubmitDisabled"
             >
-                {{ gameStore.modeLogic?.isSubmitDisabled ? "Place your guess on the map" : "GUESS" }}
+                {{ gameMode.modeLogic.isSubmitDisabled ? "Place your guess on the map" : "GUESS" }}
             </button>
         </div>
 
@@ -43,14 +43,14 @@
         <div class="gameplay-map-mobile-position"></div>
 
         <!-- LIVE STATISTICS -->
-        <GameplayBattleRoyaleLiveStatistics v-if="gameStore.currentMode === 'BattleRoyale'" class="gameplay-live-results" />
-        <GameplayCountryBattleLiveStatistics v-if="gameStore.currentMode === 'CountryBattle'" class="gameplay-live-results" />
+        <GameplayBattleRoyaleLiveStatistics v-if="gameMode.currentMode === 'BattleRoyale'" class="gameplay-live-results" />
+        <GameplayCountryBattleLiveStatistics v-if="gameMode.currentMode === 'CountryBattle'" class="gameplay-live-results" />
 
         <!-- BAR TIMER -->
-        <!-- <GameplayTimerBar v-if="gameStore.currentState === 'PLAYING'" class="timer-bar-container" /> -->
+        <!-- <GameplayTimerBar v-if="gameMode.modeLogic.currentState === 'PLAYING'" class="timer-bar-container" /> -->
 
         <!-- MAP MOBILE BUTTON -->
-        <button ref="toggleMapMobile" v-show="uiManager.getIsMobile() && gameStore.currentState === 'PLAYING'" class="mobile-map-button">
+        <button ref="toggleMapMobile" v-show="uiManager.getIsMobile() && gameMode.modeLogic.currentState === 'PLAYING'" class="mobile-map-button">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-8 lg:w-10" viewBox="0 0 576 512">
                 <path
                     d="M565.6 36.24C572.1 40.72 576 48.11 576 56V392C576 401.1 569.8 410.9 560.5 414.4L392.5 478.4C387.4 480.4 381.7 480.5 376.4 478.8L192.5 417.5L32.54 478.4C25.17 481.2 16.88 480.2 10.38 475.8C3.882 471.3 0 463.9 0 456V120C0 110 6.15 101.1 15.46 97.57L183.5 33.57C188.6 31.6 194.3 31.48 199.6 33.23L383.5 94.52L543.5 33.57C550.8 30.76 559.1 31.76 565.6 36.24H565.6zM48 421.2L168 375.5V90.83L48 136.5V421.2zM360 137.3L216 89.3V374.7L360 422.7V137.3zM408 421.2L528 375.5V90.83L408 136.5V421.2z"
@@ -68,19 +68,19 @@ const toggleMapMobile = ref<HTMLElement | null>(null);
 const showMapButtonMobile = ref(false);
 
 // External services
-const gameStore = useGameplayStore();
+const gameMode = useGameMode();
 const uiManager = useUIManager();
 
 onMounted(() => {
     setTimeout(() => {
         // Timeout added temporary to make sure google map is loaded before mounting process
-        gameStore.mountingProcess(toggleMapMobile, showMapButtonMobile, submitButton);
+        uiManager.value.mountingProcess(toggleMapMobile, showMapButtonMobile, submitButton);
     }, 2000);
 });
 
 // Resize panorama to re-render it when the game state changes
 watch(
-    () => gameStore.currentState,
+    () => gameMode.modeLogic.currentState,
     (newVal) => newVal && setTimeout(() => google.maps.event.trigger(useGooglePanorama().value, "resize"), 300)
 );
 

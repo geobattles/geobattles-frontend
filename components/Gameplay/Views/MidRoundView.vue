@@ -31,7 +31,7 @@
                 v-if="isPlayerAdmin()"
                 pt:root:class="!text-xs lg:!text-base"
                 class="m-auto"
-                @click="gameStore.sendStartRoundSocketMessage"
+                @click="useWebSocketStore().sendMessage({ command: SOCKET_COMMANDS.START })"
                 label="Next Round"
                 icon="pi pi-forward"
                 variant="outlined"
@@ -44,8 +44,6 @@
 
 <script setup lang="ts">
 const emit = defineEmits(["leaveLobby"]);
-const gameStore = useGameplayStore();
-
 const { isPlayerAdmin } = useLobbyStore();
 
 // Handle leaving the lobby
