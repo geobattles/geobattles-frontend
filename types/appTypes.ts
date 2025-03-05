@@ -78,7 +78,7 @@ interface TotalResultInfo extends ResultsInfo {
 
 export type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINISHED" | undefined; // Undefined when not connected to a lobby (socket)
 
-export type GameType = "BattleRoyale" | "CountryBattle" | undefined; // Undefined when not connected to a lobby (socket)
+export type GameType = "BattleRoyale" | "CountryBattle"; // Undefined when not connected to a lobby (socket)
 
 export enum GameState {
     WAITING = "WAITING",

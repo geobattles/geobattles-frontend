@@ -1,29 +1,30 @@
-// stores/LobbyStore.ts
 import type { LobbyInfo } from "~/types/appTypes";
 
+/**
+ * LobbyStore manages all lobby-related state and operations including:
+ * - Lobby creation, joining, and leaving
+ * - Lobby settings management
+ * - Player tracking within lobbies
+ * - Managing the online lobbies list
+ */
 export const useLobbyStore = defineStore("lobby", () => {
     // Lobby settings states
-    const lobbySettings = ref<LobbyInfo | null>(null);
-    const lobbySettingsOriginal = ref<LobbyInfo | null>(null);
-    const isUpdatingSettings = ref(false);
+    const lobbySettings = ref<LobbyInfo | null>(null); // Current lobby settings
+    const lobbySettingsOriginal = ref<LobbyInfo | null>(null); // Original settings for comparison
+    const isUpdatingSettings = ref(false); // Flag to prevent settings updates during changes
 
-    // Lobby list state
-    const lobbyList = ref<string[]>([]);
-    const modifySettingsModal = ref<boolean>(false); // Modify settings modal (show or hide modal to change lobby settings)
+    // Lobby list and UI state
+    const lobbyList = ref<string[]>([]); // List of available lobbies
+    const modifySettingsModal = ref<boolean>(false); // Controls visibility of settings modal
 
+    // ================== Lobby creation and joining ==================
     /**
-     * Create a new lobby. It will make a post request to the backend.
-     * If successful, it will initialize a WebSocket connection to the lobby and redirect to the lobby page.
-     * If unsuccessful, it will throw an error.
-     *
-     * @throws {Error} If failed to create lobby
-     * @returns {Promise<void>} Void promise
+     * Create a new lobby on the server, connect to it via WebSocket and redirect to the lobby page
      */
     const createLobby = async (): Promise<void> => {
         const playerInfo = usePlayerInfo();
         const router = useRouter();
         const { getToken } = useAuthStore();
-
         const socketStore = useWebSocketStore();
 
         const lobbyPostParams = {
@@ -32,26 +33,16 @@ export const useLobbyStore = defineStore("lobby", () => {
         };
 
         try {
-            // Make authenticated post request to create lobby
+            // Create lobby via service and store the returned lobby data
             const authToken = getToken();
-            const response = await fetch(`${useBackendAPI().value}/lobby`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `${authToken}`,
-                },
-                body: JSON.stringify(lobbyPostParams),
-            });
+            if (!authToken) throw new Error("User not authenticated");
 
-            // Check if response is ok
-            if (!response.ok) throw new Error(`Failed to create lobby: ${response.statusText}`);
-            lobbySettings.value = await response.json();
+            const lobbyData = await lobbyService.createLobby(authToken, lobbyPostParams);
+            lobbySettings.value = lobbyData;
 
-            // Initialize WebSocket connection to created lobby
+            // Connect to the lobby via WebSocket and navigate to lobby page
             if (!lobbySettings.value) return console.error("Lobby settings are not initialized");
             await socketStore.connect(lobbySettings.value.ID);
-
-            // Redirect to lobby page
             await router.push({ path: `/lobby/${lobbySettings.value.ID}` });
         } catch (error) {
             console.error("Error creating lobby:", error);
@@ -59,41 +50,42 @@ export const useLobbyStore = defineStore("lobby", () => {
         }
     };
 
+    /**
+     * Join an existing lobby by ID, connect via WebSocket and navigate to the lobby page
+     */
     const joinLobby = async (lobbyId: string) => {
         const router = useRouter();
         const socketStore = useWebSocketStore();
 
         try {
-            // Initialize WebSocket connection to lobby
             await socketStore.connect(lobbyId);
-
-            // Redirect to lobby page
             await router.push({ path: `/lobby/${lobbyId}` });
         } catch (error) {
-            console.error("Error joining lobby:", error);
-            throw new Error("This lobby is currently not joinable.");
+            console.error(`Error joining lobby ${lobbyId}:`, error);
+            throw new Error(error instanceof Error ? `Failed to join lobby: ${error.message}` : "This lobby is currently not joinable.");
         }
     };
 
+    /**
+     * Leave the current lobby, disconnect WebSocket, reset state, and clean up game data
+     */
     const leaveLobby = () => {
         const socketStore = useWebSocketStore();
         try {
-            // Close WebSocket connection
+            // Disconnect and clean up all related data
             socketStore.disconnect();
 
-            // Exit Gameplay
+            // Exit gameplay mode if active
             const gameMode = useGameMode();
             try {
                 gameMode.exitGameplay();
             } catch (error) {
-                // console.error("Error exiting gameplay:", error);
+                // Silent fail - gameplay might not be active
             }
 
-            // Reset lobby settings
+            // Reset all lobby-related state
             lobbySettings.value = null;
             lobbySettingsOriginal.value = null;
-
-            // Reset results
             useLiveResults().value = {};
             useTotalResults().value = {};
         } catch (error) {
@@ -102,9 +94,37 @@ export const useLobbyStore = defineStore("lobby", () => {
         }
     };
 
+    // ================== Lobby list management ==================
+    /**
+     * Fetch the current list of available lobbies from the server
+     */
+    const fetchLobbyList = async () => {
+        try {
+            lobbyList.value = await lobbyService.fetchLobbyList();
+        } catch (error) {
+            console.error("Error fetching lobby list:", error);
+            throw error;
+        }
+    };
+
+    /**
+     * Check if a lobby with the given ID exists
+     */
+    const checkIfLobby = async (lobbyId: string) => {
+        await fetchLobbyList();
+        if (!Object.keys(lobbyList).includes(lobbyId)) {
+            throw new Error("Lobby does not exist");
+        }
+    };
+
+    // ================== Lobby player management ==================
+    /**
+     * Handle a player joining the lobby by updating settings and initializing countries
+     */
     const joinedLobby = (lobbyInfo: LobbyInfo, userId: string) => {
         updateNestedLobbySettings(lobbyInfo);
 
+        // Ensure country list is populated
         if (!lobbySettings.value) return console.error("Lobby settings are not initialized");
         if (lobbySettings.value.conf.ccList.length === 0) {
             lobbySettings.value.conf.ccList = useCountryList().value;
@@ -112,134 +132,143 @@ export const useLobbyStore = defineStore("lobby", () => {
         console.log(`Player ${userId} joined the lobby!`);
     };
 
+    /**
+     * Handle a player leaving the lobby by updating player list and cleaning up results
+     */
     const leftLobby = (lobbyInfo: LobbyInfo, userId: string) => {
         const liveResults = useLiveResults();
-        const totalResults = useTotalResults();
 
-        // Update player list
+        // Update player list and admin in lobby settings
         updateLobbySetting("playerList", lobbyInfo.playerList);
-
-        // Update admin
         updateLobbySetting("admin", lobbyInfo.admin);
 
-        // Remove player from live and total results
+        // Remove player from results tracking
         if (liveResults.value[userId]) {
             delete liveResults.value[userId];
         }
     };
 
+    /**
+     * Check if the current player is the lobby admin
+     */
+    const isPlayerAdmin = () => {
+        if (!lobbySettings.value) return false;
+        return lobbySettings.value.admin === usePlayerInfo().value.ID;
+    };
+
+    // ================== Lobby settings management ==================
+    /**
+     * Initialize lobby settings from received lobby info
+     */
     const fetchLobbySettings = (lobbyInfo: LobbyInfo) => {
         if (!lobbyInfo) return console.error("Lobby info is not initialized");
         updateNestedLobbySettings(lobbyInfo);
 
+        // Ensure country list is populated
         if (!lobbySettings.value) return console.error("Country list is not initialized");
         if (lobbySettings.value.conf.ccList.length === 0) {
             lobbySettings.value.conf.ccList = useCountryList().value;
         }
     };
 
-    const applyLobbySettings = () => {
-        const socketStore = useWebSocketStore();
-        const ls = lobbySettings;
-        const lso = lobbySettingsOriginal;
-        if (!ls.value || !lso.value) return console.error("Lobby settings are not initialized");
+    // Type definitions for settings manipulation
+    type ConfField = keyof LobbyInfo["conf"];
+    type ConfValue = LobbyInfo["conf"][ConfField];
+    type LobbySettings = Record<ConfField, ConfValue>;
 
-        //@ts-ignore If ccList is empty (=wrong input) dont send it so it wont update on server. Empty arrray if every country is selected
-        if (ls.value.conf.ccList.length === 0) delete lso.value.conf.ccList;
-        else if (ls.value.conf.ccList.length === useCountryList().value.length) ls.value.conf.ccList = [];
-
-        // If objects are equal delete them from original settings, else update original settings
-        for (const field in lso.value.conf) {
-            //@ts-ignore  Nested objects (ccList) are always different so they are stringified and compared as such
-            if (typeof lso.value.conf[field] === "object") {
-                //@ts-ignore
-                if (JSON.stringify(lso.value.conf[field]) === JSON.stringify(ls.value.conf[field]))
-                    //@ts-ignore
-                    delete lso.value.conf[field];
-                //@ts-ignore
-                else lso.value.conf[field] = ls.value.conf[field];
-            } else {
-                //@ts-ignore
-                if (lso.value.conf[field] === ls.value.conf[field])
-                    //@ts-ignore
-                    delete lso.value.conf[field];
-                //@ts-ignore
-                else lso.value.conf[field] = ls.value.conf[field];
-            }
+    /**
+     * Compare current settings with original settings and return only the changed fields
+     * Handles special cases for country lists and complex objects
+     */
+    const getChangedSettings = (): LobbySettings => {
+        if (!lobbySettings.value || !lobbySettingsOriginal.value) {
+            throw new Error("Lobby settings are not initialized");
         }
 
-        const settings = {
-            command: SOCKET_COMMANDS.UPDATE_LOBBY_SETTINGS,
-            conf: { ...lso.value.conf },
+        const countryList = useCountryList().value;
+        const ls = lobbySettings.value;
+        const lso = lobbySettingsOriginal.value;
+
+        // Configure special handling for country list
+        const specialFields = {
+            ccList: () => processCountryList(ls, countryList),
         };
 
-        socketStore.sendMessage(settings);
+        // Get changed settings using utility function
+        return getSettingsDiff(ls.conf, lso.conf, specialFields) as LobbySettings;
     };
 
+    /**
+     * Apply changed lobby settings and send updated configuration to the server via WebSocket
+     */
+    const applyLobbySettings = () => {
+        const socketStore = useWebSocketStore();
+
+        try {
+            // Get only the settings that have changed
+            const changedSettings = getChangedSettings();
+
+            // Send the changes to the server
+            socketStore.sendMessage({
+                command: SOCKET_COMMANDS.UPDATE_LOBBY_SETTINGS,
+                conf: changedSettings,
+            });
+        } catch (error) {
+            console.error("Error applying lobby settings:", error);
+        }
+    };
+
+    /**
+     * Update a specific configuration setting in the lobby
+     */
     const updateLobbyConfigSetting = <K extends keyof LobbyInfo["conf"]>(key: K, value: LobbyInfo["conf"][K]) => {
         if (!lobbySettings.value) return console.error("Lobby settings are not initialized");
         lobbySettings.value.conf[key] = value;
     };
 
+    /**
+     * Update a top-level lobby setting (not in the conf object)
+     */
     const updateLobbySetting = <K extends keyof LobbyInfo>(key: K, value: LobbyInfo[K]) => {
         if (!lobbySettings.value) return console.error("Lobby settings are not initialized");
         lobbySettings.value[key] = value;
     };
 
+    /**
+     * Initialize or update all lobby settings, creating deep clones to avoid reference issues
+     * Also sets the appropriate game mode based on lobby configuration
+     */
     const updateNestedLobbySettings = (lobbyInfo: LobbyInfo) => {
-        // Do not update lobby settings if isUpdatingSettings is true
+        // Skip update if settings are currently being modified
         if (isUpdatingSettings.value) return;
 
-        // Update lobby settings
-        lobbySettings.value = structuredClone(lobbyInfo);
-        lobbySettings.value.conf = structuredClone(lobbyInfo.conf);
-        lobbySettingsOriginal.value = structuredClone(lobbyInfo);
-        lobbySettingsOriginal.value.conf = structuredClone(lobbyInfo.conf);
+        // Use utility to clone lobby settings
+        const { settings, originalSettings } = cloneLobbySettings(lobbyInfo);
+        lobbySettings.value = settings;
+        lobbySettingsOriginal.value = originalSettings;
 
-        const gameMode = useGameMode();
-        switch (lobbySettings.value.conf.mode) {
-            case 1:
-                gameMode.updateGameMode("BattleRoyale");
-                break;
-            case 2:
-                gameMode.updateGameMode("CountryBattle");
-                break;
-            default:
-                console.error("Unknown game mode in updateNestedLobbySettings()");
+        // Set game mode based on lobby settings
+        if (lobbySettings.value) {
+            try {
+                const gameModeName = getGameModeFromSettings(lobbySettings.value.conf.mode);
+                const gameMode = useGameMode();
+                gameMode.updateGameMode(gameModeName);
+            } catch (error) {
+                console.error("Error setting game mode:", error);
+            }
         }
     };
 
-    const fetchLobbyList = async () => {
-        const response = await fetch(`${useBackendAPI().value}/lobby`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(response.statusText);
-        } else {
-            lobbyList.value = await response.json();
-        }
-    };
-
-    const checkIfLobby = async (lobbyId: string) => {
-        await fetchLobbyList();
-        if (!Object.keys(lobbyList.value).includes(lobbyId)) throw new Error("Lobby does not exist");
-    };
-
-    const isPlayerAdmin = () => {
-        if (!lobbySettings.value) return false;
-        return lobbySettings.value.admin === usePlayerInfo().value.ID;
-    };
-
+    // Export the store's public API
     return {
+        // State
         lobbySettings,
         lobbySettingsOriginal,
         isUpdatingSettings,
         lobbyList,
         modifySettingsModal,
+
+        // Methods
         createLobby,
         joinLobby,
         leaveLobby,
@@ -248,6 +277,7 @@ export const useLobbyStore = defineStore("lobby", () => {
         fetchLobbySettings,
         applyLobbySettings,
         updateLobbyConfigSetting,
+        updateLobbySetting,
         fetchLobbyList,
         checkIfLobby,
         isPlayerAdmin,
