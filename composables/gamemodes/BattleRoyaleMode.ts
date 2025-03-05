@@ -16,7 +16,7 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
     // External composable functions
     const router = useRouter();
 
-    const startRound = () => {
+    const startRound = async () => {
         currentState.value = GameState.STARTING;
 
         // Set to PLAYING after countdown
@@ -30,9 +30,9 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
 
         // Redirect to gampeplay route if not already there
         const routeName = router.currentRoute.value.name as string;
-        if (!routeName.includes("gameplay")) router.push({ path: `/gameplay-${lobbySettings.ID}` });
+        if (!routeName.includes("gameplay")) await router.push({ path: `/gameplay-${lobbySettings.ID}` });
 
-        // Reset Pano and Map views and clear Map
+        await waitForMapAndPano();
         resetMapAndPanorama();
         clearMap();
     };
@@ -222,6 +222,25 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         google.maps.event.clearListeners(gMap, "click");
 
         addMapClickListener(processMapPin);
+    };
+
+    const waitForMapAndPano = async (): Promise<void> => {
+        // Wait for both Google Map and Panorama to be initialized
+        let attempts = 0;
+        while ((!useGoogleMap.value || !useGooglePanorama().value) && attempts < 20) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+            attempts++;
+        }
+
+        if (!useGoogleMap.value) {
+            console.error("Google Map failed to initialize after multiple attempts");
+            return;
+        }
+
+        if (!useGooglePanorama().value) {
+            console.error("Google Panorama failed to initialize after multiple attempts");
+            return;
+        }
     };
 
     return {
