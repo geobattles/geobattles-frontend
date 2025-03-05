@@ -112,7 +112,7 @@ export const useLobbyStore = defineStore("lobby", () => {
      */
     const checkIfLobby = async (lobbyId: string) => {
         await fetchLobbyList();
-        if (!Object.keys(lobbyList).includes(lobbyId)) {
+        if (!Object.keys(lobbyList.value).includes(lobbyId)) {
             throw new Error("Lobby does not exist");
         }
     };
