@@ -37,8 +37,6 @@ export const initalizeNewGoogleMap = async (map_html: HTMLElement) => {
         keyboardShortcuts: false,
         disableDefaultUI: true,
     });
-
-    console.log("GOOGLE MAP INITIALIZED");
 };
 
 /**
@@ -69,26 +67,23 @@ export const removeMapEventListener = (type: string) => google.maps.event.clearL
 /// END GOOGLE MAP ///
 
 /// GOOGLE PANORAMA ///
-export const initalizeNewPanoramaView = (panorama_html: HTMLElement | null): void => {
-    if (!panorama_html) throw new Error("Panorama html element is not defined");
-    const gameMode = useGameMode();
+export const initalizeNewPanoramaView = async (panorama_html: HTMLElement | null, coordinates: Coordinates = { lat: 0, lng: 0 }): Promise<void> => {
+    const { StreetViewPanorama } = (await google.maps.importLibrary("streetView")) as google.maps.StreetViewLibrary;
 
     // Timeout heres is added just to track Google Maps API billing (so panorama is alomst for sure loaded after map)
-    setTimeout(() => {
-        useGooglePanorama().value = new google.maps.StreetViewPanorama(panorama_html as HTMLElement, {
-            position: gameMode.modeLogic.searchedLocationCoords,
-            pov: {
-                heading: 34,
-                pitch: 10,
-            },
-            fullscreenControl: false,
-            showRoadLabels: false,
-            addressControl: false,
-            motionTracking: false,
-            motionTrackingControl: false,
-            // disableDefaultUI: true,
-        });
-    }, 2000);
+    useGooglePanorama().value = new StreetViewPanorama(panorama_html as HTMLElement, {
+        position: coordinates,
+        pov: {
+            heading: 34,
+            pitch: 10,
+        },
+        fullscreenControl: false,
+        showRoadLabels: false,
+        addressControl: false,
+        motionTracking: false,
+        motionTrackingControl: false,
+        // disableDefaultUI: true,
+    });
 };
 export const updatePanoramaView = (coordinates: Coordinates) => useGooglePanorama().value.setPosition(coordinates);
 /// END GOOGLE PANORAMA ///
