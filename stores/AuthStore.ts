@@ -40,9 +40,9 @@ export const useAuthStore = defineStore("auth", () => {
         usePlayerInfo().value = {} as User;
         isAuthenticated.value = false;
 
+        // TODO: Stuff below is not needed here probably
         const socketStore = useWebSocketStore();
         socketStore.disconnect();
-
         const router = useRouter();
         router.push({ path: "/" });
     };
