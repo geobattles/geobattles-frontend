@@ -17,21 +17,13 @@ export const useWebSocketStore = defineStore("websocket", () => {
     const wasConnectedBeforeOffline = ref(false);
     const networkOnline = ref(navigator.onLine); // Track network status internally
 
-    // Reconnection configuration
-    const reconnectConfig = {
-        maxAttempts: 10,
-        baseDelay: 2000,
-        currentAttempts: 0,
-        timerId: null as number | null,
-    };
-
-    // Heartbeat configuration
-    const heartbeatConfig = {
-        pingInterval: 5000,
-        pongTimeout: 5000,
-        pingTimerId: null as number | null,
-        pongTimerId: null as number | null,
-    };
+    // Initialize the services
+    const heartbeatService = createHeartbeatService(connection);
+    const reconnectionService = createReconnectionService(
+        state as Ref<string>, // Cast to string ref since the service only cares about string values
+        networkOnline,
+        wasConnectedBeforeOffline
+    );
 
     const connect = async (id: string): Promise<void> => {
         console.debug("Attempting to connect to WebSocket with lobby ID:", id);
@@ -57,7 +49,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
         disconnect();
 
         // Setup network listeners when connecting
-        setupNetworkListeners();
+        networkUtils.setupNetworkListeners();
 
         return new Promise<void>((resolve, reject) => {
             try {
@@ -74,7 +66,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
                 state.value = ConnectionState.CONNECTING;
                 console.debug("Connecting to WebSocket...");
 
-                // Create new connection
+                // Create new connection using utility for URL building
                 const url = buildWebSocketUrl(id);
                 console.debug("WebSocket URL:", url);
                 connection.value = new WebSocket(url, ["json", token]);
@@ -111,8 +103,11 @@ export const useWebSocketStore = defineStore("websocket", () => {
     };
 
     const disconnect = (removeListeners: boolean = true): void => {
-        stopHeartbeat();
-        cancelReconnection();
+        // Use heartbeat service to stop the heartbeat
+        heartbeatService.stopHeartbeat();
+
+        // Cancel any pending reconnection attempts
+        reconnectionService.cancelReconnection();
 
         if (connection.value) {
             // Remove event listeners to avoid memory leaks
@@ -133,7 +128,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
 
         // Remove network listeners if requested (default)
         if (removeListeners) {
-            removeNetworkListeners();
+            networkUtils.removeNetworkListeners();
             wasConnectedBeforeOffline.value = false;
         }
 
@@ -153,8 +148,12 @@ export const useWebSocketStore = defineStore("websocket", () => {
     const handleOpen = (): void => {
         console.info("WebSocket connection established");
         state.value = ConnectionState.CONNECTED;
-        reconnectConfig.currentAttempts = 0;
-        startHeartbeat();
+
+        // Reset reconnection attempts counter when successfully connected
+        reconnectionService.resetAttempts();
+
+        // Start heartbeat using the heartbeat service
+        heartbeatService.startHeartbeat();
     };
 
     const handleMessage = (event: MessageEvent): void => {
@@ -164,7 +163,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
 
             // Handle heartbeat response
             if (data.type === "PONG") {
-                resetPongTimer();
+                heartbeatService.resetPongTimer();
                 return;
             }
 
@@ -176,14 +175,16 @@ export const useWebSocketStore = defineStore("websocket", () => {
     };
 
     const handleClose = (event: CloseEvent): void => {
-        stopHeartbeat();
+        // Stop the heartbeat when connection closes
+        heartbeatService.stopHeartbeat();
         console.info(`WebSocket connection closed: ${event.code} ${event.reason}`);
 
         // Only attempt reconnection if the connection wasn't closed cleanly
         // and we're in a game session
         const gameState = useGameMode().modeLogic.currentState;
         if (!event.wasClean && gameState === GameState.PLAYING && lobbyId.value) {
-            attemptReconnection();
+            // Use reconnection service to handle reconnection
+            reconnectionService.attemptReconnection(connect, lobbyId.value);
         } else {
             state.value = ConnectionState.DISCONNECTED;
         }
@@ -212,122 +213,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
         }
     };
 
-    // Heartbeat mechanism
-    const startHeartbeat = (): void => {
-        stopHeartbeat(); // Clear any existing timers
-
-        // Start regular ping interval
-        sendPing();
-        heartbeatConfig.pingTimerId = window.setInterval(sendPing, heartbeatConfig.pingInterval);
-    };
-
-    const stopHeartbeat = (): void => {
-        if (heartbeatConfig.pingTimerId !== null) {
-            clearInterval(heartbeatConfig.pingTimerId);
-            heartbeatConfig.pingTimerId = null;
-        }
-
-        if (heartbeatConfig.pongTimerId !== null) {
-            clearTimeout(heartbeatConfig.pongTimerId);
-            heartbeatConfig.pongTimerId = null;
-        }
-    };
-
-    const sendPing = (): void => {
-        if (!connection.value || connection.value.readyState !== WebSocket.OPEN) return;
-
-        connection.value.send(JSON.stringify({ command: "ping" }));
-        startPongTimer();
-    };
-
-    const startPongTimer = (): void => {
-        resetPongTimer();
-
-        heartbeatConfig.pongTimerId = window.setTimeout(() => {
-            console.warn("No pong response received - connection may be lost");
-            connection.value?.close();
-            // handleClose will handle reconnection
-        }, heartbeatConfig.pongTimeout);
-    };
-
-    const resetPongTimer = (): void => {
-        if (heartbeatConfig.pongTimerId !== null) {
-            clearTimeout(heartbeatConfig.pongTimerId);
-            heartbeatConfig.pongTimerId = null;
-        }
-    };
-
-    // Reconnection logic
-    const attemptReconnection = (): void => {
-        // Don't try to reconnect if we've reached max attempts
-        if (reconnectConfig.currentAttempts >= reconnectConfig.maxAttempts) {
-            console.warn("Maximum reconnection attempts reached");
-            state.value = ConnectionState.DISCONNECTED;
-            return;
-        }
-
-        // Don't attempt reconnection if we're offline
-        if (!networkOnline.value) {
-            console.warn("Device is offline, pausing reconnection attempts");
-            state.value = ConnectionState.RECONNECTING; // Keep in reconnecting state
-            wasConnectedBeforeOffline.value = true; // Mark for reconnection when back online
-            return; // Don't schedule any reconnection attempts
-        }
-
-        // Cancel any pending reconnection attempt
-        cancelReconnection();
-
-        // Update state and attempt count
-        state.value = ConnectionState.RECONNECTING;
-        reconnectConfig.currentAttempts++;
-
-        // Calculate backoff delay with exponential factor
-        const delay = reconnectConfig.baseDelay * Math.pow(1.5, reconnectConfig.currentAttempts - 1);
-
-        console.info(`Attempting reconnection ${reconnectConfig.currentAttempts}/${reconnectConfig.maxAttempts} in ${delay}ms`);
-
-        // Schedule reconnection attempt
-        reconnectConfig.timerId = window.setTimeout(() => {
-            if (lobbyId.value) {
-                // Double-check we're still online before attempting
-                if (!networkOnline.value) {
-                    console.warn("Network went offline during reconnection delay");
-                    return;
-                }
-
-                connect(lobbyId.value).catch((error) => {
-                    console.error("Reconnection attempt failed:", error);
-                    // Only try again if we're still online
-                    if (networkOnline.value) {
-                        attemptReconnection(); // Try again with increasing backoff
-                    }
-                });
-            } else {
-                state.value = ConnectionState.DISCONNECTED;
-            }
-        }, delay);
-    };
-
-    const cancelReconnection = (): void => {
-        if (reconnectConfig.timerId !== null) {
-            clearTimeout(reconnectConfig.timerId);
-            reconnectConfig.timerId = null;
-        }
-    };
-
-    // Utility functions
-    const buildWebSocketUrl = (id: string): string => {
-        const backendAPI = useBackendAPI().value;
-        if (!backendAPI) {
-            throw new Error("Backend API configuration not available");
-        }
-
-        // Convert http(s):// to ws(s)://
-        const apiUrl = backendAPI.replace(/(http)(s)?:\/\//, "ws$2://");
-        return `${apiUrl}/lobbySocket?id=${encodeURIComponent(id)}`;
-    };
-
-    // Public API
+    // Public API for sending messages
     const sendMessage = (message: any): void => {
         if (connection.value?.readyState !== WebSocket.OPEN) {
             console.error("Cannot send message: WebSocket is not open", message);
@@ -341,66 +227,65 @@ export const useWebSocketStore = defineStore("websocket", () => {
         }
     };
 
-    // Network status handlers
-    const handleOffline = (): void => {
-        console.warn("Device went offline, suspending WebSocket connection");
-        networkOnline.value = false; // Set our internal state
-        wasConnectedBeforeOffline.value = state.value === ConnectionState.CONNECTED || state.value === ConnectionState.RECONNECTING;
+    // Network utilities
+    const networkUtils = createNetworkUtils(
+        networkOnline,
+        // Handle offline callback
+        () => {
+            wasConnectedBeforeOffline.value = state.value === ConnectionState.CONNECTED || state.value === ConnectionState.RECONNECTING;
 
-        // Cancel any pending reconnection attempts since they'll fail
-        cancelReconnection();
+            // Cancel any pending reconnection attempts since they'll fail
+            reconnectionService.cancelReconnection();
 
-        // Don't close the socket immediately, let the heartbeat mechanism detect the issue
-        // This prevents unnecessarily closing the socket during brief connectivity blips
-        if (connection.value && connection.value.readyState === WebSocket.OPEN) {
-            console.info("Connection open during offline event, will wait for heartbeat failure");
-        }
-    };
+            // Don't close the socket immediately, let the heartbeat mechanism detect the issue
+            // This prevents unnecessarily closing the socket during brief connectivity blips
+            if (connection.value && connection.value.readyState === WebSocket.OPEN) {
+                console.info("Connection open during offline event, will wait for heartbeat failure");
+            }
+        },
+        // Handle online callback
+        () => {
+            // Only attempt to reconnect if we were previously connected or reconnecting
+            if (wasConnectedBeforeOffline.value && lobbyId.value) {
+                console.info("Attempting to restore WebSocket connection after coming online");
 
-    const handleOnline = (): void => {
-        console.info("Device back online, checking WebSocket connection");
-        networkOnline.value = true; // Set our internal state
-
-        // Only attempt to reconnect if we were previously connected or reconnecting
-        if (wasConnectedBeforeOffline.value && lobbyId.value) {
-            console.info("Attempting to restore WebSocket connection after coming online");
-
-            // Small delay to ensure network is fully restored
-            setTimeout(() => {
-                if (connection.value?.readyState !== WebSocket.OPEN) {
-                    // If we were in RECONNECTING state, continue from where we left off
-                    if (state.value === ConnectionState.RECONNECTING) {
-                        attemptReconnection();
-                    } else {
-                        // Otherwise try a fresh connection
-                        connect(lobbyId.value!).catch((error) => {
-                            console.error("Failed to reconnect after coming online:", error);
-                            // If initial reconnect fails, start the reconnection process
-                            attemptReconnection();
-                        });
+                // Small delay to ensure network is fully restored
+                setTimeout(() => {
+                    if (connection.value?.readyState !== WebSocket.OPEN) {
+                        // If we were in RECONNECTING state, continue from where we left off
+                        if (state.value === ConnectionState.RECONNECTING) {
+                            reconnectionService.attemptReconnection(connect, lobbyId.value);
+                        } else {
+                            // Otherwise try a fresh connection
+                            if (lobbyId.value) {
+                                connect(lobbyId.value).catch((error) => {
+                                    console.error("Failed to reconnect after coming online:", error);
+                                    // If initial reconnect fails, start the reconnection process
+                                    if (lobbyId.value) {
+                                        reconnectionService.attemptReconnection(connect, lobbyId.value);
+                                    }
+                                });
+                            }
+                        }
                     }
-                }
-            }, 1000);
+                }, 1000);
+            }
         }
+    );
+
+    /**
+     * Build WebSocket URL from API configuration
+     */
+    const buildWebSocketUrl = (id: string): string => {
+        const backendAPI = useBackendAPI().value;
+        if (!backendAPI) {
+            throw new Error("Backend API configuration not available");
+        }
+
+        // Convert http(s):// to ws(s)://
+        const apiUrl = backendAPI.replace(/(http)(s)?:\/\//, "ws$2://");
+        return `${apiUrl}/lobbySocket?id=${encodeURIComponent(id)}`;
     };
-
-    // Setup and remove network status listeners
-    const setupNetworkListeners = (): void => {
-        window.addEventListener("offline", handleOffline);
-        window.addEventListener("online", handleOnline);
-    };
-
-    const removeNetworkListeners = (): void => {
-        console.log("Removing NETWORK status listeners");
-
-        window.removeEventListener("offline", handleOffline);
-        window.removeEventListener("online", handleOnline);
-    };
-
-    // When component using the store is unmounted
-    onUnmounted(() => {
-        disconnect();
-    });
 
     return {
         // Expose connection state as readonly
@@ -413,6 +298,6 @@ export const useWebSocketStore = defineStore("websocket", () => {
 
         // For debugging/development
         isConnected: computed(() => state.value === ConnectionState.CONNECTED),
-        isOnline: computed(() => networkOnline.value), // Use our internal tracker instead
+        isOnline: computed(() => networkOnline.value),
     };
 });

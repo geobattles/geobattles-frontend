@@ -8,7 +8,12 @@ export { useCountdown } from "./utils/useCountdown";
 export { useStartApp } from "./utils/useStartApp";
 export { parseJwt } from "./utils/parseJwt";
 export { processCountryList, cloneLobbySettings, getGameModeFromSettings, getSettingsDiff } from "./utils/lobbyUtils";
+export { createNetworkUtils } from "./utils/networkUtils";
 
 // Services
 export { authService } from "./services/authService";
 export { lobbyService } from "./services/lobbyService";
+
+// Websocket services
+export { createHeartbeatService } from "./services/websocket/heartbeatService";
+export { createReconnectionService } from "./services/websocket/reconnectionService";
