@@ -11,6 +11,8 @@ const statusMessage = computed(() => {
     switch (socketStore.connectionState) {
         case "connected":
             return "Connected";
+        case "connecting":
+            return "Connecting...";
         case "reconnecting":
             return "Reconnecting...";
         case "disconnected":
@@ -24,6 +26,8 @@ const severity = computed(() => {
     switch (socketStore.connectionState) {
         case "connected":
             return "success";
+        case "connecting":
+            return "info";
         case "reconnecting":
             return "warn";
         case "disconnected":

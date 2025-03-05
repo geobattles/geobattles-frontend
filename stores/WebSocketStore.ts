@@ -14,6 +14,8 @@ export const useWebSocketStore = defineStore("websocket", () => {
     const connection = shallowRef<WebSocket | null>(null);
     const state = ref<ConnectionState>(ConnectionState.DISCONNECTED);
     const lobbyId = ref<string | null>(null);
+    const wasConnectedBeforeOffline = ref(false);
+    const networkOnline = ref(navigator.onLine); // Track network status internally
 
     // Reconnection configuration
     const reconnectConfig = {
@@ -43,8 +45,19 @@ export const useWebSocketStore = defineStore("websocket", () => {
             return;
         }
 
+        // Don't attempt connection if we're offline
+        if (!navigator.onLine) {
+            console.warn("Device is offline, cannot establish WebSocket connection");
+            state.value = ConnectionState.DISCONNECTED;
+            wasConnectedBeforeOffline.value = true; // Mark to attempt reconnection when back online
+            return Promise.reject(new Error("Device is offline"));
+        }
+
         // Terminate any existing connection
         disconnect();
+
+        // Setup network listeners when connecting
+        setupNetworkListeners();
 
         return new Promise<void>((resolve, reject) => {
             try {
@@ -97,7 +110,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
         });
     };
 
-    const disconnect = (): void => {
+    const disconnect = (removeListeners: boolean = true): void => {
         stopHeartbeat();
         cancelReconnection();
 
@@ -117,6 +130,12 @@ export const useWebSocketStore = defineStore("websocket", () => {
         }
 
         state.value = ConnectionState.DISCONNECTED;
+
+        // Remove network listeners if requested (default)
+        if (removeListeners) {
+            removeNetworkListeners();
+            wasConnectedBeforeOffline.value = false;
+        }
 
         console.log("WebSocket connection closed");
     };
@@ -247,6 +266,14 @@ export const useWebSocketStore = defineStore("websocket", () => {
             return;
         }
 
+        // Don't attempt reconnection if we're offline
+        if (!networkOnline.value) {
+            console.warn("Device is offline, pausing reconnection attempts");
+            state.value = ConnectionState.RECONNECTING; // Keep in reconnecting state
+            wasConnectedBeforeOffline.value = true; // Mark for reconnection when back online
+            return; // Don't schedule any reconnection attempts
+        }
+
         // Cancel any pending reconnection attempt
         cancelReconnection();
 
@@ -255,17 +282,25 @@ export const useWebSocketStore = defineStore("websocket", () => {
         reconnectConfig.currentAttempts++;
 
         // Calculate backoff delay with exponential factor
-        const delay = reconnectConfig.baseDelay * Math.pow(1, reconnectConfig.currentAttempts - 1);
+        const delay = reconnectConfig.baseDelay * Math.pow(1.5, reconnectConfig.currentAttempts - 1);
 
         console.info(`Attempting reconnection ${reconnectConfig.currentAttempts}/${reconnectConfig.maxAttempts} in ${delay}ms`);
 
         // Schedule reconnection attempt
         reconnectConfig.timerId = window.setTimeout(() => {
             if (lobbyId.value) {
+                // Double-check we're still online before attempting
+                if (!networkOnline.value) {
+                    console.warn("Network went offline during reconnection delay");
+                    return;
+                }
+
                 connect(lobbyId.value).catch((error) => {
                     console.error("Reconnection attempt failed:", error);
-                    // If connect fails, it will set appropriate state
-                    // We'll try again in handleClose if needed
+                    // Only try again if we're still online
+                    if (networkOnline.value) {
+                        attemptReconnection(); // Try again with increasing backoff
+                    }
                 });
             } else {
                 state.value = ConnectionState.DISCONNECTED;
@@ -306,6 +341,67 @@ export const useWebSocketStore = defineStore("websocket", () => {
         }
     };
 
+    // Network status handlers
+    const handleOffline = (): void => {
+        console.warn("Device went offline, suspending WebSocket connection");
+        networkOnline.value = false; // Set our internal state
+        wasConnectedBeforeOffline.value = state.value === ConnectionState.CONNECTED || state.value === ConnectionState.RECONNECTING;
+
+        // Cancel any pending reconnection attempts since they'll fail
+        cancelReconnection();
+
+        // Don't close the socket immediately, let the heartbeat mechanism detect the issue
+        // This prevents unnecessarily closing the socket during brief connectivity blips
+        if (connection.value && connection.value.readyState === WebSocket.OPEN) {
+            console.info("Connection open during offline event, will wait for heartbeat failure");
+        }
+    };
+
+    const handleOnline = (): void => {
+        console.info("Device back online, checking WebSocket connection");
+        networkOnline.value = true; // Set our internal state
+
+        // Only attempt to reconnect if we were previously connected or reconnecting
+        if (wasConnectedBeforeOffline.value && lobbyId.value) {
+            console.info("Attempting to restore WebSocket connection after coming online");
+
+            // Small delay to ensure network is fully restored
+            setTimeout(() => {
+                if (connection.value?.readyState !== WebSocket.OPEN) {
+                    // If we were in RECONNECTING state, continue from where we left off
+                    if (state.value === ConnectionState.RECONNECTING) {
+                        attemptReconnection();
+                    } else {
+                        // Otherwise try a fresh connection
+                        connect(lobbyId.value!).catch((error) => {
+                            console.error("Failed to reconnect after coming online:", error);
+                            // If initial reconnect fails, start the reconnection process
+                            attemptReconnection();
+                        });
+                    }
+                }
+            }, 1000);
+        }
+    };
+
+    // Setup and remove network status listeners
+    const setupNetworkListeners = (): void => {
+        window.addEventListener("offline", handleOffline);
+        window.addEventListener("online", handleOnline);
+    };
+
+    const removeNetworkListeners = (): void => {
+        console.log("Removing NETWORK status listeners");
+
+        window.removeEventListener("offline", handleOffline);
+        window.removeEventListener("online", handleOnline);
+    };
+
+    // When component using the store is unmounted
+    onUnmounted(() => {
+        disconnect();
+    });
+
     return {
         // Expose connection state as readonly
         connectionState: computed(() => state.value),
@@ -317,5 +413,6 @@ export const useWebSocketStore = defineStore("websocket", () => {
 
         // For debugging/development
         isConnected: computed(() => state.value === ConnectionState.CONNECTED),
+        isOnline: computed(() => networkOnline.value), // Use our internal tracker instead
     };
 });
