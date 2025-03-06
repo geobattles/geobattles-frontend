@@ -13,7 +13,8 @@
 </template>
 
 <script setup lang="ts">
-useStartApp();
+const appStore = useAppStore();
+appStore.startApplication();
 </script>
 
 <style>
