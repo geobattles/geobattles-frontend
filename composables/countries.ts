@@ -38,7 +38,8 @@ export const toggleAllCountries = () => {
 };
 
 export const fetchCountryList = async () => {
-    const response = await fetch(`${useBackendAPI().value}/countryList`, {
+    const endpoint = useAppStore().backendEndpoint;
+    const response = await fetch(`${endpoint}/countryList`, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
