@@ -8,10 +8,9 @@ export const authService = {
      * Authenticate a user with username and password
      */
     async login(username: string, password: string): Promise<AuthResponse> {
-        const backendAPI = useBackendAPI().value;
-        if (!backendAPI) throw new Error("Backend API is not defined");
+        const endpoint = useAppStore().backendEndpoint;
 
-        const response = await fetch(`${backendAPI}/login`, {
+        const response = await fetch(`${endpoint}/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -31,11 +30,9 @@ export const authService = {
      * Register a new user or guest
      */
     async register(username: string | null, password: string | null, displayName: string | null): Promise<AuthResponse> {
-        const backendAPI = useBackendAPI().value;
-        if (!backendAPI) throw new Error("Backend API is not defined");
-
+        const baseEndpoint = useAppStore().backendEndpoint;
         const isRegularUser = username && password;
-        const endpoint = isRegularUser ? `${backendAPI}/register/user` : `${backendAPI}/register/guest`;
+        const endpoint = isRegularUser ? `${baseEndpoint}/register/user` : `${baseEndpoint}/register/guest`;
         const body = isRegularUser ? { username, password, displayname: displayName } : { displayname: displayName };
 
         const response = await fetch(endpoint, {
@@ -58,11 +55,11 @@ export const authService = {
      * Validate the current token with the backend
      */
     async validateToken(token: string): Promise<boolean> {
-        const backendAPI = useBackendAPI().value;
-        if (!backendAPI || !token) return false;
+        const endpoint = useAppStore().backendEndpoint;
+        if (!token) return false;
 
         try {
-            const response = await fetch(`${backendAPI}/validate-token`, {
+            const response = await fetch(`${endpoint}/validate-token`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",

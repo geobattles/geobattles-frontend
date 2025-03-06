@@ -277,13 +277,10 @@ export const useWebSocketStore = defineStore("websocket", () => {
      * Build WebSocket URL from API configuration
      */
     const buildWebSocketUrl = (id: string): string => {
-        const backendAPI = useBackendAPI().value;
-        if (!backendAPI) {
-            throw new Error("Backend API configuration not available");
-        }
+        const endpoint = useAppStore().backendEndpoint;
 
         // Convert http(s):// to ws(s)://
-        const apiUrl = backendAPI.replace(/(http)(s)?:\/\//, "ws$2://");
+        const apiUrl = endpoint.replace(/(http)(s)?:\/\//, "ws$2://");
         return `${apiUrl}/lobbySocket?id=${encodeURIComponent(id)}`;
     };
 

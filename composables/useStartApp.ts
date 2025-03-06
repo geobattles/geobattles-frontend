@@ -1,7 +1,7 @@
 export const useStartApp = () => {
     // Read ENV variables
     const runtimeConfig = useRuntimeConfig();
-    useBackendAPI().value = runtimeConfig.public.BACKEND_HOST;
+    useAppStore().setBackendEndpoint(runtimeConfig.public.BACKEND_HOST);
     console.log("HOST:", runtimeConfig.public.BACKEND_HOST); //! Dev
 
     // Define the app's head metadata

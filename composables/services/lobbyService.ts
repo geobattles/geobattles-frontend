@@ -5,8 +5,8 @@ export const lobbyService = {
      * Create a new lobby on the server
      */
     async createLobby(token: string, lobbyParams: { name: string; roundTime: number }): Promise<LobbyInfo> {
-        const backendAPI = useBackendAPI().value;
-        const response = await fetch(`${backendAPI}/lobby`, {
+        const endpoint = useAppStore().backendEndpoint;
+        const response = await fetch(`${endpoint}/lobby`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -26,8 +26,8 @@ export const lobbyService = {
      * Get list of available lobbies
      */
     async fetchLobbyList(): Promise<string[]> {
-        const backendAPI = useBackendAPI().value;
-        const response = await fetch(`${backendAPI}/lobby`, {
+        const endpoint = useAppStore().backendEndpoint;
+        const response = await fetch(`${endpoint}/lobby`, {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
