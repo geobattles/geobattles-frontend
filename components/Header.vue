@@ -10,13 +10,13 @@
                 </a>
             </template>
             <template #end>
-                <div v-if="!auth.isAuthenticated" class="flex">
+                <div v-if="!authStore.isAuthenticated" class="flex">
                     <div>
                         <Button label="Login" size="small" severity="primary" @click="handleLoginClick" />
                     </div>
                 </div>
                 <div v-else class="flex gap-2 items-center">
-                    <Button v-if="showLogoutButton" label="Logout" size="small" severity="primary" raised @click="auth.logout()" />
+                    <Button v-if="showLogoutButton" label="Logout" size="small" severity="primary" raised @click="authStore.logout()" />
                     <Tag icon="pi pi-user" severity="info" :value="playerInfo.displayName" />
                     <Button
                         v-if="showLogoutButton"
@@ -32,8 +32,8 @@
                 </div>
             </template>
         </Menubar>
-        <Dialog v-model:visible="isLoginDialogVisible" class="w-full lg:w-1/2" header="Login" position="center" :modal="true" :draggable="false">
-            <Login class="m-10" @userLogged="isLoginDialogVisible = false" />
+        <Dialog v-model:visible="authStore.isLoginDialog" class="w-full lg:w-1/2" header="Login" position="center" :modal="true" :draggable="false">
+            <Login class="m-10" @userLogged="authStore.isLoginDialog = false" />
         </Dialog>
     </header>
 </template>
@@ -47,8 +47,7 @@ const lobbyStore = useLobbyStore();
 const playerInfo = usePlayerInfo();
 const router = useRouter();
 const route = useRoute();
-const isLoginDialogVisible = useIsLoginDialogVisible();
-const auth = useAuthStore();
+const authStore = useAuthStore();
 
 const items: Ref<MenuItem[]> = ref([
     {
@@ -93,7 +92,7 @@ const itemsProfile: Ref<MenuItem[]> = ref([
 const toggleUserMenu = (event: any) => userMenu.value.toggle(event);
 
 // Open Login dialog on Login button click
-const handleLoginClick = () => (isLoginDialogVisible.value = true);
+const handleLoginClick = () => (authStore.isLoginDialog = true);
 
 // Check if Logout button should be shown
 const showLogoutButton = computed(() => {

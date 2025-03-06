@@ -31,11 +31,10 @@ const toast = useToast();
 // External services
 const { fetchLobbyList, checkIfLobby, joinLobby } = useLobbyStore();
 const lobbyStore = useLobbyStore();
-const auth = useAuthStore();
-const isLoginDialogVisible = useIsLoginDialogVisible();
+const authStore = useAuthStore();
 
 const handleJoinLobbyClick = async (lobby_id: string) => {
-    if (!auth.isAuthenticated) return (isLoginDialogVisible.value = true);
+    if (!authStore.isAuthenticated) return (authStore.isLoginDialog = true);
     isJoiningLobby.value = true;
 
     try {

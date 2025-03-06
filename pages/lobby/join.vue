@@ -37,8 +37,7 @@ let inputs_array: Ref<HTMLInputElement | null>[] = [];
 
 // External services
 const router = useRouter();
-const auth = useAuthStore();
-const isLoginDialogVisible = useIsLoginDialogVisible();
+const authStore = useAuthStore();
 const toast = useToast();
 const { checkIfLobby, joinLobby } = useLobbyStore();
 
@@ -59,7 +58,7 @@ onMounted(() => {
             if (input.value) input.value.value = lobby_id[id];
         });
 
-        if (!auth.isAuthenticated) return (isLoginDialogVisible.value = true);
+        if (!authStore.isAuthenticated) return (authStore.isLoginDialog = true);
         handleJoinLobby(lobbyURLParameter.value);
     }
 });

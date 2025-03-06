@@ -26,12 +26,11 @@ const isJoiningLobby = ref(false); // Handle loader
 
 // External services
 const router = useRouter();
-const auth = useAuthStore();
-const isLoginDialogVisible = useIsLoginDialogVisible();
+const authStore = useAuthStore();
 const { createLobby } = useLobbyStore();
 
 const handlePlayNowClick = async () => {
-    if (!auth.isAuthenticated) return (isLoginDialogVisible.value = true);
+    if (!authStore.isAuthenticated) return (authStore.isLoginDialog = true);
     isJoiningLobby.value = true;
 
     // Try to create a lobby
@@ -46,7 +45,7 @@ const handlePlayNowClick = async () => {
 };
 
 const handleJoinByCodeClick = () => {
-    if (!auth.isAuthenticated) return (isLoginDialogVisible.value = true);
+    if (!authStore.isAuthenticated) return (authStore.isLoginDialog = true);
     router.push("/lobby/join");
 };
 </script>

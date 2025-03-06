@@ -34,7 +34,7 @@ const playerInfo = usePlayerInfo();
 const { register } = useAuthStore();
 const router = useRouter();
 const toast = useToast();
-const isLoginDialogVisible = useIsLoginDialogVisible();
+const authStore = useAuthStore();
 
 const onSubmit = async () => {
     isRegisterLoading.value = true;
@@ -65,7 +65,7 @@ const onSubmit = async () => {
         playerInfo.value.username = username.value;
         playerInfo.value.displayName = displayName.value;
 
-        isLoginDialogVisible.value = false; // Close the login dialog if it's open
+        authStore.isLoginDialog = false; // Close the login dialog if it's open
 
         router.push("/"); // Redirect to the home page after successful registration
     } catch (error) {
