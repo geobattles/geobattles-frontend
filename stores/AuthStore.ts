@@ -3,6 +3,7 @@ import type { User } from "@/types/appTypes";
 export const useAuthStore = defineStore("auth", () => {
     const isAuthenticated = ref(false);
     const authError = ref<string | null>(null);
+    const isLoginDialog = ref(false); // Flag whether the login dialog is open
 
     // Token management functions remain the same
     const saveToken = (token: string, expire: number): void => {
@@ -95,6 +96,7 @@ export const useAuthStore = defineStore("auth", () => {
     return {
         isAuthenticated,
         authError,
+        isLoginDialog,
         saveToken,
         getToken,
         clearToken,
