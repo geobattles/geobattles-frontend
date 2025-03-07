@@ -51,6 +51,8 @@ export const useAppStore = defineStore("app", () => {
             // Add primitive check for mobile devices
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             if (isMobile) useUIManager().value.setMobile(true);
+
+            addBeforeUnloadPrompt();
         });
     };
 
@@ -79,6 +81,22 @@ export const useAppStore = defineStore("app", () => {
                 });
             `;
         document.head.appendChild(script);
+    };
+
+    const addBeforeUnloadPrompt = () => {
+        // Add confirmation dialog when leaving the page only on specific routes
+        window.onbeforeunload = function () {
+            const router = useRouter();
+            const currentRouteName = router.currentRoute.value.name;
+
+            // Only prompt when leaving lobby or gameplay routes
+            if (currentRouteName === "lobby-id" || currentRouteName === "gameplay-id") {
+                return "Are you sure you want to leave? Progress may be lost.";
+            }
+
+            // Return undefined for other routes (no prompt)
+            return undefined;
+        };
     };
 
     return {
