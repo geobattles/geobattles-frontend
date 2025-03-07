@@ -74,11 +74,6 @@ onMounted(async () => {
 
     // Initialize Gameplay
     gameMode.initGameMode();
-
-    // Add confirmation dialog when leaving the page
-    window.onbeforeunload = function () {
-        return "Are you sure you want to leave? Progress may be lost.";
-    };
 });
 
 onBeforeRouteLeave((to, from, next) => {
