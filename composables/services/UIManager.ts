@@ -27,13 +27,10 @@ export class UIManager {
      * @param submit_button
      */
     mountingProcess(toggle_map_mobile: Ref<HTMLElement | null>, show_map_button: Ref<boolean>, submit_button: Ref<HTMLElement | null>): void {
-        const google_map = useGoogleMapHTML();
-        const google_pan = useGooglePanoramaHTML();
-        if (!google_map.value) throw new Error("Google Map DOM element not found in gameplay");
-        if (!google_pan.value) throw new Error("Google Panorama DOM element not found in gameplay");
+        const { getMapHTML, getPanoramaHTML } = useGoogleStore();
 
-        this.googleMap = google_map.value;
-        this.googlePanorama = google_pan.value;
+        this.googleMap = getMapHTML;
+        this.googlePanorama = getPanoramaHTML;
         this.submitButton = submit_button.value;
 
         this.setupMapListeners(toggle_map_mobile, show_map_button, submit_button);
@@ -51,6 +48,7 @@ export class UIManager {
     }
 
     private setupMobileView(toggle_map_mobile: Ref<HTMLElement | null>, show_map_button: Ref<boolean>): void {
+        const { setMapZoom } = useGoogleStore();
         setMapZoom(3); // Make zoom greater on mobile
         toggle_map_mobile.value?.addEventListener("click", this.handleMapToggleMobile.bind(this));
         window.addEventListener("resize", this.updateOrientation.bind(this));

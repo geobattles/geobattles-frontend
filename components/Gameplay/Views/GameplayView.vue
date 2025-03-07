@@ -70,6 +70,7 @@ const showMapButtonMobile = ref(false);
 // External services
 const gameMode = useGameMode();
 const uiManager = useUIManager();
+const googleStore = useGoogleStore();
 
 onMounted(() => {
     setTimeout(() => {
@@ -81,7 +82,7 @@ onMounted(() => {
 // Resize panorama to re-render it when the game state changes
 watch(
     () => gameMode.modeLogic.currentState,
-    (newVal) => newVal && setTimeout(() => google.maps.event.trigger(useGooglePanorama().value, "resize"), 300)
+    (newVal) => newVal && setTimeout(() => google.maps.event.trigger(googleStore.getPanorama, "resize"), 300)
 );
 
 // Handle leaving the lobby

@@ -100,24 +100,24 @@ export function useTimer() {
         }, delayBeforeSound);
     }
 
+    const handleResize = () => (screenWidth.value = window.innerWidth);
+
     onMounted(() => {
         initializeTimer();
-
         // Handle window resize
-        const handleResize = () => (screenWidth.value = window.innerWidth);
         window.addEventListener("resize", handleResize);
+    });
 
-        onUnmounted(() => {
-            clearTimeout(timeoutSound);
-            clearInterval(intervalSound);
-            clearInterval(intervalCountdown);
-            window.removeEventListener("resize", handleResize);
+    onUnmounted(() => {
+        clearTimeout(timeoutSound);
+        clearInterval(intervalSound);
+        clearInterval(intervalCountdown);
+        window.removeEventListener("resize", handleResize);
 
-            // Clean up audio context
-            if (audioContext) {
-                audioContext.close().catch(console.error);
-            }
-        });
+        // Clean up audio context
+        if (audioContext) {
+            audioContext.close().catch(console.error);
+        }
     });
 
     return {

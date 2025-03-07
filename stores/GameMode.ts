@@ -59,8 +59,8 @@ export const useGameMode = defineStore("gameModeStore", () => {
     // ========== Extra Functions ==========
     const exitGameplay = () => {
         // Clear click listeners after game ends
-        const gMap = isGoogleMap();
-        google.maps.event.clearListeners(gMap, "click");
+        const { getMap } = useGoogleStore();
+        google.maps.event.clearListeners(getMap, "click");
         modeLogic.value.clearMap();
     };
 
