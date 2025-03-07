@@ -116,8 +116,6 @@ function handleTimesUp(data: MsgTimesUpData) {
 }
 
 function handleRoundFinished(data: MsgRoundFinishedData) {
-    const { playRoundFinishSound } = useTimer();
-    playRoundFinishSound();
     return;
 }
 

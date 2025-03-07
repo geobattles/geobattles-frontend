@@ -9,17 +9,17 @@ export default {
     },
     setup(props) {
         const google_map = useTemplateRef<HTMLElement>("google_map");
+        const googleStore = useGoogleStore();
 
         onMounted(() => {
             if (!google_map.value) throw new Error("Google Map DOM element not found");
-            const existingMap = useGoogleMapHTML().value;
 
             // Append existing Google Map HTML to the DOM or create new one
-            if (existingMap) {
-                google_map.value.appendChild(existingMap);
+            if (googleStore.isGoogleInitialized) {
+                google_map.value.appendChild(googleStore.getMapHTML);
             } else {
-                useGoogleMapHTML().value = google_map.value;
-                initalizeNewGoogleMap(google_map.value); // Init Google Map
+                googleStore.setMapHTML(google_map.value);
+                googleStore.initializeGoogleMap(google_map.value); // Init Google Map
             }
         });
 

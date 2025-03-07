@@ -15,6 +15,7 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
 
     // External composable functions
     const router = useRouter();
+    const googleStore = useGoogleStore();
 
     const startRound = async () => {
         currentState.value = GameState.STARTING;
@@ -49,7 +50,7 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         clearMap();
 
         // Add searched location marker
-        const marker = await createSearchedLocationMarker(searchedLocationCoords.value);
+        const marker = await googleStore.createSearchedLocationMarker(searchedLocationCoords.value);
         mapMarkers.value.push(marker); // Save marker to static array
 
         // Draw player pins and polylines to searched location
@@ -72,8 +73,7 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         currentRound.value = 0;
 
         // Clear click listeners after game ends
-        const gMap = isGoogleMap();
-        google.maps.event.clearListeners(gMap, "click");
+        google.maps.event.clearListeners(googleStore.getMap, "click");
     };
 
     const processMapPin = async (coordinates: Coordinates): Promise<void> => {
@@ -156,8 +156,8 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
     // ======================================== Internal functions ========================================
     const drawPolyLine = (from: Coordinates, to: Coordinates): void => {
         // Contrust polyline and render it on map
-        const polyline = makePolyline(from, to);
-        polyline.setMap(isGoogleMap());
+        const polyline = googleStore.makePolyline(from, to);
+        polyline.setMap(googleStore.getMap);
 
         // Save polyline to static array
         mapPolylines.value.push(polyline);
@@ -165,8 +165,8 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
 
     const drawMarker = async (coordinates: Coordinates, color: string, playerName?: string): Promise<void> => {
         // Create new marker and render it on map
-        const marker = await addNewMapMarker(coordinates, color, playerName);
-        marker.map = isGoogleMap();
+        const marker = await googleStore.addNewMapMarker(coordinates, color, playerName);
+        marker.map = googleStore.getMap;
 
         // Save marker to static array
         mapMarkers.value.push(marker);
@@ -188,9 +188,9 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
 
         // If there are only two locations (including the searched location), set the center instead of fitting bounds
         if (locationCount === 1) {
-            isGoogleMap().setCenter(searchedLocationCoords.value);
+            googleStore.getMap.setCenter(searchedLocationCoords.value);
         } else {
-            fitCustomBounds(bounds, 50); // Fit all displayed markers bounds
+            googleStore.fitCustomBounds(bounds, 50); // Fit all displayed markers bounds
         }
     };
 
@@ -205,39 +205,35 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
     };
 
     const resetMapAndPanorama = (): void => {
-        if (useGoogleMapHTML().value && useGooglePanoramaHTML().value) {
-            // Set Panorama to a location that needs to be guessed
-            updatePanoramaView(searchedLocationCoords.value);
+        // Set Panorama to a location that needs to be guessed
+        googleStore.updatePanoramaView(searchedLocationCoords.value);
 
-            // Set GoogleMap to center and define zoom
-            isGoogleMap().setCenter({ lat: 0, lng: 0 });
-            isGoogleMap().setZoom(2);
-        }
+        // Set GoogleMap to center and define zoom
+        googleStore.getMap.setCenter({ lat: 0, lng: 0 });
+        googleStore.getMap.setZoom(2);
     };
 
     const setMapClickEventListener = () => {
-        const gMap = isGoogleMap();
-
         // Remove existing listeners
-        google.maps.event.clearListeners(gMap, "click");
-
-        addMapClickListener(processMapPin);
+        google.maps.event.clearListeners(googleStore.getMap, "click");
+        googleStore.addMapClickListener(processMapPin);
     };
 
     const waitForMapAndPano = async (): Promise<void> => {
         // Wait for both Google Map and Panorama to be initialized
         let attempts = 0;
-        while ((!useGoogleMap.value || !useGooglePanorama().value) && attempts < 20) {
+
+        while (!googleStore.isGoogleInitialized && attempts < 20) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
             attempts++;
         }
 
-        if (!useGoogleMap.value) {
+        if (!googleStore.getMap) {
             console.error("Google Map failed to initialize after multiple attempts");
             return;
         }
 
-        if (!useGooglePanorama().value) {
+        if (!googleStore.getPanorama) {
             console.error("Google Panorama failed to initialize after multiple attempts");
             return;
         }

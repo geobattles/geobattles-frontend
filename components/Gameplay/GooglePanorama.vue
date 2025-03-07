@@ -6,17 +6,17 @@
 export default {
     setup() {
         const google_panorama = ref<HTMLElement | null>(null);
+        const googleStore = useGoogleStore();
 
         onMounted(() => {
             if (!google_panorama.value) throw new Error("Google Panorama DOM element not found");
-            const existingPanorama = useGooglePanoramaHTML().value;
 
             // Append existing Google Panorama HTML to the DOM or create new one
-            if (existingPanorama) {
-                google_panorama.value.appendChild(existingPanorama);
+            if (googleStore.isGoogleInitialized) {
+                google_panorama.value.appendChild(googleStore.getPanoramaHTML);
             } else {
-                useGooglePanoramaHTML().value = google_panorama.value;
-                initalizeNewPanoramaView(google_panorama.value); // Init Google Map
+                googleStore.setPanoramaHTML(google_panorama.value);
+                googleStore.initalizePanoramaView(google_panorama.value); // Init Google Map
             }
         });
 
