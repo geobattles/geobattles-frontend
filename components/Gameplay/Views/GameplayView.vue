@@ -277,13 +277,14 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
 
     .submit-button {
         width: 150px;
+        height: 50px;
         font-size: 14px;
         padding: 8px 16px;
     }
 
     .mobile-map-button {
         position: absolute;
-        bottom: 55px;
+        bottom: 70px;
         left: 10px;
         z-index: 2;
 

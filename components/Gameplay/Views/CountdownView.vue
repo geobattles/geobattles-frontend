@@ -9,7 +9,13 @@
 
         <!-- Round Info -->
         <p>Starting Round</p>
-        <Knob v-model="knobValue" :min="0" :max="lobbySettings?.conf.numRounds" readonly />
+        <Knob
+            v-model="knobValue"
+            :min="0"
+            :max="lobbyStore.lobbySettings?.conf.numRounds"
+            :valueTemplate="(value) => `${value} / ${lobbyStore.lobbySettings?.conf.numRounds}`"
+            readonly
+        />
     </div>
 </template>
 
@@ -18,7 +24,7 @@ const COUNTDOWN_SECONDS = 3;
 const { counter, startCountdown } = useCountdown(COUNTDOWN_SECONDS);
 
 // Store references
-const { lobbySettings } = useLobbyStore();
+const lobbyStore = useLobbyStore();
 const gameMode = useGameMode();
 
 // Computed properties
