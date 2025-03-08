@@ -53,16 +53,17 @@ const setChartData = () => {
                 data: filteredData.map((data) => data.score),
                 fill: false,
                 borderColor: documentStyle.getPropertyValue("--p-primary-500"),
+                borderWidth: 4, // Add this property to make the line thicker (adjust value as needed)
                 tension: 0.4,
                 pointRadius: 0, // Remove circles or dots around the points
             },
-            {
-                label: "Min Score Showing 50",
-                data: Array(filteredData.length).fill(50),
-                borderColor: documentStyle.getPropertyValue("--p-red-600"),
-                borderWidth: 1,
-                pointRadius: 0,
-            },
+            // {
+            //     label: "Min Score Showing 50",
+            //     data: Array(filteredData.length).fill(50),
+            //     borderColor: documentStyle.getPropertyValue("--p-red-600"),
+            //     borderWidth: 1,
+            //     pointRadius: 0,
+            // },
         ],
     };
 };

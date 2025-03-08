@@ -48,7 +48,7 @@
         <div v-else class="endgame-menu-container">
             <div class="flex gap-3">
                 <div class="flex flex-col">
-                    <p class="text-center">GAMEOVER</p>
+                    <p class="text-center">GAME OVER</p>
                     <p class="text-xs text-center">Waiting for admin to start next...</p>
                 </div>
                 <LobbyLeave class="m-auto" @click="handleClickLeaveLobby" />
