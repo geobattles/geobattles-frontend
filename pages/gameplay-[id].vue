@@ -3,8 +3,8 @@
         <!-- Countdown View (before starting next round) -->
         <GameplayViewsCountdownView v-if="gameMode.modeLogic.currentState === 'STARTING'" />
 
-        <!-- Gameplay View (when game is playing) -->
-        <GameplayViewsGameplayView v-show="gameMode.modeLogic.currentState === 'PLAYING'" @leaveLobby="handleClickLeaveLobby()" />
+        <!-- Gameplay View (when game is playing and also starting to render StreetView in starting time) -->
+        <GameplayViewsGameplayView v-show="gameMode.modeLogic.currentState === 'PLAYING' || gameMode.modeLogic.currentState === 'STARTING'" @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- MidRound View (when game is in mid-round) -->
         <GameplayViewsMidRoundView v-show="gameMode.modeLogic.currentState === 'MID-ROUND'" @leaveLobby="handleClickLeaveLobby()" />
