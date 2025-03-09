@@ -17,6 +17,12 @@
                     <span>or join a lobby by <a class="clickable" @click="handleJoinByCodeClick()">game code!</a></span>
                 </div>
             </div>
+            <footer class="version">
+                <div>
+                    <p>© {{ new Date().getFullYear() }} GeoBattles</p>
+                    <p>Version: {{ runtimeConfig.public.VERSION }} from {{ runtimeConfig.public.BUILD_DATE }}</p>
+                </div>
+            </footer>
         </div>
     </div>
 </template>
@@ -26,6 +32,7 @@ const isJoiningLobby = ref(false); // Handle loader
 
 // External services
 const router = useRouter();
+const runtimeConfig = useRuntimeConfig();
 const authStore = useAuthStore();
 const { createLobby } = useLobbyStore();
 
@@ -69,5 +76,16 @@ const handleJoinByCodeClick = () => {
     cursor: pointer;
 
     color: var(--p-primary-400);
+}
+
+.version {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.8rem;
+    color: rgb(185, 167, 167);
+    text-align: center;
+    width: auto;
 }
 </style>
