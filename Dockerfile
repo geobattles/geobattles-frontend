@@ -2,14 +2,17 @@ FROM node:22-alpine AS builder
 
 WORKDIR /usr/src/nuxt-app
 
-ARG VERSION
-
 # Copy necessary files
 COPY package*.json ./
 RUN npm ci
 
-# Copy the rest of the app & build
+# Copy the rest of the app files
 COPY . .
+
+# Set here to improve caching
+ARG VERSION
+
+# Build the app
 RUN npm run build
 
 
