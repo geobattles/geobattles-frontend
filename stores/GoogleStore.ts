@@ -4,7 +4,7 @@ export const useGoogleStore = defineStore("googleStore", () => {
     // States
     const googleMap = shallowRef<google.maps.Map | undefined>(undefined);
     const googleMapHTML = ref<HTMLElement | null>(null);
-    const googlePanorama = ref<google.maps.StreetViewPanorama | undefined>(undefined);
+    const googlePanorama = shallowRef<google.maps.StreetViewPanorama | undefined>(undefined);
     const googlePanoramaHTML = ref<HTMLElement | null>(null);
 
     // Constants
@@ -82,12 +82,11 @@ export const useGoogleStore = defineStore("googleStore", () => {
     const initalizePanoramaView = async (panoramaHTML: HTMLElement, coordinates: Coordinates = { lat: 0, lng: 0 }) => {
         const { StreetViewPanorama } = (await google.maps.importLibrary("streetView")) as google.maps.StreetViewLibrary;
 
-        // Timeout heres is added just to track Google Maps API billing (so panorama is alomst for sure loaded after map)
         googlePanorama.value = new StreetViewPanorama(panoramaHTML as HTMLElement, {
             position: coordinates,
             pov: {
-                heading: 34,
-                pitch: 10,
+                heading: 270,
+                pitch: 0,
             },
             fullscreenControl: false,
             showRoadLabels: false,
