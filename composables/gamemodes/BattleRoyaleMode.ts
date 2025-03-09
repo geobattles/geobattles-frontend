@@ -33,7 +33,7 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         const routeName = router.currentRoute.value.name as string;
         if (!routeName.includes("gameplay")) await router.push({ path: `/gameplay-${lobbySettings.ID}` });
 
-        await waitForMapAndPano();
+        await googleStore.waitForMapAndPano();
         resetMapAndPanorama();
         clearMap();
     };
@@ -121,6 +121,11 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         const new_leader = Object.keys(liveResults.value).reduce((a, b) => (liveResults.value[a].distance < liveResults.value[b].distance ? a : b)); // Returns player ID
 
         useUIManager().value.applyGuessStyles(userID, leader_before, new_leader);
+    };
+
+    const getUserLives = (userID: string): number => {
+        const liveResults = useLiveResults();
+        return liveResults.value[userID].lives;
     };
 
     const submitGuess = () => {
@@ -219,31 +224,12 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         googleStore.addMapClickListener(processMapPin);
     };
 
-    const waitForMapAndPano = async (): Promise<void> => {
-        // Wait for both Google Map and Panorama to be initialized
-        let attempts = 0;
-
-        while (!googleStore.isGoogleInitialized && attempts < 20) {
-            await new Promise((resolve) => setTimeout(resolve, 1000));
-            attempts++;
-        }
-
-        if (!googleStore.getMap) {
-            console.error("Google Map failed to initialize after multiple attempts");
-            return;
-        }
-
-        if (!googleStore.getPanorama) {
-            console.error("Google Panorama failed to initialize after multiple attempts");
-            return;
-        }
-    };
-
     return {
         currentState: readonly(currentState),
         currentRound: readonly(currentRound),
         currentMapPin: readonly(currentMapPin),
         searchedLocationCoords: readonly(searchedLocationCoords),
+        getUserLives,
         setSearchedLocationCoords,
         isSubmitDisabled,
         clearMap,

@@ -26,7 +26,7 @@
                 @click="gameMode.submitGuess()"
                 :disabled="gameMode.modeLogic.isSubmitDisabled"
             >
-                {{ gameMode.modeLogic.isSubmitDisabled ? "Place your pin" : "GUESS" }}
+                {{ submitButtonMessage }}
             </button>
             <button
                 ref="submit_button"
@@ -35,7 +35,7 @@
                 @click="gameMode.submitGuess()"
                 :disabled="gameMode.modeLogic.isSubmitDisabled"
             >
-                {{ gameMode.modeLogic.isSubmitDisabled ? "Place your guess on the map" : "GUESS" }}
+                {{ submitButtonMessage }}
             </button>
         </div>
 
@@ -72,18 +72,21 @@ const gameMode = useGameMode();
 const uiManager = useUIManager();
 const googleStore = useGoogleStore();
 
-onMounted(() => {
-    setTimeout(() => {
-        // Timeout added temporary to make sure google map is loaded before mounting process
-        uiManager.value.mountingProcess(toggleMapMobile, showMapButtonMobile, submitButton);
-    }, 2000);
+// Computed property for submit button message
+const submitButtonMessage = computed(() => {
+    const user = usePlayerInfo().value.ID || "";
+    // Return "out of lives" message if player has no lives left in BattleRoyale mode
+    if ("getUserLives" in gameMode.modeLogic && gameMode.modeLogic.getUserLives(user) <= 0) {
+        return "Out of lives";
+    }
+    // Return "Place your pin" if submit is disabled, otherwise "GUESS"
+    return gameMode.modeLogic.isSubmitDisabled ? "Place your pin" : "GUESS";
 });
 
-// Resize panorama to re-render it when the game state changes
-watch(
-    () => gameMode.modeLogic.currentState,
-    (newVal) => newVal && setTimeout(() => google.maps.event.trigger(googleStore.getPanorama, "resize"), 300)
-);
+onMounted(async () => {
+    await googleStore.waitForMapAndPano();
+    uiManager.value.mountingProcess(toggleMapMobile, showMapButtonMobile, submitButton);
+});
 
 // Handle leaving the lobby
 const handleClickLeaveLobby = () => emit("leaveLobby");

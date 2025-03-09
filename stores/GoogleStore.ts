@@ -40,6 +40,26 @@ export const useGoogleStore = defineStore("googleStore", () => {
         return panorama_html;
     });
 
+    const waitForMapAndPano = async (): Promise<void> => {
+        // Wait for both Google Map and Panorama to be initialized
+        let attempts = 0;
+
+        while (!isGoogleInitialized.value && attempts < 20) {
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            attempts++;
+        }
+
+        if (!getMap.value) {
+            console.error("Google Map failed to initialize after multiple attempts");
+            return;
+        }
+
+        if (!getPanorama.value) {
+            console.error("Google Panorama failed to initialize after multiple attempts");
+            return;
+        }
+    };
+
     // Setup functions
     const setMapHTML = (element: HTMLElement) => {
         googleMapHTML.value = element;
@@ -160,15 +180,35 @@ export const useGoogleStore = defineStore("googleStore", () => {
     };
 
     const shadeColor = (color: string, percent: number): string => {
+        // Parse the hex color
         let R = parseInt(color.substring(1, 3), 16);
         let G = parseInt(color.substring(3, 5), 16);
         let B = parseInt(color.substring(5, 7), 16);
 
-        R = Math.min(255, Math.max(0, R + (R * percent) / 100));
-        G = Math.min(255, Math.max(0, G + (G * percent) / 100));
-        B = Math.min(255, Math.max(0, B + (B * percent) / 100));
+        // Calculate the new values
+        if (percent < 0) {
+            // Darken the color (multiply components)
+            R = Math.round(R * (1 + percent / 100));
+            G = Math.round(G * (1 + percent / 100));
+            B = Math.round(B * (1 + percent / 100));
+        } else {
+            // Lighten the color (add white)
+            R = Math.round(R + (255 - R) * (percent / 100));
+            G = Math.round(G + (255 - G) * (percent / 100));
+            B = Math.round(B + (255 - B) * (percent / 100));
+        }
 
-        return `#${((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1).toUpperCase()}`;
+        // Ensure values stay within range
+        R = Math.min(255, Math.max(0, R));
+        G = Math.min(255, Math.max(0, G));
+        B = Math.min(255, Math.max(0, B));
+
+        // Convert back to hex
+        const RR = R.toString(16).padStart(2, "0");
+        const GG = G.toString(16).padStart(2, "0");
+        const BB = B.toString(16).padStart(2, "0");
+
+        return `#${RR}${GG}${BB}`;
     };
 
     const getMarkerContent = async (playerColor: string, playerName: string | undefined) => {
@@ -239,6 +279,7 @@ export const useGoogleStore = defineStore("googleStore", () => {
         getPanorama,
         getPanoramaHTML,
         isGoogleInitialized,
+        waitForMapAndPano,
 
         // Setup function
         setMapHTML,
