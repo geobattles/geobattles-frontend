@@ -16,3 +16,4 @@ export { lobbyService } from "./services/lobbyService";
 // Websocket services
 export { createHeartbeatService } from "./services/websocket/heartbeatService";
 export { createReconnectionService } from "./services/websocket/reconnectionService";
+export { createPingMonitorService } from "./services/websocket/pingMonitorService";

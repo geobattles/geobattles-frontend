@@ -125,7 +125,7 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
 
     const getUserLives = (userID: string): number => {
         const liveResults = useLiveResults();
-        return liveResults.value[userID].lives;
+        return liveResults.value[userID]?.lives ?? 0; // Return 0 if userID doesn't exist in results yet
     };
 
     const submitGuess = () => {

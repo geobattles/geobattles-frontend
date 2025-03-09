@@ -17,12 +17,21 @@ export const useWebSocketStore = defineStore("websocket", () => {
     const wasConnectedBeforeOffline = ref(false);
     const networkOnline = ref(navigator.onLine); // Track network status internally
 
-    // Initialize the services
-    const heartbeatService = createHeartbeatService(connection);
+    // Initialize the reconnection service
     const reconnectionService = createReconnectionService(
         state as Ref<string>, // Cast to string ref since the service only cares about string values
         networkOnline,
         wasConnectedBeforeOffline
+    );
+
+    // Create the ping monitor service (replacing heartbeat service)
+    const pingMonitorService = createPingMonitorService(
+        connection,
+        state as Ref<string>,
+        (id) => {
+            reconnectionService.attemptReconnection(connect, id);
+        },
+        lobbyId
     );
 
     const connect = async (id: string): Promise<void> => {
@@ -103,8 +112,8 @@ export const useWebSocketStore = defineStore("websocket", () => {
     };
 
     const disconnect = (removeListeners: boolean = true): void => {
-        // Use heartbeat service to stop the heartbeat
-        heartbeatService.stopHeartbeat();
+        // Stop the ping monitoring
+        pingMonitorService.stopMonitoring();
 
         // Cancel any pending reconnection attempts
         reconnectionService.cancelReconnection();
@@ -152,8 +161,8 @@ export const useWebSocketStore = defineStore("websocket", () => {
         // Reset reconnection attempts counter when successfully connected
         reconnectionService.resetAttempts();
 
-        // Start heartbeat using the heartbeat service
-        heartbeatService.startHeartbeat();
+        // Start monitoring for server pings
+        pingMonitorService.startMonitoring();
     };
 
     const handleMessage = (event: MessageEvent): void => {
@@ -161,9 +170,9 @@ export const useWebSocketStore = defineStore("websocket", () => {
             const data = JSON.parse(event.data);
             console.log("Parsed WebSocket message:", data);
 
-            // Handle heartbeat response
-            if (data.type === "PONG") {
-                heartbeatService.resetPongTimer();
+            // Handle ping command from server
+            if (data.command === "ping") {
+                pingMonitorService.handlePing();
                 return;
             }
 
@@ -175,14 +184,13 @@ export const useWebSocketStore = defineStore("websocket", () => {
     };
 
     const handleClose = (event: CloseEvent): void => {
-        // Stop the heartbeat when connection closes
-        heartbeatService.stopHeartbeat();
+        // Stop ping monitoring when connection closes
+        pingMonitorService.stopMonitoring();
+
         console.info(`WebSocket connection closed: ${event.code} ${event.reason}`);
 
         // Only attempt reconnection if the connection wasn't closed cleanly
-        // and we're in a game session
-        const gameState = useGameMode().modeLogic.currentState;
-        if (!event.wasClean && gameState === GameState.PLAYING && lobbyId.value) {
+        if (!event.wasClean && lobbyId.value) {
             // Use reconnection service to handle reconnection
             reconnectionService.attemptReconnection(connect, lobbyId.value);
         } else {
