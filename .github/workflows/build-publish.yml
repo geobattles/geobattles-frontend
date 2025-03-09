@@ -53,11 +53,22 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-node-
 
+      - name: Set VERSION env variable
+        run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          if [[ "$GITHUB_REF_TYPE" == "tag" ]]; then
+            echo "VERSION=$GITHUB_REF_NAME - $SHORT_SHA" >> $GITHUB_ENV
+          else
+            echo "VERSION=$SHORT_SHA" >> $GITHUB_ENV
+          fi
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            VERSION=${{ env.VERSION }}
           push: true
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
