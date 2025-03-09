@@ -18,6 +18,7 @@ export interface GameModeLogic {
 // Add optional methods
 export interface BattleRoyaleLogic extends GameModeLogic {
     processMapPin: (coordinates: Coordinates) => Promise<void>;
+    getUserLives: (user: string) => number;
     submitGuess: () => void;
 }
 
