@@ -6,16 +6,14 @@
 
 <script setup lang="ts">
 const lobbyStore = useLobbyStore();
-const inviteLink = ref("");
 const inviteLinkTagSettings = ref({
     value: "Copy Invite Link",
     severity: "info",
     icon: "pi pi-copy",
 });
 
-onMounted(() => {
-    // Generate invite link
-    inviteLink.value = `${window.location.origin}/lobby/join?id=${lobbyStore.lobbySettings!.ID}`;
+const inviteLink = computed(() => {
+    return `${window.location.origin}/lobby/join?id=${lobbyStore.lobbySettings?.ID}`;
 });
 
 const copyInviteLink = () => {

@@ -6,7 +6,7 @@
             :valueTemplate="valueTemplate"
             :size="knobSize"
             :min="0"
-            :max="roundTime"
+            :max="fullRoundTime"
             :valueColor="countdownColor"
             :textColor="countdownColor"
             :strokeWidth="10"
@@ -18,13 +18,12 @@
 </template>
 
 <script setup lang="ts">
-const { countdown, roundTime, countdownColor, knobSize, valueTemplate } = useTimer();
+const { countdown, fullRoundTime, countdownColor, knobSize, valueTemplate } = useTimer();
 </script>
 
 <style scoped>
 #progress-bar {
     background-color: var(--surface-background);
     border-radius: 100%;
-    /* width: fit-content; */
 }
 </style>

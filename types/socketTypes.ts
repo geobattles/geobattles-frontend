@@ -9,6 +9,7 @@ export enum SocketStatus {
 export enum SocketType {
     JOINED_LOBBY = "JOINED_LOBBY",
     LEFT_LOBBY = "LEFT_LOBBY",
+    REJOIN_ROUND = "REJOIN_ROUND",
     UPDATED_LOBBY = "UPDATED_LOBBY",
     START_ROUND = "START_ROUND",
     NEW_RESULT = "NEW_RESULT",
@@ -36,6 +37,13 @@ export type MsgJoinedLobbyData = SocketMessage<{
 export type MsgLeftLobbyData = SocketMessage<{
     lobby: LobbyInfo;
     user: string;
+}>;
+
+export type MsgRejoinRound = SocketMessage<{
+    location: Coordinates;
+    players: Results;
+    timeRemaining: number;
+    fullroundRes: any;
 }>;
 
 export type MsgUpdatedLobbyData = SocketMessage<{
