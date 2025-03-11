@@ -26,7 +26,7 @@
                         </div>
                     </td>
                     <td class="px-6 py-4">
-                        <div v-if="player_data.player_countries?.length > 0" class="countries">
+                        <div v-if="player_data.player_countries?.length || 0 > 0" class="countries">
                             <div v-for="(country_code, id) in player_data.player_countries" :key="id">
                                 <div
                                     class="flag"

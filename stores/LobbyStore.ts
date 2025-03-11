@@ -88,8 +88,6 @@ export const useLobbyStore = defineStore("lobby", () => {
             // Reset all lobby-related state
             lobbySettings.value = null;
             lobbySettingsOriginal.value = null;
-            useLiveResults().value = {};
-            useTotalResults().value = {};
         } catch (error) {
             console.error("Error leaving lobby:", error);
             throw new Error("Could not leave lobby.");

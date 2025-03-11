@@ -19,6 +19,7 @@ export interface BattleRoyaleLogic extends GameModeLogic {
     processMapPin: (coordinates: Coordinates) => Promise<void>;
     getUserLives: (user: string) => number;
     submitGuess: () => void;
+    drawMarker: (coordinates: Coordinates, color: string, playerName?: string) => void;
 }
 
 export interface CountryBattleLogic extends GameModeLogic {
