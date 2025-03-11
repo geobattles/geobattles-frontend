@@ -2,6 +2,11 @@ import { GameState, type Coordinates, type Results, type ResultsInfo, type Total
 import type { BattleRoyaleLogic } from "~/types/GameModeLogic";
 
 export function useBattleRoyaleMode(): BattleRoyaleLogic {
+    // External composable functions
+    const router = useRouter();
+    const googleStore = useGoogleStore();
+    const resultsStore = useResultsStore();
+
     // GamePlay State // TODO: Make this object so state can be simply reset and return as computed
     const currentState = ref(GameState.WAITING);
     const currentRound = ref(0);
@@ -12,11 +17,6 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
     // GameMode Specifics
     const mapMarkers: Ref<google.maps.marker.AdvancedMarkerElement[]> = ref([]);
     const mapPolylines: Ref<google.maps.Polyline[]> = shallowRef([]);
-
-    // External composable functions
-    const router = useRouter();
-    const googleStore = useGoogleStore();
-    const resultsStore = useResultsStore();
 
     const startRound = async (isCountdown: boolean = true) => {
         currentState.value = GameState.STARTING;
@@ -86,11 +86,10 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         const playerID = usePlayerInfo().value.ID;
         if (!playerID) throw new Error("Player ID is not defined");
 
-        const liveResults = resultsStore.liveResults;
-        if (liveResults[playerID].lives === 0) return console.warn("All lives are used!!");
+        if (resultsStore.liveResults[playerID].lives === 0) return console.warn("All lives are used!!");
 
         // Place first pin if no pins yet, or if pins and submits are the same
-        if (usedPins === 0 || liveResults[playerID].attempt === usedPins) {
+        if (usedPins === 0 || resultsStore.liveResults[playerID].attempt === usedPins) {
             const color = getPlayerColorByID(playerID);
             if (!color) throw new Error("Player color is not defined");
             drawMarker(coordinates, color);
@@ -98,7 +97,7 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         }
 
         // If no submitted results yet || there are stil lives left, change last marker position
-        if (!liveResults[playerID] || liveResults[playerID].lives > 0) {
+        if (!resultsStore.liveResults[playerID] || resultsStore.liveResults[playerID].lives > 0) {
             const lastMarker = mapMarkers.value[mapMarkers.value.length - 1];
             lastMarker.position = coordinates;
             return;
@@ -106,7 +105,6 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
     };
 
     const getUserLives = (userID: string): number => {
-        const resultsStore = useResultsStore();
         return resultsStore.liveResults[userID]?.lives ?? 0; // Return 0 if userID doesn't exist in results yet
     };
 
@@ -226,5 +224,6 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         finishGame,
         processMapPin,
         submitGuess,
+        drawMarker,
     };
 }

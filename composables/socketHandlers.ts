@@ -84,14 +84,13 @@ async function handleRejoinRound(message: MsgRejoinRound) {
     const lobbyStore = useLobbyStore();
     lobbyStore.rejoinTimer = Math.round(data.timeRemaining / 1000);
 
-    // Apply the live round results // TODO:
-    const resultsStore = useResultsStore();
-    resultsStore.liveResults = data.players; // TODO: This is just temporary, round results needs to be parsed and applied
-
-    // Place players pins used on the map // TODO:
-
     // Start the round
     await gameMode.startRound(false);
+
+    // Apply the live round results
+    const resultsStore = useResultsStore();
+    resultsStore.liveResults = data.players;
+    resultsStore.syncLiveResults(data.fullroundRes); // Apply actual results to the live results object
 }
 
 function handleUpdatedLobby(message: MsgUpdatedLobbyData) {
@@ -110,6 +109,8 @@ function handleStartRound(message: MsgStartRoundData) {
     const gameMode = useGameMode();
     gameMode.modeLogic.setSearchedLocationCoords(data.location);
     gameMode.startRound();
+
+    // TODO: Should update lobby settings here or at least the round. But its not being sent from the backend yet
 
     // Set new player results for live statistics
     const resultsStore = useResultsStore();

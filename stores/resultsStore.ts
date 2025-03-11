@@ -1,4 +1,4 @@
-import type { GameType, Results, ResultsInfo, TotalResults } from "~/types/appTypes";
+import type { GameType, LiveResultsHashMap, Results, ResultsInfo, TotalResults } from "~/types/appTypes";
 
 export const useResultsStore = defineStore("results", () => {
     // State
@@ -6,10 +6,10 @@ export const useResultsStore = defineStore("results", () => {
     const totalResults = ref<TotalResults>({});
     const gameMode = useGameMode();
 
-    function resetResults() {
+    const resetResults = () => {
         liveResults.value = {};
         totalResults.value = {};
-    }
+    };
 
     const applySingleResult = (userID: string, resultsData: ResultsInfo) => {
         processSingleResult(gameMode.currentMode, userID, resultsData);
@@ -18,13 +18,50 @@ export const useResultsStore = defineStore("results", () => {
     const syncRoundResults = (roundResults: Results) => {
         switch (gameMode.currentMode) {
             case "BattleRoyale":
-                // Sort round results properly by distance
-                const sortedResults = Object.fromEntries(Object.entries(roundResults).sort(([, a], [, b]) => (a.distance ?? 999999999) - (b.distance ?? 999999999)));
-                liveResults.value = sortedResults;
+                liveResults.value = roundResults;
+                sortResultsByDistance();
                 break;
             default:
                 console.error(`Unknown game mode: ${gameMode}`);
 
+                break;
+        }
+    };
+
+    const syncLiveResults = (liveResultsHashMap: LiveResultsHashMap) => {
+        const playerID = usePlayerInfo().value.ID;
+        console.log(playerID);
+
+        // Sort results by distance based on the current game mode
+        switch (gameMode.currentMode) {
+            case "BattleRoyale":
+                // Extract key and value for each entry in the hash map
+                Object.entries(liveResultsHashMap).forEach(([key, value]) => {
+                    // For each user, find their best result (lowest distance)
+                    if (value.length > 0) {
+                        const bestResult = value.reduce((best, current) => (current.distance < best.distance ? current : best), value[0]);
+
+                        // Update the live results with the best result for this user
+                        liveResults.value[key] = bestResult;
+                        liveResults.value[key].lives = value[value.length - 1].lives;
+                        liveResults.value[key].attempt = value[value.length - 1].attempt;
+                    }
+
+                    // Draw the markers for the current user
+                    if (key === playerID && playerID) {
+                        value.forEach((guess) => {
+                            const color = getPlayerColorByID(playerID);
+                            console.log(color);
+                            if ("drawMarker" in gameMode.modeLogic && color) gameMode.modeLogic.drawMarker(guess.location, color);
+                        });
+                    }
+                });
+
+                // Sort results by distance
+                sortResultsByDistance();
+                break;
+            default:
+                console.error(`Unknown game mode: ${gameMode.currentMode}`);
                 break;
         }
     };
@@ -84,7 +121,16 @@ export const useResultsStore = defineStore("results", () => {
     };
 
     const sortResultsByDistance = (): void => {
-        liveResults.value = Object.fromEntries(Object.entries(liveResults.value).sort(([, a], [, b]) => (a.distance ?? 999999999) - (b.distance ?? 999999999)));
+        // liveResults.value = Object.fromEntries(Object.entries(liveResults.value).sort(([, a], [, b]) => (a.distance ?? 999999999) - (b.distance ?? 999999999)));
+
+        // Do this temporarily until the backend is fixed not to send 0 distance on no result
+        liveResults.value = Object.fromEntries(
+            Object.entries(liveResults.value).sort(([, a], [, b]) => {
+                const distanceA = a.distance === 0 ? 999999999 : (a.distance ?? 999999999);
+                const distanceB = b.distance === 0 ? 999999999 : (b.distance ?? 999999999);
+                return distanceA - distanceB;
+            })
+        );
     };
 
     return {
@@ -96,6 +142,7 @@ export const useResultsStore = defineStore("results", () => {
         applySingleResult,
         syncRoundResults,
         syncTotalResults,
+        syncLiveResults,
         processSingleResult,
         resetResults,
     };

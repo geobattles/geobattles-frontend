@@ -64,8 +64,8 @@ export interface ResultsInfo {
     distance: number;
     lives: number;
     location: Coordinates;
-    cc: string;
-    player_countries: string[];
+    cc?: string;
+    player_countries?: string[];
 }
 
 export type TotalResults = {
@@ -75,6 +75,18 @@ export type TotalResults = {
 interface TotalResultInfo extends ResultsInfo {
     total: number | undefined; // Not defined by backend if user scores 0 points
 }
+
+interface LiveResults {
+    attempt: number;
+    baseScr: number;
+    distance: number;
+    lives: number;
+    location: Coordinates;
+}
+
+export type LiveResultsHashMap = {
+    [key: string]: Array<LiveResults>;
+};
 
 export type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINISHED" | undefined; // Undefined when not connected to a lobby (socket)
 

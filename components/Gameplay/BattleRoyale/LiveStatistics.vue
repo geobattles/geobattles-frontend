@@ -17,8 +17,12 @@
                     <div class="table__row-element">
                         <div>Lives</div>
                         <div class="flex gap-0 lg:gap-1 m-auto">
-                            <div v-for="life in totalAttempts.get(index)" :key="life">
+                            <!-- TODO: Temporary remove gray hearts until we know the number of attempts from backend -->
+                            <!-- <div v-for="life in totalAttempts.get(index)" :key="life">
                                 <SvgsHeartIcon class="svg-heart-icon h-4" :color="value.lives >= life ? 'var(--p-red-500)' : 'var(--p-gray-400)'" />
+                            </div> -->
+                            <div v-for="life in value.lives" :key="life">
+                                <SvgsHeartIcon class="svg-heart-icon h-4" :color="'var(--p-red-500)'" />
                             </div>
                         </div>
                     </div>
