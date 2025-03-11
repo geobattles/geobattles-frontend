@@ -16,15 +16,16 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
     // External composable functions
     const router = useRouter();
     const googleStore = useGoogleStore();
+    const resultsStore = useResultsStore();
 
-    const startRound = async () => {
+    const startRound = async (isCountdown: boolean = true) => {
         currentState.value = GameState.STARTING;
 
         // Set to PLAYING after countdown
-        setTimeout(() => {
-            currentState.value = GameState.PLAYING;
-            setMapClickEventListener();
-        }, 3000);
+        if (isCountdown)
+            setTimeout(async () => {
+                currentState.value = GameState.PLAYING;
+            }, 3000);
 
         const { lobbySettings } = useLobbyStore();
         if (!lobbySettings) return console.error("Lobby settings are not defined in startRound method in useBattleRoyaleMode.");
@@ -32,40 +33,39 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         // Redirect to gampeplay route if not already there
         const routeName = router.currentRoute.value.name as string;
         if (!routeName.includes("gameplay")) await router.push({ path: `/gameplay-${lobbySettings.ID}` });
+        if (!isCountdown) currentState.value = GameState.PLAYING;
 
         await googleStore.waitForMapAndPano();
         resetMapAndPanorama();
         clearMap();
+        setMapClickEventListener();
     };
 
-    const finishRound = async (totalResults: TotalResults, roundResults: Results, round: number) => {
+    const finishRound = async (round: number) => {
         currentState.value = GameState.MID_ROUND;
         currentRound.value = round;
-
-        // Apply total results and sort them
-        useTotalResults().value = totalResults;
-        useTotalResults().value = Object.fromEntries(Object.entries(useTotalResults().value).sort(([, a], [, b]) => (b.total || 0) - (a.total || 0)));
 
         // Clear map from Gameplay
         clearMap();
 
         // Add searched location marker
         const marker = await googleStore.createSearchedLocationMarker(searchedLocationCoords.value);
-        mapMarkers.value.push(marker); // Save marker to static array
+        mapMarkers.value.push(marker);
 
         // Draw player pins and polylines to searched location
-        for (const key in roundResults) {
-            if (Object.keys(roundResults[key].location).length === 0) continue; // Skip if location object is empty
+        const roundRes = resultsStore.liveResults;
+        for (const key in roundRes) {
+            if (Object.keys(roundRes[key].location).length === 0) continue; // Skip if location object is empty
 
             const color = getPlayerColorByID(key);
             if (!color) throw new Error("Player color is not defined");
 
-            drawPolyLine(searchedLocationCoords.value, roundResults[key].location);
-            drawMarker(roundResults[key].location, color, getPlayerNameFromID(key)); // Create new marker
+            drawPolyLine(searchedLocationCoords.value, roundRes[key].location);
+            await drawMarker(roundRes[key].location, color, getPlayerNameFromID(key)); // Create new marker
         }
 
         // Bound map view to players locations
-        setTimeout(() => setMapBounds(roundResults), 1500);
+        setTimeout(() => setMapBounds(), 1500);
     };
 
     const finishGame = () => {
@@ -86,7 +86,7 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         const playerID = usePlayerInfo().value.ID;
         if (!playerID) throw new Error("Player ID is not defined");
 
-        const liveResults = useLiveResults().value;
+        const liveResults = resultsStore.liveResults;
         if (liveResults[playerID].lives === 0) return console.warn("All lives are used!!");
 
         // Place first pin if no pins yet, or if pins and submits are the same
@@ -105,27 +105,9 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         }
     };
 
-    const processNewResult = (userID: string, playerResult: ResultsInfo): void => {
-        const liveResults = useLiveResults();
-        const leader_before = Object.keys(liveResults.value).reduce((a, b) => (liveResults.value[a].distance < liveResults.value[b].distance ? a : b)); // Returns player ID
-
-        if (playerResult.baseScr < liveResults.value[userID]?.baseScr || (playerResult.baseScr === 0 && playerResult.distance > liveResults.value[userID].distance)) {
-            // Update attempts and lives, not the score or distance
-            liveResults.value[userID].lives = playerResult.lives;
-            liveResults.value[userID].attempt = playerResult.attempt;
-        } else {
-            liveResults.value[userID] = playerResult; // Update everything because the new user's result is better than current best
-            liveResults.value = Object.fromEntries(Object.entries(liveResults.value).sort(([, a], [, b]) => (a.distance ?? 999999999) - (b.distance ?? 999999999))); // Sort results by score
-        }
-
-        const new_leader = Object.keys(liveResults.value).reduce((a, b) => (liveResults.value[a].distance < liveResults.value[b].distance ? a : b)); // Returns player ID
-
-        useUIManager().value.applyGuessStyles(userID, leader_before, new_leader);
-    };
-
     const getUserLives = (userID: string): number => {
-        const liveResults = useLiveResults();
-        return liveResults.value[userID]?.lives ?? 0; // Return 0 if userID doesn't exist in results yet
+        const resultsStore = useResultsStore();
+        return resultsStore.liveResults[userID]?.lives ?? 0; // Return 0 if userID doesn't exist in results yet
     };
 
     const submitGuess = () => {
@@ -144,7 +126,7 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
     };
 
     const isSubmitDisabled = computed(() => {
-        const liveResults = useLiveResults();
+        const liveResults = resultsStore.liveResults;
         const playerID = usePlayerInfo().value.ID;
 
         // Disable if there are no markers on the map
@@ -152,7 +134,7 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
 
         // Disable if number of markers equals number of attempts
         if (!playerID) throw new Error("Player ID not found, probably because left lobby");
-        const playerAttempt = liveResults.value[playerID].attempt;
+        const playerAttempt = liveResults[playerID].attempt;
         if (mapMarkers.value.length === playerAttempt) return true;
 
         return false;
@@ -177,7 +159,8 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         mapMarkers.value.push(marker);
     };
 
-    const setMapBounds = (roundResults: Results): void => {
+    const setMapBounds = (): void => {
+        const roundResults = resultsStore.liveResults;
         const bounds = new google.maps.LatLngBounds();
         let locationCount = 0;
 
@@ -188,8 +171,6 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         }
         bounds.extend(searchedLocationCoords.value);
         locationCount++;
-
-        console.log(bounds);
 
         // If there are only two locations (including the searched location), set the center instead of fitting bounds
         if (locationCount === 1) {
@@ -220,7 +201,14 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
 
     const setMapClickEventListener = () => {
         // Remove existing listeners
-        google.maps.event.clearListeners(googleStore.getMap, "click");
+        // try {
+        //     google.maps.event.clearListeners(googleStore.getMap, "click");
+        // } catch (error) {
+        //     console.warn("Clearing map click listeners failed", error);
+        // }
+
+        if (googleStore.getMap) google.maps.event.clearListeners(googleStore.getMap, "click");
+
         googleStore.addMapClickListener(processMapPin);
     };
 
@@ -237,7 +225,6 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         finishRound,
         finishGame,
         processMapPin,
-        processNewResult,
         submitGuess,
     };
 }

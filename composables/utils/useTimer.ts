@@ -13,21 +13,42 @@ type TimerSound = {
 };
 
 export function useTimer() {
-    const { lobbySettings } = useLobbyStore();
+    const { lobbySettings, rejoinTimer } = useLobbyStore();
+    const fullRoundTime = computed(() => lobbySettings?.conf.roundTime ?? 0);
+    const roundTime = computed(() => {
+        if (rejoinTimer !== null) return rejoinTimer;
+        return lobbySettings?.conf.roundTime ?? 0;
+    });
     const screenWidth = ref(window.innerWidth);
-    const roundTime = computed(() => lobbySettings?.conf.roundTime ?? 0);
     const countdown = ref(roundTime.value);
     const timerSoundThreshold = ref(roundTime.value <= TIMER_CONFIG.SHORT_ROUND_THRESHOLD ? TIMER_CONFIG.SHORT_ROUND_SOUND_THRESHOLD : TIMER_CONFIG.DEFAULT_SOUND_THRESHOLD);
     const countdownColor = ref("var(--p-primary-500)");
-
-    // Computed properties
     const knobSize = computed(() => (screenWidth.value > TIMER_CONFIG.LARGE_SCREEN_SIZE ? TIMER_CONFIG.LARGE_KNOB_SIZE : TIMER_CONFIG.SMALL_KNOB_SIZE));
 
-    // Audio Context for Web Audio API
     let audioContext: AudioContext | null = null;
     let intervalSound: ReturnType<typeof setInterval>;
     let intervalCountdown: ReturnType<typeof setInterval>;
     let timeoutSound: ReturnType<typeof setTimeout>;
+
+    const handleResize = () => (screenWidth.value = window.innerWidth);
+
+    onMounted(() => {
+        initializeTimer();
+        // Handle window resize
+        window.addEventListener("resize", handleResize);
+    });
+
+    onUnmounted(() => {
+        clearTimeout(timeoutSound);
+        clearInterval(intervalSound);
+        clearInterval(intervalCountdown);
+        window.removeEventListener("resize", handleResize);
+
+        // Clean up audio context
+        if (audioContext) {
+            audioContext.close().catch(console.error);
+        }
+    });
 
     /**
      * Plays a tick sound using Web Audio API
@@ -100,28 +121,9 @@ export function useTimer() {
         }, delayBeforeSound);
     }
 
-    const handleResize = () => (screenWidth.value = window.innerWidth);
-
-    onMounted(() => {
-        initializeTimer();
-        // Handle window resize
-        window.addEventListener("resize", handleResize);
-    });
-
-    onUnmounted(() => {
-        clearTimeout(timeoutSound);
-        clearInterval(intervalSound);
-        clearInterval(intervalCountdown);
-        window.removeEventListener("resize", handleResize);
-
-        // Clean up audio context
-        if (audioContext) {
-            audioContext.close().catch(console.error);
-        }
-    });
-
     return {
         countdown,
+        fullRoundTime,
         roundTime,
         countdownColor,
         knobSize,

@@ -1,8 +1,8 @@
-import { type Results, type ResultsInfo, type TotalResults } from "~/types/appTypes";
+import { type GameType } from "~/types/appTypes";
 
 export const useGameMode = defineStore("gameModeStore", () => {
     // GameMode and GameMode Logic
-    const currentMode = ref<"BattleRoyale" | "CountryBattle">("BattleRoyale");
+    const currentMode = ref<GameType>("BattleRoyale");
     const modeLogic = ref<ReturnType<typeof useBattleRoyaleMode> | ReturnType<typeof useCountryBattleMode>>(useBattleRoyaleMode());
 
     // Initialized once player joins the lobby
@@ -13,7 +13,7 @@ export const useGameMode = defineStore("gameModeStore", () => {
     };
 
     // Update GameMode
-    const updateGameMode = (newGameType: "BattleRoyale" | "CountryBattle") => {
+    const updateGameMode = (newGameType: GameType) => {
         if (currentMode.value !== newGameType) {
             // Update game mode
             currentMode.value = newGameType;
@@ -23,21 +23,17 @@ export const useGameMode = defineStore("gameModeStore", () => {
     };
 
     // ========== GameMode Logic Functions ==========
-    const startRound = () => {
-        modeLogic.value.startRound();
+    const startRound = async (isCountdown: boolean = true) => {
+        await modeLogic.value.startRound(isCountdown);
     };
 
-    const finishRound = (totalResults: TotalResults, roundResults: Results, round: number, polygon?: any) => {
-        modeLogic.value.finishRound(totalResults, roundResults, round, polygon);
+    const finishRound = (round: number, polygon?: any) => {
+        modeLogic.value.finishRound(round, polygon);
     };
 
     const finishGame = () => {
         console.info(`Finishing gameplay.`);
         modeLogic.value.finishGame();
-    };
-
-    const processNewResult = (user: string, player_result: ResultsInfo): void => {
-        modeLogic.value.processNewResult(user, player_result);
     };
 
     const processClickedCountry = (polygon: any, countryCode: string): void => {
@@ -73,7 +69,6 @@ export const useGameMode = defineStore("gameModeStore", () => {
         finishRound,
         finishGame,
         processClickedCountry,
-        processNewResult,
         submitGuess,
         exitGameplay,
     };

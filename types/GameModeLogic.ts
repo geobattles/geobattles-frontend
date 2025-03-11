@@ -9,10 +9,9 @@ export interface GameModeLogic {
     setSearchedLocationCoords: (coordinates: Coordinates) => void;
     isSubmitDisabled: ComputedRef<boolean> | Ref<boolean>;
     clearMap: () => void;
-    startRound: () => void;
-    finishRound: (totalResults: TotalResults, roundResults: Results, round: number, polygon?: any) => void;
+    startRound: (isCountdown?: boolean) => Promise<void>;
+    finishRound: (round: number, polygon?: any) => void;
     finishGame: () => void;
-    processNewResult: (user: string, player_result: ResultsInfo) => void;
 }
 
 // Add optional methods

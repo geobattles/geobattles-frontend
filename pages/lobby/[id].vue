@@ -20,7 +20,7 @@
                     <div class="flex flex-col">
                         <div class="mb-1">Lobby code</div>
                         <div class="text-base lg:text-xl" style="letter-spacing: 2px">
-                            {{ lobbySettings?.ID }}
+                            {{ lobbyStore.lobbySettings?.ID }}
                         </div>
                     </div>
                     <div class="flex flex-col">
@@ -47,7 +47,7 @@
 const isGuardDisabled = ref(false);
 
 // External services
-const { lobbySettings, leaveLobby, isPlayerAdmin } = useLobbyStore();
+const { leaveLobby, isPlayerAdmin } = useLobbyStore();
 const lobbyStore = useLobbyStore();
 const country_list = useCountryList();
 const filtered_country_list = useFilteredCountryList();
@@ -66,10 +66,10 @@ onMounted(async () => {
     }
 
     // If ccList is empty it populate it with all ccodes. Happend only on first load.
-    if (!lobbySettings) return console.error("Lobby settings not found");
+    if (!lobbyStore.lobbySettings) return console.error("Lobby settings not found");
 
     // Populate ccList
-    if (lobbySettings.conf.ccList.length === 0) lobbySettings.conf.ccList = Object.values(country_list.value);
+    if (lobbyStore.lobbySettings.conf.ccList.length === 0) lobbyStore.lobbySettings.conf.ccList = Object.values(country_list.value);
     filtered_country_list.value = country_list.value;
 
     // Initialize Gameplay

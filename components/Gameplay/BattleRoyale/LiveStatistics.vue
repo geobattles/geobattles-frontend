@@ -1,7 +1,7 @@
 <template>
     <div class="text-xs">
         <TransitionGroup name="list" tag="ul" class="flex flex-col gap-1 lg:gap-1">
-            <div v-for="(value, index) in results" :key="index">
+            <div v-for="(value, index) in resultsStore.liveResults" :key="index">
                 <div class="table__row" :id="index.toString()">
                     <!-- Player Information -->
                     <div class="table__row-element">
@@ -46,12 +46,14 @@
 
 <script lang="ts">
 import { GameState } from "~/types/appTypes";
+import type { WatchStopHandle } from "vue";
 
 export default {
     setup() {
-        const results = useLiveResults();
+        const resultsStore = useResultsStore();
         const totalAttempts = ref(new Map<string | number, number>());
         const gameMode = useGameMode();
+        let gameStateWatcher: WatchStopHandle | null = null;
 
         /**
          * Format distance for display in results table.
@@ -71,21 +73,30 @@ export default {
          * Initialize total attempts for every player at the start of each round.
          */
         const initializeTotalAttempts = () => {
-            for (const player_id in results.value) totalAttempts.value.set(player_id, results.value[player_id].lives);
+            for (const player_id in resultsStore.liveResults) totalAttempts.value.set(player_id, resultsStore.liveResults[player_id].lives);
         };
 
-        // Watch game flow state to initialize total attempts
-        watch(
-            () => gameMode.modeLogic.currentState,
-            (newVal) => {
-                if (newVal === GameState.PLAYING) {
-                    initializeTotalAttempts();
+        onMounted(() => {
+            // Setup watcher when component is mounted
+            gameStateWatcher = watch(
+                () => gameMode.modeLogic.currentState,
+                (newVal) => {
+                    if (newVal === GameState.PLAYING) {
+                        initializeTotalAttempts();
+                    }
                 }
+            );
+        });
+
+        onUnmounted(() => {
+            // Clean up watcher when component is unmounted
+            if (gameStateWatcher) {
+                gameStateWatcher();
             }
-        );
+        });
 
         return {
-            results,
+            resultsStore,
             totalAttempts,
             getPlayerColorByID,
             formatDistance,

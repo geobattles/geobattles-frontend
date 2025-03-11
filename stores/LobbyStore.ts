@@ -17,6 +17,8 @@ export const useLobbyStore = defineStore("lobby", () => {
     const lobbyList = ref<string[]>([]); // List of available lobbies
     const modifySettingsModal = ref<boolean>(false); // Controls visibility of settings modal
 
+    const rejoinTimer = ref<number | null>(null); // Timer for rejoining a round will override the default timer
+
     // ================== Lobby creation and joining ==================
     /**
      * Create a new lobby on the server, connect to it via WebSocket and redirect to the lobby page
@@ -267,6 +269,7 @@ export const useLobbyStore = defineStore("lobby", () => {
         isUpdatingSettings,
         lobbyList,
         modifySettingsModal,
+        rejoinTimer,
 
         // Methods
         createLobby,

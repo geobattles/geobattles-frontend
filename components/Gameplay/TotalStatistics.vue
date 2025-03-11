@@ -7,9 +7,9 @@
         </div>
         <div>
             <TransitionGroup name="list">
-                <div v-for="(value, player_id, index) in total_results" :key="player_id" class="table__row p-2 md:p-2.5">
+                <div v-for="(value, player_id, index) in resultsStore.totalResults" :key="player_id" class="table__row p-2 md:p-2.5">
                     <div class="table__row-element">
-                        <SvgsTrophyIcon :color="trophy_color[index]" class="w-4 lg:w-6" />
+                        <SvgsTrophyIcon :color="trophyColor[index]" class="w-4 lg:w-6" />
                     </div>
                     <div class="table__row-element">
                         <div class="flex">
@@ -32,10 +32,10 @@
 <script>
 export default {
     setup() {
-        const trophy_color = ["gold", "silver", "#CD7F32"];
-        const total_results = useTotalResults();
+        const trophyColor = ["gold", "silver", "#CD7F32"];
+        const resultsStore = useResultsStore();
 
-        return { trophy_color, total_results };
+        return { trophyColor, resultsStore };
     },
 };
 </script>
