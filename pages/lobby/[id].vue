@@ -71,9 +71,6 @@ onMounted(async () => {
     // Populate ccList
     if (lobbyStore.lobbySettings.conf.ccList.length === 0) lobbyStore.lobbySettings.conf.ccList = Object.values(country_list.value);
     filtered_country_list.value = country_list.value;
-
-    // Initialize Gameplay
-    gameMode.initGameMode();
 });
 
 onBeforeRouteLeave((to, from, next) => {

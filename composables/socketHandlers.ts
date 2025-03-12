@@ -76,8 +76,8 @@ async function handleRejoinRound(message: MsgRejoinRound) {
     const data = message.payload;
     if (!data.location || !data.players || !data.timeRemaining || !data.fullroundRes) return console.error("Missing data in REJOIN_ROUND message", data);
 
-    // Update the searched location coordinates
     const gameMode = useGameMode();
+    // Update the searched location coordinates
     gameMode.modeLogic.setSearchedLocationCoords(data.location);
 
     // Update the time remaining
