@@ -5,13 +5,6 @@ export const useGameMode = defineStore("gameModeStore", () => {
     const currentMode = ref<GameType>("BattleRoyale");
     const modeLogic = ref<ReturnType<typeof useBattleRoyaleMode> | ReturnType<typeof useCountryBattleMode>>(useBattleRoyaleMode());
 
-    // Initialized once player joins the lobby
-    const initGameMode = () => {
-        const gameMode = useLobbyStore().lobbySettings?.conf.mode;
-        currentMode.value = gameMode === 2 ? "CountryBattle" : "BattleRoyale";
-        modeLogic.value = currentMode.value === "BattleRoyale" ? useBattleRoyaleMode() : useCountryBattleMode();
-    };
-
     // Update GameMode
     const updateGameMode = (newGameType: GameType) => {
         if (currentMode.value !== newGameType) {
@@ -63,7 +56,6 @@ export const useGameMode = defineStore("gameModeStore", () => {
     return {
         currentMode: readonly(currentMode),
         modeLogic: readonly(modeLogic),
-        initGameMode,
         updateGameMode,
         startRound,
         finishRound,
