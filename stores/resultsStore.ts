@@ -1,4 +1,4 @@
-import type { GameType, LiveResultsHashMap, Results, ResultsInfo, TotalResults } from "~/types/appTypes";
+import type { GameType, LiveResultsHashMap, ResultData, Results, TotalResults } from "~/types/appTypes";
 
 export const useResultsStore = defineStore("results", () => {
     // State
@@ -11,7 +11,7 @@ export const useResultsStore = defineStore("results", () => {
         totalResults.value = {};
     };
 
-    const applySingleResult = (userID: string, resultsData: ResultsInfo) => {
+    const applySingleResult = (userID: string, resultsData: ResultData) => {
         processSingleResult(gameMode.currentMode, userID, resultsData);
     };
 
@@ -30,7 +30,6 @@ export const useResultsStore = defineStore("results", () => {
 
     const syncLiveResults = (liveResultsHashMap: LiveResultsHashMap) => {
         const playerID = usePlayerInfo().value.ID;
-        console.log(playerID);
 
         // Sort results by distance based on the current game mode
         switch (gameMode.currentMode) {
@@ -51,7 +50,6 @@ export const useResultsStore = defineStore("results", () => {
                     if (key === playerID && playerID) {
                         value.forEach((guess) => {
                             const color = getPlayerColorByID(playerID);
-                            console.log(color);
                             if ("drawMarker" in gameMode.modeLogic && color) gameMode.modeLogic.drawMarker(guess.location, color);
                         });
                     }
@@ -79,7 +77,7 @@ export const useResultsStore = defineStore("results", () => {
         }
     };
 
-    const processSingleResult = (gameMode: GameType, userID: string, playerResult: ResultsInfo) => {
+    const processSingleResult = (gameMode: GameType, userID: string, playerResult: ResultData) => {
         switch (gameMode) {
             case "BattleRoyale":
                 // Get leader before aplying the new result
@@ -115,9 +113,7 @@ export const useResultsStore = defineStore("results", () => {
 
     // ======================== HELPERS ========================
     const getCurrentRoundLeader = () => {
-        // return Object.keys(liveResults.value).reduce((a, b) => (liveResults.value[a].distance < liveResults.value[b].distance ? a : b));
-        const firstKey = Object.keys(liveResults.value)[0];
-        return firstKey;
+        return Object.keys(liveResults.value)[0];
     };
 
     const sortResultsByDistance = (): void => {

@@ -1,4 +1,4 @@
-import { GameState, type Coordinates, type Results, type ResultsInfo, type TotalResults } from "~/types/appTypes";
+import { GameState, type Coordinates } from "~/types/appTypes";
 import type { BattleRoyaleLogic } from "~/types/GameModeLogic";
 
 export function useBattleRoyaleMode(): BattleRoyaleLogic {

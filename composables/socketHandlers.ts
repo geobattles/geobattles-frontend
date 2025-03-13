@@ -11,8 +11,8 @@ import type {
     MsgRoundFinishedData,
     MsgNoCountryData,
     MsgRejoinRound,
-} from "~/types/socketTypes"; // Adjust the path according to your project structure
-import { SocketType } from "~/types/socketTypes"; // Adjust the path according to your project structure
+} from "~/types/socketTypes";
+import { SocketType } from "~/types/socketTypes";
 
 // Messages that client sends to the server
 export const SOCKET_COMMANDS = {
@@ -90,7 +90,7 @@ async function handleRejoinRound(message: MsgRejoinRound) {
     // Apply the live round results
     const resultsStore = useResultsStore();
     resultsStore.liveResults = data.players;
-    resultsStore.syncLiveResults(data.fullroundRes); // Apply actual results to the live results object
+    resultsStore.syncLiveResults(data.fullroundRes);
 }
 
 function handleUpdatedLobby(message: MsgUpdatedLobbyData) {

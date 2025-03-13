@@ -1,4 +1,4 @@
-import { type Coordinates, type LiveResultsHashMap, type LobbyInfo, type Results, type ResultsInfo, type TotalResults } from "~/types/appTypes";
+import { type Coordinates, type LiveResultsHashMap, type LobbyInfo, type Results, type ResultData, type TotalResults } from "~/types/appTypes";
 
 export enum SocketStatus {
     NORMAL = "OK",
@@ -56,7 +56,7 @@ export type MsgStartRoundData = SocketMessage<{
 }>;
 
 export type MsgNewResultData = SocketMessage<{
-    playerRes: ResultsInfo;
+    playerRes: ResultData;
     user: string;
 }>;
 

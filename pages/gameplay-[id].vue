@@ -63,13 +63,15 @@ onUnmounted(() => {
 
     // Remove event listener for window resize
     window.removeEventListener("resize", updateDimensions);
+
+    // Leave lobby when component is unmounted
+    leaveLobby();
 });
 
 onBeforeRouteLeave((to, from, next) => {
     if (wantsToLeaveLobby.value) {
         if (confirm("Are you sure you want to leave the lobby?")) {
             next();
-            leaveLobby();
         } else next(false);
     } else {
         next(false);

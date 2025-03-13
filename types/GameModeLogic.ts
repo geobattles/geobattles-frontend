@@ -1,4 +1,4 @@
-import type { Coordinates, GameState, Results, ResultsInfo, TotalResults } from "./appTypes";
+import type { Coordinates, GameState } from "./appTypes";
 
 // Create a shared interface for game mode logic
 export interface GameModeLogic {
