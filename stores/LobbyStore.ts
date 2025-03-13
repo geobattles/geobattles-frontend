@@ -129,7 +129,7 @@ export const useLobbyStore = defineStore("lobby", () => {
         if (lobbySettings.value.conf.ccList.length === 0) {
             lobbySettings.value.conf.ccList = useCountryList().value;
         }
-        console.log(`Player ${userId} joined the lobby!`);
+        console.info(`Player ${userId} joined the lobby!`);
     };
 
     /**

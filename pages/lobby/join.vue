@@ -50,7 +50,7 @@ onMounted(() => {
     // Check if there is lobby_id in url
     const lobbyIdParam = router.currentRoute.value.query.id;
     lobbyURLParameter.value = Array.isArray(lobbyIdParam) ? lobbyIdParam[0] || "" : lobbyIdParam || "";
-    console.log(lobbyURLParameter.value);
+    console.info(lobbyURLParameter.value);
 
     if (lobbyURLParameter.value) {
         const lobby_id = lobbyURLParameter.value.split("").slice(0, 6).join("");
@@ -70,7 +70,7 @@ const handleJoinLobby = async (lobby_id: string) => {
         await joinLobby(lobby_id);
     } catch (error: unknown) {
         if (error instanceof Error) {
-            console.log(error.message);
+            console.error(error.message);
             inputs_array.forEach((input) => input.value?.classList.add("error-lobby")); // Add error class to inputs
             toast.add({
                 severity: "error",

@@ -141,7 +141,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
             wasConnectedBeforeOffline.value = false;
         }
 
-        console.log("WebSocket connection closed");
+        console.info("WebSocket connection closed");
     };
 
     // Event handlers
@@ -168,7 +168,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
     const handleMessage = (event: MessageEvent): void => {
         try {
             const data = JSON.parse(event.data);
-            console.log("Parsed WebSocket message:", data);
+            if (data.command !== "ping") console.debug("Parsed WebSocket message:", data);
 
             // Handle ping command from server
             if (data.command === "ping") {

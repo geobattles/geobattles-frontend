@@ -59,7 +59,7 @@ const onSubmit = async () => {
         }
 
         await register(username.value, password.value, displayName.value);
-        console.log("Registration successful");
+        console.info("Registration successful");
 
         // Update the player info
         playerInfo.value.username = username.value;

@@ -42,7 +42,6 @@ export const createNetworkUtils = (networkOnline: Ref<boolean>, onOfflineCallbac
      * Remove network status event listeners
      */
     const removeNetworkListeners = (): void => {
-        console.log("Removing network status listeners");
         window.removeEventListener("offline", handleOffline);
         window.removeEventListener("online", handleOnline);
     };
