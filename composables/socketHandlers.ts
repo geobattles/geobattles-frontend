@@ -10,8 +10,9 @@ import type {
     MsgTimesUpData,
     MsgRoundFinishedData,
     MsgNoCountryData,
-} from "~/types/socketTypes"; // Adjust the path according to your project structure
-import { SocketType } from "~/types/socketTypes"; // Adjust the path according to your project structure
+    MsgRejoinRound,
+} from "~/types/socketTypes";
+import { SocketType } from "~/types/socketTypes";
 
 // Messages that client sends to the server
 export const SOCKET_COMMANDS = {
@@ -25,6 +26,7 @@ export const SOCKET_COMMANDS = {
 interface SocketMessageMap {
     [SocketType.JOINED_LOBBY]: MsgJoinedLobbyData;
     [SocketType.LEFT_LOBBY]: MsgLeftLobbyData;
+    [SocketType.REJOIN_ROUND]: MsgRejoinRound;
     [SocketType.UPDATED_LOBBY]: MsgUpdatedLobbyData;
     [SocketType.START_ROUND]: MsgStartRoundData;
     [SocketType.NEW_RESULT]: MsgNewResultData;
@@ -42,6 +44,7 @@ export const messageHandlers: {
 } = {
     [SocketType.JOINED_LOBBY]: handleJoinedLobby,
     [SocketType.LEFT_LOBBY]: handleLeftLobby,
+    [SocketType.REJOIN_ROUND]: handleRejoinRound,
     [SocketType.UPDATED_LOBBY]: handleUpdatedLobby,
     [SocketType.START_ROUND]: handleStartRound,
     [SocketType.NEW_RESULT]: handleNewResult,
@@ -69,6 +72,27 @@ function handleLeftLobby(message: MsgLeftLobbyData) {
     leftLobby(data.lobby, data.user);
 }
 
+async function handleRejoinRound(message: MsgRejoinRound) {
+    const data = message.payload;
+    if (!data.location || !data.players || !data.timeRemaining || !data.fullroundRes) return console.error("Missing data in REJOIN_ROUND message", data);
+
+    const gameMode = useGameMode();
+    // Update the searched location coordinates
+    gameMode.modeLogic.setSearchedLocationCoords(data.location);
+
+    // Update the time remaining
+    const lobbyStore = useLobbyStore();
+    lobbyStore.rejoinTimer = Math.round(data.timeRemaining / 1000);
+
+    // Start the round
+    await gameMode.startRound(false);
+
+    // Apply the live round results
+    const resultsStore = useResultsStore();
+    resultsStore.liveResults = data.players;
+    resultsStore.syncLiveResults(data.fullroundRes);
+}
+
 function handleUpdatedLobby(message: MsgUpdatedLobbyData) {
     const { fetchLobbySettings } = useLobbyStore();
     const data = message.payload;
@@ -86,8 +110,11 @@ function handleStartRound(message: MsgStartRoundData) {
     gameMode.modeLogic.setSearchedLocationCoords(data.location);
     gameMode.startRound();
 
+    // TODO: Should update lobby settings here or at least the round. But its not being sent from the backend yet
+
     // Set new player results for live statistics
-    useLiveResults().value = data.players;
+    const resultsStore = useResultsStore();
+    resultsStore.liveResults = data.players;
 }
 
 function handleNewResult(message: MsgNewResultData) {
@@ -96,8 +123,8 @@ function handleNewResult(message: MsgNewResultData) {
     if (!data.playerRes || !data.user) return console.error("Missing data in NEW_RESULT message", data);
 
     // Process the new result
-    const gameMode = useGameMode();
-    gameMode.processNewResult(data.user, data.playerRes);
+    const resultsStore = useResultsStore();
+    resultsStore.applySingleResult(data.user, data.playerRes);
 }
 
 function handleRoundResult(message: MsgRoundResultData) {
@@ -107,8 +134,13 @@ function handleRoundResult(message: MsgRoundResultData) {
     if (!data.totalResults || !data.roundRes) return console.error("Missing data in ROUND_RESULT message", data);
     if (!data.polygon && gameMode.currentMode === "CountryBattle") return console.error("Missing polygon data in ROUND_RESULT message for CountryBattle", data);
 
-    // Apply the total results and finish the round
-    gameMode.finishRound(data.totalResults, data.roundRes, data.round);
+    // Apply the round results and total results
+    const resultsStore = useResultsStore();
+    resultsStore.syncRoundResults(data.roundRes);
+    resultsStore.syncTotalResults(data.totalResults);
+
+    // Finish the round in the game mode
+    gameMode.finishRound(data.round, data.polygon);
 }
 
 function handleTimesUp(data: MsgTimesUpData) {
@@ -116,6 +148,9 @@ function handleTimesUp(data: MsgTimesUpData) {
 }
 
 function handleRoundFinished(data: MsgRoundFinishedData) {
+    // Set the rejoin timer to null
+    const lobbyStore = useLobbyStore();
+    lobbyStore.rejoinTimer = null;
     return;
 }
 

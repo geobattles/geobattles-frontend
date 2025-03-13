@@ -1,4 +1,4 @@
-import type { Coordinates, GameState, Results, ResultsInfo, TotalResults } from "./appTypes";
+import type { Coordinates, GameState } from "./appTypes";
 
 // Create a shared interface for game mode logic
 export interface GameModeLogic {
@@ -9,10 +9,9 @@ export interface GameModeLogic {
     setSearchedLocationCoords: (coordinates: Coordinates) => void;
     isSubmitDisabled: ComputedRef<boolean> | Ref<boolean>;
     clearMap: () => void;
-    startRound: () => void;
-    finishRound: (totalResults: TotalResults, roundResults: Results, round: number, polygon?: any) => void;
+    startRound: (isCountdown?: boolean) => Promise<void>;
+    finishRound: (round: number, polygon?: any) => void;
     finishGame: () => void;
-    processNewResult: (user: string, player_result: ResultsInfo) => void;
 }
 
 // Add optional methods
@@ -20,6 +19,7 @@ export interface BattleRoyaleLogic extends GameModeLogic {
     processMapPin: (coordinates: Coordinates) => Promise<void>;
     getUserLives: (user: string) => number;
     submitGuess: () => void;
+    drawMarker: (coordinates: Coordinates, color: string, playerName?: string) => void;
 }
 
 export interface CountryBattleLogic extends GameModeLogic {

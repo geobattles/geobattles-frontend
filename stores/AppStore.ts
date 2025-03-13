@@ -41,7 +41,7 @@ export const useAppStore = defineStore("app", () => {
             try {
                 useAuthStore().saveTokenData();
             } catch (error) {
-                console.log("Failed to save token data:", error);
+                console.warn("Failed to save token data:", error);
             }
         });
 

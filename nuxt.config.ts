@@ -109,9 +109,7 @@ export default defineNuxtConfig({
 
     // PWA CONFIG
     pwa: {
-        strategies: sw ? "injectManifest" : "generateSW",
-        srcDir: sw ? "service-worker" : undefined,
-        filename: sw ? "sw.ts" : undefined,
+        strategies: "generateSW",
         registerType: "autoUpdate",
         manifest: {
             name: "GeoBattles PWA",
@@ -128,21 +126,19 @@ export default defineNuxtConfig({
         },
         workbox: {
             globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
-        },
-        injectManifest: {
-            globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
+            navigateFallback: null, // Don't use a fallback for navigation
+
+            // Add these options for better control over service worker updates
+            cleanupOutdatedCaches: true,
+            skipWaiting: true,
+            clientsClaim: true,
         },
         client: {
             installPrompt: true,
-            // you don't need to include this: only for testing purposes
-            // if enabling periodic sync for update use 1 hour or so (periodicSyncForUpdates: 3600)
-            periodicSyncForUpdates: 20,
         },
         devOptions: {
             enabled: true,
             suppressWarnings: true,
-            navigateFallback: "/",
-            navigateFallbackAllowlist: [/^\/$/],
             type: "module",
         },
     },

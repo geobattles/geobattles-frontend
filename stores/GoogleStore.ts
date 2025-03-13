@@ -113,7 +113,17 @@ export const useGoogleStore = defineStore("googleStore", () => {
             addressControl: false,
             motionTracking: false,
             motionTrackingControl: false,
-            // disableDefaultUI: true,
+
+            // Enable compass controls but disable ALL other controls
+            disableDefaultUI: true,
+            panControl: true,
+
+            zoomControl: true,
+            linksControl: true, // Keep ability to navigate streets
+
+            // Force specific layout for better mobile compatibility
+            controlSize: 32,
+            clickToGo: true,
         });
     };
 

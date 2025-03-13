@@ -1,4 +1,4 @@
-// Type describing current user session
+// ====================== User data ======================
 export type User = {
     username: string;
     displayName: string;
@@ -7,7 +7,7 @@ export type User = {
     guest: boolean | undefined;
 };
 
-// Type used to define lobby info
+// ====================== Lobby data ======================
 export type LobbyInfo = {
     ID: string;
     admin: string;
@@ -45,39 +45,37 @@ export type playerListObject = {
     };
 };
 
-export type CountryFlagMap = Map<string, { name: string; x: number; y: number }>;
-
-// Used for coordinates. Same as google.maps.LatLng
-export type Coordinates = {
-    lat: number;
-    lng: number;
-};
-
-// For handling all players results
+// ====================== RESULTS TYPES ======================
 export type Results = {
-    [key: string]: ResultsInfo;
+    [key: string]: ResultData;
 };
 
-export interface ResultsInfo {
+// Single result data
+export interface ResultData {
     attempt: number;
     baseScr: number;
     distance: number;
     lives: number;
     location: Coordinates;
-    cc: string;
-    player_countries: string[];
+    cc?: string;
+    player_countries?: string[];
 }
 
 export type TotalResults = {
     [key: string]: TotalResultInfo;
 };
 
-interface TotalResultInfo extends ResultsInfo {
+// Single total result data
+interface TotalResultInfo extends ResultData {
     total: number | undefined; // Not defined by backend if user scores 0 points
 }
 
-export type GameFlow = "WAITING" | "STARTING" | "PLAYING" | "MID-ROUND" | "FINISHED" | undefined; // Undefined when not connected to a lobby (socket)
+// Hash map of live results
+export type LiveResultsHashMap = {
+    [key: string]: Array<ResultData>;
+};
 
+// ====================== GameType and GameState ======================
 export type GameType = "BattleRoyale" | "CountryBattle"; // Undefined when not connected to a lobby (socket)
 
 export enum GameState {
@@ -87,3 +85,10 @@ export enum GameState {
     MID_ROUND = "MID-ROUND",
     FINISHED = "FINISHED",
 }
+
+// ====================== Extra ======================
+export type CountryFlagMap = Map<string, { name: string; x: number; y: number }>;
+export type Coordinates = {
+    lat: number;
+    lng: number;
+};

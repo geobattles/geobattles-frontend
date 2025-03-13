@@ -1,4 +1,4 @@
-import { GameState, type Coordinates, type Results, type ResultsInfo, type TotalResults } from "~/types/appTypes";
+import { GameState, type Coordinates } from "~/types/appTypes";
 import type { CountryBattleLogic } from "~/types/GameModeLogic";
 
 export function useCountryBattleMode(): CountryBattleLogic {
@@ -10,18 +10,14 @@ export function useCountryBattleMode(): CountryBattleLogic {
     const setSearchedLocationCoords = (coordinates: Coordinates): Coordinates => (searchedLocationCoords.value = coordinates);
     const isSubmitDisabled = ref(true);
 
-    const startRound = () => {};
+    const startRound = async () => {};
 
-    const finishRound = (totalResults: TotalResults, roundResults: Results, round: number, polygon: any) => {
+    const finishRound = (round: number, polygon: any) => {
         // Add logic to finish the round
     };
 
     const finishGame = () => {
         // Add logic to finish the game
-    };
-
-    const processNewResult = (user: string, player_result: ResultsInfo) => {
-        // Add logic to process new result
     };
 
     const processClickedCountry = (polygon: any, countryCode: string) => {
@@ -42,7 +38,6 @@ export function useCountryBattleMode(): CountryBattleLogic {
         startRound,
         finishRound,
         finishGame,
-        processNewResult,
         processClickedCountry,
         clearMap,
     };

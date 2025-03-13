@@ -1,4 +1,4 @@
-import { type Coordinates, type LobbyInfo, type Results, type ResultsInfo, type TotalResults } from "~/types/appTypes";
+import { type Coordinates, type LiveResultsHashMap, type LobbyInfo, type Results, type ResultData, type TotalResults } from "~/types/appTypes";
 
 export enum SocketStatus {
     NORMAL = "OK",
@@ -9,6 +9,7 @@ export enum SocketStatus {
 export enum SocketType {
     JOINED_LOBBY = "JOINED_LOBBY",
     LEFT_LOBBY = "LEFT_LOBBY",
+    REJOIN_ROUND = "REJOIN_ROUND",
     UPDATED_LOBBY = "UPDATED_LOBBY",
     START_ROUND = "START_ROUND",
     NEW_RESULT = "NEW_RESULT",
@@ -38,6 +39,13 @@ export type MsgLeftLobbyData = SocketMessage<{
     user: string;
 }>;
 
+export type MsgRejoinRound = SocketMessage<{
+    location: Coordinates;
+    players: Results;
+    timeRemaining: number;
+    fullroundRes: LiveResultsHashMap;
+}>;
+
 export type MsgUpdatedLobbyData = SocketMessage<{
     lobby: LobbyInfo;
 }>;
@@ -48,7 +56,7 @@ export type MsgStartRoundData = SocketMessage<{
 }>;
 
 export type MsgNewResultData = SocketMessage<{
-    playerRes: ResultsInfo;
+    playerRes: ResultData;
     user: string;
 }>;
 

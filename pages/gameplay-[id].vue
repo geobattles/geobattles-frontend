@@ -3,8 +3,8 @@
         <!-- Countdown View (before starting next round) -->
         <GameplayViewsCountdownView v-if="gameMode.modeLogic.currentState === 'STARTING'" />
 
-        <!-- Gameplay View (when game is playing) -->
-        <GameplayViewsGameplayView v-show="gameMode.modeLogic.currentState === 'PLAYING'" @leaveLobby="handleClickLeaveLobby()" />
+        <!-- Gameplay View (when game is playing and also starting to render StreetView in starting time) -->
+        <GameplayViewsGameplayView v-show="gameMode.modeLogic.currentState === 'PLAYING' || gameMode.modeLogic.currentState === 'STARTING'" @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- MidRound View (when game is in mid-round) -->
         <GameplayViewsMidRoundView v-show="gameMode.modeLogic.currentState === 'MID-ROUND'" @leaveLobby="handleClickLeaveLobby()" />
@@ -63,13 +63,15 @@ onUnmounted(() => {
 
     // Remove event listener for window resize
     window.removeEventListener("resize", updateDimensions);
+
+    // Leave lobby when component is unmounted
+    leaveLobby();
 });
 
 onBeforeRouteLeave((to, from, next) => {
     if (wantsToLeaveLobby.value) {
         if (confirm("Are you sure you want to leave the lobby?")) {
             next();
-            leaveLobby();
         } else next(false);
     } else {
         next(false);
