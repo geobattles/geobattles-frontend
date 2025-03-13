@@ -40,7 +40,6 @@ const setChartData = () => {
     // Create 1000 data points from 0 to 2_0000_000 aka. 20_000 km
     const distances = Array.from({ length: 1000 }, (_, i) => i * 20000); // Example distances from 0 to 200000
     const scores = distances.map((d) => scoreDistance(d, props.scoreFactor)); // Use the scoreFactor prop
-    // console.log(distances, scores); //! Dev
 
     // Filter distances and scores to include only those with scores greater than 5
     const filteredData = distances.map((d, i) => ({ distance: d, score: scores[i] })).filter((data) => data.score > 50);

@@ -39,10 +39,10 @@ export class UIManager {
 
     private setupMapListeners(toggle_map_mobile: Ref<HTMLElement | null>, show_map_button: Ref<boolean>, submit_button: Ref<HTMLElement | null>): void {
         if (this.isMobile) {
-            console.log("SETTING UP MOBILE VIEW"); //! Dev
+            console.info("SETTING UP MOBILE VIEW"); //! Dev
             this.setupMobileView(toggle_map_mobile, show_map_button);
         } else {
-            console.log("SETTING UP DESKTOP VIEW"); //! Dev
+            console.info("SETTING UP DESKTOP VIEW"); //! Dev
             this.setupDesktopView(submit_button);
         }
     }
@@ -76,7 +76,6 @@ export class UIManager {
     }
 
     private updateOrientation(): void {
-        console.log("ORIENTATION UPDATE | is vertical? --> ", window.innerWidth < window.innerHeight); //! Dev
         // Update orientation flag
         this.isVertical = window.innerWidth < window.innerHeight;
 
