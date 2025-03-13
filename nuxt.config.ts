@@ -1,5 +1,24 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import Aura from "@primevue/themes/aura";
+import { execSync } from "child_process";
+
+const sw = process.env.SW === "true";
+
+// VERSION can be set by GHA or manually (if building locally)
+// If not set, it will try to get the git commit hash
+// If not possible, it will fallback to 'dev'
+function getVersion() {
+    if (process.env.VERSION) {
+        return process.env.VERSION
+    }
+
+    // Try local git command
+    try {
+        return execSync("git rev-parse --short HEAD").toString().trim();
+    } catch (error) {
+        return "dev";
+    }
+}
 
 export default defineNuxtConfig({
     devtools: { enabled: true },
@@ -15,6 +34,8 @@ export default defineNuxtConfig({
         public: {
             GMAPS_API: "",
             BACKEND_HOST: "",
+            VERSION: getVersion(),
+            BUILD_DATE: new Date().toISOString(),
         },
     },
 
