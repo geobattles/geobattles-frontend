@@ -25,4 +25,8 @@ export default {
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.gm-style .gm-compass) {
+    transform: scale(1.2); /* Make compass larger for better visibility */
+}
+</style>
