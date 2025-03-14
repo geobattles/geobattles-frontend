@@ -136,15 +136,15 @@ export const useLobbyStore = defineStore("lobby", () => {
      * Handle a player leaving the lobby by updating player list and cleaning up results
      */
     const leftLobby = (lobbyInfo: LobbyInfo, userId: string) => {
-        const liveResults = useLiveResults();
+        const resultsStore = useResultsStore();
 
         // Update player list and admin in lobby settings
         updateLobbySetting("playerList", lobbyInfo.playerList);
         updateLobbySetting("admin", lobbyInfo.admin);
 
         // Remove player from results tracking
-        if (liveResults.value[userId]) {
-            delete liveResults.value[userId];
+        if (resultsStore.liveResults[userId]) {
+            delete resultsStore.liveResults[userId];
         }
     };
 

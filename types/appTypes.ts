@@ -15,7 +15,9 @@ export type LobbyInfo = {
     currentRound: number;
     numPlayers: number;
     playerList: playerListObject;
-    results: Results;
+    results: {
+        [round: number]: LiveResultsHashMap;
+    };
     totalResults: TotalResults;
 };
 

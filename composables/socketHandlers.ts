@@ -61,7 +61,13 @@ function handleJoinedLobby(message: MsgJoinedLobbyData) {
     const { joinedLobby } = useLobbyStore();
     const data = message.payload;
     if (!data.lobby || !data.user) return console.error("Missing data in JOINED_LOBBY message", data);
-    joinedLobby(data.lobby, data.user);
+    joinedLobby({ ...data.lobby }, data.user);
+
+    // Apply the live round results when player joins the lobby
+    const resultsStore = useResultsStore();
+    // @ts-ignore (ignore until proper definition is synched from backend)
+    resultsStore.liveResults = { ...data.lobby.playerList };
+    resultsStore.syncLiveResults({ ...data.lobby.results[data.lobby.currentRound] });
 }
 
 function handleLeftLobby(message: MsgLeftLobbyData) {
@@ -115,6 +121,9 @@ function handleStartRound(message: MsgStartRoundData) {
     // Set new player results for live statistics
     const resultsStore = useResultsStore();
     resultsStore.liveResults = data.players;
+
+    const lobbyStore = useLobbyStore();
+    if (lobbyStore.lobbySettings) lobbyStore.lobbySettings.currentRound++;
 }
 
 function handleNewResult(message: MsgNewResultData) {
@@ -170,6 +179,9 @@ function handleGameEnd(messsge: MsgGameEndData) {
     const gameMode = useGameMode();
     gameMode.finishGame();
     // TODO: Process endgame results and display them
+
+    const lobbyStore = useLobbyStore();
+    if (lobbyStore.lobbySettings) lobbyStore.lobbySettings.currentRound = 0;
 }
 
 function handleNoCountry(data: MsgNoCountryData) {

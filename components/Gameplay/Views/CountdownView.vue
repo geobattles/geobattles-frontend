@@ -25,10 +25,15 @@ const { counter, startCountdown } = useCountdown(COUNTDOWN_SECONDS);
 
 // Store references
 const lobbyStore = useLobbyStore();
-const gameMode = useGameMode();
 
 // Computed properties
-const knobValue = computed(() => (gameMode.modeLogic.currentRound || 0) + 1);
+const knobValue = computed(() => {
+    if (lobbyStore.lobbySettings) {
+        return lobbyStore.lobbySettings.currentRound;
+    } else {
+        return 0;
+    }
+});
 
 // Lifecycle hooks
 onMounted(() => {
