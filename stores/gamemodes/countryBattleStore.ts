@@ -1,7 +1,6 @@
 import { GameState, type Coordinates } from "~/types/appTypes";
-import type { CountryBattleLogic } from "~/types/GameModeLogic";
 
-export function useCountryBattleMode(): CountryBattleLogic {
+export const useCountryBattleStore = defineStore("countryBattleStore", () => {
     // GamePlay State
     const currentState = ref(GameState.WAITING);
     const currentRound = ref(0);
@@ -10,7 +9,9 @@ export function useCountryBattleMode(): CountryBattleLogic {
     const setSearchedLocationCoords = (coordinates: Coordinates): Coordinates => (searchedLocationCoords.value = coordinates);
     const isSubmitDisabled = ref(true);
 
-    const startRound = async () => {};
+    const startRound = async () => {
+        // Add logic to start the round
+    };
 
     const finishRound = (round: number, polygon: any) => {
         // Add logic to finish the round
@@ -41,4 +42,4 @@ export function useCountryBattleMode(): CountryBattleLogic {
         processClickedCountry,
         clearMap,
     };
-}
+});

@@ -1,13 +1,12 @@
 import { GameState, type Coordinates } from "~/types/appTypes";
-import type { BattleRoyaleLogic } from "~/types/GameModeLogic";
 
-export function useBattleRoyaleMode(): BattleRoyaleLogic {
+export const useBattleRoyaleStore = defineStore("battleRoyale", () => {
     // External composable functions
     const router = useRouter();
     const googleStore = useGoogleStore();
     const resultsStore = useResultsStore();
 
-    // GamePlay State // TODO: Make this object so state can be simply reset and return as computed
+    // GamePlay State
     const currentState = ref(GameState.WAITING);
     const currentRound = ref(0);
     const currentMapPin = ref<Coordinates>({} as Coordinates);
@@ -199,12 +198,6 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
 
     const setMapClickEventListener = () => {
         // Remove existing listeners
-        // try {
-        //     google.maps.event.clearListeners(googleStore.getMap, "click");
-        // } catch (error) {
-        //     console.warn("Clearing map click listeners failed", error);
-        // }
-
         if (googleStore.getMap) google.maps.event.clearListeners(googleStore.getMap, "click");
 
         googleStore.addMapClickListener(processMapPin);
@@ -226,4 +219,4 @@ export function useBattleRoyaleMode(): BattleRoyaleLogic {
         submitGuess,
         drawMarker,
     };
-}
+});

@@ -19,7 +19,7 @@
         <GameplayLostConnectionDialog @leaveLobby="handleClickLeaveLobby()" />
 
         <!-- Toast when player leaves lobby -->
-        <Toast position="bottom-right" />
+        <Toast :pt:root:class="'!w-48'" :pt:detail:class="'!text-xs'" class="w-24 text-sm" position="bottom-right" />
     </div>
 </template>
 
@@ -30,7 +30,7 @@ const gameplayPageContainer = useTemplateRef<HTMLElement>("gameplayPageContainer
 // External services
 const { leaveLobby } = useLobbyStore();
 const gameMode = useGameMode(); // To get the current game state
-const uiManager = useUIManager(); // To show toasts on player leave
+const uiManager = useUIManagerStore();
 const toast = useToast();
 const router = useRouter();
 
@@ -48,10 +48,10 @@ useHead({
 
 onMounted(() => {
     // Add listener when player leaves lobby to show toast
-    uiManager.value.on("showPlayerLeftToast", handlePlayerLeftToast);
+    uiManager.on("showPlayerLeftToast", handlePlayerLeftToast);
 
     // Set the gameplay page container in UIManager
-    if (gameplayPageContainer.value) uiManager.value.setGameplayPageContainer(gameplayPageContainer.value);
+    if (gameplayPageContainer.value) uiManager.setGameplayPageContainer(gameplayPageContainer.value);
 
     // Add event listener for window resize
     window.addEventListener("resize", updateDimensions);
@@ -59,7 +59,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    uiManager.value.off("showPlayerLeftToast", handlePlayerLeftToast);
+    uiManager.off("showPlayerLeftToast", handlePlayerLeftToast);
 
     // Remove event listener for window resize
     window.removeEventListener("resize", updateDimensions);
@@ -87,9 +87,8 @@ const handleClickLeaveLobby = () => {
 // When player leaves lobby, show toast
 const handlePlayerLeftToast = (event: CustomEvent) => {
     toast.add({
-        severity: "warn",
-        summary: `Player ${event.detail.playerName} Left`,
-        detail: `Player ${event.detail.playerName} has left the lobby`,
+        severity: "contrast",
+        summary: `${event.detail.playerName} Left`,
         life: 3000,
     });
 };

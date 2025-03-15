@@ -69,7 +69,7 @@ const showMapButtonMobile = ref(false);
 
 // External services
 const gameMode = useGameMode();
-const uiManager = useUIManager();
+const uiManager = useUIManagerStore();
 const googleStore = useGoogleStore();
 
 // Computed property for submit button message
@@ -85,7 +85,7 @@ const submitButtonMessage = computed(() => {
 
 onMounted(async () => {
     await googleStore.waitForMapAndPano();
-    uiManager.value.mountingProcess(toggleMapMobile, showMapButtonMobile, submitButton);
+    uiManager.mountingProcess(toggleMapMobile, showMapButtonMobile, submitButton);
 });
 
 // Handle leaving the lobby

@@ -1,16 +1,29 @@
 import { type GameType } from "~/types/appTypes";
+import { useBattleRoyaleStore } from "./gamemodes/battleRoyaleStore";
+import { useCountryBattleStore } from "./gamemodes/countryBattleStore";
 
 export const useGameMode = defineStore("gameModeStore", () => {
     // GameMode and GameMode Logic
     const currentMode = ref<GameType>("BattleRoyale");
-    const modeLogic = ref<ReturnType<typeof useBattleRoyaleMode> | ReturnType<typeof useCountryBattleMode>>(useBattleRoyaleMode());
+
+    const createGameMode = (gameType: GameType) => {
+        switch (gameType) {
+            case "BattleRoyale":
+                return useBattleRoyaleStore();
+            case "CountryBattle":
+                return useCountryBattleStore();
+            default:
+                throw new Error(`Unknown game type: ${gameType}`);
+        }
+    };
+    const modeLogic = ref(createGameMode(currentMode.value));
 
     // Update GameMode
     const updateGameMode = (newGameType: GameType) => {
         if (currentMode.value !== newGameType) {
             // Update game mode
             currentMode.value = newGameType;
-            modeLogic.value = newGameType === "BattleRoyale" ? useBattleRoyaleMode() : useCountryBattleMode();
+            modeLogic.value = createGameMode(newGameType);
             console.info(`Game mode updated to: ${newGameType}`);
         }
     };

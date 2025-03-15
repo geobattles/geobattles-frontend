@@ -1,7 +1,3 @@
-// Gamemodes
-export { useBattleRoyaleMode } from "./gamemodes/BattleRoyaleMode";
-export { useCountryBattleMode } from "./gamemodes/CountryBattleMode";
-
 // Utilities
 export { useTimer } from "./utils/useTimer";
 export { useCountdown } from "./utils/useCountdown";

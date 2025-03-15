@@ -101,7 +101,8 @@ export const useResultsStore = defineStore("results", () => {
                 const leaderAfter = getCurrentRoundLeader();
 
                 // Apply styles to the leaderboard
-                useUIManager().value.applyGuessStyles(userID, leaderBefore, leaderAfter);
+                const uiManager = useUIManagerStore();
+                uiManager.applyGuessStyles(userID, leaderBefore, leaderAfter);
                 break;
 
             default:
