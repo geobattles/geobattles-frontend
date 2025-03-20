@@ -13,6 +13,7 @@ import type {
     MsgRejoinRound,
 } from "~/types/socketTypes";
 import { SocketType } from "~/types/socketTypes";
+import { useBattleRoyaleStore } from "~/stores/gamemodes/battleRoyaleStore";
 
 // Messages that client sends to the server
 export const SOCKET_COMMANDS = {
@@ -135,6 +136,13 @@ function handleNewResult(message: MsgNewResultData) {
     // Process the new result
     const resultsStore = useResultsStore();
     resultsStore.applySingleResult(data.user, data.playerRes);
+
+    // Reset the pending state if this result is for the current user
+    const playerID = usePlayerInfo().value.ID;
+    if (data.user === playerID) {
+        const battleRoyaleStore = useBattleRoyaleStore();
+        battleRoyaleStore.isGuessPending = false;
+    }
 }
 
 function handleRoundResult(message: MsgRoundResultData) {

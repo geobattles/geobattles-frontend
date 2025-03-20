@@ -16,9 +16,11 @@ export const useBattleRoyaleStore = defineStore("battleRoyale", () => {
     // GameMode Specifics
     const mapMarkers: Ref<google.maps.marker.AdvancedMarkerElement[]> = ref([]);
     const mapPolylines: Ref<google.maps.Polyline[]> = shallowRef([]);
+    const isGuessPending = ref(false);
 
     const startRound = async (isCountdown: boolean = true) => {
         currentState.value = GameState.STARTING;
+        isGuessPending.value = false;
 
         // Set to PLAYING after countdown
         if (isCountdown)
@@ -77,6 +79,7 @@ export const useBattleRoyaleStore = defineStore("battleRoyale", () => {
 
     const processMapPin = async (coordinates: Coordinates): Promise<void> => {
         if (currentState.value !== GameState.PLAYING) return;
+        if (isGuessPending.value) return;
 
         // Update current map pin
         currentMapPin.value = coordinates;
@@ -108,6 +111,10 @@ export const useBattleRoyaleStore = defineStore("battleRoyale", () => {
     };
 
     const submitGuess = () => {
+        // Set pending state to true when submitting
+        if (isGuessPending.value) return;
+        isGuessPending.value = true;
+
         const socket_message = {
             command: SOCKET_COMMANDS.SUBMIT_LOCATION,
             location: currentMapPin.value,
@@ -123,6 +130,9 @@ export const useBattleRoyaleStore = defineStore("battleRoyale", () => {
     };
 
     const isSubmitDisabled = computed(() => {
+        // Also disable submit button when a guess is pending
+        if (isGuessPending.value) return true;
+
         const liveResults = resultsStore.liveResults;
         const playerID = usePlayerInfo().value.ID;
 
@@ -208,6 +218,7 @@ export const useBattleRoyaleStore = defineStore("battleRoyale", () => {
         currentRound: readonly(currentRound),
         currentMapPin: readonly(currentMapPin),
         searchedLocationCoords: readonly(searchedLocationCoords),
+        isGuessPending,
         getUserLives,
         setSearchedLocationCoords,
         isSubmitDisabled,
