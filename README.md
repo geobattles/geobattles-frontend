@@ -1,23 +1,46 @@
-# Nuxt 3 Minimal Starter
+# GeoBattles
 
-Look at the [Nuxt 3 documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+GeoBattles is an open-source interactive geolocation guessing game where players compete to identify locations from Google Street View panoramas.
 
-## Setup
+## 🌍 About the Game
 
-Make sure to install the dependencies:
+GeoBattles features a **Battle Royale** mode where players can play solo or compete against others to guess locations, with limited lives.
 
-```bash
-# npm
-npm install
+The game offers real-time multiplayer functionality, live statistics, and interactive map elements.
 
-# pnpm
-pnpm install
+## 🚀 Getting Started
 
-# yarn
-yarn install
-```
+### Prerequisites
 
-## Development Server
+- Node.js (v16 or higher)
+- npm, yarn, or pnpm
+- Google Maps API key (for development)
+
+### Installation
+
+1. Clone the repository:
+
+    ```bash
+    git clone https://github.com/geobattles/geobattles-frontend
+    cd GeoBattles
+    ```
+
+2. Install dependencies:
+
+    ```bash
+    # npm
+    npm install
+
+    # pnpm
+    pnpm install
+
+    # yarn
+    yarn install
+    ```
+
+3. Create a `.env` file based on `.env.example` and add your Google Maps API key.
+
+## 🛠️ Development
 
 Start the development server on `http://localhost:3000`:
 
@@ -32,32 +55,23 @@ pnpm run dev
 yarn dev
 ```
 
-## Production
+## 🐳 Docker
 
-Build the application for production:
+GeoBattles can also be deployed using Docker for easier setup and consistent environments.
 
-```bash
-# npm
-npm run build
+### Running with Docker
 
-# pnpm
-pnpm run build
+1. Build the Docker image:
 
-# yarn
-yarn build
-```
+    ```bash
+    docker build -t geobattles_frontend .
+    ```
 
-Locally preview production build:
+2. Run the container:
 
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm run preview
-
-# yarn
-yarn preview
-```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+    ```bash
+    docker run -p 3000:3000 \
+    -e NUXT_PUBLIC_GMAPS_API=your_api_key \
+    -e NUXT_PUBLIC_BACKEND_HOST=your_backend_url \
+    geobattles_frontend
+    ```
