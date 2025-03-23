@@ -2,7 +2,7 @@
     <div class="text-xs">
         <TransitionGroup name="list" tag="ul" class="flex flex-col gap-1 lg:gap-1">
             <div v-for="(value, index) in resultsStore.liveResults" :key="index">
-                <div class="table__row" :id="index.toString()">
+                <div v-if="isPlayerConnected(index)" class="table__row" :id="index.toString()">
                     <!-- Player Information -->
                     <div class="table__row-element">
                         <div class="player-name">
@@ -55,6 +55,7 @@ import type { WatchStopHandle } from "vue";
 export default {
     setup() {
         const resultsStore = useResultsStore();
+        const lobbyStore = useLobbyStore();
         const totalAttempts = ref(new Map<string | number, number>());
         const gameMode = useGameMode();
         let gameStateWatcher: WatchStopHandle | null = null;
@@ -92,6 +93,11 @@ export default {
             );
         });
 
+        const isPlayerConnected = (playerID: string | number): boolean => {
+            if (lobbyStore.lobbySettings?.playerList[playerID].connected) return true;
+            return false;
+        };
+
         onUnmounted(() => {
             // Clean up watcher when component is unmounted
             if (gameStateWatcher) {
@@ -105,6 +111,7 @@ export default {
             getPlayerColorByID,
             formatDistance,
             getPlayerNameFromID,
+            isPlayerConnected,
         };
     },
 };
