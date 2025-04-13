@@ -39,7 +39,7 @@ export const useAppStore = defineStore("app", () => {
         onBeforeMount(() => {
             // Authenticate user if possible
             try {
-                useAuthStore().saveTokenData();
+                useAuthStore().initializeAuth();
             } catch (error) {
                 console.warn("Failed to save token data:", error);
             }

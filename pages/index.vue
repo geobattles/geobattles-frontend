@@ -1,6 +1,7 @@
 <template>
     <div>
         <Header />
+        <Toast />
         <div class="page-container">
             <div>
                 <Button
@@ -28,6 +29,7 @@ const isJoiningLobby = ref(false); // Handle loader
 const router = useRouter();
 const authStore = useAuthStore();
 const { createLobby } = useLobbyStore();
+const toast = useToast();
 
 const handlePlayNowClick = async () => {
     if (!authStore.isAuthenticated) return (authStore.isLoginDialog = true);
@@ -38,7 +40,12 @@ const handlePlayNowClick = async () => {
         await createLobby();
     } catch (error) {
         console.error("Failed to create lobby:", error);
-        return window.alert("Failed to create lobby. Please try again later.\n" + error);
+        toast.add({
+            severity: "error",
+            summary: "Failed to create lobby",
+            detail: error instanceof Error ? error.message : String(error),
+            life: 5000,
+        });
     } finally {
         isJoiningLobby.value = false;
     }

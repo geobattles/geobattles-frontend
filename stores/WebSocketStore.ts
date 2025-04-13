@@ -10,6 +10,8 @@ enum ConnectionState {
 }
 
 export const useWebSocketStore = defineStore("websocket", () => {
+    const { getValidAccessToken } = useAuthStore();
+
     // Core state
     const connection = shallowRef<WebSocket | null>(null);
     const state = ref<ConnectionState>(ConnectionState.DISCONNECTED);
@@ -60,11 +62,11 @@ export const useWebSocketStore = defineStore("websocket", () => {
         // Setup network listeners when connecting
         networkUtils.setupNetworkListeners();
 
-        return new Promise<void>((resolve, reject) => {
+        return new Promise<void>(async (resolve, reject) => {
             try {
                 // Get auth token
-                const token = useCookie("saved_token").value;
-                if (!token || typeof token !== "string") {
+                const accessToken = await getValidAccessToken();
+                if (!accessToken || typeof accessToken !== "string") {
                     state.value = ConnectionState.DISCONNECTED;
                     console.error("Authentication token unavailable");
                     reject(new Error("Authentication token unavailable"));
@@ -78,7 +80,7 @@ export const useWebSocketStore = defineStore("websocket", () => {
                 // Create new connection using utility for URL building
                 const url = buildWebSocketUrl(id);
                 console.debug("WebSocket URL:", url);
-                connection.value = new WebSocket(url, ["json", token]);
+                connection.value = new WebSocket(url, ["json", accessToken]);
 
                 // Set up one-time handlers specifically for this Promise
                 connection.value.addEventListener(

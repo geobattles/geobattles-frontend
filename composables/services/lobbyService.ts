@@ -4,13 +4,13 @@ export const lobbyService = {
     /**
      * Create a new lobby on the server
      */
-    async createLobby(token: string, lobbyParams: { name: string; roundTime: number }): Promise<LobbyInfo> {
+    async createLobby(accessToken: string, lobbyParams: { name: string; roundTime: number }): Promise<LobbyInfo> {
         const endpoint = useAppStore().backendEndpoint;
         const response = await fetch(`${endpoint}/lobby`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                Authorization: token,
+                Authorization: accessToken,
             },
             body: JSON.stringify(lobbyParams),
         });
