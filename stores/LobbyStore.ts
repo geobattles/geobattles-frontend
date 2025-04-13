@@ -26,7 +26,7 @@ export const useLobbyStore = defineStore("lobby", () => {
     const createLobby = async (): Promise<void> => {
         const playerInfo = usePlayerInfo();
         const router = useRouter();
-        const { getToken } = useAuthStore();
+        const { getValidAccessToken } = useAuthStore();
         const socketStore = useWebSocketStore();
 
         const lobbyPostParams = {
@@ -36,10 +36,10 @@ export const useLobbyStore = defineStore("lobby", () => {
 
         try {
             // Create lobby via service and store the returned lobby data
-            const authToken = getToken();
-            if (!authToken) throw new Error("User not authenticated");
+            const accessToken = await getValidAccessToken();
+            if (!accessToken) throw new Error("User not authenticated");
 
-            const lobbyData = await lobbyService.createLobby(authToken, lobbyPostParams);
+            const lobbyData = await lobbyService.createLobby(accessToken, lobbyPostParams);
             lobbySettings.value = lobbyData;
 
             // Connect to the lobby via WebSocket and navigate to lobby page
