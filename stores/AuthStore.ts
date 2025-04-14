@@ -13,12 +13,12 @@ export const useAuthStore = defineStore("auth", () => {
      * @param {number} expire - The expiry timestamp (in seconds).
      */
     const saveAccessToken = (token: string, expire: number): void => {
-        // const maxAge = expire - Math.floor(Date.now() / 1000);
-        const maxAge = 10;
+        const maxAge = expire - Math.floor(Date.now() / 1000);
+        // const maxAge = 10; //! Dev
         const accessTokenCookie = useCookie("access_token", {
             maxAge: maxAge > 0 ? maxAge : 0,
             sameSite: "lax",
-            secure: true, // Enable in production
+            // secure: true, // Enable in production
             path: "/",
         });
         accessTokenCookie.value = token;
@@ -30,12 +30,12 @@ export const useAuthStore = defineStore("auth", () => {
      * @param {number} expire - The expiry timestamp (in seconds).
      */
     const saveRefreshToken = (token: string, expire: number): void => {
-        // const maxAge = expire - Math.floor(Date.now() / 1000);
-        const maxAge = 1000;
+        const maxAge = expire - Math.floor(Date.now() / 1000);
+        // const maxAge = 1000; //! Dev
         const refreshTokenCookie = useCookie("refresh_token", {
             maxAge: maxAge > 0 ? maxAge : 0,
             sameSite: "lax",
-            secure: true, // Enable in production
+            // secure: true, // Enable in production
             // httpOnly: true, // Recommended for refresh tokens
             path: "/",
         });
