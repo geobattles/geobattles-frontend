@@ -12,21 +12,21 @@
     "devDependencies": {
         "@nuxt/devtools": "latest",
         "@nuxt/types": "^2.18.1",
-        "@nuxtjs/tailwindcss": "^6.12.1",
-        "@pinia/nuxt": "^0.7.0",
-        "@primevue/nuxt-module": "^4.0.7",
+        "@nuxtjs/tailwindcss": "^6.13.2",
+        "@pinia/nuxt": "^0.11.0",
+        "@primevue/nuxt-module": "^4.3.3",
         "@types/google.maps": "^3.58.1",
         "@vite-pwa/nuxt": "^0.10.6",
-        "nuxt": "^3.15.4",
-        "prettier": "^3.5.2",
-        "typescript": "^5.2.2",
+        "nuxt": "^3.16.2",
+        "prettier": "^3.5.3",
+        "typescript": "^5.8.3",
         "vue-tsc": "^2.1.6"
     },
     "dependencies": {
-        "@primevue/themes": "^4.0.7",
+        "@primevue/themes": "^4.3.3",
         "chart.js": "^4.4.7",
-        "pinia": "^3.0.1",
+        "pinia": "^3.0.2",
         "primeicons": "^7.0.0",
-        "primevue": "^4.0.7"
+        "primevue": "^4.3.3"
     }
 }
