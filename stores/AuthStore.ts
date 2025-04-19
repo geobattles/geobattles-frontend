@@ -265,6 +265,38 @@ export const useAuthStore = defineStore("auth", () => {
     };
 
     /**
+     * Updates user profile information (display name and/or password).
+     * @param {string | null} displayName - The new display name (null if not updating).
+     * @param {string | null} password - The new password (null if not updating).
+     * @returns {Promise<void>}
+     * @throws {Error} If update fails.
+     */
+    const updateUser = async (displayName: string | null, password: string | null): Promise<void> => {
+        try {
+            authError.value = null;
+
+            // Get a valid access token
+            const accessToken = await getValidAccessToken();
+            // const accessToken = getRawRefreshToken();
+            if (!accessToken) {
+                throw new Error("Authentication required. Please log in again.");
+            }
+
+            // Call service to update user
+            const responseData = await authService.updateUser(displayName, password, accessToken);
+
+            // Update the access token and refresh token if they are returned
+            saveAccessToken(responseData.AccessToken, responseData.AccessExpiry);
+            saveRefreshToken(responseData.RefreshToken, responseData.RefreshExpiry);
+            saveTokenData(responseData.AccessToken);
+        } catch (error: any) {
+            console.error("Profile update failed:", error);
+            authError.value = error.message || "Profile update failed. Please try again.";
+            throw error;
+        }
+    };
+
+    /**
      * Initializes the auth state from cookies on app load.
      * Attempts to refresh the token if the access token is expired but a refresh token exists.
      * @returns {Promise<void>}
@@ -315,6 +347,7 @@ export const useAuthStore = defineStore("auth", () => {
         refreshToken, // Expose manual refresh if needed
         initializeAuth, // Expose initialization function
         getValidAccessToken, // <-- New function to get token and refresh if needed
+        updateUser, // <-- New function to update user profile
 
         // State checkers/helpers
         isPlayerAuthenticated, // Function based on isAuthenticated ref
