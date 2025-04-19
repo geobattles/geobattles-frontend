@@ -127,4 +127,58 @@ export const authService = {
             throw error instanceof Error ? error : new Error("An unexpected error occurred during token refresh.");
         }
     },
+
+    /**
+     * Updates a user's profile information (display name and/or password).
+     * @param {string | null} displayName - The new display name (null if not updating).
+     * @param {string | null} password - The new password (null if not updating).
+     * @param {string} accessToken - The user's access token for authentication.
+     * @returns {Promise<AuthResponse>} Result of the update operation.
+     * @throws {Error} If update fails.
+     */
+    async updateUser(displayName: string | null, password: string | null, accessToken: string): Promise<AuthResponse> {
+        const endpoint = useAppStore().backendEndpoint;
+
+        // Don't proceed if nothing to update
+        if (!displayName && !password) {
+            throw new Error("Nothing to update. Provide display name or password.");
+        }
+
+        // Build request body with fields to be updated
+        const updateData: Record<string, string> = {};
+        if (displayName) updateData.DisplayName = displayName;
+        if (password) updateData.Password = password;
+
+        try {
+            const response = await fetch(`${endpoint}/updateUser`, {
+                // Assuming the endpoint is under /auth
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `${accessToken}`, // Keep Authorization header as standard practice
+                },
+                body: JSON.stringify(updateData),
+            });
+
+            if (!response.ok) {
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    throw new Error(`Profile update failed with status: ${response.status}`);
+                }
+                console.error("Update user API error:", errorData);
+                throw new Error(errorData?.error || `Profile update failed with status: ${response.status}`);
+            }
+
+            // Assuming the backend returns a success message or confirmation
+            const responseData = await response.json();
+            console.log("Update user response:", responseData);
+
+            return responseData;
+        } catch (error: any) {
+            console.error("Update user service error:", error);
+            throw error instanceof Error ? error : new Error("An unexpected error occurred during profile update.");
+        }
+    },
 };
