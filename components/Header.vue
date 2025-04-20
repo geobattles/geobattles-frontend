@@ -33,7 +33,7 @@
             </template>
         </Menubar>
         <Dialog v-if="authStore.isLoginDialog" v-model:visible="authStore.isLoginDialog" class="w-full lg:w-1/2" header="Login" position="center" :modal="true" :draggable="false">
-            <Login class="m-10" @userLogged="authStore.isLoginDialog = false" />
+            <Login @userLogged="authStore.isLoginDialog = false" />
         </Dialog>
     </header>
 </template>
