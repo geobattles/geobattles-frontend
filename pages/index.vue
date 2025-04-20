@@ -5,7 +5,7 @@
         <div class="page-container">
             <div>
                 <Button
-                    class="play-button w-56 md:w-80"
+                    class="play-button w-56 md:w-80 !bg-gradient-to-r !from-green-600 !to-teal-700 !border-none !text-white"
                     @click="handlePlayNowClick"
                     label="PLAY NOW"
                     icon="pi pi-map-marker"
