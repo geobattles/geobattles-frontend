@@ -17,6 +17,7 @@ websocket. All in game communications go through websockets.
 ## CSS Styling Guidelines
 
 - Use responsive design with Tailwind's breakpoint prefixes (`sm:`, `md:`, `lg:`)
+- Ensure UI elements are properly styled for both light and dark modes.
 - For cards and containers:
     - Apply gradient backgrounds in headers (`bg-gradient-to-r`) with brand colors
     - Use shadow (`shadow-lg`) for elevation and depth
