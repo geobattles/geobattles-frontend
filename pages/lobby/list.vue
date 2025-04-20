@@ -219,6 +219,7 @@ onMounted(async () => {
 
 .main-content {
     max-width: 1000px;
+    margin: auto;
 }
 
 /* Responsive adjustments */
