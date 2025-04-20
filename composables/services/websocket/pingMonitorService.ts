@@ -6,7 +6,7 @@ export interface PingMonitorConfig {
 
 export const createPingMonitorService = (connection: Ref<WebSocket | null>, state: Ref<string>, reconnect: (id: string) => void, lobbyId: Ref<string | null>) => {
     const config: PingMonitorConfig = {
-        pingTimeout: 12000, // 8 seconds timeout for server ping
+        pingTimeout: 12000, // 12 seconds timeout for server ping
         monitorTimerId: null,
         lastPingTime: null,
     };
