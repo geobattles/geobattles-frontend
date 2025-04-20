@@ -9,7 +9,7 @@
                     <label for="username">Username</label>
                 </FloatLabel>
                 <FloatLabel>
-                    <Password id="password" v-model="password" required />
+                    <Password id="password" v-model="password" :feedback="false" required />
                     <label for="username">Password</label>
                 </FloatLabel>
                 <div class="flex">
