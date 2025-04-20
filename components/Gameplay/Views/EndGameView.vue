@@ -1,29 +1,12 @@
 <template>
     <div class="endgame-container">
         <div id="endgame-map-and-results">
-            <div id="endgame-results-container">
-                <Tabs value="0" class="text-xs lg:text-base">
-                    <TabList>
-                        <Tab value="0">Round Results</Tab>
-                        <Tab value="1">Total Results</Tab>
-                    </TabList>
-                    <TabPanels>
-                        <!-- Round Results Table -->
-                        <TabPanel value="0">
-                            <GameplayBattleRoyaleLiveStatistics class="text-xs lg:text-base" />
-                        </TabPanel>
-
-                        <!-- Total Results Table -->
-                        <TabPanel value="1">
-                            <GameplayTotalStatistics class="text-xs lg:text-base" />
-                        </TabPanel>
-                    </TabPanels>
-                </Tabs>
+            <div id="endgame-results-container" class="overflow-auto">
+                <GameplayTotalStatistics class="text-xs lg:text-base p-2 md:p-4" />
             </div>
-
             <!-- Google Map Gets Appended here in ENDGAME -->
         </div>
-        <div v-if="isPlayerAdmin()" class="endgame-menu-container">
+        <div v-if="isPlayerAdmin()" class="endgame-menu-container" :class="[uiManager.isVertical ? 'w-full' : 'w-1/2']">
             <Button
                 type="button"
                 label="New Game"
@@ -32,7 +15,7 @@
                 variant="outlined"
                 size="large"
                 @click="useWebSocketStore().sendMessage({ command: SOCKET_COMMANDS.START })"
-                pt:root:class="!text-xs lg:!text-base m-auto"
+                pt:root:class="!text-xs lg:!text-base"
             />
             <Button
                 type="button"
@@ -41,17 +24,17 @@
                 icon="pi pi-cog"
                 variant="outlined"
                 @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal"
-                pt:root:class="!text-xs lg:!text-base m-auto"
+                pt:root:class="!text-xs lg:!text-base"
             />
-            <LobbyLeave class="m-auto" @click="handleClickLeaveLobby" />
+            <LobbyLeave @click="handleClickLeaveLobby" />
         </div>
-        <div v-else class="endgame-menu-container">
+        <div v-else class="endgame-menu-container" :class="[uiManager.isVertical ? 'w-full' : 'w-1/2']">
             <div class="flex gap-3">
-                <div class="flex flex-col">
-                    <p class="text-center">GAME OVER</p>
-                    <p class="text-xs text-center">Waiting for admin to start next...</p>
+                <div class="flex flex-col justify-center">
+                    <Tag class="text-center" severity="danger">GAME OVER</Tag>
+                    <p class="text-xs lg:text-base">Admin can start next game!</p>
                 </div>
-                <LobbyLeave class="m-auto" @click="handleClickLeaveLobby" />
+                <LobbyLeave @click="handleClickLeaveLobby" />
             </div>
         </div>
         <div></div>
@@ -67,6 +50,7 @@ const emit = defineEmits(["leaveLobby"]);
 // External services
 const lobbyStore = useLobbyStore();
 const { isPlayerAdmin } = useLobbyStore();
+const uiManager = useUIManagerStore();
 
 // Watch for lobby settings modal
 watch(
@@ -85,21 +69,21 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     position: relative;
     height: 100dvh;
     width: 100dvw;
+
+    overflow: hidden;
 }
 
 .endgame-menu-container {
     position: absolute;
-    bottom: 0px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 5px;
-    background-color: var(--surface-background);
-    padding: 10px 20px;
+    bottom: 0;
+    right: 0;
 
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    background-color: var(--p-content-background); /* Use the root background color variable */
+    padding: 8px 0px;
+
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
 }
 </style>

@@ -2,8 +2,8 @@
     <div class="midround-container">
         <div id="midround-map-and-results">
             <!-- MidRound Results Content -->
-            <div id="midround-results-container">
-                <Tabs value="0" class="text-xs lg:text-base">
+            <div id="midround-results-container" class="overflow-auto">
+                <Tabs value="1" class="text-xs lg:text-base">
                     <TabList>
                         <Tab value="0">Round Results</Tab>
                         <Tab value="1">Total Results</Tab>
@@ -26,12 +26,11 @@
         </div>
 
         <!-- Mid Round Menu -->
-        <div class="midround-menu">
+        <div class="midround-menu" :class="[uiManager.isVertical ? 'w-full' : 'w-1/2']">
             <!-- Next Round Button -->
             <Button
                 v-if="isPlayerAdmin()"
                 pt:root:class="!text-xs lg:!text-base"
-                class="m-auto"
                 :class="{ 'button-loading-animation': nextRoundButtonLoading }"
                 @click="useWebSocketStore().sendMessage({ command: SOCKET_COMMANDS.START })"
                 :label="'Next Round'"
@@ -40,11 +39,19 @@
                 severity="primary"
                 :disabled="nextRoundButtonLoading"
             />
+            <div v-else class="flex flex-col justify-right items-center gap-1">
+                <p class="text-xs lg:text-base text-center">Admin will start round...</p>
+                <div class="flex items-center space-x-2">
+                    <div class="animate-ping w-2 h-2 rounded-full bg-indigo-400"></div>
+                    <div class="animate-ping w-2 h-2 rounded-full bg-indigo-400 animation-delay-150"></div>
+                    <div class="animate-ping w-2 h-2 rounded-full bg-indigo-400 animation-delay-300"></div>
+                </div>
+            </div>
             <!-- Leave Button -->
-            <LobbyLeave class="gameplay-connection-and-leave text-xs lg:text-sm m-auto" @click="handleClickLeaveLobby" />
+            <LobbyLeave class="text-xs lg:text-sm" @click="handleClickLeaveLobby" />
 
             <!-- Show round number -->
-            <div class="round-indicator m-auto text-xs lg:text-base flex flex-col">
+            <div class="round-indicator text-xs lg:text-base flex flex-col">
                 <span class="font-semibold">Round:</span>
                 <div class="m-auto">{{ gameMode.modeLogic.currentRound }} / {{ lobbyStore.lobbySettings?.conf.numRounds }}</div>
             </div>
@@ -60,6 +67,7 @@ const emit = defineEmits(["leaveLobby"]);
 const gameMode = useGameMode();
 const lobbyStore = useLobbyStore();
 const { isPlayerAdmin } = useLobbyStore();
+const uiManager = useUIManagerStore();
 
 const isMidRound = computed(() => gameMode.modeLogic.currentState === GameState.MID_ROUND);
 const nextRoundButtonLoading = ref(false);
@@ -92,7 +100,7 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
 
 /* Google Map MidRound Styles */
 .google-map-midround-container-horizontal {
-    width: 70dvw;
+    width: 50dvw;
     height: 100dvh;
     opacity: 1;
     display: inline-block;
@@ -107,7 +115,7 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
 
 /* MidRound Results Styles */
 .midround-results-container-horizontal {
-    width: 30dvw;
+    width: 50dvw;
     height: 100dvh;
     display: inline-block;
     vertical-align: top;
@@ -123,16 +131,15 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
 .midround-menu {
     position: absolute;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    right: 0;
 
-    background-color: var(--surface-background);
-    padding: 15px 20px;
-
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
+    background-color: var(--p-content-background); /* Use the root background color variable */
+    padding: 8px 0px;
 
     display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 1rem;
 }
 
 /* Button Loading Animation */
