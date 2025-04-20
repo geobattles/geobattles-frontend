@@ -102,7 +102,7 @@ export const useAuthStore = defineStore("auth", () => {
         try {
             const tokenData = parseJwt(token);
             if (!tokenData) throw new Error("Invalid token data: Parsing returned null");
-            console.debug("Saving token data from Access Token:", tokenData);
+
             const playerInfo = usePlayerInfo();
             playerInfo.value.username = tokenData.user_name || tokenData.username;
             playerInfo.value.ID = tokenData.sub || tokenData.uid;
