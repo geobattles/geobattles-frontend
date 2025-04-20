@@ -52,7 +52,10 @@
                     </div>
 
                     <div class="table__row-element text-right">
-                        <div class="px-3 py-1 rounded-full bg-blue-600/10 dark:bg-blue-500/20">
+                        <div
+                            class="px-3 py-1 rounded-full bg-blue-600/10 dark:bg-blue-500/20 score-background transition-all duration-500"
+                            :style="{ width: calculateScoreWidth(value.total || 0) }"
+                        >
                             <HelpersAnimateScore
                                 :startAmount="0"
                                 :endAmount="value.total"
@@ -72,6 +75,23 @@
 <script setup lang="ts">
 const trophyColor = ["gold", "silver", "#CD7F32"];
 const resultsStore = useResultsStore();
+
+/**
+ * Calculates the relative width for score background based on points
+ * @param points - The player's score points
+ * @returns CSS width value as a string
+ */
+const calculateScoreWidth = (points: number): string => {
+    // Get the highest score in the game
+    const scores = Object.values(resultsStore.totalResults).map((result) => result.total || 0);
+    const maxScore = Math.max(...scores, 1); // Avoid division by zero
+
+    // Calculate percentage (min 10%, max 100%) - increased range for better visualization
+    const percentage = Math.min(100, Math.max(10, (points / maxScore) * 100));
+
+    // Scale the percentage to give top score around 50% of table width
+    return `${percentage}%`;
+};
 </script>
 
 <style scoped>
@@ -100,7 +120,9 @@ const resultsStore = useResultsStore();
 }
 
 .table__row-element:last-child {
-    flex: 0 0 100px;
+    flex: 0 0 40%; /* Increased from 100px to allow more space for score display */
+    display: flex;
+    justify-content: flex-end;
 }
 
 /* Custom scrollbar */
@@ -135,5 +157,14 @@ const resultsStore = useResultsStore();
    animations can be calculated correctly. */
 .list-leave-active {
     position: absolute;
+}
+
+.score-background {
+    min-width: 30px;
+    max-width: 100%;
+    display: flex;
+    justify-content: flex-end;
+    overflow: hidden;
+    transition: width 0.5s ease-in-out; /* Smoother transition on width changes */
 }
 </style>
