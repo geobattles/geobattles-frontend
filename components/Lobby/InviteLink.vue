@@ -1,6 +1,12 @@
 <template>
     <div>
-        <Tag class="cursor-pointer" :icon="inviteLinkTagSettings.icon" :severity="inviteLinkTagSettings.severity" :value="inviteLinkTagSettings.value" @click="copyInviteLink()" />
+        <Tag
+            :class="['cursor-pointer transition-all duration-300', isCopied ? 'animate-pulse scale-105 shadow-md' : '']"
+            :icon="inviteLinkTagSettings.icon"
+            :severity="inviteLinkTagSettings.severity"
+            :value="inviteLinkTagSettings.value"
+            @click="copyInviteLink()"
+        />
     </div>
 </template>
 
@@ -11,6 +17,7 @@ const inviteLinkTagSettings = ref({
     severity: "info",
     icon: "pi pi-copy",
 });
+const isCopied = ref(false);
 
 const inviteLink = computed(() => {
     return `${window.location.origin}/lobby/join?id=${lobbyStore.lobbySettings?.ID}`;
@@ -23,11 +30,13 @@ const copyInviteLink = () => {
             inviteLinkTagSettings.value.value = "Copied";
             inviteLinkTagSettings.value.severity = "success";
             inviteLinkTagSettings.value.icon = "pi pi-check";
+            isCopied.value = true;
 
             setTimeout(() => {
                 inviteLinkTagSettings.value.value = "Copy Invite Link";
                 inviteLinkTagSettings.value.severity = "info";
                 inviteLinkTagSettings.value.icon = "pi pi-copy";
+                isCopied.value = false;
             }, 2000);
         })
         .catch((err) => {

@@ -12,15 +12,20 @@
             <template #end>
                 <div v-if="!authStore.isAuthenticated" class="flex">
                     <div>
-                        <Button label="Login" size="small" severity="primary" @click="handleLoginClick" />
+                        <Button
+                            label="Login"
+                            severity="primary"
+                            size="small"
+                            class="!bg-gradient-to-r !from-blue-600 !to-indigo-800 !border-none !text-white"
+                            @click="handleLoginClick"
+                        />
                     </div>
                 </div>
                 <div v-else class="flex gap-2 items-center">
-                    <Button v-if="showLogoutButton" label="Logout" size="small" severity="primary" raised @click="authStore.logout()" />
                     <Tag icon="pi pi-user" severity="info" :value="playerInfo.displayName" />
                     <Button
                         v-if="showLogoutButton"
-                        size="small"
+                        class="!bg-gradient-to-r !from-blue-600 !to-indigo-800 !border-none !text-white"
                         severity="primary"
                         type="button"
                         icon="pi pi-user-edit"
@@ -85,6 +90,13 @@ const itemsProfile: Ref<MenuItem[]> = ref([
             router.push("/profile");
         },
         path: "/profile",
+    },
+    {
+        label: "Logout",
+        icon: "pi pi-sign-out",
+        command: () => {
+            authStore.logout();
+        },
     },
 ]);
 

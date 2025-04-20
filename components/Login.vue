@@ -35,7 +35,13 @@
                     </div>
 
                     <div class="flex w-full">
-                        <Button label="Login" :loading="isLoginLoading" icon="pi pi-sign-in" class="w-full" @click="handleLogin" />
+                        <Button
+                            label="Login"
+                            :loading="isLoginLoading"
+                            icon="pi pi-sign-in"
+                            class="w-full !bg-gradient-to-r !from-green-600 !to-teal-700 !border-none !text-white"
+                            @click="handleLogin"
+                        />
                     </div>
                 </div>
 
@@ -49,7 +55,13 @@
                 <div class="w-full md:w-5/12 flex flex-col gap-4 items-center justify-center py-4">
                     <h2 class="text-xl font-bold mb-2 text-center">New to GeoBattles?</h2>
 
-                    <Button label="Sign Up" icon="pi pi-user-plus" severity="primary" class="w-full" @click="router.push('/signup')" />
+                    <Button
+                        label="Sign Up"
+                        icon="pi pi-user-plus"
+                        severity="primary"
+                        class="w-full !bg-gradient-to-r !from-blue-600 !to-indigo-800 !border-none !text-white"
+                        @click="router.push('/signup')"
+                    />
 
                     <div class="text-center text-sm text-gray-500 my-1">or</div>
 
