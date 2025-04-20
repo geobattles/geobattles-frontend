@@ -14,6 +14,26 @@ websocket. All in game communications go through websockets.
 - Pinia for state management
 - WebSockets for real-time communication
 
+## CSS Styling Guidelines
+
+- Use responsive design with Tailwind's breakpoint prefixes (`sm:`, `md:`, `lg:`)
+- For cards and containers:
+    - Apply gradient backgrounds in headers (`bg-gradient-to-r`) with brand colors
+    - Use shadow (`shadow-lg`) for elevation and depth
+    - Round corners with `rounded-lg` or `rounded-xl` for modals
+- For form elements:
+    - Ensure full width inputs on mobile, responsive on larger screens
+    - Add icons in input group addons for better UX
+    - Apply proper spacing between form sections (use `mb-4` or `mb-6`)
+- Dialog/modal styling:
+    - Use centered content with proper padding
+    - Apply animations for feedback (e.g., `animate-pulse`)
+    - Remove borders and use rounded corners
+- Text hierarchy:
+    - Use `text-sm/md/lg/xl` responsively based on screen size
+    - Apply `font-semibold` or `font-bold` for headings
+    - Use subtle color variations for secondary text (`text-gray-500`)
+
 ## Code Style Guidelines
 
 - Use TypeScript for all new code

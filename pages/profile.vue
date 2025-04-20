@@ -2,8 +2,6 @@
     <div>
         <Header />
         <div class="max-w-5xl mx-auto px-4 py-4 md:py-8">
-            <h1 class="text-2xl md:text-3xl font-bold mb-4 md:mb-8 text-center">Player Profile</h1>
-
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
                 <!-- User Information Card -->
                 <Card class="col-span-1 shadow-lg">
@@ -60,10 +58,10 @@
                             <form @submit.prevent="submitProfileUpdate">
                                 <div class="mb-5">
                                     <h3 class="text-base md:text-lg font-semibold mb-2 md:mb-3">Display Name</h3>
-                                    <div class="p-inputgroup">
-                                        <span class="p-inputgroup-addon">
+                                    <InputGroup>
+                                        <InputGroupAddon>
                                             <i class="pi pi-user"></i>
-                                        </span>
+                                        </InputGroupAddon>
                                         <InputText
                                             v-model="updateForm.displayName"
                                             placeholder="Enter new display name"
@@ -71,7 +69,7 @@
                                             :class="{ 'p-invalid': displayNameError }"
                                             @blur="validateDisplayName"
                                         />
-                                    </div>
+                                    </InputGroup>
                                     <small v-if="displayNameError" class="p-error block mt-1">{{ displayNameError }}</small>
                                     <small class="text-gray-500 block mt-1 text-xs md:text-sm" v-else>This name will be visible to other players during gameplay</small>
                                 </div>
@@ -83,10 +81,10 @@
                                 <div class="mb-5">
                                     <h3 class="text-base md:text-lg font-semibold mb-2 md:mb-3">Change Password</h3>
                                     <div class="mb-4">
-                                        <div class="p-inputgroup">
-                                            <span class="p-inputgroup-addon">
+                                        <InputGroup>
+                                            <InputGroupAddon>
                                                 <i class="pi pi-lock"></i>
-                                            </span>
+                                            </InputGroupAddon>
                                             <Password
                                                 v-model="updateForm.password"
                                                 placeholder="Enter new password"
@@ -96,16 +94,16 @@
                                                 @blur="validatePassword"
                                                 :inputStyle="{ width: '100%' }"
                                             />
-                                        </div>
+                                        </InputGroup>
                                         <small v-if="passwordError" class="p-error block mt-1">{{ passwordError }}</small>
                                         <small class="text-gray-500 block mt-1 text-xs md:text-sm" v-else>Leave blank to keep your current password</small>
                                     </div>
 
                                     <div class="mb-4">
-                                        <div class="p-inputgroup">
-                                            <span class="p-inputgroup-addon">
+                                        <InputGroup>
+                                            <InputGroupAddon>
                                                 <i class="pi pi-lock-open"></i>
-                                            </span>
+                                            </InputGroupAddon>
                                             <Password
                                                 v-model="updateForm.confirmPassword"
                                                 placeholder="Confirm new password"
@@ -116,7 +114,7 @@
                                                 :class="{ 'p-invalid': confirmPasswordError }"
                                                 :inputStyle="{ width: '100%' }"
                                             />
-                                        </div>
+                                        </InputGroup>
                                         <small v-if="confirmPasswordError" class="p-error block mt-1">{{ confirmPasswordError }}</small>
                                     </div>
                                 </div>
