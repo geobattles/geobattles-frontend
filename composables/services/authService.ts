@@ -81,7 +81,6 @@ export const authService = {
             }
 
             const responseData = await response.json();
-            console.log("Registration response:", responseData);
             return responseData;
         } catch (error: any) {
             console.error("Registration service error:", error);
@@ -97,7 +96,6 @@ export const authService = {
      */
     async refreshAccessToken(refreshToken: string): Promise<AuthResponse> {
         const endpoint = useAppStore().backendEndpoint;
-        console.debug("Calling /refresh endpoint to update access token..."); // !Dev
 
         try {
             const response = await fetch(`${endpoint}/auth/refresh`, {
@@ -173,8 +171,6 @@ export const authService = {
 
             // Assuming the backend returns a success message or confirmation
             const responseData = await response.json();
-            console.log("Update user response:", responseData);
-
             return responseData;
         } catch (error: any) {
             console.error("Update user service error:", error);

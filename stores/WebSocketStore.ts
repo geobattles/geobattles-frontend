@@ -79,7 +79,6 @@ export const useWebSocketStore = defineStore("websocket", () => {
 
                 // Create new connection using utility for URL building
                 const url = buildWebSocketUrl(id);
-                console.debug("WebSocket URL:", url);
                 connection.value = new WebSocket(url, ["json", accessToken]);
 
                 // Set up one-time handlers specifically for this Promise
