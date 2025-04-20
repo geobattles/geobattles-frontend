@@ -25,7 +25,7 @@ export const lobbyService = {
     /**
      * Get list of available lobbies
      */
-    async fetchLobbyList(): Promise<string[]> {
+    async fetchLobbyList(): Promise<Record<string, LobbyInfo>> {
         const endpoint = useAppStore().backendEndpoint;
         const response = await fetch(`${endpoint}/lobby`, {
             method: "GET",

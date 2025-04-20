@@ -14,7 +14,7 @@ export const useLobbyStore = defineStore("lobby", () => {
     const isUpdatingSettings = ref(false); // Flag to prevent settings updates during changes
 
     // Lobby list and UI state
-    const lobbyList = ref<string[]>([]); // List of available lobbies
+    const lobbyList = ref<Record<string, LobbyInfo>>({}); // Map of lobby IDs to LobbyInfo
     const modifySettingsModal = ref<boolean>(false); // Controls visibility of settings modal
 
     const rejoinTimer = ref<number | null>(null); // Timer for rejoining a round will override the default timer
