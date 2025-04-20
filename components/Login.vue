@@ -1,53 +1,103 @@
 <template>
     <div>
-        <Toast />
         <!-- Main Login Component content -->
-        <div class="flex flex-wrap">
-            <div class="w-full md:w-5/12 flex flex-col items-center justify-center gap-3 py-5">
-                <FloatLabel class="mb-4">
-                    <InputText id="username" v-model="username" type="text" required />
-                    <label for="username">Username</label>
-                </FloatLabel>
-                <FloatLabel>
-                    <Password id="password" v-model="password" :feedback="false" required />
-                    <label for="username">Password</label>
-                </FloatLabel>
-                <div class="flex">
-                    <Button label="Login" :loading="isLoginLoading" icon="pi pi-user" class="w-full max-w-[17.35rem] mx-auto" @click="handleLogin" />
+        <div class="p-4 md:p-6 rounded-lg">
+            <div class="flex flex-wrap">
+                <!-- Login Form -->
+                <div class="w-full md:w-5/12 flex flex-col items-center justify-center gap-4 py-4">
+                    <h2 class="text-xl font-bold mb-2 text-center">Sign In</h2>
+
+                    <div class="w-full mb-4">
+                        <InputGroup>
+                            <InputGroupAddon>
+                                <i class="pi pi-user"></i>
+                            </InputGroupAddon>
+                            <InputText id="username" v-model="username" placeholder="Username" type="text" class="w-full" required />
+                        </InputGroup>
+                    </div>
+
+                    <div class="w-full mb-4">
+                        <InputGroup>
+                            <InputGroupAddon>
+                                <i class="pi pi-lock"></i>
+                            </InputGroupAddon>
+                            <Password
+                                id="password"
+                                v-model="password"
+                                placeholder="Password"
+                                :feedback="false"
+                                :toggleMask="true"
+                                class="w-full"
+                                :inputStyle="{ width: '100%' }"
+                                required
+                            />
+                        </InputGroup>
+                    </div>
+
+                    <div class="flex w-full">
+                        <Button label="Login" :loading="isLoginLoading" icon="pi pi-sign-in" class="w-full" @click="handleLogin" />
+                    </div>
                 </div>
-            </div>
-            <div class="w-full md:w-2/12">
-                <Divider layout="vertical" class="!hidden md:!flex"><b>OR</b></Divider>
-                <Divider layout="horizontal" class="!flex md:!hidden" align="center"><b>OR</b></Divider>
-            </div>
-            <div class="w-full md:w-5/12 flex flex-col gap-3 items-center justify-center py-5">
-                <Button label="Sign Up" icon="pi pi-user-plus" severity="primary" class="w-full max-w-[17.35rem] mx-auto" @click="router.push('/signup')" />
-                <span>or</span>
-                <Button label="Continue as Guest" severity="secondary" icon="pi pi-user" class="w-full max-w-[17.35rem] mx-auto" @click="isGuestFormVisible = true" />
+
+                <!-- Divider -->
+                <div class="w-full md:w-2/12 flex items-center justify-center">
+                    <Divider layout="vertical" class="!hidden md:!flex"><b>OR</b></Divider>
+                    <Divider layout="horizontal" class="!flex md:!hidden" align="center"><b>OR</b></Divider>
+                </div>
+
+                <!-- Registration Options -->
+                <div class="w-full md:w-5/12 flex flex-col gap-4 items-center justify-center py-4">
+                    <h2 class="text-xl font-bold mb-2 text-center">New to GeoBattles?</h2>
+
+                    <Button label="Sign Up" icon="pi pi-user-plus" severity="primary" class="w-full" @click="router.push('/signup')" />
+
+                    <div class="text-center text-sm text-gray-500 my-1">or</div>
+
+                    <Button label="Continue as Guest" severity="secondary" icon="pi pi-user" class="w-full" @click="isGuestFormVisible = true" />
+                </div>
             </div>
         </div>
 
         <!-- Guest username Dialog -->
-        <Dialog v-model:visible="isGuestFormVisible" class="w-80" pt:header:class="text-xs" header="Confirm Display Name" modal>
-            <div class="flex flex-col gap-2 items-center justify-center">
-                <FloatLabel>
-                    <InputText id="guest-username" type="text" v-model="guestDisplayName" />
-                    <label for="guest-username">Guest Username</label>
-                </FloatLabel>
-                <Button
-                    label="Submit"
-                    icon="pi pi-check"
-                    severity="info"
-                    class="w-full max-w-[17.35rem] mx-auto"
-                    @click="handleRegisterGuest()"
-                    :loading="isGuestRegisterLoading"
-                />
+        <Dialog
+            v-model:visible="isGuestFormVisible"
+            :modal="true"
+            :closable="true"
+            :showHeader="true"
+            header="Guest Account"
+            :pt="{
+                root: { class: 'border-0 rounded-xl shadow-lg' },
+            }"
+            class="max-w-[90vw] sm:max-w-md"
+        >
+            <div class="p-4 flex flex-col gap-4">
+                <p class="text-sm text-gray-600 dark:text-gray-300">Enter a display name to continue as a guest. This name will be visible to other players.</p>
+
+                <div class="mb-4">
+                    <InputGroup>
+                        <InputGroupAddon>
+                            <i class="pi pi-id-card"></i>
+                        </InputGroupAddon>
+                        <InputText id="guest-username" type="text" v-model="guestDisplayName" placeholder="Display Name" class="w-full" />
+                    </InputGroup>
+                </div>
+
+                <div class="flex gap-2">
+                    <Button label="Cancel" icon="pi pi-times" severity="secondary" class="w-1/2" outlined @click="isGuestFormVisible = false" />
+                    <Button label="Continue" icon="pi pi-check" severity="info" class="w-1/2" @click="handleRegisterGuest()" :loading="isGuestRegisterLoading" />
+                </div>
             </div>
         </Dialog>
     </div>
 </template>
 
 <script setup lang="ts">
+/**
+ * Login Component
+ * Provides user authentication options including login, signup, and guest access
+ * @author GeoBattles Team
+ */
+
 // External states
 const toast = useToast();
 const router = useRouter();
@@ -62,14 +112,32 @@ const isLoginLoading = ref(false);
 const isGuestRegisterLoading = ref(false);
 const emit = defineEmits(["userLogged"]);
 
+/**
+ * Generates a random guest username with a 4-digit number
+ * @returns {string} A random guest username
+ */
 const generateGuestUsername = () => {
     const randomDigits = Math.floor(1000 + Math.random() * 9000);
     return `Guest${randomDigits}`;
 };
 
+// Initialize guest display name
 guestDisplayName.value = generateGuestUsername();
 
+/**
+ * Handles user login authentication
+ */
 const handleLogin = async () => {
+    if (!username.value || !password.value) {
+        toast.add({
+            severity: "warn",
+            summary: "Missing Information",
+            detail: "Please enter both username and password",
+            life: 3000,
+        });
+        return;
+    }
+
     isLoginLoading.value = true;
     try {
         await login(username.value, password.value);
@@ -84,11 +152,25 @@ const handleLogin = async () => {
             detail: errorMessage,
             life: 5000,
         });
+    } finally {
         isLoginLoading.value = false;
     }
 };
 
+/**
+ * Handles guest user registration
+ */
 const handleRegisterGuest = async () => {
+    if (!guestDisplayName.value) {
+        toast.add({
+            severity: "warn",
+            summary: "Missing Information",
+            detail: "Please enter a display name",
+            life: 3000,
+        });
+        return;
+    }
+
     isGuestRegisterLoading.value = true;
     try {
         await register(null, null, guestDisplayName.value);
@@ -104,9 +186,38 @@ const handleRegisterGuest = async () => {
             detail: "Failed to register guest. Please try again later.",
             life: 5000,
         });
+    } finally {
         isGuestRegisterLoading.value = false;
     }
 };
 </script>
 
-<style scoped></style>
+<style scoped>
+:deep(.p-password-input) {
+    width: 100%;
+}
+
+:deep(.p-password) {
+    display: block;
+    width: 100%;
+}
+
+:deep(.p-inputgroup) {
+    width: 100%;
+}
+
+:deep(.p-inputtext) {
+    width: 100%;
+}
+
+:deep(.p-dialog-content) {
+    border-radius: 0.75rem;
+}
+
+@media (max-width: 640px) {
+    :deep(.p-password-panel) {
+        min-width: 100% !important;
+        left: 0 !important;
+    }
+}
+</style>
