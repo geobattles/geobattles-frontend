@@ -55,6 +55,7 @@
                         <div
                             class="px-3 py-1 rounded-full bg-blue-600/10 dark:bg-blue-500/20 score-background transition-all duration-500"
                             :style="{ width: calculateScoreWidth(value.total || 0) }"
+                            style="min-width: fit-content"
                         >
                             <HelpersAnimateScore
                                 :startAmount="0"
