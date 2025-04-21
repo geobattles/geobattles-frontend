@@ -7,7 +7,13 @@
                 <div class="flex items-center justify-between w-full">
                     <h1 class="text-lg md:text-xl lg:text-2xl font-bold">Active Lobbies</h1>
                     <div class="flex gap-2 ml-auto">
-                        <Button @click="handleRefreshClick" icon="pi pi-refresh" rounded :loading="isTableLoading" />
+                        <Button
+                            @click="handleRefreshClick"
+                            class="!bg-gradient-to-r !from-green-600 !to-teal-700 !border-none !text-white"
+                            icon="pi pi-refresh"
+                            rounded
+                            :loading="isTableLoading"
+                        />
                     </div>
                 </div>
             </template>
@@ -16,7 +22,13 @@
                 <i class="pi pi-search text-4xl text-gray-400 mb-4"></i>
                 <h2 class="text-xl font-semibold text-gray-700 mb-2">No Active Lobbies</h2>
                 <p class="text-gray-500 mb-6 text-center">There are currently no active lobbies. Refresh to check again or create a new one!</p>
-                <Button label="Create New Lobby" icon="pi pi-plus" @click="navigateToCreateLobby" severity="primary" />
+                <Button
+                    label="Create New Lobby"
+                    class="!bg-gradient-to-r !from-green-600 !to-teal-700 !border-none !text-white"
+                    icon="pi pi-plus"
+                    @click="navigateToCreateLobby"
+                    severity="primary"
+                />
             </div>
 
             <DataTable
@@ -60,10 +72,10 @@
                             :disabled="!isLobbyJoinableForCurrentuser(slotProps.data.ID)"
                             :label="isLobbyJoinableForCurrentuser(slotProps.data.ID) ? 'Join' : 'In Progress'"
                             :severity="isLobbyJoinableForCurrentuser(slotProps.data.ID) ? 'primary' : 'warn'"
-                            :icon="isLobbyJoinableForCurrentuser(slotProps.data.ID) ? 'pi pi-sign-in' : 'pi pi-times'"
+                            :icon="isLobbyJoinableForCurrentuser(slotProps.data.ID) ? 'pi pi-sign-in' : ''"
                             size="small"
                             variant="outlined"
-                            class="md:!text-base !text-xs"
+                            class="md:!text-base !text-xs !bg-gradient-to-r !from-green-600 !to-teal-700 !border-none !text-white"
                         />
                     </template>
                 </Column>

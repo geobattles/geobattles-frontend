@@ -8,7 +8,7 @@
                     <template #header>
                         <div class="bg-gradient-to-r from-blue-600 to-indigo-800 p-4 md:p-6 rounded-t-lg flex flex-col items-center justify-center">
                             <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white flex items-center justify-center shadow-lg mb-3 md:mb-4">
-                                <i class="pi pi-user text-4xl md:text-5xl text-blue-800"></i>
+                                <i class="pi pi-user !text-4xl md:!text-5xl text-blue-800"></i>
                             </div>
                             <h2 class="text-xl font-bold text-white">{{ playerInfo.displayName || "Player" }}</h2>
                             <div class="mt-2">
@@ -102,7 +102,7 @@
                                     <div class="mb-4">
                                         <InputGroup>
                                             <InputGroupAddon>
-                                                <i class="pi pi-lock-open"></i>
+                                                <i class="pi pi-lock"></i>
                                             </InputGroupAddon>
                                             <Password
                                                 v-model="updateForm.confirmPassword"

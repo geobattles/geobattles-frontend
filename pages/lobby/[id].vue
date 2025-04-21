@@ -8,7 +8,14 @@
                     <div class="font-bold text-base">Lobby Settings</div>
                 </template>
                 <template v-if="isPlayerAdmin()" #icons>
-                    <Button @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal" type="button" label="Modify" icon="pi pi-cog" severity="contrast" />
+                    <Button
+                        @click="lobbyStore.modifySettingsModal = !lobbyStore.modifySettingsModal"
+                        type="button"
+                        label="Modify"
+                        variant="outlined"
+                        icon="pi pi-cog"
+                        severity="contrast"
+                    />
                 </template>
                 <LobbyDisplaySettings />
             </Panel>
@@ -40,18 +47,22 @@
             </template>
             <LobbyModifySettings />
         </Dialog>
+
+        <!-- Connection Status Dialog -->
+        <GameplayLostConnectionDialog @leaveLobby="handleClickLeaveLobby()" />
     </div>
 </template>
 
 <script setup lang="ts">
 const isGuardDisabled = ref(false);
+const wantsToLeaveLobby = ref(false);
 
 // External services
 const { leaveLobby, isPlayerAdmin } = useLobbyStore();
 const lobbyStore = useLobbyStore();
 const country_list = useCountryList();
 const filtered_country_list = useFilteredCountryList();
-const gameMode = useGameMode();
+const router = useRouter();
 
 useHead({
     title: "GeoBattles | Lobby",
@@ -72,6 +83,11 @@ onMounted(async () => {
     if (lobbyStore.lobbySettings.conf.ccList.length === 0) lobbyStore.lobbySettings.conf.ccList = Object.values(country_list.value);
     filtered_country_list.value = country_list.value;
 });
+
+const handleClickLeaveLobby = () => {
+    wantsToLeaveLobby.value = true;
+    router.push("/");
+};
 
 onBeforeRouteLeave((to, from, next) => {
     if (isGuardDisabled.value) return next(); // If guard is disabled, allow navigation (so we can easily navigate to /index page)

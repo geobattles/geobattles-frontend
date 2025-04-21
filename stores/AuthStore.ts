@@ -128,23 +128,46 @@ export const useAuthStore = defineStore("auth", () => {
     };
 
     /**
-     * Logs the player out, clearing tokens and resetting state.
+     * Logs the player out, clearing tokens, resetting state, and notifying the backend.
      */
-    const logout = (): void => {
+    const logout = async (): Promise<void> => {
+        // Make the function async
         console.debug("Logging out user...");
+        const currentAccessToken = await getValidAccessToken(); // Get access token before clearing
+
+        // Attempt to notify the backend using the access token
+        if (currentAccessToken) {
+            try {
+                await authService.logout(currentAccessToken); // Call backend logout with access token
+                console.debug("Backend logout successful.");
+            } catch (error) {
+                // Log the error but proceed with client-side logout regardless
+                console.error("Backend logout failed:", error);
+                // Optionally, check if the error is due to an expired token and handle accordingly
+                // For now, we proceed with client logout anyway.
+            }
+        } else {
+            console.debug("No access token found, skipping backend logout call.");
+        }
+
+        // Proceed with client-side logout
         clearTokens();
         usePlayerInfo().value = {} as User;
         isAuthenticated.value = false;
         authError.value = null;
+
         const socketStore = useWebSocketStore();
         if (socketStore.isConnected) {
             socketStore.disconnect();
         }
-        const router = useRouter();
-        router.replace({ path: "/" });
 
-        // Show login dialog after logout
+        const router = useRouter();
+        // Use replace to avoid adding the logout action to browser history
+        await router.replace({ path: "/" }); // Use await for router navigation
+
+        // Optionally show login dialog after logout completes
         isLoginDialog.value = true;
+        console.debug("Client-side logout complete.");
     };
 
     /**
@@ -343,7 +366,7 @@ export const useAuthStore = defineStore("auth", () => {
         // Core actions
         login,
         register,
-        logout,
+        logout, // Ensure the updated logout is returned
         refreshToken, // Expose manual refresh if needed
         initializeAuth, // Expose initialization function
         getValidAccessToken, // <-- New function to get token and refresh if needed

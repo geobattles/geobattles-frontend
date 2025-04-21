@@ -7,7 +7,7 @@
             label="Start Game"
             icon="pi pi-play-circle"
             :loading="isPlayNowLoading"
-            class="w-full md:w-auto text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl border-none rounded-xl px-6 py-3 text-white"
+            class="!w-full md:!w-auto !text-lg !font-semibold !bg-gradient-to-r !from-green-600 !to-teal-700 !border-none !text-white hover:!from-indigo-700 hover:!to-purple-700 !transition-all !shadow-lg hover:!shadow-xl !border-none !rounded-xl !px-6 !py-3 !text-white"
         />
         <div v-else class="flex flex-col items-center p-4 rounded-lg bg-gray-100/80 dark:bg-gray-800/50 shadow-lg border border-gray-200 dark:border-gray-700">
             <div class="text-gray-800 dark:text-white text-center mb-3 font-medium">Waiting for admin to start the game</div>

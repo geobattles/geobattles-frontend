@@ -177,4 +177,50 @@ export const authService = {
             throw error instanceof Error ? error : new Error("An unexpected error occurred during profile update.");
         }
     },
+
+    /**
+     * Logs out a user by notifying the backend.
+     * The backend should invalidate the session/token based on the provided access token.
+     * @param {string} accessToken - The access token of the user logging out.
+     * @returns {Promise<void>}
+     * @throws {Error} If logout fails on the backend.
+     */
+    async logout(accessToken: string): Promise<void> {
+        // Parameter changed to accessToken
+        const endpoint = useAppStore().backendEndpoint;
+
+        try {
+            // Changed method to GET as per user request
+            const response = await fetch(`${endpoint}/auth/logout`, {
+                method: "GET", // Use GET for logout action
+                headers: {
+                    // Send the access token in the Authorization header
+                    Authorization: `${accessToken}`,
+                },
+            });
+
+            if (!response.ok) {
+                let errorData;
+                try {
+                    // Attempt to parse error only if there's content
+                    if (response.headers.get("content-length") !== "0") {
+                        errorData = await response.json();
+                    }
+                } catch (e) {
+                    // Ignore JSON parsing errors if response is not JSON
+                    console.warn("Could not parse JSON error response from logout endpoint.");
+                }
+                console.error("Logout API error:", errorData || `Status: ${response.status}`);
+                // Throw specific error if available, otherwise generic status error
+                throw new Error(errorData?.error || `Backend logout failed with status: ${response.status}`);
+            }
+
+            // Logout successful, no specific data expected in response body for logout
+            console.debug("Backend logout request successful.");
+        } catch (error: any) {
+            console.error("Logout service error:", error);
+            // Re-throw the error to be handled by the caller (e.g., authStore)
+            throw error instanceof Error ? error : new Error("An unexpected error occurred during backend logout.");
+        }
+    },
 };

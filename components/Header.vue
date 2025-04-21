@@ -94,6 +94,7 @@ const itemsProfile: Ref<MenuItem[]> = ref([
     {
         label: "Logout",
         icon: "pi pi-sign-out",
+        class: "mt-1",
         command: () => {
             authStore.logout();
         },
