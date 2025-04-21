@@ -18,7 +18,6 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from "vue";
 import confetti from "canvas-confetti";
 
 // Define props to accept winnerId
@@ -50,10 +49,11 @@ const winnerData = computed(() => {
 // Trigger confetti on mount
 onMounted(() => {
     confetti({
-        particleCount: 150,
-        spread: 90,
+        particleCount: 250,
+        spread: 120,
         origin: { y: 0.6 },
         zIndex: 1001, // Ensure confetti is above the overlay
+        ticks: 300,
     });
 });
 </script>

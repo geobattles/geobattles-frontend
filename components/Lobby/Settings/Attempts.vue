@@ -7,7 +7,7 @@
             v-model="lobbyStore.lobbySettings!.conf.numAttempt"
             showButtons
             buttonLayout="vertical"
-            :min="0"
+            :min="1"
             :max="5"
             @focus="handleFocus"
         />

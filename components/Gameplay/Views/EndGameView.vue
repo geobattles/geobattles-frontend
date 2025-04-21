@@ -42,7 +42,7 @@
             <LobbyModifySettings />
         </Dialog>
         <!-- Display the Game Winner component -->
-        <GameWinner v-if="showWinner" :winner-id="winnerId" />
+        <GameplayGameWinner v-if="showWinner" :winner-id="winnerId" />
     </div>
 </template>
 
@@ -57,7 +57,6 @@ const resultsStore = useResultsStore();
 const { isPlayerAdmin } = useLobbyStore();
 const uiManager = useUIManagerStore();
 const gameMode = useGameMode();
-
 const showWinner = ref(false);
 
 // Compute the winner ID based on the results store
