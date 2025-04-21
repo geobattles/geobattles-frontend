@@ -26,7 +26,7 @@
         </div>
 
         <!-- Mid Round Menu -->
-        <div class="midround-menu" :class="[uiManager.isVertical ? 'w-full' : 'w-1/2']">
+        <div class="midround-menu" :style="{ width: uiManager.isVertical ? '100dvw' : '50dvw' }">
             <!-- Next Round Button -->
             <Button
                 v-if="isPlayerAdmin()"
@@ -80,7 +80,7 @@ watch(isMidRound, (newValue) => {
 
         setTimeout(() => {
             nextRoundButtonLoading.value = false;
-        }, 6000);
+        }, 1);
     }
 });
 
@@ -118,7 +118,6 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     width: 50dvw;
     height: 100dvh;
     display: inline-block;
-    vertical-align: top;
 }
 
 .midround-results-container-vertical {
@@ -131,10 +130,10 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
 .midround-menu {
     position: absolute;
     bottom: 0;
-    right: 0;
+    right: 1px;
 
     background-color: var(--p-content-background); /* Use the root background color variable */
-    padding: 8px 0px;
+    padding: 8px 5px;
 
     display: flex;
     justify-content: flex-start;

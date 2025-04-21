@@ -13,7 +13,8 @@ export const useUIManagerStore = defineStore("uiManager", () => {
     const submitButton = ref<HTMLElement | null>(null);
     const gameplayPageContainer = ref<HTMLElement | null>(null);
     const isMobile = ref(false);
-    const isVertical = ref(false);
+
+    const isVertical = ref(typeof window !== "undefined" ? window.innerWidth < window.innerHeight : false);
 
     const mountingProcess = (toggle_map_mobile: Ref<HTMLElement | null>, show_map_button: Ref<boolean>, submit_button: Ref<HTMLElement | null>) => {
         const { getMapHTML, getPanoramaHTML } = useGoogleStore();
@@ -23,15 +24,15 @@ export const useUIManagerStore = defineStore("uiManager", () => {
         submitButton.value = submit_button.value;
 
         setupMapListeners(toggle_map_mobile, show_map_button, submit_button);
-        googleMapDOMTracker();
+        gameStateTracker();
     };
 
     const setupMapListeners = (toggle_map_mobile: Ref<HTMLElement | null>, show_map_button: Ref<boolean>, submit_button: Ref<HTMLElement | null>) => {
         if (isMobile.value) {
-            console.info("SETTING UP MOBILE VIEW"); //! Dev
+            console.debug("SETTING UP MOBILE VIEW"); //! Dev
             setupMobileView(toggle_map_mobile, show_map_button);
         } else {
-            console.info("SETTING UP DESKTOP VIEW"); //! Dev
+            console.debug("SETTING UP DESKTOP VIEW"); //! Dev
             setupDesktopView(submit_button);
         }
     };
@@ -109,7 +110,7 @@ export const useUIManagerStore = defineStore("uiManager", () => {
         }
     };
 
-    const googleMapDOMTracker = () => {
+    const gameStateTracker = () => {
         // Stop previous watcher if it exists
         if (stateWatcher.value) stateWatcher.value();
 
@@ -122,6 +123,12 @@ export const useUIManagerStore = defineStore("uiManager", () => {
                     moveMapToMidRound();
                 }
                 if (newVal === GameState.PLAYING) {
+                    // Set panorama to visible and focus (gets rid of the pan panorama staying small after orientation change)
+                    const googleStore = useGoogleStore();
+                    googleStore.getPanorama.setVisible(true);
+                    googleStore.getPanorama.focus();
+
+                    // Move map to gameplay container
                     moveMapToPlaying();
                 }
                 if (newVal === GameState.FINISHED) {
@@ -235,14 +242,6 @@ export const useUIManagerStore = defineStore("uiManager", () => {
         gameplayPageContainer.value = container;
     };
 
-    const setMobile = (mobile: boolean) => {
-        isMobile.value = mobile;
-    };
-
-    const getIsMobile = () => {
-        return isMobile.value;
-    };
-
     const toggleFullscreen = () => {
         if (gameplayPageContainer.value) {
             if (!document.fullscreenElement) {
@@ -309,15 +308,15 @@ export const useUIManagerStore = defineStore("uiManager", () => {
         setupDesktopView,
         updateOrientation,
         handleMapHover,
-        googleMapDOMTracker,
+        gameStateTracker,
         moveMapToPlaying,
         moveMapToMidRound,
         moveMapToFinished,
         setGameplayPageContainer,
-        setMobile,
-        getIsMobile,
         toggleFullscreen,
         applyGuessStyles,
+
+        // Event handling methods
         on,
         off,
         dispatch,

@@ -50,7 +50,7 @@ export const useAppStore = defineStore("app", () => {
 
             // Add primitive check for mobile devices
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile) useUIManagerStore().setMobile(true);
+            if (isMobile) useUIManagerStore().isMobile = true;
 
             addBeforeUnloadPrompt();
         });

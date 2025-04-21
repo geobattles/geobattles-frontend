@@ -21,7 +21,7 @@
             <button
                 ref="submitButton"
                 severity="primary"
-                class="submit-button"
+                class="submit-button !bg-gradient-to-r !from-green-600 !to-teal-700"
                 v-if="gameMode.currentMode === 'BattleRoyale'"
                 @click="gameMode.submitGuess()"
                 :disabled="gameMode.modeLogic.isSubmitDisabled"
@@ -50,8 +50,8 @@
         <!-- <GameplayTimerBar v-if="gameMode.modeLogic.currentState === 'PLAYING'" class="timer-bar-container" /> -->
 
         <!-- MAP MOBILE BUTTON -->
-        <button ref="toggleMapMobile" v-show="uiManager.getIsMobile() && gameMode.modeLogic.currentState === 'PLAYING'" class="mobile-map-button">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 lg:w-10" viewBox="0 0 576 512">
+        <button ref="toggleMapMobile" v-show="uiManager.isMobile && gameMode.modeLogic.currentState === 'PLAYING'" class="mobile-map-button">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512">
                 <path
                     d="M565.6 36.24C572.1 40.72 576 48.11 576 56V392C576 401.1 569.8 410.9 560.5 414.4L392.5 478.4C387.4 480.4 381.7 480.5 376.4 478.8L192.5 417.5L32.54 478.4C25.17 481.2 16.88 480.2 10.38 475.8C3.882 471.3 0 463.9 0 456V120C0 110 6.15 101.1 15.46 97.57L183.5 33.57C188.6 31.6 194.3 31.48 199.6 33.23L383.5 94.52L543.5 33.57C550.8 30.76 559.1 31.76 565.6 36.24H565.6zM48 421.2L168 375.5V90.83L48 136.5V421.2zM360 137.3L216 89.3V374.7L360 422.7V137.3zM408 421.2L528 375.5V90.83L408 136.5V421.2z"
                 />
@@ -105,8 +105,8 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
+    width: 100dvw;
+    height: 100dvh;
     z-index: 1; /* Base layer */
 }
 
@@ -137,7 +137,6 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     height: 45px;
 
     background-color: var(--surface-background);
-
     border-color: var(--surface-background);
 }
 
@@ -225,6 +224,7 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     border-radius: 4px;
     cursor: pointer;
     background-color: var(--surface-background);
+    color: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.7);
     transition:
         width 0.3s,
@@ -237,9 +237,9 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
 }
 
 .submit-button:disabled {
-    background-color: var(--surface-background);
     cursor: not-allowed;
-    opacity: 0.8;
+    filter: grayscale(50%); /* Apply grayscale filter */
+    opacity: 0.75; /* Adjust opacity for a darker/faded look */
 }
 
 /* Timer bar container */
@@ -252,6 +252,19 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     transform: translateX(-50%);
     margin-left: auto;
     margin-right: auto;
+}
+
+.mobile-map-button {
+    position: absolute;
+    bottom: 70px;
+    left: 10px;
+    z-index: 2;
+
+    background-color: var(--surface-background);
+    fill: var(--p-primary-400);
+
+    padding: 10px 20px;
+    border-radius: 5px;
 }
 
 /* Responsive Adjustments */
@@ -283,19 +296,6 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
         height: 50px;
         font-size: 14px;
         padding: 8px 16px;
-    }
-
-    .mobile-map-button {
-        position: absolute;
-        bottom: 70px;
-        left: 10px;
-        z-index: 2;
-
-        background-color: var(--surface-background);
-        fill: var(--p-primary-400);
-
-        padding: 10px 15px;
-        border-radius: 5px;
     }
 }
 </style>
