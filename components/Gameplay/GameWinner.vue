@@ -73,15 +73,14 @@ onMounted(() => {
 }
 
 .game-winner-card {
-    background: linear-gradient(to bottom right, var(--p-surface-800), var(--p-surface-950)); /* Darker gradient */
-    color: var(--p-content-color);
-    padding: 2rem 3rem; /* Increased padding */
-    border-radius: 1.5rem; /* rounded-2xl */
+    background: linear-gradient(to bottom right, var(--surface-background), var(--surface-background));
+    padding: 2rem 3rem;
+    border-radius: 1.5rem;
     text-align: center;
-    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6); /* Enhanced shadow */
-    border: 2px solid var(--p-primary-500); /* Thicker border */
-    min-width: 325px; /* Minimum width */
-    max-width: 90%; /* Max width relative to viewport */
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+    border: 2px solid var(--p-primary-500);
+    min-width: 325px;
+    max-width: 90%;
 }
 
 /* Simple celebration animation */

@@ -1,5 +1,13 @@
 <template>
     <div class="text-xs">
+        <!-- Table Header -->
+        <div class="table__header">
+            <div class="table__header-element">Player</div>
+            <div class="table__header-element">Attempts</div>
+            <div class="table__header-element distance" style="flex: 35%">Distance</div>
+            <div class="table__header-element score">Score</div>
+        </div>
+
         <TransitionGroup name="list" tag="ul" class="flex flex-col gap-1 lg:gap-1">
             <div v-for="(value, index) in resultsStore.liveResults" :key="index">
                 <div v-if="isPlayerConnected(index)" class="table__row" :id="index.toString()">
@@ -13,23 +21,17 @@
                         </div>
                     </div>
 
-                    <!-- Lives Display -->
+                    <!-- Attempts Display -->
                     <div class="table__row-element">
-                        <div>Lives</div>
-                        <div class="flex gap-0 lg:gap-1 m-auto">
-                            <!-- TODO: Temporary remove gray hearts until we know the number of attempts from backend -->
-                            <!-- <div v-for="life in totalAttempts.get(index)" :key="life">
-                                <SvgsHeartIcon class="svg-heart-icon h-4" :color="value.lives >= life ? 'var(--p-red-500)' : 'var(--p-gray-400)'" />
-                            </div> -->
-                            <div v-for="life in value.lives" :key="life">
-                                <SvgsHeartIcon class="svg-heart-icon h-4" :color="'var(--p-red-500)'" />
-                            </div>
+                        <!-- Display number of attempts and a bullseye icon -->
+                        <div class="flex items-center justify-center gap-1 m-auto">
+                            <span class="font-semibold text-sm">{{ value.lives }}</span>
+                            <i class="pi pi-map-marker text-sm lg:text-xl text-green-400 dark:text-green-400 !fill-[#243c5a]"></i>
                         </div>
                     </div>
 
                     <!-- Distance Display -->
                     <div class="table__row-element distance" style="flex: 35%">
-                        <div>Distance</div>
                         <div class="value m-auto">
                             {{ formatDistance(value.distance) }}
                         </div>
@@ -37,7 +39,6 @@
 
                     <!-- Score Display -->
                     <div class="table__row-element score">
-                        <div>Score</div>
                         <div class="value m-auto">
                             {{ value.baseScr || 0 }}
                         </div>
@@ -49,16 +50,10 @@
 </template>
 
 <script lang="ts">
-import { GameState } from "~/types/appTypes";
-import type { WatchStopHandle } from "vue";
-
 export default {
     setup() {
         const resultsStore = useResultsStore();
         const lobbyStore = useLobbyStore();
-        const totalAttempts = ref(new Map<string | number, number>());
-        const gameMode = useGameMode();
-        let gameStateWatcher: WatchStopHandle | null = null;
 
         /**
          * Format distance for display in results table.
@@ -74,40 +69,13 @@ export default {
             return `${Math.round(formattedDistance * 10) / 10} ${isMeters ? "m" : "km"}`;
         };
 
-        /**
-         * Initialize total attempts for every player at the start of each round.
-         */
-        const initializeTotalAttempts = () => {
-            for (const player_id in resultsStore.liveResults) totalAttempts.value.set(player_id, resultsStore.liveResults[player_id].lives);
-        };
-
-        onMounted(() => {
-            // Setup watcher when component is mounted
-            gameStateWatcher = watch(
-                () => gameMode.modeLogic.currentState,
-                (newVal) => {
-                    if (newVal === GameState.PLAYING) {
-                        initializeTotalAttempts();
-                    }
-                }
-            );
-        });
-
         const isPlayerConnected = (playerID: string | number): boolean => {
             if (lobbyStore.lobbySettings?.playerList[playerID].connected) return true;
             return false;
         };
 
-        onUnmounted(() => {
-            // Clean up watcher when component is unmounted
-            if (gameStateWatcher) {
-                gameStateWatcher();
-            }
-        });
-
         return {
             resultsStore,
-            totalAttempts,
             getPlayerColorByID,
             formatDistance,
             getPlayerNameFromID,
@@ -118,8 +86,28 @@ export default {
 </script>
 
 <style scoped>
+.table__header {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 3px 6px;
+    margin-bottom: 4px; /* Add some space below the header */
+    font-weight: 600;
+    color: var(--text-color-secondary); /* Use secondary text color */
+    border-bottom: 1px solid var(--surface-border); /* Add a subtle border */
+
+    background-color: var(--surface-background); /* Use background color */
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+}
+
+.table__header-element {
+    flex: 25%;
+    text-align: center;
+}
+
 .table__row {
-    height: 45px;
+    height: 40px;
     padding: 3px 6px;
 
     display: flex;
@@ -140,7 +128,7 @@ export default {
     flex: 25%;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     z-index: 3;
 
@@ -216,6 +204,11 @@ export default {
 
     .score .value {
         font-size: 8px;
+    }
+
+    .table__header {
+        font-size: 8px;
+        padding: 2px 6px;
     }
 }
 </style>

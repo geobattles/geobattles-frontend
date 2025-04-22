@@ -95,18 +95,6 @@ const handlePlayerLeftToast = (event: CustomEvent) => {
 </script>
 
 <style scoped>
-.fullscreen-button {
-    position: absolute;
-    bottom: 20px;
-    right: 60px;
-    padding: 8px 10px;
-    font-size: 12px;
-    cursor: pointer;
-    background-color: var(--p-surface-950);
-    color: var(--p-surface-0);
-    border-radius: 5px;
-}
-
 .screen-dimensions {
     position: absolute;
     top: 50%;
