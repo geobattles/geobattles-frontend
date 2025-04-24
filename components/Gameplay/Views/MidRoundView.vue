@@ -75,12 +75,12 @@ const nextRoundButtonLoading = ref(false);
 // Watch for changes to isMidRound and trigger button timeout
 watch(isMidRound, (newValue) => {
     if (newValue) {
-        // When entering mid-round state, disable button for 8 seconds
+        // When entering mid-round state, disable button for 6 seconds
         nextRoundButtonLoading.value = true;
 
         setTimeout(() => {
             nextRoundButtonLoading.value = false;
-        }, 1);
+        }, 6000);
     }
 });
 

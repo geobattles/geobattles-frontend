@@ -108,6 +108,7 @@ export const useGoogleStore = defineStore("googleStore", () => {
                 heading: 270,
                 pitch: 0,
             },
+            zoom: 0,
             fullscreenControl: false,
             showRoadLabels: false,
             addressControl: false,

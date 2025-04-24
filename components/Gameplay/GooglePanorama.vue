@@ -29,4 +29,15 @@ export default {
 :deep(.gm-style .gm-compass) {
     transform: scale(1.2); /* Make compass larger for better visibility */
 }
+
+#panorama-container {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    will-change: transform;
+    transform: translateZ(0);
+}
 </style>

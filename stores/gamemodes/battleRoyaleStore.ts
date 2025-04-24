@@ -201,6 +201,13 @@ export const useBattleRoyaleStore = defineStore("battleRoyale", () => {
         // Set Panorama to a location that needs to be guessed
         googleStore.updatePanoramaView(searchedLocationCoords.value);
 
+        // Reset panorama POV and zoom
+        googleStore.getPanorama.setPov({
+            heading: 270,
+            pitch: 0,
+        });
+        googleStore.getPanorama.setZoom(0);
+
         // Set GoogleMap to center and define zoom
         googleStore.getMap.setCenter({ lat: 0, lng: 0 });
         googleStore.getMap.setZoom(2);
