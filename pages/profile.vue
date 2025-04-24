@@ -10,9 +10,9 @@
                             <div class="w-20 h-20 md:w-24 md:h-24 rounded-full bg-white flex items-center justify-center shadow-lg mb-3 md:mb-4">
                                 <i class="pi pi-user !text-4xl md:!text-5xl text-blue-800"></i>
                             </div>
-                            <h2 class="text-xl font-bold text-white">{{ playerInfo.displayName || "Player" }}</h2>
+                            <h2 class="text-xl font-bold text-white">{{ authStore.playerInfo.displayName || "Player" }}</h2>
                             <div class="mt-2">
-                                <Tag v-if="playerInfo.guest" value="Guest Account" severity="warning" class="mr-2"></Tag>
+                                <Tag v-if="authStore.playerInfo.guest" value="Guest Account" severity="warning" class="mr-2"></Tag>
                                 <Tag v-else value="Registered Player" severity="info"></Tag>
                             </div>
                         </div>
@@ -21,18 +21,21 @@
                         <div class="p-4">
                             <div class="mb-4">
                                 <h3 class="text-sm font-semibold text-gray-500 mb-1">Username</h3>
-                                <p class="text-lg break-words">{{ playerInfo.username || "Guest User" }}</p>
+                                <p class="text-lg break-words">{{ authStore.playerInfo.username || "Guest User" }}</p>
                             </div>
                             <div class="mb-4">
                                 <h3 class="text-sm font-semibold text-gray-500 mb-1">Display Name</h3>
-                                <p class="text-lg break-words">{{ playerInfo.displayName || "Not Set" }}</p>
+                                <p class="text-lg break-words">{{ authStore.playerInfo.displayName || "Not Set" }}</p>
                             </div>
                             <div class="mb-4">
                                 <h3 class="text-sm font-semibold text-gray-500 mb-1">Account Type</h3>
-                                <p class="text-lg">{{ playerInfo.guest ? "Guest" : "Registered" }}</p>
+                                <p class="text-lg">{{ authStore.playerInfo.guest ? "Guest" : "Registered" }}</p>
                             </div>
 
-                            <div v-if="playerInfo.guest" class="mt-4 md:mt-6 p-3 md:p-4 bg-amber-50 dark:bg-gray-700 border-l-4 border-amber-400 dark:border-amber-600 rounded">
+                            <div
+                                v-if="authStore.playerInfo.guest"
+                                class="mt-4 md:mt-6 p-3 md:p-4 bg-amber-50 dark:bg-gray-700 border-l-4 border-amber-400 dark:border-amber-600 rounded"
+                            >
                                 <div class="flex">
                                     <i class="pi pi-info-circle text-amber-500 mr-2 text-lg"></i>
                                     <div>
@@ -46,7 +49,7 @@
                 </Card>
 
                 <!-- Update Profile Form -->
-                <Card class="col-span-1 md:col-span-2 shadow-lg" v-if="!playerInfo.guest">
+                <Card class="col-span-1 md:col-span-2 shadow-lg" v-if="!authStore.playerInfo.guest">
                     <template #header>
                         <div class="bg-gradient-to-r from-green-600 to-teal-700 p-3 md:p-4 rounded-t-lg">
                             <h2 class="text-lg md:text-xl font-bold text-white">Update Profile</h2>
@@ -187,7 +190,6 @@
 
 <script setup lang="ts">
 const router = useRouter();
-const playerInfo = usePlayerInfo();
 const authStore = useAuthStore();
 const toast = useToast();
 const isLoading = ref(false);
@@ -210,7 +212,7 @@ const confirmPasswordError = ref<string | null>(null);
  */
 const isFormValid = computed(() => {
     // First check if there's any change to submit
-    const hasDisplayNameChange = updateForm.displayName !== playerInfo.value.displayName;
+    const hasDisplayNameChange = updateForm.displayName !== authStore.playerInfo.displayName;
     const hasPasswordChange = !!updateForm.password;
 
     // If nothing has changed, form is not valid
@@ -300,7 +302,7 @@ function validateConfirmPassword() {
  */
 function resetForm() {
     // Reset form to current values
-    updateForm.displayName = playerInfo.value?.displayName || "";
+    updateForm.displayName = authStore.playerInfo.displayName || "";
     updateForm.password = "";
     updateForm.confirmPassword = "";
 
@@ -334,7 +336,7 @@ async function submitProfileUpdate() {
         isLoading.value = true;
 
         // Determine what to update
-        const displayName = updateForm.displayName !== playerInfo.value.displayName ? updateForm.displayName : null;
+        const displayName = updateForm.displayName !== authStore.playerInfo.displayName ? updateForm.displayName : null;
         const password = updateForm.password ? updateForm.password : null;
 
         // Submit update to the backend

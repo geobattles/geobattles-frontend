@@ -138,7 +138,7 @@ function handleNewResult(message: MsgNewResultData) {
     resultsStore.applySingleResult(data.user, data.playerRes);
 
     // Reset the pending state if this result is for the current user
-    const playerID = usePlayerInfo().value.ID;
+    const playerID = useAuthStore().playerInfo.ID;
     if (data.user === playerID) {
         const battleRoyaleStore = useBattleRoyaleStore();
         battleRoyaleStore.isGuessPending = false;

@@ -1,10 +1,17 @@
-// ====================== User data ======================
+// ====================== User data and Authentication ======================
 export type User = {
-    username: string;
-    displayName: string;
-    ID: string | undefined; // Only if in a lobby\
-    color: string;
-    guest: boolean | undefined;
+    username: string | null;
+    displayName: string | null;
+    ID: string | null;
+    guest: boolean;
+    color: string | null;
+};
+
+export type AuthResponse = {
+    AccessToken: string;
+    RefreshToken: string;
+    AccessExpiry: number;
+    RefreshExpiry: number;
 };
 
 // ====================== Lobby data ======================

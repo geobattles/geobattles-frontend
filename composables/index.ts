@@ -7,7 +7,7 @@ export { createNetworkUtils } from "./utils/networkUtils";
 
 // Services
 export { authService } from "./services/authService";
-export { lobbyService } from "./services/lobbyService";
+export { lobbyService, getPlayerColorByID, getPlayerNameFromID } from "./services/lobbyService";
 
 // Websocket services
 export { createHeartbeatService } from "./services/websocket/heartbeatService";

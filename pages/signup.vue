@@ -109,7 +109,6 @@ const errors = reactive({
 });
 
 // External services
-const playerInfo = usePlayerInfo();
 const authStore = useAuthStore();
 const router = useRouter();
 const toast = useToast();
@@ -193,10 +192,6 @@ async function onSubmit() {
     try {
         await authStore.register(username.value, password.value, displayName.value);
         console.info("Registration successful");
-
-        // Update the player info
-        playerInfo.value.username = username.value;
-        playerInfo.value.displayName = displayName.value;
 
         authStore.isLoginDialog = false; // Close the login dialog if it's open
 

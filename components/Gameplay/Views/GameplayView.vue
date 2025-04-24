@@ -71,10 +71,11 @@ const showMapButtonMobile = ref(false);
 const gameMode = useGameMode();
 const uiManager = useUIManagerStore();
 const googleStore = useGoogleStore();
+const authStore = useAuthStore();
 
 // Computed property for submit button message
 const submitButtonMessage = computed(() => {
-    const user = usePlayerInfo().value.ID || "";
+    const user = authStore.playerInfo.ID || "";
     // Return "out of lives" message if player has no lives left in BattleRoyale mode
     if ("getUserLives" in gameMode.modeLogic && gameMode.modeLogic.getUserLives(user) <= 0) {
         return "Out of lives";

@@ -1,11 +1,19 @@
 import type { User } from "@/types/appTypes";
-import { authService } from "@/composables/services/authService"; // Corrected import path
 
 export const useAuthStore = defineStore("auth", () => {
     const isAuthenticated = ref(false);
     const authError = ref<string | null>(null);
     const isLoginDialog = ref(false);
     const isRefreshingToken = ref(false);
+
+    // User information state
+    const playerInfo = ref<User>({
+        username: null,
+        displayName: null,
+        ID: null,
+        guest: false,
+        color: null,
+    });
 
     /**
      * Saves the access token to a cookie.
@@ -102,12 +110,13 @@ export const useAuthStore = defineStore("auth", () => {
         try {
             const tokenData = parseJwt(token);
             if (!tokenData) throw new Error("Invalid token data: Parsing returned null");
-
-            const playerInfo = usePlayerInfo();
-            playerInfo.value.username = tokenData.user_name || tokenData.username;
-            playerInfo.value.ID = tokenData.sub || tokenData.uid;
-            playerInfo.value.displayName = tokenData.display_name || tokenData.name;
+            console.log("Token data:", tokenData);
+            // Update playerInfo state with token data
+            playerInfo.value.username = tokenData.user_name || null;
+            playerInfo.value.ID = tokenData.sub || null;
+            playerInfo.value.displayName = tokenData.display_name || null;
             playerInfo.value.guest = tokenData.guest || false;
+
             isAuthenticated.value = true;
             authError.value = null;
         } catch (error) {
@@ -152,7 +161,14 @@ export const useAuthStore = defineStore("auth", () => {
 
         // Proceed with client-side logout
         clearTokens();
-        usePlayerInfo().value = {} as User;
+        // Reset playerInfo to initial null/default state
+        playerInfo.value = {
+            username: null,
+            displayName: null,
+            ID: null,
+            guest: false,
+            color: null,
+        };
         isAuthenticated.value = false;
         authError.value = null;
 
@@ -348,10 +364,17 @@ export const useAuthStore = defineStore("auth", () => {
         } else {
             console.debug("No valid tokens found or refresh token expired. User is logged out.");
             if (isAuthenticated.value || accessToken || refreshTokenVal) {
-                logout(); // Logout and clear tokens
+                logout();
             } else {
                 isAuthenticated.value = false;
-                usePlayerInfo().value = {} as User;
+                // Reset playerInfo to initial null/default state
+                playerInfo.value = {
+                    username: null,
+                    displayName: null,
+                    ID: null,
+                    guest: false,
+                    color: null,
+                };
                 authError.value = null;
             }
         }
@@ -362,6 +385,7 @@ export const useAuthStore = defineStore("auth", () => {
         authError, // Direct state ref
         isLoginDialog, // Direct state ref
         isRefreshingToken, // Expose the refreshing flag
+        playerInfo, // Expose playerInfo state
 
         // Core actions
         login,

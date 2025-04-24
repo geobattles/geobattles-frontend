@@ -19,18 +19,21 @@ export const useLobbyStore = defineStore("lobby", () => {
 
     const rejoinTimer = ref<number | null>(null); // Timer for rejoining a round will override the default timer
 
+    // External states
+    const authStore = useAuthStore();
+
     // ================== Lobby creation and joining ==================
     /**
      * Create a new lobby on the server, connect to it via WebSocket and redirect to the lobby page
      */
     const createLobby = async (): Promise<void> => {
-        const playerInfo = usePlayerInfo();
+        const playerInfo = authStore.playerInfo;
         const router = useRouter();
         const { getValidAccessToken } = useAuthStore();
         const socketStore = useWebSocketStore();
 
         const lobbyPostParams = {
-            name: `${playerInfo.value.displayName}'s Lobby`,
+            name: `${playerInfo.displayName}'s Lobby`,
             roundTime: 100,
         };
 
@@ -153,7 +156,7 @@ export const useLobbyStore = defineStore("lobby", () => {
      */
     const isPlayerAdmin = () => {
         if (!lobbySettings.value) return false;
-        return lobbySettings.value.admin === usePlayerInfo().value.ID;
+        return lobbySettings.value.admin === authStore.playerInfo.ID;
     };
 
     // ================== Lobby settings management ==================

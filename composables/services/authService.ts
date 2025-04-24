@@ -1,9 +1,4 @@
-interface AuthResponse {
-    AccessToken: string;
-    RefreshToken: string;
-    AccessExpiry: number;
-    RefreshExpiry: number;
-}
+import type { AuthResponse } from "~/types/appTypes";
 
 export const authService = {
     /**

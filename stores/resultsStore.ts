@@ -6,6 +6,9 @@ export const useResultsStore = defineStore("results", () => {
     const totalResults = ref<TotalResults>({});
     const gameMode = useGameMode();
 
+    // External states
+    const authStore = useAuthStore();
+
     const resetResults = () => {
         liveResults.value = {};
         totalResults.value = {};
@@ -29,7 +32,7 @@ export const useResultsStore = defineStore("results", () => {
     };
 
     const syncLiveResults = (liveResultsHashMap: LiveResultsHashMap) => {
-        const playerID = usePlayerInfo().value.ID;
+        const playerID = authStore.playerInfo.ID;
 
         // Sort results by distance based on the current game mode
         switch (gameMode.currentMode) {

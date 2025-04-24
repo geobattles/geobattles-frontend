@@ -11,7 +11,7 @@
             </thead>
             <tbody>
                 <!-- <TransitionGroup name="list" tag="tr"> -->
-                <tr v-for="(player_data, player_id) in results" :key="player_id" class="bg-white border-b">
+                <!-- <tr v-for="(player_data, player_id) in results" :key="player_id" class="bg-white border-b">
                     <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
                         {{ player_id }}
                     </th>
@@ -40,7 +40,7 @@
                         <div v-else>Waiting for first guess...</div>
                     </td>
                     <td class="px-6 py-4">{{ player_data.baseScr || 0 }}</td>
-                </tr>
+                </tr> -->
                 <!-- </TransitionGroup> -->
             </tbody>
         </table>
@@ -51,38 +51,34 @@
 import { GameState } from "~/types/appTypes";
 export default {
     setup() {
-        const results = useLiveResults();
-        const flag_map = useCountriesFlagMap();
-        const total_attempts = ref(new Map<string | number, number>());
-        const gameMode = useGameMode();
-
-        /**
-         * Process distance to display in results table
-         * @param distance Distance in meters
-         * @returns Distance in meters or km
-         */
-        const processDistance = (distance: number | undefined): string => {
-            if (!distance) return "--"; // This means no guess yet from player
-            const distanceInMeters = distance < 1000 ? distance : distance / 1000; // Convert to km unit if neccesary
-            return `${Math.round(distanceInMeters * 10) / 10} ${distance < 1000 ? "m" : "km"}`; // Return distance in corret units
-        };
-
-        /**
-         * Function creates total attempts constant variable for every player
-         * at the start of every round. This is used to display lives in results table.
-         */
-        const createTotalAttempts = () => {
-            // Create an array map of total lives for every player
-            for (const player_id in results.value) total_attempts.value.set(player_id, results.value[player_id].lives);
-        };
-
-        // Watch game flow to create total attempts
-        watch(
-            () => gameMode.modeLogic.currentState,
-            (new_val) => (new_val === GameState.PLAYING ? createTotalAttempts() : null)
-        );
-
-        return { results, total_attempts, flag_map, processDistance };
+        // const results = useLiveResults();
+        // const flag_map = useCountriesFlagMap();
+        // const total_attempts = ref(new Map<string | number, number>());
+        // const gameMode = useGameMode();
+        // /**
+        //  * Process distance to display in results table
+        //  * @param distance Distance in meters
+        //  * @returns Distance in meters or km
+        //  */
+        // const processDistance = (distance: number | undefined): string => {
+        //     if (!distance) return "--"; // This means no guess yet from player
+        //     const distanceInMeters = distance < 1000 ? distance : distance / 1000; // Convert to km unit if neccesary
+        //     return `${Math.round(distanceInMeters * 10) / 10} ${distance < 1000 ? "m" : "km"}`; // Return distance in corret units
+        // };
+        // /**
+        //  * Function creates total attempts constant variable for every player
+        //  * at the start of every round. This is used to display lives in results table.
+        //  */
+        // const createTotalAttempts = () => {
+        //     // Create an array map of total lives for every player
+        //     for (const player_id in results.value) total_attempts.value.set(player_id, results.value[player_id].lives);
+        // };
+        // // Watch game flow to create total attempts
+        // watch(
+        //     () => gameMode.modeLogic.currentState,
+        //     (new_val) => (new_val === GameState.PLAYING ? createTotalAttempts() : null)
+        // );
+        // return { results, total_attempts, flag_map, processDistance };
     },
 };
 </script>

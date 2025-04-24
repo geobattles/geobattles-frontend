@@ -188,7 +188,7 @@ const navigateToCreateLobby = () => {
 
 const isLobbyJoinableForCurrentuser = (lobbyName: string) => {
     // Get player ID
-    const playerID = usePlayerInfo().value.ID;
+    const playerID = authStore.playerInfo.ID;
 
     // Lobby
     const lobby = lobbyStore.lobbyList[lobbyName];

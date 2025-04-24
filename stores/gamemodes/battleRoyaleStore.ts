@@ -5,6 +5,7 @@ export const useBattleRoyaleStore = defineStore("battleRoyale", () => {
     const router = useRouter();
     const googleStore = useGoogleStore();
     const resultsStore = useResultsStore();
+    const authStore = useAuthStore();
 
     // GamePlay State
     const currentState = ref(GameState.WAITING);
@@ -85,7 +86,7 @@ export const useBattleRoyaleStore = defineStore("battleRoyale", () => {
         currentMapPin.value = coordinates;
 
         const usedPins = mapMarkers.value.length; // Number of guesses already made in current round
-        const playerID = usePlayerInfo().value.ID;
+        const playerID = authStore.playerInfo.ID;
         if (!playerID) throw new Error("Player ID is not defined");
 
         if (resultsStore.liveResults[playerID].lives === 0) return console.warn("All lives are used!!");
@@ -134,7 +135,7 @@ export const useBattleRoyaleStore = defineStore("battleRoyale", () => {
         if (isGuessPending.value) return true;
 
         const liveResults = resultsStore.liveResults;
-        const playerID = usePlayerInfo().value.ID;
+        const playerID = authStore.playerInfo.ID;
 
         // Disable if there are no markers on the map
         if (mapMarkers.value.length === 0) return true;

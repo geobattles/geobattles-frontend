@@ -22,7 +22,7 @@
                     </div>
                 </div>
                 <div v-else class="flex gap-2 items-center">
-                    <Tag icon="pi pi-user" severity="info" :value="playerInfo.displayName" />
+                    <Tag icon="pi pi-user" severity="info" :value="authStore.playerInfo.displayName" />
                     <Button
                         v-if="showLogoutButton"
                         class="!bg-gradient-to-r !from-blue-600 !to-indigo-800 !border-none !text-white"
@@ -49,7 +49,6 @@ const userMenu = ref();
 
 // External services
 const lobbyStore = useLobbyStore();
-const playerInfo = usePlayerInfo();
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
