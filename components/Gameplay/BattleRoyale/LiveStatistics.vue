@@ -25,8 +25,8 @@
                     <div class="table__row-element">
                         <!-- Display number of attempts and a bullseye icon -->
                         <div class="flex items-center justify-center gap-1 m-auto">
-                            <span class="font-semibold text-sm">{{ value.lives }}</span>
-                            <i class="pi pi-map-marker text-sm lg:text-xl text-green-400 dark:text-green-400 !fill-[#243c5a]"></i>
+                            <span class="font-semibold text-xs lg:text-xl">{{ value.lives }}</span>
+                            <i class="pi pi-map-marker text-xs lg:text-xl text-green-400 dark:text-green-400 !fill-[#243c5a]"></i>
                         </div>
                     </div>
 
@@ -195,7 +195,8 @@ export default {
     }
 
     .distance .value {
-        font-size: 7px;
+        font-size: 8px;
+        font-weight: 500;
     }
 
     .score {
@@ -203,7 +204,7 @@ export default {
     }
 
     .score .value {
-        font-size: 8px;
+        font-size: 10px;
     }
 
     .table__header {

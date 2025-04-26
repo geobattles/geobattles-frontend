@@ -21,7 +21,7 @@
             <button
                 ref="submitButton"
                 severity="primary"
-                class="submit-button !bg-gradient-to-r !from-green-600 !to-teal-700"
+                class="submit-button !bg-gradient-to-r !from-green-600 !to-teal-700 !text-sm lg:!text-xl"
                 v-if="gameMode.currentMode === 'BattleRoyale'"
                 @click="gameMode.submitGuess()"
                 :disabled="gameMode.modeLogic.isSubmitDisabled"
@@ -98,6 +98,8 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     position: relative; /* Enable absolute positioning for children */
     height: 100dvh; /* Fullscreen height */
     width: 100dvw; /* Fullscreen width */
+
+    overflow: hidden; /* Hide overflow */
 }
 
 /* Panorama (Fullscreen) */
@@ -167,7 +169,6 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     height: 300px;
     background: rgba(255, 255, 255, 0.8);
     border: 1px solid white;
-    border-radius: 5px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
     transition:
         width 0.3s,
@@ -203,7 +204,6 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     width: 500px;
     height: 400px;
 
-    /* padding: 30px 30px 0px 0px; */
     transition:
         height 0.3s ease-out,
         width 0.3s ease-out;
@@ -256,15 +256,16 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
 
 .mobile-map-button {
     position: absolute;
-    bottom: 70px;
-    left: 10px;
-    z-index: 2;
+    bottom: 60px;
+    left: 5px;
+    z-index: 3;
 
     background-color: var(--surface-background);
     fill: var(--p-primary-400);
 
     padding: 10px 20px;
     border-radius: 5px;
+    font-weight: bold;
 }
 
 /* Responsive Adjustments */
@@ -291,11 +292,18 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
         width: 0px;
     }
 
+    .gameplay-map-wrapper {
+        bottom: 0px;
+        left: 0px;
+        padding: 15px 20px 5px 5px; /* Padding here is used to prevent accidentall click on the map */
+    }
+
     .submit-button {
+        padding: 10px 10px;
+
+        max-width: 150px;
         width: 150px;
-        height: 50px;
-        font-size: 14px;
-        padding: 8px 16px;
+        height: 45px;
     }
 }
 </style>

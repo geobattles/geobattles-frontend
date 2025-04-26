@@ -156,8 +156,14 @@ const handleClickLeaveLobby = () => emit("leaveLobby");
     right: 0;
     height: 100%;
     width: 100%;
-    background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
+    background: linear-gradient(to left, rgba(200, 200, 200, 0.8), transparent);
     animation: slide-left 6s linear forwards;
+}
+
+@media (prefers-color-scheme: dark) {
+    .button-loading-animation::before {
+        background: linear-gradient(to left, rgba(255, 255, 255, 0.8), transparent);
+    }
 }
 
 @keyframes slide-left {
