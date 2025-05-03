@@ -42,7 +42,7 @@ const setChartData = () => {
     const scores = distances.map((d) => scoreDistance(d, props.scoreFactor)); // Use the scoreFactor prop
 
     // Filter distances and scores to include only those with scores greater than 5
-    const filteredData = distances.map((d, i) => ({ distance: d, score: scores[i] })).filter((data) => data.score > 50);
+    const filteredData = distances.map((d, i) => ({ distance: d, score: scores[i] })).filter((data) => data.score > 0);
 
     return {
         labels: filteredData.map((data) => data.distance / 1000), // Convert distances to kilometers
@@ -56,13 +56,6 @@ const setChartData = () => {
                 tension: 0.4,
                 pointRadius: 0, // Remove circles or dots around the points
             },
-            // {
-            //     label: "Min Score Showing 50",
-            //     data: Array(filteredData.length).fill(50),
-            //     borderColor: documentStyle.getPropertyValue("--p-red-600"),
-            //     borderWidth: 1,
-            //     pointRadius: 0,
-            // },
         ],
     };
 };
@@ -110,7 +103,7 @@ const setChartOptions = () => {
                 },
                 title: {
                     display: true,
-                    text: "Score",
+                    text: "Score > 0",
                 },
             },
         },

@@ -10,7 +10,7 @@
                 <input ref="input_4" class="sign-input" @keyup="handleKeyUpEvent($event)" @keydown="handleKeyDownEvent($event)" type="text" />
             </div>
             <div class="flex items-center gap-5">
-                <div class="text-white">Insert or paste lobby code to join the game!</div>
+                <div>Insert or paste lobby code to join the game!</div>
                 <Button @click="handleJoinLobbyClick" icon="pi pi-play" label="Join" size="small" outlined />
             </div>
         </div>
@@ -43,7 +43,7 @@ const { checkIfLobby, joinLobby } = useLobbyStore();
 
 onMounted(() => {
     input_1.value?.focus(); // Focus first input
-    inputs_array = [input_1, input_2, input_3, input_4]; // Create array of inputs for logic\
+    inputs_array = [input_1, input_2, input_3, input_4]; // Create array of inputs for logic
 
     handePasteEvent(); // Activate paste event
 

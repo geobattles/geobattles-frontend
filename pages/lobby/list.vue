@@ -55,7 +55,7 @@
                     <template #body="{ data }">
                         <div class="flex items-center">
                             <i class="pi pi-users mr-2 text-blue-500"></i>
-                            <span>{{ data.numPlayers }}/{{ data.conf.maxPlayers }}</span>
+                            <span>{{ getConnectedPlayersCount(data.ID) }}/{{ data.conf.maxPlayers }}</span>
                         </div>
                     </template>
                 </Column>
@@ -85,7 +85,6 @@
 </template>
 
 <script setup lang="ts">
-const router = useRouter();
 const isTableLoading = ref(false);
 const isJoiningLobby = ref<string | null>(null);
 const toast = useToast();
@@ -94,6 +93,7 @@ const toast = useToast();
 const { fetchLobbyList, checkIfLobby, joinLobby } = useLobbyStore();
 const lobbyStore = useLobbyStore();
 const authStore = useAuthStore();
+let refreshIntervalId: ReturnType<typeof setInterval> | null = null; // Variable to hold the interval ID
 
 /**
  * Handles the join lobby button click
@@ -149,19 +149,28 @@ const handleJoinLobbyClick = async (lobby_id: string) => {
  * Refresh the lobby list
  */
 const handleRefreshClick = async () => {
-    isTableLoading.value = true;
+    // Only set loading state if not triggered by the interval
+    if (!refreshIntervalId) {
+        isTableLoading.value = true;
+    }
     try {
         await fetchLobbyList();
     } catch (error) {
-        toast.add({
-            severity: "error",
-            summary: "Error Refreshing",
-            detail: "Could not fetch lobby list.",
-            life: 3000,
-        });
+        // Avoid showing toast for background refreshes unless it's a critical error
+        if (!refreshIntervalId) {
+            toast.add({
+                severity: "error",
+                summary: "Error Refreshing",
+                detail: "Could not fetch lobby list.",
+                life: 3000,
+            });
+        }
         console.error("Error fetching lobby list:", error);
     } finally {
-        isTableLoading.value = false;
+        // Only set loading state if not triggered by the interval
+        if (!refreshIntervalId || !isTableLoading.value) {
+            isTableLoading.value = false;
+        }
     }
 };
 
@@ -204,11 +213,25 @@ const isLobbyJoinableForCurrentuser = (lobbyName: string) => {
     }
 };
 
-// Fetch lobby list on page load
+const getConnectedPlayersCount = (lobbyID: string): number => {
+    // Lobby
+    const lobby = lobbyStore.lobbyList[lobbyID];
+
+    if (!lobby || !lobby.playerList) {
+        return 0; // Return 0 if lobby or playerList is not found
+    }
+
+    // Count connected players
+    return Object.values(lobby.playerList).filter((player) => player.connected).length;
+};
+
+// Fetch lobby list on page load and set up refresh interval
 onMounted(async () => {
     isTableLoading.value = true;
     try {
         await fetchLobbyList();
+        // Set up interval to refresh every 5 seconds (5000 ms)
+        refreshIntervalId = setInterval(handleRefreshClick, 5000);
     } catch (error) {
         toast.add({
             severity: "error",
@@ -219,6 +242,14 @@ onMounted(async () => {
         console.error("Error fetching lobby list on mount:", error);
     } finally {
         isTableLoading.value = false;
+    }
+});
+
+// Clear the interval when the component is unmounted
+onUnmounted(() => {
+    if (refreshIntervalId) {
+        clearInterval(refreshIntervalId);
+        refreshIntervalId = null; // Clear the reference
     }
 });
 </script>
