@@ -1,9 +1,9 @@
 <template>
-    <div class="min-h-screen bg-white dark:bg-[#181c1b]">
+    <div class="h-screen flex flex-col bg-white dark:bg-[#181c1b] overflow-hidden">
         <Header />
         <Toast />
-        <div class="page-container relative z-10 flex flex-col items-center justify-center gap-8 px-4">
-            <div class="text-center animate-fade-in mt-8">
+        <div class="page-container relative z-10 flex-1 h-0 flex flex-col items-center justify-center gap-4 px-4">
+            <div class="text-center animate-fade-in mt-4">
                 <h2 class="text-2xl md:text-3xl font-light mb-2 text-gray-600 dark:text-white">Welcome to</h2>
                 <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-[#90B77D] to-[#42855B] bg-clip-text text-transparent 
                     dark:from-[#B6E388] dark:to-[#5F8D4E] dark:bg-gradient-to-r dark:bg-clip-text dark:text-transparent
@@ -13,7 +13,7 @@
                 </h1>
             </div>
 
-            <div class="w-full max-w-md animate-fade-in p-8 flex flex-col items-center bg-white dark:bg-[#232a27] rounded-xl shadow-lg dark:shadow-xl">
+            <div class="w-full max-w-md animate-fade-in p-6 flex flex-col items-center bg-white dark:bg-[#232a27] rounded-xl shadow-lg dark:shadow-xl">
                 <Button
                     class="play-button w-56 md:w-80 !bg-gradient-to-r !from-[#90B77D] !to-[#42855B] hover:!from-[#86A877] hover:!to-[#3D7152] !border-none !text-white !shadow-lg dark:!from-[#B6E388] dark:!to-[#5F8D4E] dark:!text-[#181c1b] dark:!shadow-xl transform transition-all duration-300 hover:scale-105"
                     @click="handlePlayNowClick"
@@ -24,7 +24,7 @@
                     size="large"
                     raised
                 />
-                <div class="text-center mt-6">
+                <div class="text-center mt-4">
                     <span class="text-gray-600 dark:text-white">or join a lobby by <a class="text-[#42855B] hover:text-[#90B77D] dark:text-[#B6E388] dark:hover:text-[#5F8D4E] underline underline-offset-4 cursor-pointer transition-colors" @click="handleJoinByCodeClick()">game code!</a></span>
                 </div>
             </div>
@@ -75,7 +75,7 @@ const handleJoinByCodeClick = () => {
 .page-container {
     width: 100%;
     display: flex;
-    margin-top: 100px;
+    align-items: center;
     justify-content: center;
 }
 
