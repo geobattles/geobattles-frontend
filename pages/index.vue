@@ -3,19 +3,13 @@
         <Header />
         <Toast />
         <div class="page-container relative z-10 flex-1 h-0 flex flex-col items-center justify-center gap-4 px-4">
-            <div class="text-center animate-fade-in mt-4">
-                <h2 class="text-2xl md:text-3xl font-light mb-2 text-gray-600 dark:text-white">Welcome to</h2>
-                <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-[#90B77D] to-[#42855B] bg-clip-text text-transparent 
-                    dark:from-[#B6E388] dark:to-[#5F8D4E] dark:bg-gradient-to-r dark:bg-clip-text dark:text-transparent
-                    transform hover:scale-105 transition-transform duration-300
-                    drop-shadow-sm dark:drop-shadow-lg">
-                    GeoBattles
-                </h1>
+            <div class="text-center animate-fade-in mt-4 hero">
+                <h2 class="hero-sub">Welcome to</h2>
+                <h1 class="hero-title">GeoBattles</h1>
             </div>
-
             <div class="w-full max-w-md animate-fade-in p-6 flex flex-col items-center bg-white dark:bg-[#232a27] rounded-xl shadow-lg dark:shadow-xl">
                 <Button
-                    class="play-button w-56 md:w-80 !bg-gradient-to-r !from-[#90B77D] !to-[#42855B] hover:!from-[#86A877] hover:!to-[#3D7152] !border-none !text-white !shadow-lg dark:!from-[#B6E388] dark:!to-[#5F8D4E] dark:!text-[#181c1b] dark:!shadow-xl transform transition-all duration-300 hover:scale-105"
+                    class="play-btn"
                     @click="handlePlayNowClick"
                     label="PLAY NOW"
                     icon="pi pi-map-marker"
@@ -90,5 +84,57 @@ const handleJoinByCodeClick = () => {
     text-decoration: underline;
     cursor: pointer;
     color: var(--p-primary-400);
+}
+
+.hero {
+    margin-top: 0.5rem;
+}
+
+.hero-sub {
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+    color: #4b5563; 
+    font-size: 1.25rem;
+}
+
+.hero-title {
+    font-weight: 700;
+    background: linear-gradient(90deg, #90B77D 0%, #42855B 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: 2.5rem;
+    transition: transform 0.3s ease;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.02);
+}
+
+.hero-title:hover {
+    transform: scale(1.03);
+}
+
+@media (prefers-color-scheme: dark) {
+    .hero-sub { color: #fff; }
+    .hero-title { background: linear-gradient(90deg, #B6E388 0%, #5F8D4E 100%); }
+}
+
+.play-btn {
+    width: 14rem;
+    letter-spacing: 4px;
+    padding: 15px 10px;
+    border: none;
+    color: #fff;
+    background: linear-gradient(90deg, #90B77D 0%, #42855B 100%);
+    box-shadow: 0 8px 20px rgba(66,133,91,0.15);
+    transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.play-btn:hover { transform: scale(1.03); }
+
+@media (min-width: 768px) {
+    .play-btn { width: 20rem; }
+}
+
+@media (prefers-color-scheme: dark) {
+    .play-btn { background: linear-gradient(90deg, #B6E388 0%, #5F8D4E 100%); color: #181c1b; box-shadow: 0 10px 24px rgba(0,0,0,0.25); }
 }
 </style>
