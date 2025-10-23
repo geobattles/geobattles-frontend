@@ -11,18 +11,8 @@
                     GeoBattles
                 </h1>
             </div>
-
             <div class="w-full max-w-md animate-fade-in p-6 flex flex-col items-center bg-white dark:bg-[#232a27] rounded-xl shadow-lg dark:shadow-xl">
-                <Button
-                    class="play-button w-56 md:w-80 !bg-gradient-to-r !from-[#90B77D] !to-[#42855B] hover:!from-[#86A877] hover:!to-[#3D7152] !border-none !text-white !shadow-lg dark:!from-[#B6E388] dark:!to-[#5F8D4E] dark:!text-[#181c1b] dark:!shadow-xl transform transition-all duration-300 hover:scale-105"
-                    @click="handlePlayNowClick"
-                    label="PLAY NOW"
-                    icon="pi pi-map-marker"
-                    :loading="isJoiningLobby"
-                    severity="primary"
-                    size="large"
-                    raised
-                />
+                <Button class="play-btn" @click="handlePlayNowClick" label="PLAY NOW" icon="pi pi-map-marker" :loading="isJoiningLobby" severity="primary" size="large" raised />
                 <div class="text-center mt-4">
                     <span class="text-gray-600 dark:text-white"
                         >or join a lobby by
@@ -93,5 +83,71 @@ const handleJoinByCodeClick = () => {
     text-decoration: underline;
     cursor: pointer;
     color: var(--p-primary-400);
+}
+
+.hero {
+    margin-top: 0.5rem;
+}
+
+.hero-sub {
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+    font-size: 1.25rem;
+}
+
+.hero-title {
+    font-weight: 700;
+    background: linear-gradient(90deg, #90b77d 0%, #42855b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: 2.5rem;
+    transition: transform 0.3s ease;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+}
+
+.hero-title:hover {
+    transform: scale(1.03);
+}
+
+@media (prefers-color-scheme: dark) {
+    .hero-sub {
+        color: #fff;
+    }
+    .hero-title {
+        background: linear-gradient(90deg, #b6e388 0%, #5f8d4e 100%);
+    }
+}
+
+.play-btn {
+    width: 14rem;
+    letter-spacing: 4px;
+    padding: 15px 10px;
+    border: none;
+    color: #fff;
+    background: linear-gradient(90deg, #90b77d 0%, #42855b 100%);
+    box-shadow: 0 8px 20px rgba(66, 133, 91, 0.15);
+    transition:
+        transform 0.25s ease,
+        background 0.25s ease;
+}
+
+.play-btn:hover {
+    transform: scale(1.03);
+}
+
+@media (min-width: 768px) {
+    .play-btn {
+        width: 20rem;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .play-btn {
+        background: linear-gradient(90deg, #b6e388 0%, #5f8d4e 100%);
+        color: #181c1b;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+    }
 }
 </style>
