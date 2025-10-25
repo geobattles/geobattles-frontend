@@ -16,7 +16,7 @@
                             label="Login"
                             severity="primary"
                             size="small"
-                            class="!bg-gradient-to-r !from-blue-600 !to-indigo-800 !border-none !text-white"
+                            class="play-button w-30 md:w-40 !bg-gradient-to-r !from-[#90B77D] !to-[#42855B] hover:!from-[#86A877] hover:!to-[#3D7152] !border-none !text-white !shadow-lg dark:!from-[#B6E388] dark:!to-[#5F8D4E] dark:!text-[#181c1b] dark:!shadow-xl transform transition-all duration-300 hover:scale-105"
                             @click="handleLoginClick"
                         />
                     </div>
