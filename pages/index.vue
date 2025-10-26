@@ -1,13 +1,13 @@
 <template>
-    <div class="h-screen flex flex-col bg-white dark:bg-[#181c1b] overflow-hidden">
+    <div class="app-root">
         <Header />
         <Toast />
-        <div class="page-container relative z-10 flex-1 h-0 flex flex-col items-center justify-center gap-4 px-4">
-            <div class="text-center animate-fade-in mt-4 hero">
+        <div class="page-container">
+            <div class="hero">
                 <h2 class="hero-sub">Welcome to</h2>
                 <h1 class="hero-title">GeoBattles</h1>
             </div>
-            <div class="w-full max-w-md animate-fade-in p-6 flex flex-col items-center bg-white dark:bg-[#232a27] rounded-xl shadow-lg dark:shadow-xl">
+            <div class="play-card">
                 <Button
                     class="play-btn"
                     @click="handlePlayNowClick"
@@ -18,8 +18,8 @@
                     size="large"
                     raised
                 />
-                <div class="text-center mt-4">
-                    <span class="text-gray-600 dark:text-white">or join a lobby by <a class="text-[#42855B] hover:text-[#90B77D] dark:text-[#B6E388] dark:hover:text-[#5F8D4E] underline underline-offset-4 cursor-pointer transition-colors" @click="handleJoinByCodeClick()">game code!</a></span>
+                <div class="help-text">
+                    <span>or join a lobby by <a class="code-link" @click="handleJoinByCodeClick()">game code!</a></span>
                 </div>
             </div>
                 <AnimatedEarth />
@@ -73,6 +73,26 @@ const handleJoinByCodeClick = () => {
     justify-content: center;
 }
 
+.app-root {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.page-container {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 10;
+}
+
 
 .play-button {
     letter-spacing: 4px;
@@ -87,7 +107,8 @@ const handleJoinByCodeClick = () => {
 }
 
 .hero {
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
+    text-align: center;
 }
 
 .hero-sub {
@@ -126,6 +147,37 @@ const handleJoinByCodeClick = () => {
     background: linear-gradient(90deg, #90B77D 0%, #42855B 100%);
     box-shadow: 0 8px 20px rgba(66,133,91,0.15);
     transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.play-card {
+    width: 100%;
+    max-width: 28rem;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #ffffff;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+}
+
+.help-text {
+    margin-top: 0.5rem;
+    text-align: center;
+    color: #4b5563;
+}
+
+.code-link {
+    color: #42855B;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+@media (prefers-color-scheme: dark) {
+    .app-root { background: #181c1b; }
+    .play-card { background: #232a27; box-shadow: 0 12px 30px rgba(0,0,0,0.5); }
+    .help-text { color: #ffffff; }
+    .code-link { color: #B6E388; }
 }
 
 .play-btn:hover { transform: scale(1.03); }
