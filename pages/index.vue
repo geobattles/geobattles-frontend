@@ -24,6 +24,7 @@
                 </div>
                 </div>
             </div>
+            <SvgsAnimatedEarth />
         </div>
     </div>
 </template>
