@@ -3,6 +3,7 @@
         <Header />
         <Toast />
         <div class="page-container">
+            <div class="opaque-container">
             <div class="hero">
                 <h2 class="hero-sub">Welcome to</h2>
                 <h1 class="hero-title">GeoBattles</h1>
@@ -21,15 +22,13 @@
                 <div class="help-text">
                     <span>or join a lobby by <a class="code-link" @click="handleJoinByCodeClick()">game code!</a></span>
                 </div>
+                </div>
             </div>
-                <AnimatedEarth />
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import AnimatedEarth from '~/components/Svgs/AnimatedEarth.vue';
-
 const isJoiningLobby = ref(false); // Handle loader
 
 // External services
@@ -66,22 +65,21 @@ const handleJoinByCodeClick = () => {
 
 <style scoped>
 
-.page-container {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 .app-root {
     height: 100vh;
     display: flex;
     flex-direction: column;
     background: #ffffff;
+    position: relative;
+    background-image: url('/images/wallpaper.jpg');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
     overflow: hidden;
 }
 
 .page-container {
+    width: 100%;
     flex: 1 1 auto;
     display: flex;
     flex-direction: column;
@@ -91,6 +89,20 @@ const handleJoinByCodeClick = () => {
     padding: 0 1rem;
     position: relative;
     z-index: 10;
+}
+
+.app-root > * {
+    position: relative;
+    z-index: 12;
+}
+
+.app-root::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.28);
+    z-index: 2;
+    pointer-events: none;
 }
 
 
@@ -136,6 +148,7 @@ const handleJoinByCodeClick = () => {
 @media (prefers-color-scheme: dark) {
     .hero-sub { color: #fff; }
     .hero-title { background: linear-gradient(90deg, #B6E388 0%, #5F8D4E 100%); }
+    .hero { background: rgba(0,0,0,0.45); }
 }
 
 .play-btn {
@@ -156,9 +169,7 @@ const handleJoinByCodeClick = () => {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: #ffffff;
     border-radius: 0.75rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
 }
 
 .help-text {
@@ -173,6 +184,30 @@ const handleJoinByCodeClick = () => {
     cursor: pointer;
 }
 
+.opaque-container {
+    width: min(86vw, 460px);
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255,255,255,0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.10);
+    z-index: 6;
+}
+
+@media (min-width: 1024px) {
+    .opaque-container { align-items: center; }
+}
+
+@media (prefers-color-scheme: dark) {
+    .opaque-container { background: rgba(0,0,0,0.48); box-shadow: 0 12px 36px rgba(0,0,0,0.6); }
+}
+
 @media (prefers-color-scheme: dark) {
     .app-root { background: #181c1b; }
     .play-card { background: #232a27; box-shadow: 0 12px 30px rgba(0,0,0,0.5); }
@@ -184,6 +219,12 @@ const handleJoinByCodeClick = () => {
 
 @media (min-width: 768px) {
     .play-btn { width: 20rem; }
+}
+
+@media (min-width: 1024px) {
+    .page-container { align-items: flex-start; justify-content: center; padding-left: clamp(1rem, 8vw, 6rem); }
+    .hero { display: block; text-align: center; }
+    .play-card { align-items: center; }
 }
 
 @media (prefers-color-scheme: dark) {
