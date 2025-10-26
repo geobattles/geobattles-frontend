@@ -1,5 +1,5 @@
 <template>
-    <div class="h-screen flex flex-col bg-white dark:bg-[#181c1b] overflow-hidden">
+    <div class="app-root">
         <Header />
         <Toast />
         <div class="page-container relative z-10 flex-1 h-0 flex flex-col items-center justify-center gap-4 px-4">
@@ -86,7 +86,8 @@ const handleJoinByCodeClick = () => {
 }
 
 .hero {
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
+    text-align: center;
 }
 
 .hero-sub {
