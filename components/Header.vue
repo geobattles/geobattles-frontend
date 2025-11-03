@@ -16,7 +16,7 @@
                             label="Login"
                             severity="primary"
                             size="small"
-                            class="play-button w-30 md:w-40 !bg-gradient-to-r !from-[#90B77D] !to-[#42855B] hover:!from-[#86A877] hover:!to-[#3D7152] !border-none !text-white !shadow-lg dark:!from-[#B6E388] dark:!to-[#5F8D4E] dark:!text-[#181c1b] dark:!shadow-xl transform transition-all duration-300 hover:scale-105"
+                            class="header-play-btn"
                             @click="handleLoginClick"
                         />
                     </div>
@@ -135,5 +135,36 @@ onMounted(async () => {
     color: var(--p-primary-color);
     background-color: var(--p-menubar-item-focus-background);
     border-radius: 4px;
+}
+
+.header-play-btn {
+    width: 8rem;
+    letter-spacing: 3px;
+    padding: 8px 10px;
+    border: none;
+    color: #fff;
+    background: linear-gradient(90deg, #90B77D 0%, #42855B 100%);
+    box-shadow: 0 6px 14px rgba(66,133,91,0.12);
+    transition: transform 0.2s ease, background 0.2s ease;
+    border-radius: 6px;
+    font-size: 0.875rem;
+}
+
+.header-play-btn:hover {
+    transform: scale(1.03);
+}
+
+@media (min-width: 768px) {
+    .header-play-btn {
+        width: 10rem;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .header-play-btn {
+        background: linear-gradient(90deg, #B6E388 0%, #5F8D4E 100%);
+        color: #181c1b;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+    }
 }
 </style>

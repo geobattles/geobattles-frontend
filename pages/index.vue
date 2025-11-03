@@ -1,37 +1,27 @@
 <template>
-    <div class="h-screen flex flex-col bg-white dark:bg-[#181c1b] overflow-hidden">
+    <div class="app-root">
         <Header />
         <Toast />
-        <div class="page-container relative z-10 flex-1 h-0 flex flex-col items-center justify-center gap-4 px-4">
-            <div class="text-center animate-fade-in mt-4">
-                <h2 class="text-2xl md:text-3xl font-light mb-2 text-gray-600 dark:text-white">Welcome to</h2>
-                <h1
-                    class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-[#90B77D] to-[#42855B] bg-clip-text text-transparent dark:from-[#B6E388] dark:to-[#5F8D4E] dark:bg-gradient-to-r dark:bg-clip-text dark:text-transparent transform hover:scale-105 transition-transform duration-300 drop-shadow-sm dark:drop-shadow-lg"
-                >
-                    GeoBattles
-                </h1>
-            </div>
-
-            <div class="w-full max-w-md animate-fade-in p-6 flex flex-col items-center bg-white dark:bg-[#232a27] rounded-xl shadow-lg dark:shadow-xl">
-                <Button
-                    class="play-button w-56 md:w-80 !bg-gradient-to-r !from-[#90B77D] !to-[#42855B] hover:!from-[#86A877] hover:!to-[#3D7152] !border-none !text-white !shadow-lg dark:!from-[#B6E388] dark:!to-[#5F8D4E] dark:!text-[#181c1b] dark:!shadow-xl transform transition-all duration-300 hover:scale-105"
-                    @click="handlePlayNowClick"
-                    label="PLAY NOW"
-                    icon="pi pi-map-marker"
-                    :loading="isJoiningLobby"
-                    severity="primary"
-                    size="large"
-                    raised
-                />
-                <div class="text-center mt-4">
-                    <span class="text-gray-600 dark:text-white"
-                        >or join a lobby by
-                        <a
-                            class="text-[#42855B] hover:text-[#90B77D] dark:text-[#B6E388] dark:hover:text-[#5F8D4E] underline underline-offset-4 cursor-pointer transition-colors"
-                            @click="handleJoinByCodeClick()"
-                            >game code!</a
-                        ></span
-                    >
+        <div class="page-container">
+            <div class="opaque-container">
+                <div class="hero">
+                    <h2 class="hero-sub">Welcome to</h2>
+                    <h1 class="hero-title">GeoBattles</h1>
+                </div>
+                <div class="play-card">
+                    <Button
+                        class="play-btn"
+                        @click="handlePlayNowClick"
+                        label="PLAY NOW"
+                        icon="pi pi-map-marker"
+                        :loading="isJoiningLobby"
+                        severity="primary"
+                        size="large"
+                        raised
+                    />
+                    <div class="help-text">
+                        <span>or join a lobby by <a class="code-link" @click="handleJoinByCodeClick()">game code!</a></span>
+                    </div>
                 </div>
             </div>
             <SvgsAnimatedEarth />
@@ -75,11 +65,49 @@ const handleJoinByCodeClick = () => {
 </script>
 
 <style scoped>
+.app-root {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background-image: url("/images/wallpaper.jpg");
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+}
+
 .page-container {
     width: 100%;
+    flex: 1 1 auto;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.75rem;
+    padding: 0 1rem;
+    position: relative;
+    z-index: 10;
+}
+
+.app-root > * {
+    position: relative;
+    z-index: 12;
+}
+
+.app-root::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.28);
+    z-index: 2;
+    pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+    .app-root::before {
+        background: rgba(0, 0, 0, 0.8);
+    }
 }
 
 .play-button {
@@ -91,5 +119,149 @@ const handleJoinByCodeClick = () => {
     text-decoration: underline;
     cursor: pointer;
     color: var(--p-primary-400);
+}
+
+.hero {
+    margin-top: 0.25rem;
+    text-align: center;
+}
+
+.hero-sub {
+    font-weight: 300;
+    margin-bottom: 0.5rem;
+    color: #4b5563;
+    font-size: 1.25rem;
+}
+
+.hero-title {
+    font-weight: 700;
+    background: linear-gradient(90deg, #90b77d 0%, #42855b 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-size: 2.5rem;
+    transition: transform 0.3s ease;
+}
+
+.hero-title:hover {
+    transform: scale(1.03);
+}
+
+@media (prefers-color-scheme: dark) {
+    .hero-sub {
+        color: #ffffff;
+    }
+    .hero-title {
+        background: linear-gradient(90deg, #b6e388 0%, #5f8d4e 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+    }
+}
+
+.play-btn {
+    width: 14rem;
+    letter-spacing: 4px;
+    padding: 15px 10px;
+    border: none;
+    color: #fff;
+    background: linear-gradient(90deg, #90b77d 0%, #42855b 100%);
+    box-shadow: 0 8px 20px rgba(66, 133, 91, 0.15);
+    transition:
+        transform 0.25s ease,
+        background 0.25s ease;
+}
+
+.play-card {
+    width: 100%;
+    max-width: 28rem;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 0.75rem;
+}
+
+.help-text {
+    margin-top: 0.5rem;
+    text-align: center;
+    color: #4b5563;
+}
+
+.code-link {
+    color: #42855b;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.opaque-container {
+    width: min(86vw, 460px);
+    max-width: 460px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+    z-index: 6;
+}
+
+@media (min-width: 1024px) {
+    .opaque-container {
+        align-items: center;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .opaque-container {
+        background: rgba(0, 0, 0, 0.48);
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .play-card {
+        background: #232a27;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+    }
+    .help-text {
+        color: #ffffff;
+    }
+    .code-link {
+        color: #b6e388;
+    }
+}
+
+.play-btn:hover {
+    transform: scale(1.03);
+}
+
+@media (min-width: 768px) {
+    .play-btn {
+        width: 20rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .page-container {
+        align-items: flex-start;
+        justify-content: center;
+        padding-left: clamp(1rem, 8vw, 6rem);
+    }
+    .hero {
+    }
+    .play-card {
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .play-btn {
+        background: linear-gradient(90deg, #b6e388 0%, #5f8d4e 100%);
+        color: #181c1b;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+    }
 }
 </style>
