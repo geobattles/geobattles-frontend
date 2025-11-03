@@ -254,7 +254,6 @@ const handleJoinByCodeClick = () => {
     .hero {
     }
     .play-card {
-        align-items: center;
     }
 }
 
