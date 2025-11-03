@@ -252,8 +252,6 @@ const handleJoinByCodeClick = () => {
         padding-left: clamp(1rem, 8vw, 6rem);
     }
     .hero {
-        display: block;
-        text-align: center;
     }
     .play-card {
         align-items: center;
