@@ -150,13 +150,21 @@ onMounted(async () => {
     font-size: 0.875rem;
 }
 
-.header-play-btn:hover { transform: scale(1.03); }
+.header-play-btn:hover {
+    transform: scale(1.03);
+}
 
 @media (min-width: 768px) {
-    .header-play-btn { width: 10rem; }
+    .header-play-btn {
+        width: 10rem;
+    }
 }
 
 @media (prefers-color-scheme: dark) {
-    .header-play-btn { background: linear-gradient(90deg, #B6E388 0%, #5F8D4E 100%); color: #181c1b; box-shadow: 0 8px 18px rgba(0,0,0,0.25); }
+    .header-play-btn {
+        background: linear-gradient(90deg, #B6E388 0%, #5F8D4E 100%);
+        color: #181c1b;
+        box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+    }
 }
 </style>
