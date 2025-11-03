@@ -124,7 +124,6 @@ const handleJoinByCodeClick = () => {
 .hero {
     margin-top: 0.25rem;
     text-align: center;
-    background: transparent;
 }
 
 .hero-sub {
