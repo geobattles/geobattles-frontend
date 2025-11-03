@@ -30,8 +30,6 @@
 </template>
 
 <script setup lang="ts">
-import AnimatedEarth from "~/components/Svgs/AnimatedEarth.vue";
-
 const isJoiningLobby = ref(false); // Handle loader
 
 // External services
