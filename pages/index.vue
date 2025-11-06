@@ -87,12 +87,10 @@ const handleJoinByCodeClick = () => {
     gap: 0.75rem;
     padding: 0 1rem;
     position: relative;
-    z-index: 10;
 }
 
 .app-root > * {
     position: relative;
-    z-index: 12;
 }
 
 .app-root::before {
@@ -100,7 +98,6 @@ const handleJoinByCodeClick = () => {
     position: absolute;
     inset: 0;
     background: rgba(0, 0, 0, 0.28);
-    z-index: 2;
     pointer-events: none;
 }
 
@@ -250,10 +247,6 @@ const handleJoinByCodeClick = () => {
         align-items: flex-start;
         justify-content: center;
         padding-left: clamp(1rem, 8vw, 6rem);
-    }
-    .hero {
-    }
-    .play-card {
     }
 }
 
