@@ -326,6 +326,13 @@ export const createSocketHandlers = () => {
             if (!snapshot || !acceptsGame(data.gameId) || data.round < snapshot.currentRound) return;
             const endResults = decodeRoundArchive(data.endResults, data.round, decodeScoredRound);
             const answers = decodeRoundArchive(data.revealedAnswers, data.round, decodeCoordinates);
+            const previousAnswer = revealedAnswers.value[data.round];
+            const answer = answers?.[data.round] ?? previousAnswer;
+            const restoreFinalMap =
+                snapshot.currentRound !== data.round ||
+                (snapshot.phase !== "MID-ROUND" && snapshot.phase !== "FINISHED") ||
+                previousAnswer?.lat !== answer?.lat ||
+                previousAnswer?.lng !== answer?.lng;
             if (data.gameId !== undefined) snapshot.gameId = data.gameId;
             snapshot.results = Object.fromEntries(Object.entries(data.results).map(([round, raw]) => [round, normalizeRawResults(raw)]));
             // On legacy servers, only prior finalized answers prove which
@@ -344,6 +351,16 @@ export const createSocketHandlers = () => {
             roundDeadline.value = null;
             setPhase(data.phase, data.round);
             request.resetPending();
+            if (answer) {
+                snapshot.location = { ...answer };
+                mode.modeLogic.setSearchedLocationCoords(answer);
+            }
+            if (restoreFinalMap && mode.currentMode === "BattleRoyale") {
+                // Restore directly into FINISHED, fencing any pending gameplay
+                // render. Never draw an unrevealed/stale answer on legacy ends.
+                if (answer) render(() => battle.restoreRound(phaseGameState(data.phase), data.round));
+                else battle.clearMap();
+            }
             mode.finishGame();
             // The client journal owner observes only applied final archives and
             // totals. Its validator still rejects incomplete legacy history.
