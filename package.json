@@ -1,34 +1,38 @@
 {
     "name": "geobattles-frontend",
     "private": true,
+    "type": "module",
+    "packageManager": "npm@11.19.1",
+    "engines": {
+        "node": ">=24.22.3 <25",
+        "npm": ">=11.19.1 <12"
+    },
     "scripts": {
         "build": "nuxt build",
-        "dev": "nuxt dev --host",
+        "dev": "nuxt dev --host 127.0.0.1",
         "generate": "nuxt generate",
         "preview": "nuxt preview",
         "postinstall": "nuxt prepare",
-        "format": "prettier --write ."
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "typecheck": "nuxt typecheck",
+        "check": "npm run format:check && npm run typecheck && npm run build",
+        "test:socket": "node tools/socket-smoke.mjs",
+        "test:e2e": "playwright test"
     },
     "devDependencies": {
-        "@nuxt/devtools": "latest",
-        "@nuxt/types": "^2.18.1",
-        "@nuxtjs/tailwindcss": "^6.12.1",
-        "@pinia/nuxt": "^0.7.0",
-        "@primevue/nuxt-module": "^4.0.7",
-        "@types/google.maps": "^3.58.1",
-        "@vite-pwa/nuxt": "^0.10.6",
-        "nuxt": "^3.15.4",
-        "prettier": "^3.5.2",
-        "typescript": "^5.2.2",
-        "vue-tsc": "^2.1.6"
+        "@nuxtjs/tailwindcss": "6.14.0",
+        "@playwright/test": "1.65.1",
+        "@types/canvas-confetti": "1.9.0",
+        "@types/google.maps": "3.58.1",
+        "@types/node": "24.19.2",
+        "@vite-pwa/nuxt": "1.1.1",
+        "nuxt": "4.6.4",
+        "prettier": "3.5.2",
+        "typescript": "5.9.3",
+        "vue-tsc": "3.3.14"
     },
     "dependencies": {
-        "@primevue/themes": "^4.0.7",
-        "@types/canvas-confetti": "^1.9.0",
-        "canvas-confetti": "^1.9.3",
-        "chart.js": "^4.4.7",
-        "pinia": "^3.0.1",
-        "primeicons": "^7.0.0",
-        "primevue": "^4.0.7"
+        "canvas-confetti": "1.9.3"
     }
 }

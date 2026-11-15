@@ -1,7 +1,10 @@
-name: Build and Push Image
+name: Publish image (manual)
 
 on:
-  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 env:
   REGISTRY: ghcr.io
@@ -9,6 +12,8 @@ env:
 
 jobs:
   build-and-push:
+    # Obtain explicit maintainer approval before dispatching on master.
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
 
     permissions:

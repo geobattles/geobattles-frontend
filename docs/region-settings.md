@@ -1,0 +1,29 @@
+# Region settings
+
+## Interaction
+
+Main settings offer World, Continents, Country and an explicitly opened Custom checklist. The local SVG supports pointer selection and one roving keyboard stop; native buttons/select/search remain available, including for tiny countries. Preserve the explicitly chosen mode while editing. Empty Custom is invalid, whereas World serializes as the established `ccList: []`. Save/Cancel stay reachable in compact layouts. Advanced contains manual scoring, bonus and capacity options; the read-only lobby summary favors region and essential round rules.
+
+`useCountryCatalog` loads the public backend `/countryCatalog` once into Nuxt state, validates the response and exposes a bounded retryable loading state. Country names/codes, continent membership and scoring constants are authoritative backend data. `/countryList` remains compatible. Settings controls and SVG handlers must both respect host/connection disabled state.
+
+## Scoring
+
+Battle Royale defaults to automatic scoring. The backend derives `scoreScaleKm` from the actual playable geometry and separation between countries, not the decorative map or sampling weights. Changing region resets a manual override unless explicitly chosen again. Manual `scoreFactor` remains an Advanced override of the legacy formula; Country Battle is unchanged. `app/utils/regionScoring.ts` mirrors base-point arithmetic for the examples, including the 100m automatic perfect radius, truncation and 5000-point cap. Bonuses are separate. See `docs/region-scoring.md` in the matching release of the [backend repository](https://github.com/geobattles/geobattles-backend) for the full contract.
+
+## Local artwork
+
+Normal frontend installation and builds use the committed generated assets and do not require a backend checkout. To regenerate only the region map, arrange a clone of the [backend repository](https://github.com/geobattles/geobattles-backend) at `../geo-backend` relative to the frontend root, using the matching release. This is the generator's fixed sibling clone-folder convention, not an npm package or an arbitrary path argument. Run `node tools/generate-region-map.mjs` from the frontend; its only optional argument is `--check`, which verifies deterministic output. It combines supported keys from `assets/countryDB.json`, the existing game boundary asset `assets/full/countries2.json` grouped by `ISO_A2_EH`, and the local land SVG. The full asset already covers every supported country, including small territories. The generator records source hashes, preserves polygon holes, simplifies/unrolls/clips dateline crossings and emits one compound path per country to bound DOM size. These are simplified selection outlines, not guarantees of imagery coverage or political authority. Actual location sampling and scoring are unaffected by decorative boundaries.
+
+The backdrop's public-domain provenance and hash-checked regeneration are documented in [geography attribution](../public/globe/README.md). Generation fails on malformed/truncated land paths. No runtime asset service, Maps initialization, new dependency or external font is needed.
+
+## Gameplay starting camera
+
+Exactly one distinct supported `ccList` code (including Custom with one country) frames that country's public outline at round start or initial recovery. Empty World, the full supported list, multiple countries and any unknown code retain center `0,0` / zoom `2`. Duplicate instances of the same supported code count once; malformed codes are not normalized. No answer, playable sampling bounds, catalog request or geocoding service influences this camera.
+
+`node tools/generate-country-viewports.mjs` derives the lean bundled `app/assets/country-viewports.json` solely from `region-map.json` country bounds. `--check` verifies exact deterministic output, including the source SHA-256. Generation rejects unsupported projection/version/dimensions, malformed bounds and duplicate codes. Inverting the 1024×512 equirectangular projection preserves the shortest wrapped extent: canonical `east < west` means an antimeridian crossing (including US, NZ and RU). Full public outlines may include distant overseas fragments, so some country views are deliberately wide. The SVG asset/generator and backend sampling/scoring remain unchanged.
+
+The existing native map receives literal bounds with 32px padding and minimum zoom 0 for country fitting; world framing retains minimum zoom 2. There is no country restriction or new SDK object/listener. A separate one-shot frame waits for the retained host to be connected and nonzero-sized, using the existing layout/resize owner. After it is applied, map toggles, reparenting and resizing preserve the player's live camera. The consumed identity is lobby/game/round, not the transient render generation: same-round retry/reconnect does not undo manual pan/zoom. Cleanup cancels deferred work while preserving a consumed camera; results/disposal reset gameplay ownership. Result bounds remain separately persistent and refit on visible layout as before. A fresh page/runtime frames the current round again.
+
+## Verification
+
+Use repository format/type/build checks, `node tools/generate-region-map.mjs --check`, the existing native socket smoke and guarded `e2e/regions.keyless.spec.ts`. The browser scenario covers both real browser engines, compact sizes, actual SVG pointer/keyboard interaction, presets/Custom, small/distant regions, auto/manual reset, Ready preservation and dialog focus return. These provider-free settings checks do not establish live Maps round acceptance. Also run `node tools/generate-country-viewports.mjs --check` to verify the bundled camera bounds; this command needs no backend checkout. Record observed results and remaining live-provider limits in the change review.

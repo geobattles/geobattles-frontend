@@ -1,0 +1,39 @@
+name: Checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - "**"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Nuxt static verification
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NUXT_PUBLIC_GMAPS_API: ""
+      NUXT_PUBLIC_BACKEND_HOST: http://127.0.0.1:8080
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Use pinned npm
+        run: npm install --global npm@11.19.1
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Check formatting, types and build
+        run: npm run check

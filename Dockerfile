@@ -1,4 +1,8 @@
-FROM node:22-alpine AS builder
+FROM node:24.22.3-alpine AS base
+
+RUN npm install --global npm@11.19.1
+
+FROM base AS builder
 
 WORKDIR /usr/src/nuxt-app
 
@@ -10,10 +14,11 @@ RUN npm ci
 
 # Copy the rest of the app & build
 COPY . .
-RUN npm run build
+# The cached install ran prepare before the app/config existed. Regenerate its types.
+RUN npm exec nuxt prepare && npm run check
 
 
-FROM node:22-alpine
+FROM base AS runtime
 
 WORKDIR /app
 
@@ -21,6 +26,8 @@ ENV NODE_ENV=production \
     HOST=0.0.0.0
 
 COPY --from=builder /usr/src/nuxt-app/.output  ./
+
+USER node
 
 EXPOSE 3000
 
