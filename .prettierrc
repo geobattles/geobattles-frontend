@@ -13,11 +13,9 @@
     "quoteProps": "as-needed",
     "singleAttributePerLine": false,
     "vueIndentScriptAndStyle": false,
-    "ignorePath": ".prettierignore",
     "endOfLine": "lf",
     "experimentalTernaries": false,
     "insertPragma": false,
-    "withNodeModules": false,
     "overrides": [
         {
             "files": "*.yml",

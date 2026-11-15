@@ -4,3 +4,36 @@ node_modules
 .nuxt
 .output
 .DS_Store
+
+# Local configuration and credentials must never enter the build context.
+**/.env
+**/.env.*
+**/.envrc
+**/.envrc.*
+**/.npmrc
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*credentials*.json
+**/*service-account*.json
+**/.ssh
+**/.aws
+**/.config/gcloud
+
+# Local tooling, generated files and logs.
+.devcontainer
+.vscode
+.idea
+.data
+.nitro
+.cache
+dist
+logs
+*.log
+**/*.log
+.local
+**/.local
+test-results
+playwright-report
+blob-report

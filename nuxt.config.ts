@@ -1,15 +1,12 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import Aura from "@primevue/themes/aura";
-import { execSync } from "child_process";
-
-const sw = process.env.SW === "true";
+import { execSync } from "node:child_process";
 
 // VERSION can be set by GHA or manually (if building locally)
 // If not set, it will try to get the git commit hash
 // If not possible, it will fallback to 'dev'
 function getVersion() {
     if (process.env.VERSION) {
-        return process.env.VERSION
+        return process.env.VERSION;
     }
 
     // Try local git command
@@ -24,13 +21,25 @@ export default defineNuxtConfig({
     devtools: { enabled: true },
     ssr: true,
 
+    experimental: {
+        // Nuxt's build checker otherwise schedules a reload on the next navigation.
+        checkOutdatedBuildInterval: false,
+        // Even "manual" includes a crawler reload plugin in locked Nuxt 4.6.4.
+        // Observe Vite failures in the notice without swallowing their rejection.
+        emitRouteChunkError: false,
+    },
+
     app: {
         head: {
-            link: [{ rel: "icon", type: "image/png", href: "/logo.png" }],
+            link: [
+                { rel: "icon", type: "image/png", href: "/icons/icon-192.png" },
+                { rel: "apple-touch-icon", type: "image/png", href: "/icons/apple-touch-icon.png", sizes: "180x180" },
+            ],
         },
     },
 
     runtimeConfig: {
+        BACKEND_SERVER_HOST: "",
         public: {
             GMAPS_API: "",
             BACKEND_HOST: "",
@@ -42,104 +51,79 @@ export default defineNuxtConfig({
     typescript: {
         typeCheck: true,
         strict: true,
+        tsConfig: {
+            compilerOptions: {
+                types: ["google.maps"],
+            },
+        },
     },
 
-    modules: ["@nuxtjs/tailwindcss", "@primevue/nuxt-module", "@pinia/nuxt", "@vite-pwa/nuxt"],
-    css: ["primeicons/primeicons.css"],
+    modules: ["@nuxtjs/tailwindcss", "@vite-pwa/nuxt"],
+    css: ["~/assets/css/main.css"],
+    postcss: {
+        plugins: {
+            // Nuxt 4 resolves ESM entries; Tailwind 3's directory import is not one.
+            "tailwindcss/nesting": false,
+            "tailwindcss/nesting/index.js": {},
+        },
+    },
 
     vite: {
         optimizeDeps: {
-            include: [
-                "primevue/toggleswitch",
-                "primevue/inputnumber",
-                "primevue/slider",
-                "primevue/radiobutton",
-                "primevue/checkbox",
-                "primevue/panel",
-                "primevue/button",
-                "primevue/tabmenu",
-                "primevue/card",
-                "primevue/dropdown",
-                "primevue/fieldset",
-                "primevue/inputswitch",
-                "primevue/progressbar",
-                "primevue/progressspinner",
-                "primevue/menubar",
-                "primevue/badge",
-                "primevue/inputtext",
-                "primevue/floatlabel",
-                "primevue/divider",
-                "primevue/datatable",
-                "primevue/column",
-                "primevue/usetoast",
-                "primevue/toast",
-                "primevue/menu",
-                "primevue/ripple",
-                "primevue/dialog",
-                "primevue/tag",
-                "primevue/knob",
-                "primevue/chart",
-                "primevue/tabs",
-                "primevue/tabpanels",
-                "primevue/tabpanel",
-                "primevue/tablist",
-                "primevue/tab",
-                "primevue/password",
-            ],
+            // Avoid a late dependency-optimization reload during a round.
+            include: ["@vue/devtools-core", "canvas-confetti"],
         },
-    },
-
-    // PRIMEVUE CONFIG
-    primevue: {
-        options: {
-            ripple: true,
-            inputVariant: "filled",
-            theme: {
-                preset: Aura,
-                options: {
-                    prefix: "p",
-                    darkModeSelector: "system",
-                    cssLayer: false,
-                },
-            },
-        },
-
-        autoImport: true,
     },
 
     // PWA CONFIG
     pwa: {
         strategies: "generateSW",
-        registerType: "autoUpdate",
+        registerType: "prompt",
+        // One client-owned registration; no module reload or install-prompt interception.
+        injectRegister: false,
+        scope: "/",
         manifest: {
+            id: "/",
             name: "GeoBattles PWA",
             short_name: "GeoBattles",
-            theme_color: "#00A155",
+            start_url: "/",
+            scope: "/",
+            display: "standalone",
+            theme_color: "#181818",
+            background_color: "#181818",
             description: "GeoLocation Guessing Game",
             icons: [
                 {
-                    src: "logo.png",
-                    sizes: "1024x1024",
+                    src: "/icons/icon-192.png",
+                    sizes: "192x192",
                     type: "image/png",
+                    purpose: "any",
+                },
+                {
+                    src: "/icons/icon-512.png",
+                    sizes: "512x512",
+                    type: "image/png",
+                    purpose: "any",
                 },
             ],
         },
         workbox: {
-            globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
-            navigateFallback: null, // Don't use a fallback for navigation
-
-            // Add these options for better control over service worker updates
+            globPatterns: ["_nuxt/**/*.{js,css}", "icons/*.png", "gameplay/map-icons/*.svg", "images/*.png", "logo.png"],
+            // The module can append Nuxt payload patterns; never cache page/private payloads.
+            globIgnores: ["**/_payload.json", "**/_payload.js", "**/*.html"],
+            runtimeCaching: [],
+            navigateFallback: null,
             cleanupOutdatedCaches: true,
-            skipWaiting: true,
+            // Only activate updates once ALL old app clients close (including other tabs).
+            skipWaiting: false,
+            // Give an initial, uncached page a controller without reloading it.
             clientsClaim: true,
         },
         client: {
-            installPrompt: true,
+            registerPlugin: false,
         },
         devOptions: {
-            enabled: true,
-            suppressWarnings: true,
-            type: "module",
+            enabled: false,
         },
     },
 

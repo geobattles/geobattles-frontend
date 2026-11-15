@@ -5,6 +5,10 @@
 .nitro
 .cache
 dist
+.local
+test-results
+playwright-report
+blob-report
 
 # Node dependencies
 node_modules
@@ -22,3 +26,17 @@ logs
 .env
 .env.*
 !.env.example
+
+# Local credentials (nonsecret examples need an explicit exception)
+.envrc
+.envrc.*
+.npmrc
+*.pem
+*.key
+*.p12
+*.pfx
+*credentials*.json
+*service-account*.json
+.ssh/
+.aws/
+.config/gcloud/
