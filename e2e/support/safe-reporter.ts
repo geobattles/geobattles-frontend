@@ -55,7 +55,9 @@ export default class SafeReporter implements Reporter {
                 const location = error.location;
                 if (
                     location &&
-                    ["lobby.keyless.spec.ts", "regions.keyless.spec.ts", "ui.ts", "fixtures.ts"].includes(basename(location.file)) &&
+                    ["lobby.keyless.spec.ts", "regions.keyless.spec.ts", "game.maps.spec.ts", "multiround.maps.spec.ts", "ui.ts", "fixtures.ts"].includes(
+                        basename(location.file)
+                    ) &&
                     Number.isSafeInteger(location.line) &&
                     location.line > 0
                 ) {

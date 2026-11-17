@@ -4,7 +4,6 @@
         <main id="main-content" class="page-shell waiting-lobby">
             <div class="page-heading">
                 <div>
-                    <p class="eyebrow">Ready room</p>
                     <h1 class="command-heading" data-testid="lobby-name">{{ mounted ? lobby.lobbySettings?.conf.name || "Lobby" : "Lobby" }}</h1>
                 </div>
                 <LobbyLeave class="lobby-leave" @click="leave" />
@@ -32,15 +31,7 @@
                                 <UiIcon name="settings" />Edit settings
                             </button>
                         </div>
-                        <details :open="settingsOpen" @toggle="settingsOpen = ($event.target as HTMLDetailsElement).open">
-                            <summary class="settings-toggle">
-                                <span
-                                    >{{ lobby.lobbySettings?.conf.numRounds }} rounds · {{ lobby.lobbySettings?.conf.roundTime }}s ·
-                                    {{ lobby.lobbySettings?.conf.numAttempt }} guesses</span
-                                ><span class="accent">{{ settingsOpen ? "Less" : "Details" }}</span>
-                            </summary>
-                            <div class="settings-body"><LobbyDisplaySettings /></div>
-                        </details>
+                        <div class="settings-body"><LobbyDisplaySettings /></div>
                     </section>
                 </div>
                 <GameplayLostConnectionDialog @leaveLobby="leave" /><UiDialog v-model:open="lobby.modifySettingsModal" title="Lobby settings" wide
@@ -59,11 +50,7 @@
 definePageMeta({ key: (route) => `lobby-${String(route.params.id)}` });
 const lobby = useLobbyStore();
 const mounted = ref(false);
-const settingsOpen = ref(false);
-let layoutQuery: MediaQueryList | undefined;
-const syncSettingsLayout = () => {
-    settingsOpen.value = layoutQuery?.matches ?? false;
-};
+
 const { connectionState } = useSocketState();
 const isConnected = computed(() => connectionState.value === "connected");
 const route = useRoute();
@@ -71,12 +58,10 @@ const { goHome: leave } = useLobbyLeaveGuard();
 const { fetchCountryList } = useCountryActions();
 onMounted(() => {
     mounted.value = true;
-    layoutQuery = window.matchMedia("(min-width: 900px), (min-width: 560px) and (orientation: landscape)");
-    syncSettingsLayout();
-    layoutQuery.addEventListener("change", syncSettingsLayout);
+
     void fetchCountryList().catch(() => console.warn("Country list could not be loaded."));
 });
-onBeforeUnmount(() => layoutQuery?.removeEventListener("change", syncSettingsLayout));
+
 useHead({ title: "Lobby" });
 </script>
 <style scoped>
@@ -173,23 +158,7 @@ useHead({ title: "Lobby" });
     min-width: 0;
     max-width: 100%;
 }
-.settings-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 44px;
-    gap: 0.5rem;
-    font-size: 0.8rem;
-    cursor: pointer;
-    list-style: none;
-}
-.settings-toggle::-webkit-details-marker {
-    display: none;
-}
-.settings-toggle > .accent {
-    font: 600 0.68rem var(--gb-font-mono);
-    text-transform: uppercase;
-}
+
 .settings-body {
     padding-top: 0.75rem;
     border-top: 1px solid var(--gb-line);
@@ -224,6 +193,13 @@ useHead({ title: "Lobby" });
     }
 }
 @media (max-width: 640px) {
+    .waiting-lobby :deep(.btn) {
+        min-height: 44px;
+        padding: 0.35rem 0.6rem;
+    }
+    .waiting-lobby :deep(.ready-actions > button) {
+        min-height: 48px;
+    }
     .waiting-lobby .page-heading {
         flex-wrap: nowrap;
         gap: 0.5rem;
@@ -265,6 +241,95 @@ useHead({ title: "Lobby" });
     .lobby-code {
         font-size: 1.15rem;
         letter-spacing: 0.12em;
+    }
+}
+@media (max-width: 640px) and (orientation: portrait) {
+    .lobby-layout > .lobby-actions,
+    .lobby-layout > .room-invite {
+        padding: 0.4rem 0.625rem;
+    }
+    .lobby-actions :deep(.ready-check) {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        align-items: center;
+        gap: 0.25rem 0.5rem;
+    }
+    .lobby-actions :deep(.ready-heading h2) {
+        display: none;
+    }
+    .lobby-actions :deep(.ready-status) {
+        padding: 0;
+        border: 0;
+        background: transparent;
+        white-space: nowrap;
+    }
+    .lobby-actions :deep(.ready-status .status-dot) {
+        display: none;
+    }
+    .lobby-actions :deep(.ready-actions) {
+        margin-top: 0;
+        gap: 0.35rem;
+    }
+    .lobby-actions :deep(.ready-actions > button) {
+        min-height: 44px;
+        padding-inline: 0.45rem;
+        gap: 0.3rem;
+        letter-spacing: normal;
+    }
+    .lobby-actions :deep(.ready-actions svg) {
+        display: none;
+    }
+    .lobby-actions :deep(.field-help) {
+        grid-column: 1 / -1;
+        margin-top: 0;
+    }
+    .lobby-actions :deep(.routine-feedback),
+    .room-code > .section-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+    .room-invite {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        gap: 0.35rem;
+    }
+    .room-code {
+        grid-column: 1;
+        grid-row: 1;
+        margin: 0;
+    }
+    .room-invite > :deep(.badge) {
+        grid-column: 3;
+        grid-row: 1;
+        border: 0;
+        background: transparent;
+    }
+    .room-invite :deep(.invite-link) {
+        display: contents;
+    }
+    .room-invite :deep(.invite-link > button) {
+        grid-column: 2;
+        grid-row: 1;
+        width: auto;
+        padding-inline: 0.5rem;
+        gap: 0.35rem;
+    }
+    .room-invite :deep(.invite-label) {
+        display: none;
+    }
+    .room-invite :deep(.invite-compact-label) {
+        display: inline;
+    }
+    .room-invite :deep(.invite-link > .field) {
+        grid-column: 1 / -1;
+        margin-top: 0.25rem;
     }
 }
 </style>

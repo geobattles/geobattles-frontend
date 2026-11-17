@@ -1,6 +1,20 @@
 import { test, expect } from "./support/fixtures";
 import type { Actor } from "./support/fixtures";
-import { registerGuest, createLobby, joinInvite, setReady, changeSettings, connected, guess, leave, disposed, readyButton, ownServerScore, journalScoreText } from "./support/ui";
+import {
+    registerGuest,
+    createLobby,
+    joinInvite,
+    setReady,
+    changeSettings,
+    connected,
+    guess,
+    leave,
+    disposed,
+    readyButton,
+    ownServerScore,
+    journalScoreText,
+    nativeMaps,
+} from "./support/ui";
 import { mapsScenarios } from "./support/safety.mjs";
 import type { Envelope } from "./support/types";
 
@@ -105,6 +119,27 @@ test("three independent guests: two real rounds, MID-ROUND reload, ungated Next 
             expect(Object.keys(snapshot?.revealedAnswers ?? {})).toEqual(["1"]);
             expect(peer.id).toBe(peerId);
             await connected(peer);
+            // Recovery must restore the usable results screen, not just socket state.
+            await expect(peer.page.getByRole("heading", { name: /^round 1 debrief$/i })).toBeVisible();
+            await expect(peer.page.getByRole("region", { name: "Round debrief and player results", exact: true })).toBeVisible();
+            // Session retains the gameplay view with v-show to keep native Maps objects.
+            await expect(peer.page.locator(".guess-button")).toBeHidden();
+            await expect(peer.page.getByRole("dialog")).toHaveCount(0);
+            await expect(peer.page.getByTestId("maps-recovery")).toHaveCount(0);
+            const answer = snapshot?.revealedAnswers?.["1"];
+            expect(answer, "Recovery must include the completed round's authoritative answer").toBeDefined();
+            const recoveredViews = await nativeMaps(peer);
+            try {
+                await expect
+                    .poll(() => recoveredViews.evaluate(({ map }, point) => !!map?.getBounds()?.contains(point), answer!), {
+                        message: "The recovered result map must frame the revealed answer",
+                        timeout: 15_000,
+                    })
+                    .toBe(true);
+            } finally {
+                await recoveredViews.dispose();
+            }
+            expect(peer.events.slice(reloadMark).some((event) => event.type === "START_ROUND")).toBe(false);
             await host.snapshot(
                 (lobby) => lobby.gameId === gameId && lobby.phase === "MID-ROUND" && lobby.playerList[peerId]?.connected && !lobby.playerList[peerId]?.ready,
                 hostMark
@@ -135,7 +170,7 @@ test("three independent guests: two real rounds, MID-ROUND reload, ungated Next 
     for (const actor of [guest, peer, host]) await leave(actor);
     await disposed(lobbyId);
     for (const [index, actor] of actors.entries()) {
-        await actor.page.goto("/journal", { waitUntil: "domcontentloaded" });
+        await actor.goto("/journal");
         await expect(actor.page.getByTestId("journal-entry")).toHaveCount(1);
         const entry = actor.page.locator(`[data-testid="journal-entry"][data-game-id="${gameId}"]`);
         await expect(entry).toContainText("2 rounds");

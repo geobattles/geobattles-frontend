@@ -9,7 +9,9 @@
         <fieldset :disabled="!lobby.isPlayerAdmin() || !socket.isConnected || loadingCountries || !catalog" class="settings-fields">
             <div class="settings-columns">
                 <section class="region-section" aria-labelledby="region-heading">
-                    <h3 id="region-heading">Where shall we play?</h3>
+                    <div class="section-heading region-heading">
+                        <h3 id="region-heading">Map</h3>
+                    </div>
                     <LobbySettingsRegionPicker
                         v-if="catalog && !loadingCountries"
                         :disabled="!lobby.isPlayerAdmin() || !socket.isConnected"
@@ -17,17 +19,14 @@
                         :catalog="catalog"
                         @update:model-value="selectRegion"
                     />
-                    <p v-if="draft.mode === 1" class="scoring-status" aria-live="polite">
-                        {{ automaticScoring ? "Scoring adapts to your region." : "Manual scoring · change it in Advanced." }}
-                    </p>
                 </section>
                 <section class="round-section form-stack" aria-labelledby="round-heading">
                     <div class="section-heading">
-                        <h3 id="round-heading">Round setup</h3>
+                        <h3 id="round-heading">Game settings</h3>
                         <span class="field-help">{{ draft.mode === 1 ? "Battle Royale" : "Country Battle" }}</span>
                     </div>
                     <LobbySettingsName v-model="draft.name" />
-                    <LobbySettingsTimer v-model="draft.roundTime" />
+                    <LobbySettingsTimer v-model="draft.roundTime" @editing="timerEditing = $event" />
                     <div class="settings-numbers"><LobbySettingsRounds v-model="draft.numRounds" /><LobbySettingsAttempts v-model="draft.numAttempt" /></div>
                     <details class="advanced-settings">
                         <summary>Advanced settings</summary>
@@ -60,10 +59,14 @@
         </fieldset>
         <p v-if="error" class="field-error" role="alert">{{ error }}</p>
         <footer class="settings-footer">
-            <p class="field-help">Everyone keeps their ready status.</p>
+            <p v-if="timerEditing" class="field-help" role="status">Save or cancel the time edit first.</p>
             <div class="settings-actions">
                 <button class="btn btn-secondary" type="button" @click="emit('close')">Cancel</button
-                ><button class="btn" type="submit" :disabled="!lobby.isPlayerAdmin() || !socket.isConnected || loadingCountries || !catalog || !draft.ccList.length">
+                ><button
+                    class="btn"
+                    type="submit"
+                    :disabled="timerEditing || !lobby.isPlayerAdmin() || !socket.isConnected || loadingCountries || !catalog || !draft.ccList.length"
+                >
                     <UiIcon name="check" />Save settings
                 </button>
             </div>
@@ -85,6 +88,7 @@ if (draft.value) {
     draft.value.powerups ??= [false, false];
 }
 const error = ref("");
+const timerEditing = ref(false);
 const loadingCountries = ref(true);
 let active = true;
 const automaticScoring = computed({
@@ -139,7 +143,7 @@ onBeforeUnmount(() => {
 function save() {
     const conf = draft.value;
     const data = catalog.value;
-    if (!conf || !data || loadingCountries.value || !lobby.isPlayerAdmin() || !socket.isConnected) return;
+    if (!conf || !data || timerEditing.value || loadingCountries.value || !lobby.isPlayerAdmin() || !socket.isConnected) return;
     const allowed = new Set(data.countries.map((country) => country.code));
     if (!conf.name.trim() || !conf.ccList.length || conf.ccList.some((code) => !allowed.has(code))) {
         error.value = "Choose a lobby name and at least one available country.";
@@ -173,17 +177,28 @@ function save() {
 .settings-form {
     font-size: 0.85rem;
 }
+
+.region-heading {
+    margin-bottom: 0.85rem;
+}
 .settings-fields {
     min-width: 0;
 }
 .settings-columns {
     display: grid;
     grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
-    gap: 1.5rem;
+    gap: 1.25rem;
 }
 .region-section,
 .round-section {
     min-width: 0;
+}
+.round-section {
+    align-self: start;
+    border: 1px solid var(--gb-line);
+    border-radius: 12px;
+    padding: 1rem;
+    background: #181b1880;
 }
 .region-section > h3 {
     margin-bottom: 0.75rem;
@@ -231,14 +246,10 @@ h4 {
 }
 .settings-numbers {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
     gap: 0.65rem;
 }
-.scoring-status {
-    margin-top: 0.6rem;
-    color: var(--gb-accent);
-    font-size: 0.75rem;
-}
+
 .advanced-settings {
     border-top: 1px solid var(--gb-line);
 }
@@ -290,13 +301,16 @@ fieldset:disabled {
     opacity: 0.6;
 }
 @media (max-width: 760px) {
+    .settings-form :deep(.btn) {
+        min-height: 44px;
+        padding: 0.35rem 0.6rem;
+    }
     .settings-columns {
         grid-template-columns: minmax(0, 1fr);
         gap: 1rem;
     }
     .round-section {
-        border-top: 1px solid var(--gb-line);
-        padding-top: 0.85rem;
+        padding: 0.85rem;
     }
     .settings-footer {
         gap: 0.3rem;
@@ -326,8 +340,7 @@ fieldset:disabled {
         gap: 1rem;
     }
     .round-section {
-        border: 0;
-        padding: 0;
+        padding: 0.75rem;
     }
 }
 </style>

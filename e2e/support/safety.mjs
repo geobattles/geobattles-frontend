@@ -28,8 +28,8 @@ export function plannedAllocation(scenarios = Object.values(mapsScenarios)) {
 // A smaller explicit plan permits a reconciled continuation; CLI filtering alone
 // never reduces reservations or resets a previous invocation's owner budget.
 const mapsScope = process.env.GEOBATTLES_E2E_MAPS_SCOPE ?? "all";
-check(["all", "recovery"].includes(mapsScope), "Maps scope must be all or recovery");
-export const mapsTestFiles = mapsScope === "recovery" ? ["game.maps.spec.ts"] : Object.keys(mapsScenarios);
+check(["all", "recovery", "multiround"].includes(mapsScope), "Maps scope must be all, recovery or multiround");
+export const mapsTestFiles = mapsScope === "recovery" ? ["game.maps.spec.ts"] : mapsScope === "multiround" ? ["multiround.maps.spec.ts"] : Object.keys(mapsScenarios);
 export const mapsAllocation = plannedAllocation(mapsTestFiles.map((file) => mapsScenarios[file]));
 
 /** Never include server bodies, tokens, URLs or arbitrary errors in labels. */

@@ -17,7 +17,7 @@ export const journalScoreText = (score: number) => `${new Intl.NumberFormat("en-
 
 export async function registerGuest(actor: Actor) {
     const { page } = actor;
-    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await actor.goto("/");
     await page.getByRole("button", { name: /^(login|sign in)$/i }).click();
     await page.getByRole("textbox", { name: /^(guest )?display name$/i }).fill(actor.name);
     const registered = page.waitForResponse((response) => response.url() === `${env.backend}/auth/register/guest` && response.request().method() === "POST");
@@ -39,7 +39,7 @@ export async function createLobby(actor: Actor): Promise<string> {
 
 export async function joinInvite(actor: Actor, lobbyId: string) {
     const mark = actor.mark();
-    await actor.page.goto(`/lobby/join?id=${encodeURIComponent(lobbyId)}`, { waitUntil: "domcontentloaded" });
+    await actor.goto(`/lobby/join?id=${encodeURIComponent(lobbyId)}`);
     await actor.snapshot((snapshot) => snapshot.ID === lobbyId && Object.values(snapshot.playerList).some((player) => player.name === actor.name && player.connected), mark);
     await expect(actor.page).toHaveURL(`${env.frontend}/lobby/${lobbyId}`);
     await connected(actor);
@@ -75,28 +75,43 @@ export async function changeSettings(actor: Actor, values: { name: string; round
     const country = values.country ?? (env.maps ? "NL" : undefined);
     if (country !== undefined) {
         expect(country).toMatch(/^[A-Z]{2}$/);
-        await dialog.getByRole("button", { name: /^custom$/i, exact: true }).click();
-        const search = dialog.getByRole("searchbox", { name: /^find a country$/i });
+        await dialog
+            .getByRole("group", { name: /^region type$/i })
+            .getByRole("button", { name: /^country$/i })
+            .click();
+        const search = dialog.getByRole("searchbox", { name: /^choose a country$/i });
         await expect(search).toBeVisible();
-        await dialog.getByRole("button", { name: /^clear$/i }).click();
         await search.fill(country);
-        const choice = dialog.getByRole("group", { name: /^available countries$/i }).locator(`input[type="checkbox"][value="${country}"]`);
+        const choice = dialog.getByRole("group", { name: /^country search results$/i }).getByRole("button", { name: new RegExp(` ${country}$`) });
         await expect(choice, "The actual country list must support this QA selection; never fall back to new provider attempts").toHaveCount(1);
-        await choice.check();
-        await expect(choice).toBeChecked();
+        await choice.click();
+        await expect(choice).toHaveAttribute("aria-pressed", "true");
     }
     if (values.rounds !== undefined) await dialog.getByRole("spinbutton", { name: /^rounds$/i }).fill(String(values.rounds));
     if (values.attempts !== undefined) await dialog.getByRole("spinbutton", { name: /^(guesses per round|attempts)$/i }).fill(String(values.attempts));
     if (values.seconds !== undefined) {
-        const slider = dialog.getByRole("slider", { name: /^round timer/i });
+        const timer = dialog.locator(".timer-setting");
+        const slider = timer.getByRole("slider", { name: /^round timer adjustment$/i });
+        await expect(slider).toHaveCount(0);
+        await timer.getByRole("button", { name: /^edit$/i }).click();
+        await expect(dialog.getByRole("button", { name: /^save settings$/i })).toBeDisabled();
         const min = Number(await slider.getAttribute("min"));
+        const max = Number(await slider.getAttribute("max"));
         const step = Number(await slider.getAttribute("step"));
+        expect(values.seconds).toBeGreaterThanOrEqual(min);
+        expect(values.seconds).toBeLessThanOrEqual(max);
         expect(Number.isInteger((values.seconds - min) / step)).toBe(true);
         await slider.press("Home");
         // Use the actual native range keyboard behavior, not a DOM/store mutation.
         for (let value = min; value < values.seconds; value += step) await slider.press("ArrowRight");
         await expect(slider).toHaveValue(String(values.seconds));
+        await expect(timer.getByRole("spinbutton", { name: /^time in seconds$/i })).toHaveValue(String(values.seconds));
+        await timer.getByRole("button", { name: /^save time$/i }).click();
+        await expect(slider).toHaveCount(0);
+        await expect(timer.getByRole("button", { name: /^edit$/i })).toBeFocused();
+        await expect(timer.locator(".timer-value strong")).toHaveText(String(values.seconds));
     }
+    await expect(dialog.getByRole("button", { name: /^save settings$/i })).toBeEnabled();
     await dialog.getByRole("button", { name: /^(save settings|save)$/i }).click();
     const snapshot = await actor.snapshot((lobby) => lobby.conf.name === values.name, mark);
     if (values.rounds !== undefined) expect(snapshot.conf.numRounds).toBe(values.rounds);
@@ -113,6 +128,7 @@ export async function leave(actor: Actor) {
         else await dialog.dismiss();
     };
     actor.page.on("dialog", accept);
+    actor.navigating = true;
     try {
         await actor.page.getByRole("button", { name: /^(leave|leave lobby)$/i }).click();
         const confirmation = actor.page.getByRole("dialog").getByRole("button", { name: /^(leave|leave lobby|confirm)$/i });
@@ -122,6 +138,7 @@ export async function leave(actor: Actor) {
         if (await confirmation.isVisible()) await confirmation.click();
         await expect(actor.page).toHaveURL(`${env.frontend}/`);
     } finally {
+        actor.navigating = false;
         actor.page.off("dialog", accept);
     }
 }
@@ -145,7 +162,7 @@ export async function nativeMaps(actor: Actor) {
         type GoogleViews = {
             isMapInitialized: boolean;
             isPanoramaInitialized: boolean;
-            getMap: { getDiv(): HTMLElement };
+            getMap: { getDiv(): HTMLElement; getBounds(): { contains(point: { lat: number; lng: number }): boolean } | undefined };
             getPanorama: { getStatus(): string | undefined };
         };
         const root = document.getElementById("__nuxt") as

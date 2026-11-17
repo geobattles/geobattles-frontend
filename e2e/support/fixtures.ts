@@ -113,6 +113,14 @@ export class Actor {
             this.navigating = false;
         }
     }
+    async goto(path: string) {
+        this.navigating = true;
+        try {
+            await this.page.goto(path, { waitUntil: "domcontentloaded" });
+        } finally {
+            this.navigating = false;
+        }
+    }
 }
 
 class BrowserRun {

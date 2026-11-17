@@ -33,7 +33,7 @@
                 <span v-if="request.isStartPending" class="spinner" /><UiIcon v-else name="arrow" />{{ replay ? "New game" : "Start game" }}
             </button>
         </div>
-        <p class="field-help mt-2" role="status">{{ feedback }}</p>
+        <p class="field-help mt-2" :class="{ 'routine-feedback': feedback === 'Waiting for every explorer to mark ready.' }" role="status">{{ feedback }}</p>
     </section>
 </template>
 <script setup lang="ts">

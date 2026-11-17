@@ -46,6 +46,23 @@ Browser projects `keyless-chromium` and `keyless-firefox` collect `*.keyless.spe
 
 ## Explicit Maps suite
 
+### Simple presets
+
+After setting the isolated-local target and URLs above, use these POSIX-shell npm shortcuts. They reuse the existing scenarios and guards, without a separate framework:
+
+| Command                          | Purpose                                                                                  | Provider use                                    |
+| -------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `npm run test:socket`            | Membership, host handoff, reconnect, real grace expiry, settings and leave               | None; leave readiness-rejection opt-in disabled |
+| `npm run test:e2e:keyless`       | Lobby/settings controls and waiting-room reload/offline recovery in Chromium and Firefox | None                                            |
+| `npm run test:e2e:maps:recovery` | Two players: real round, PLAYING disconnect/reconnect, map retry, rematch and journals   | Up to 2 starts / 10 conservative grants         |
+| `npm run test:e2e:maps:all`      | Recovery preset plus three players, two rounds and MID-ROUND reload                      | Up to 4 starts / 24 conservative grants         |
+
+For a focused three-player check, `npm run test:e2e:maps:multiround` runs only the two-round match, MID-ROUND reload and journals, with an allocation of 2 starts / 14 conservative grants. Recovery must restore the visible debrief with gameplay guessing unavailable and no recovery dialog before Next round.
+
+The Maps presets can spend quota: obtain approval before running them. They require the same isolated-local configuration and do not start or deploy services. Paid scenarios use Netherlands, one guess per player per round and a 90-second timer. Append `-- --list` to inspect collection without launching browsers or making provider calls. Keep `GEOBATTLES_E2E_READY_REJECTION=0` for these presets.
+
+Each invocation stops on its first failure and has no automatic retries. A failed provider request still consumes part of the allocation; retain its result and reconcile usage before a separately approved rerun. A provider HTTP failure is not a clean acceptance pass, nor by itself proof of a game-state defect. Offline/online recovery and page reload are different checks; these presets do not prove recovery after a backend restart or physical-device sleep.
+
 Paid execution needs separate approval of the remaining shared allocation, correctly restricted app keys and successful keyless checks. The following documents CLI policy, not permission to run it:
 
 ```sh
@@ -59,7 +76,7 @@ GEOBATTLES_E2E_MAPS=1 GEOBATTLES_E2E_MAPS_SCOPE=all GEOBATTLES_E2E_ROUND_BUDGET=
 | `recovery`      | Two players, completion/replay, PLAYING recovery, pre-initialization Maps-only retry |               2 |                               10 | 4, including two rejection probes |
 | `all` (default) | Recovery case plus three players/two rounds and MID-ROUND reload                     |               4 |                               24 | 6, including two rejection probes |
 
-Configured ceilings are 4 starts and 24 grants. Grants count authorization, not exact SDK constructors, backend metadata requests or billable units. Scope `recovery` requires its own approved/reconciled allocation and selects only `game.maps.spec.ts`; filtering does not reduce reservations. One ledger/halt flag spans the invocation. Reservations are not refunded after failure; new processes do not reset a real spending allowance.
+Configured ceilings per invocation are 4 starts and 24 grants. Grants count authorization, not exact SDK constructors, backend metadata requests or billable units. Scope `recovery` selects only `game.maps.spec.ts`. Scope `multiround` selects only `multiround.maps.spec.ts` and requires 2 starts, 14 grants and 2 START permits. Each focused scope requires its own approved/reconciled allocation; CLI filtering does not reduce reservations. One ledger/halt flag spans the invocation. Reservations are not refunded after failure; new processes do not reset a real spending allowance.
 
 Keep one worker/project, no retries/repetition/shards/replacement workers, and first-failure stop. Stop on unexpected provider/network/JS/protocol failure; do not retry with another country or bypass a selector. Already in-flight requests cannot be recalled. The real country-picker path selects NL; this limits variability without guaranteeing provider availability.
 

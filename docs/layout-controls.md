@@ -12,9 +12,13 @@ Native dialogs own focus/inert background, Escape, deliberate backdrop closing a
 
 Four labelled code boxes support ASCII capitalization, keyboard editing and valid code/same-origin-invite paste. Do not repair malformed Unicode/lookalike codes. Completing a valid code submits once; prevent concurrent submissions and keep an explicit retry after failure.
 
-The waiting room puts readiness/actions and people first on portrait screens, with optional settings behind disclosure. Wide landscape separates the settings inspector from roster/actions. Directory rows preserve search, sorting, capacity and phase eligibility rather than hiding metadata to fit.
+The waiting room puts readiness/actions and people first on portrait screens, followed by a visible game-plan map and essential settings. Included countries and advanced rules use disclosures. Wide landscape separates the settings inspector from roster/actions. Directory rows preserve search, sorting, capacity and phase eligibility rather than hiding metadata to fit.
+
+Keep region selection concise: mode buttons, one selected-region line, the map and a searchable flag list. Avoid repeated instructions, numbered steps and duplicate selection cards. Retain accessible search labels, selection/result announcements and map keyboard guidance even when their visible counterparts are unnecessary. The waiting-room overview shows region, map and essential values; scoring details belong in Advanced rules. Mobile controls use compact padding without shrinking touch targets below 44px.
 
 Settings use a local draft with explicit Save/Cancel. Escape/close/unmount never saves. Live membership/host/readiness updates continue while editing; loss of authority invalidates the editor. Backend broadcasts commit settings and ordinary settings changes preserve Ready values. [Regions](region-settings.md) covers geographic selection and Advanced scoring.
+
+Round time is locked until Edit is selected. Presets, a numeric stepper and a range edit a separate time draft; Save time confirms it into the settings draft, while Cancel or Escape discards it and restores focus. The outer Save settings stays blocked until that time edit is saved or cancelled. Rounds, guesses and capacity use bounded native number fields with 44px step buttons; narrow layouts stack the controls rather than squeezing their input targets.
 
 Recovery uses one short cause-specific sentence and two main choices: New lobby/Home for confirmed absence, Retry/Home after expiry, Keep waiting/Home during recovery. Delay the initial-admission modal so normal connection startup is not presented as a loss. Suppress only the exact duplicate connection alert, not unrelated action errors. Keep offline guards and the dismissed-dialog reopening control.
 

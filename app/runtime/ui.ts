@@ -54,10 +54,10 @@ export const createUIRuntime = (googleStore: ReturnType<typeof import("./google"
         else moveMapToPlaying();
         if (currentGameState.value === GameState.PLAYING && googleStore.isPanoramaInitialized) googleStore.getPanorama.setVisible(true);
     };
-    const mountingProcess = () => {
+    const mountingProcess = (host?: HTMLElement) => {
         detach();
-        if (!googleStore.isMapInitialized) return;
-        googleMap.value = googleStore.getMapHTML;
+        if (!host && !googleStore.isMapInitialized) return;
+        googleMap.value = host ?? googleStore.getMapHTML;
         mapObserver = new ResizeObserver(refreshMapLayout);
         mapObserver.observe(googleMap.value);
         stateWatcher = watch(currentGameState, positionMap, { immediate: true, flush: "post" });

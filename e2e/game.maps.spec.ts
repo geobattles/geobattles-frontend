@@ -206,7 +206,7 @@ test("real Maps round: map-only retry, recovery clock, ordered results, ready-ga
     await leave(host);
     await disposed(lobbyId);
     for (const actor of [host, peer]) {
-        await actor.page.goto("/journal", { waitUntil: "domcontentloaded" });
+        await actor.goto("/journal");
         await expect(actor.page.getByText(/local.*device|this device|stored locally/i).first()).toBeVisible();
         await expect(actor.page.getByTestId("journal-entry")).toHaveCount(2);
         const results = actor === host ? [first, second] : [peerFirst, peerSecond];

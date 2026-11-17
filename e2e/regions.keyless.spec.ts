@@ -20,6 +20,7 @@ test("regions: presets, single-country map, Custom, adaptive scoring and compact
     const catalog: CountryCatalog = await catalogResponse.json();
     const page = host.page;
     const dialog = page.getByRole("dialog", { name: /^lobby settings$/i });
+    let expectedRoundTime = Number(host.latest!.conf.roundTime);
     const open = async () => {
         await page.getByRole("button", { name: /^(modify|edit settings|settings)$/i }).click();
         await expect(dialog.getByRole("button", { name: /^world$/i })).toBeEnabled();
@@ -32,21 +33,90 @@ test("regions: presets, single-country map, Custom, adaptive scoring and compact
             mark
         );
         expect(Object.values(snapshot.playerList).every((player) => player.ready)).toBe(true);
+        expect(snapshot.conf.roundTime).toBe(expectedRoundTime);
         await expect(dialog).toHaveCount(0);
         if (mode === "auto") expect(Number(snapshot.conf.scoreScaleKm)).toBeCloseTo(regionScoreScale(codes, catalog), 6);
         return snapshot;
     };
     await open();
     await expect(dialog.getByRole("button", { name: /^world$/i })).toHaveAttribute("aria-pressed", "true");
-    await expect(dialog.getByRole("searchbox", { name: /^find a country$/i })).toHaveCount(0);
-    const countrySearch = dialog.getByRole("searchbox", { name: /^search countries$/i });
-    const countrySelect = dialog.getByRole("combobox", { name: /^country$/i });
+    await expect(dialog.getByRole("searchbox", { name: /^find countries$/i })).toHaveCount(0);
+    const countrySearch = dialog.getByRole("searchbox", { name: /^choose a country$/i });
+    const countryResults = dialog.getByRole("group", { name: /^country search results$/i });
+    const sloveniaRow = countryResults.getByRole("button", { name: /^Slovenia SI$/ });
+    const selectedCountry = dialog.locator(".current-country");
     await expect(countrySearch).toHaveCount(0);
     await expect(dialog.getByRole("slider", { name: /^score factor/i })).toBeHidden();
+    // The locked timer has no editable inputs; drafts must be confirmed locally
+    // before the outer settings form may publish them to the ready peer.
+    const timer = dialog.locator(".timer-setting");
+    const editTime = timer.getByRole("button", { name: /^edit$/i });
+    const seconds = timer.getByRole("spinbutton", { name: /^time in seconds$/i });
+    const adjustment = timer.getByRole("slider", { name: /^round timer adjustment$/i });
+    const saveTime = timer.getByRole("button", { name: /^save time$/i });
+    const saveSettings = dialog.getByRole("button", { name: /^save settings$/i });
+    await expect(seconds).toHaveCount(0);
+    await expect(adjustment).toHaveCount(0);
+    await expect(timer.locator(".timer-value strong")).toHaveText(String(expectedRoundTime));
+    await editTime.click();
+    await expect(seconds).toBeFocused();
+    await expect(seconds).toHaveValue(String(expectedRoundTime));
+    await expect(saveSettings).toBeDisabled();
+    for (const invalid of ["19", "201", "20.5", ""]) {
+        await seconds.fill(invalid);
+        await expect(saveTime).toBeDisabled();
+        await expect(saveSettings).toBeDisabled();
+        expect(await seconds.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
+    }
+    const cancelledTime = expectedRoundTime === 60 ? 30 : 60;
+    await timer
+        .getByRole("group", { name: /^round time presets$/i })
+        .getByRole("button", { name: `${cancelledTime}s`, exact: true })
+        .click();
+    await expect(seconds).toHaveValue(String(cancelledTime));
+    await seconds.press("Enter");
+    await expect(dialog).toBeVisible();
+    await expect(saveSettings).toBeDisabled();
+    await timer.getByRole("button", { name: /^cancel$/i }).click();
+    await expect(editTime).toBeFocused();
+    await expect(seconds).toHaveCount(0);
+    await expect(timer.locator(".timer-value strong")).toHaveText(String(expectedRoundTime));
+    await expect(saveSettings).toBeEnabled();
+    await editTime.click();
+    await expect(seconds).toHaveValue(String(expectedRoundTime));
+    await adjustment.press("Home");
+    await expect(seconds).toHaveValue("20");
+    await expect(timer.getByRole("button", { name: /^decrease time in seconds$/i })).toBeDisabled();
+    await adjustment.press("End");
+    await expect(seconds).toHaveValue("200");
+    await expect(timer.getByRole("button", { name: /^increase time in seconds$/i })).toBeDisabled();
+    await timer
+        .getByRole("group", { name: /^round time presets$/i })
+        .getByRole("button", { name: "90s", exact: true })
+        .click();
+    await timer.getByRole("button", { name: /^increase time in seconds$/i }).click();
+    await expect(seconds).toHaveValue("91");
+    await expect(adjustment).toHaveValue("91");
+    await saveTime.click();
+    expect(peer.latest!.conf.roundTime, "Save time confirms only the local draft, not the lobby settings").toBe(expectedRoundTime);
+    expectedRoundTime = 91;
+    await expect(editTime).toBeFocused();
+    await expect(adjustment).toHaveCount(0);
+    await expect(timer.locator(".timer-value strong")).toHaveText("91");
+    await expect(saveSettings).toBeEnabled();
+    await editTime.click();
+    await expect(seconds).toHaveValue("91");
+    await seconds.fill("92");
+    await seconds.press("Escape");
+    await expect(dialog).toBeVisible(); // Escape cancels the nested timer edit, not the whole settings dialog.
+    await expect(editTime).toBeFocused();
+    await expect(seconds).toHaveCount(0);
+    await expect(timer.locator(".timer-value strong")).toHaveText("91");
     for (const viewport of [
         { width: 320, height: 568 },
         { width: 390, height: 844 },
         { width: 568, height: 256 },
+        { width: 568, height: 320 },
         { width: 844, height: 390 },
         { width: 1024, height: 768 },
     ]) {
@@ -70,13 +140,47 @@ test("regions: presets, single-country map, Custom, adaptive scoring and compact
         expect(measures.overflow, "No horizontal scrolling inside settings").toBe(false);
         expect(measures.undersized, "Ordinary controls retain 44px targets").toEqual([]);
         await expect(dialog.getByRole("button", { name: /^save settings$/i })).toBeInViewport();
+        await editTime.click();
+        await expect(seconds).toHaveValue(String(expectedRoundTime));
+        await expect(saveSettings).toBeDisabled();
+        const timePresets = timer.getByRole("group", { name: /^round time presets$/i });
+        await expect(timePresets.getByRole("button")).toHaveCount(4);
+        const presetMeasures = await timePresets.evaluate((group) => {
+            const bounds = group.getBoundingClientRect();
+            // DOMRect arithmetic differs by tiny fractions of a CSS pixel in Firefox.
+            const epsilon = 0.01;
+            return Array.from(group.querySelectorAll("button"), (button) => {
+                const rect = button.getBoundingClientRect();
+                return {
+                    label: button.textContent,
+                    fits: rect.left >= bounds.left - epsilon && rect.right <= bounds.right + epsilon && rect.top >= bounds.top - epsilon && rect.bottom <= bounds.bottom + epsilon,
+                    width: rect.width,
+                    height: rect.height,
+                };
+            });
+        });
+        for (const preset of presetMeasures) {
+            expect(preset.fits, `${preset.label} stays inside its group at ${viewport.width}x${viewport.height}`).toBe(true);
+            expect(preset.width).toBeGreaterThanOrEqual(44);
+            expect(preset.height).toBeGreaterThanOrEqual(44);
+        }
+        await timePresets.getByRole("button", { name: `${cancelledTime}s`, exact: true }).click();
+        await expect(seconds).toHaveValue(String(cancelledTime));
+        await expect(saveSettings).toBeDisabled();
+        await timer.getByRole("button", { name: /^cancel$/i }).click();
+        await expect(seconds).toHaveCount(0);
+        await expect(timer.locator(".timer-value strong")).toHaveText(String(expectedRoundTime));
+        await expect(saveSettings).toBeEnabled();
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await dialog.getByRole("button", { name: /^country$/i }).click();
-    await expect(countrySelect).toHaveValue("");
-    expect(await countrySelect.evaluate((element: HTMLSelectElement) => element.required && element.validity.valueMissing)).toBe(true);
+    await expect(selectedCountry).toHaveCount(0);
+    await expect.poll(() => countrySearch.evaluate((element: HTMLInputElement) => element.validity.customError)).toBe(true);
+    await expect.poll(() => countrySearch.evaluate((element: HTMLInputElement) => element.validationMessage)).toBe("Choose one country from the results or map.");
+    await expect(saveSettings).toBeEnabled(); // Native custom validity, not a disabled submit button, rejects this draft.
     await dialog.getByRole("button", { name: /^save settings$/i }).click();
     await expect(dialog).toBeVisible(); // Opening Country cannot save the previous World selection.
+    await expect(countrySearch).toBeFocused();
     await dialog.getByRole("button", { name: /^continents$/i }).click();
     await expect(countrySearch).toHaveCount(0);
     await dialog.getByRole("button", { name: /^europe$/i }).click();
@@ -84,23 +188,28 @@ test("regions: presets, single-country map, Custom, adaptive scoring and compact
 
     await open();
     await dialog.getByRole("button", { name: /^country$/i }).click();
-    await expect(countrySelect).toHaveValue("");
+    await expect(selectedCountry).toHaveCount(0);
     await countrySearch.fill("sI");
-    await expect(countrySelect.locator('option[value="SI"]')).toHaveText("Slovenia"); // Code is not a substring of its name.
+    await expect(sloveniaRow).toBeVisible(); // Code is not a substring of its name.
+    await expect(sloveniaRow.locator(".country-flag")).toHaveCSS("background-image", /flags32\.webp/);
     await countrySearch.fill("sLoVeNiA");
-    await expect(countrySelect.locator('option:not([value=""])')).toHaveText(["Slovenia"]);
-    await expect(countrySelect).toHaveValue(""); // Filtering never chooses the first match.
-    await countrySelect.selectOption("SI");
+    await expect(countryResults.getByRole("button")).toHaveCount(1);
+    await expect(sloveniaRow).toHaveAttribute("aria-pressed", "false"); // Filtering never chooses the first match.
+    await expect.poll(() => countrySearch.evaluate((element: HTMLInputElement) => element.validity.customError)).toBe(true);
+    await countrySearch.press("ArrowDown");
+    await expect(sloveniaRow).toBeFocused();
+    await sloveniaRow.press("Enter");
+    await expect(sloveniaRow).toHaveAttribute("aria-pressed", "true");
+    await expect.poll(() => countrySearch.evaluate((element: HTMLInputElement) => element.validity.valid)).toBe(true);
     await countrySearch.fill("no-such-country");
-    await expect(dialog.getByText("No countries match your search.", { exact: true })).toBeVisible();
-    await expect(countrySelect).toHaveValue("SI");
-    await expect(countrySelect.locator("option:checked")).toContainText("Slovenia");
+    await expect(dialog.getByText("No countries match these filters.", { exact: true })).toBeVisible();
+    await expect(selectedCountry).toContainText("Slovenia");
     await countrySearch.press("Enter");
     await expect(dialog).toBeVisible(); // Search Enter must not submit a valid draft either.
     await dialog.getByRole("button", { name: /^clear country search$/i }).click();
     await expect(countrySearch).toHaveValue("");
-    await expect(countrySelect.locator('option:not([value=""])')).toHaveCount(catalog.countries.length);
-    await expect(countrySelect).toHaveValue("SI");
+    await expect(countryResults.getByRole("button")).toHaveCount(catalog.countries.length);
+    await expect(sloveniaRow).toHaveAttribute("aria-pressed", "true");
     await countrySearch.fill("no-such-country");
     const small = await save(["SI"]);
     expect(Number(small.conf.scoreScaleKm)).toBeLessThan(catalog.scoring.worldHalfKm);
@@ -132,12 +241,18 @@ test("regions: presets, single-country map, Custom, adaptive scoring and compact
         }),
         "The keyboard focus indicator must intersect the visible map"
     ).toBe(true);
+    await page.keyboard.press("ArrowRight");
+    await expect.poll(() => page.evaluate(() => document.activeElement?.getAttribute("data-country"))).not.toBe(focusedCountry);
+    await expect(oceania).toHaveAttribute("aria-pressed", "true"); // Browsing the SVG must not choose another region.
+    await page.keyboard.press("ArrowLeft");
+    await expect.poll(() => page.evaluate(() => document.activeElement?.getAttribute("data-country"))).toBe(focusedCountry);
     await page.keyboard.press("Enter");
     await expect(oceania).toHaveAttribute("aria-pressed", "true");
     await dialog.getByRole("button", { name: /^country$/i }).click();
     await expect(countrySearch).toHaveValue("");
-    await expect(countrySelect.locator('option:not([value=""])')).toHaveCount(catalog.countries.length);
-    await dialog.getByRole("combobox", { name: /^country$/i }).selectOption("SI");
+    await expect(countryResults.getByRole("button")).toHaveCount(catalog.countries.length);
+    await countrySearch.fill("SI");
+    await sloveniaRow.click();
     const advanced = dialog.locator("details.advanced-settings");
     await advanced.locator("summary").click();
     await expect(advanced.getByRole("checkbox", { name: /^automatic scoring/i })).toBeChecked();
@@ -150,35 +265,40 @@ test("regions: presets, single-country map, Custom, adaptive scoring and compact
     expect(manual.conf.scoreFactor).toBe(2);
     await open();
     await countrySearch.fill("lU");
-    await expect(countrySelect.locator('option[value="LU"]')).toHaveText("Luxembourg");
-    await expect(countrySelect).toHaveValue("SI");
-    await countrySelect.selectOption("LU");
-    await expect(countrySelect).toHaveValue("LU");
+    const luxembourgRow = countryResults.getByRole("button", { name: /^Luxembourg LU$/ });
+    await expect(luxembourgRow).toBeVisible();
+    await expect(selectedCountry).toContainText("Slovenia");
+    await luxembourgRow.click();
+    await expect(luxembourgRow).toHaveAttribute("aria-pressed", "true");
     await save(["LU"]); // A different region resets the manual override.
 
     await open();
     await dialog.getByRole("button", { name: /^custom$/i }).click();
     await expect(countrySearch).toHaveCount(0);
-    await dialog.getByRole("button", { name: /^clear$/i }).click();
+    await dialog.getByRole("button", { name: /^clear selection$/i }).click();
     await expect(dialog.getByRole("button", { name: /^save settings$/i })).toBeDisabled();
-    const search = dialog.getByRole("searchbox", { name: /^find a country$/i });
+    const search = dialog.getByRole("searchbox", { name: /^find countries$/i });
+    const customResults = dialog.getByRole("group", { name: /^custom country search results$/i });
     for (const country of ["SI", "NZ"]) {
         await search.fill(country);
-        await dialog.locator(`input[type="checkbox"][value="${country}"]`).check();
+        const choice = customResults.locator(`input[type="checkbox"][value="${country}"]`);
+        await choice.check();
+        await expect(choice).toBeChecked();
     }
     const custom = await save(["SI", "NZ"]);
     expect(Number(custom.conf.scoreScaleKm)).toBeGreaterThan(Number(small.conf.scoreScaleKm));
     await open();
     await expect(dialog.getByRole("button", { name: /^custom$/i })).toHaveAttribute("aria-pressed", "true");
     await dialog.getByRole("button", { name: /^country$/i }).click();
-    await expect(countrySelect).toHaveValue("");
-    expect(await countrySelect.evaluate((element: HTMLSelectElement) => element.validity.valueMissing)).toBe(true);
+    await expect(selectedCountry).toHaveCount(0);
+    await expect.poll(() => countrySearch.evaluate((element: HTMLInputElement) => element.validity.customError)).toBe(true);
     await dialog.getByRole("button", { name: /^save settings$/i }).click();
     await expect(dialog).toBeVisible(); // A multi-country Custom draft also needs an explicit single choice.
     const slovenia = dialog.locator('[data-country="SI"]').first();
     await slovenia.focus();
     await slovenia.press("Enter");
-    await expect(dialog.getByRole("combobox", { name: /^country$/i })).toHaveValue("SI");
+    await expect(sloveniaRow).toHaveAttribute("aria-pressed", "true");
+    await expect.poll(() => countrySearch.evaluate((element: HTMLInputElement) => element.validity.valid)).toBe(true);
     await save(["SI"]);
     await open();
     await dialog.getByRole("button", { name: /^world$/i }).click();
@@ -191,34 +311,80 @@ test("regions: presets, single-country map, Custom, adaptive scoring and compact
     await peer.page.getByRole("button", { name: /^(modify|edit settings|settings)$/i }).click();
     const desktop = peer.page.getByRole("dialog", { name: /^lobby settings$/i });
     await desktop.getByRole("button", { name: /^country$/i }).click();
+    const map = desktop.getByRole("group", { name: /^choose a playable region$/i });
+    const worldView = await map.getAttribute("viewBox");
+    expect(worldView).not.toBeNull();
+    const worldSelectedCount = await map.locator('[data-country][aria-pressed="true"]').count();
+    expect(worldSelectedCount).toBeGreaterThan(1);
     // Select through a real pointer hit on a filled local SVG path (not a synthetic event).
     const france = desktop.locator('[data-country="FR"]').first();
     await france.scrollIntoViewIfNeeded();
-    const point = await france.evaluate((target) => {
-        const paths = target instanceof SVGGeometryElement ? [target] : Array.from(target.querySelectorAll<SVGGeometryElement>("path"));
-        const viewport = (target as SVGElement).ownerSVGElement?.getBoundingClientRect();
-        if (!viewport) return null;
-        for (const path of paths) {
-            const bounds = path.getBBox();
-            const matrix = path.getScreenCTM();
-            if (!matrix) continue;
-            const topLeft = new DOMPoint(bounds.x, bounds.y).matrixTransform(matrix);
-            const bottomRight = new DOMPoint(bounds.x + bounds.width, bounds.y + bounds.height).matrixTransform(matrix);
-            const inverse = matrix.inverse();
-            // Compound paths include overseas territories. A coarse 9x9 grid
-            // over that huge box can miss every visible land fragment.
-            for (let y = Math.max(viewport.top, topLeft.y) + 1; y < Math.min(viewport.bottom, bottomRight.y); y += 2)
-                for (let x = Math.max(viewport.left, topLeft.x) + 1; x < Math.min(viewport.right, bottomRight.x); x += 2) {
-                    const local = new DOMPoint(x, y).matrixTransform(inverse);
-                    if (!path.isPointInFill(local)) continue;
-                    if (document.elementFromPoint(x, y)?.closest("[data-country]")?.getAttribute("data-country") === "FR") return { x, y };
-                }
-        }
-        return null;
-    });
+    const francePoint = () =>
+        france.evaluate((target) => {
+            const paths = target instanceof SVGGeometryElement ? [target] : Array.from(target.querySelectorAll<SVGGeometryElement>("path"));
+            const viewport = (target as SVGElement).ownerSVGElement?.getBoundingClientRect();
+            if (!viewport) return null;
+            for (const path of paths) {
+                const bounds = path.getBBox();
+                const matrix = path.getScreenCTM();
+                if (!matrix) continue;
+                const topLeft = new DOMPoint(bounds.x, bounds.y).matrixTransform(matrix);
+                const bottomRight = new DOMPoint(bounds.x + bounds.width, bounds.y + bounds.height).matrixTransform(matrix);
+                const inverse = matrix.inverse();
+                // Compound paths include overseas territories. A coarse 9x9 grid
+                // over that huge box can miss every visible land fragment.
+                for (let y = Math.max(viewport.top, topLeft.y) + 1; y < Math.min(viewport.bottom, bottomRight.y); y += 2)
+                    for (let x = Math.max(viewport.left, topLeft.x) + 1; x < Math.min(viewport.right, bottomRight.x); x += 2) {
+                        const local = new DOMPoint(x, y).matrixTransform(inverse);
+                        if (!path.isPointInFill(local)) continue;
+                        if (document.elementFromPoint(x, y)?.closest("[data-country]")?.getAttribute("data-country") === "FR") return { x, y };
+                    }
+            }
+            return null;
+        });
+    let point = await francePoint();
     expect(point, "A visible France path must have a genuine pointer hit target").not.toBeNull();
+    const mapBounds = await map.boundingBox();
+    expect(mapBounds).not.toBeNull();
+    const pan = point!.x + 40 < mapBounds!.x + mapBounds!.width ? 40 : -40;
+    await peer.page.mouse.move(point!.x, point!.y);
+    await peer.page.mouse.down();
+    await peer.page.mouse.move(point!.x + pan, point!.y, { steps: 8 });
+    await peer.page.mouse.up();
+    await expect(map).not.toHaveAttribute("viewBox", worldView!);
+    // Starting a drag on France must not replace World with France on release.
+    await expect(map.locator('[data-country][aria-pressed="true"]')).toHaveCount(worldSelectedCount);
+    await expect(desktop.locator(".current-country")).toHaveCount(0);
+    await expect.poll(() => desktop.getByRole("searchbox", { name: /^choose a country$/i }).evaluate((input: HTMLInputElement) => input.validity.customError)).toBe(true);
+    await desktop.getByRole("button", { name: /^reset map$/i }).click();
+    await expect(map).toHaveAttribute("viewBox", worldView!);
+    await france.scrollIntoViewIfNeeded();
+    point = await francePoint();
+    expect(point, "France must still have a genuine hit target after resetting the panned map").not.toBeNull();
     await peer.page.mouse.click(point!.x, point!.y);
-    await expect(desktop.getByRole("combobox", { name: /^country$/i })).toHaveValue("FR");
+    const franceRow = desktop.getByRole("group", { name: /^country search results$/i }).getByRole("button", { name: /^France FR$/ });
+    const selectedShapes = map.locator('[data-country][aria-pressed="true"]');
+    const unchangedSelection = async () => {
+        await expect(franceRow).toHaveAttribute("aria-pressed", "true");
+        await expect(selectedShapes).toHaveCount(1);
+        await expect(selectedShapes).toHaveAttribute("data-country", "FR");
+    };
+    await unchangedSelection();
+    await expect(map).toHaveAttribute("viewBox", worldView!); // A direct map choice preserves the user's camera.
+    await desktop.getByRole("button", { name: /^zoom in$/i }).click();
+    await expect(map).not.toHaveAttribute("viewBox", worldView!);
+    await unchangedSelection();
+    await desktop.getByRole("button", { name: /^zoom out$/i }).click();
+    await expect.poll(() => map.evaluate((svg: SVGSVGElement) => svg.viewBox.baseVal.width)).toBe(Number(worldView!.split(" ")[2]));
+    await unchangedSelection();
+    await desktop.getByRole("button", { name: /^zoom in$/i }).click();
+    await desktop.getByRole("button", { name: /^reset map$/i }).click();
+    await expect(map).toHaveAttribute("viewBox", worldView!);
+    await expect(desktop.getByRole("button", { name: /^reset map$/i })).toBeDisabled();
+    await unchangedSelection();
+    await desktop.getByRole("button", { name: /^fit selection$/i }).click();
+    await expect(map).not.toHaveAttribute("viewBox", worldView!);
+    await unchangedSelection();
     await peer.page.keyboard.press("Escape");
     await expect(desktop).toHaveCount(0);
     await expect(peer.page.getByRole("button", { name: /^(modify|edit settings|settings)$/i })).toBeFocused();

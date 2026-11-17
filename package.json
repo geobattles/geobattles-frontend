@@ -18,7 +18,11 @@
         "typecheck": "nuxt typecheck",
         "check": "npm run format:check && npm run typecheck && npm run build",
         "test:socket": "node tools/socket-smoke.mjs",
-        "test:e2e": "playwright test"
+        "test:e2e": "playwright test",
+        "test:e2e:keyless": "GEOBATTLES_E2E_MAPS=0 GEOBATTLES_E2E_MAPS_SCOPE=all playwright test",
+        "test:e2e:maps:recovery": "GEOBATTLES_E2E_MAPS=1 GEOBATTLES_E2E_MAPS_SCOPE=recovery playwright test --project=maps",
+        "test:e2e:maps:multiround": "GEOBATTLES_E2E_MAPS=1 GEOBATTLES_E2E_MAPS_SCOPE=multiround playwright test --project=maps",
+        "test:e2e:maps:all": "GEOBATTLES_E2E_MAPS=1 GEOBATTLES_E2E_MAPS_SCOPE=all playwright test --project=maps"
     },
     "devDependencies": {
         "@nuxtjs/tailwindcss": "6.14.0",

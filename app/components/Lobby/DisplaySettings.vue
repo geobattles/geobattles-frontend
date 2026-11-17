@@ -1,13 +1,17 @@
 <template>
     <div v-if="conf" class="settings-display">
         <div class="region-summary">
-            <span class="section-label">Play region</span>
-            <strong>{{ selectedRegion }}</strong>
+            <div class="region-title">
+                <span v-if="selectedCodes.length === 1" class="flag" :style="{ backgroundPosition: getFlagBackgroundPosition(selectedCodes[0]!) }" aria-hidden="true" /><strong>{{
+                    selectedRegion
+                }}</strong>
+            </div>
             <p>
-                {{ conf.mode === 1 ? "Battle Royale" : "Country Battle (unfinished)"
-                }}<span v-if="conf.mode === 1"> · {{ conf.scoringMode === "auto" ? "Automatic scoring" : "Manual scoring" }}</span>
+                {{ conf.mode === 1 ? "Battle Royale" : "Country Battle (unfinished)" }}
             </p>
         </div>
+        <RegionMap v-if="catalog" class="region-overview" :catalog="catalog" :selected-codes="selectedCodes" :mode="overviewMode" readonly />
+
         <dl class="settings-summary">
             <div>
                 <dt>Round time</dt>
@@ -18,7 +22,7 @@
                 <dd>{{ conf.numRounds }}</dd>
             </div>
             <div>
-                <dt>Guesses per round</dt>
+                <dt>Guesses / round</dt>
                 <dd>{{ conf.numAttempt }}</dd>
             </div>
         </dl>
@@ -28,7 +32,9 @@
             </summary>
             <div class="country-preview" tabindex="0" role="region" aria-label="Selected countries">
                 <span v-for="code in selectedCodes" :key="code" class="country-chip"
-                    ><span class="flag" :style="{ backgroundPosition: getFlagBackgroundPosition(code) }" aria-hidden="true" />{{ flags.get(code)?.name || code }}</span
+                    ><span class="flag" :style="{ backgroundPosition: getFlagBackgroundPosition(code) }" aria-hidden="true" />{{
+                        countryDisplayName(code, flags.get(code)?.name)
+                    }}</span
                 >
             </div>
         </details>
@@ -65,7 +71,10 @@
     <p v-else class="muted">Waiting for the server’s lobby settings.</p>
 </template>
 <script setup lang="ts">
-import { regionLabel } from "~/utils/regionScoring";
+import RegionMap from "./Settings/RegionMap.vue";
+import { regionLabel, sameCountries } from "~/utils/regionScoring";
+import type { RegionPickerMode } from "~/types/regions";
+import { countryDisplayName } from "~/utils/countryDisplayName";
 const lobby = useLobbyStore();
 const conf = computed(() => lobby.lobbySettings?.conf);
 const countries = useCountryList();
@@ -73,10 +82,22 @@ const catalog = useCountryCatalog();
 const flags = useCountriesFlagMap();
 const { getFlagBackgroundPosition } = useCountryActions();
 const { fetchCountryCatalog } = useRegionActions();
-const selectedCodes = computed(() => [...new Set(conf.value?.ccList.length ? conf.value.ccList : countries.value)]);
+const selectedCodes = computed(() => [...new Set(conf.value?.ccList.length ? conf.value.ccList : (catalog.value?.countries.map((country) => country.code) ?? countries.value))]);
+const overviewMode = computed<RegionPickerMode>(() => {
+    if (
+        !conf.value?.ccList.length ||
+        (catalog.value &&
+            sameCountries(
+                selectedCodes.value,
+                catalog.value.countries.map((country) => country.code)
+            ))
+    )
+        return "world";
+    return selectedCodes.value.length === 1 ? "country" : "custom";
+});
 const selectedRegion = computed(() => {
     const codes = conf.value?.ccList ?? [];
-    if (codes.length === 1 && !catalog.value) return flags.value.get(codes[0]!)?.name ?? codes[0]!;
+    if (codes.length === 1) return countryDisplayName(codes[0]!, flags.value.get(codes[0]!)?.name);
     return regionLabel(codes, catalog.value);
 });
 onMounted(() => {
@@ -100,6 +121,15 @@ onMounted(() => {
     color: var(--gb-accent);
     overflow-wrap: anywhere;
 }
+.region-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+.region-overview {
+    margin-bottom: 0.6rem;
+}
+
 .region-summary p {
     font-size: 0.72rem;
     color: var(--gb-muted);
@@ -109,6 +139,12 @@ onMounted(() => {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0.65rem;
     margin: 0 0 0.75rem;
+}
+.settings-summary > div {
+    padding: 0.65rem;
+    background: #18181880;
+    border: 1px solid var(--gb-line);
+    border-radius: 8px;
 }
 .settings-summary dt,
 .rule-list dt {

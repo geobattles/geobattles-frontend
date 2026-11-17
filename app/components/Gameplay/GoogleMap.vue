@@ -10,6 +10,7 @@ export default {
     setup(props) {
         const google_map = useTemplateRef<HTMLElement>("google_map");
         const googleStore = useGoogleStore();
+        const ui = useUIManagerStore();
         const mode = useGameMode();
         const { lobbySettings } = useLobbyState();
         const owner = useNuxtApp().$gameRuntime.battleRoyale;
@@ -52,6 +53,9 @@ export default {
             const isGoogleCurrent = googleStore.captureGeneration();
             const isCurrent = () => !unmounted && isGoogleCurrent() && host === google_map.value && isViewCurrent();
             googleStore.setMapHTML(host);
+            // Cold result recovery starts in a retained, hidden gameplay view.
+            // Move its host into the current phase slot before SDK construction.
+            ui.mountingProcess(host);
             void googleStore
                 .initializeGoogleMap(host, isCurrent)
                 // The scoped Maps recovery panel owns this error, not a global toast.

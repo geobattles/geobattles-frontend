@@ -1,7 +1,8 @@
 <template>
     <div class="invite-link">
         <button type="button" class="btn btn-secondary" :aria-label="copied ? 'Invite copied' : 'Copy invite link'" :disabled="!inviteLink || copying" @click="copy">
-            <UiIcon :name="copied ? 'check' : 'copy'" />{{ copied ? "Copied" : "Copy invite" }}
+            <UiIcon :name="copied ? 'check' : 'copy'" /><span class="invite-label">{{ copied ? "Copied" : "Copy invite" }}</span>
+            <span class="invite-compact-label">{{ copied ? "Copied" : "Invite" }}</span>
         </button>
         <div v-if="manual" class="field mt-3">
             <label :for="inputId">Copy this invite link</label><input :id="inputId" ref="input" class="input" :value="inviteLink" readonly @focus="select" />
@@ -61,3 +62,8 @@ onBeforeUnmount(() => {
     clearTimeout(timer);
 });
 </script>
+<style scoped>
+.invite-compact-label {
+    display: none;
+}
+</style>
