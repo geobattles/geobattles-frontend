@@ -6,11 +6,10 @@
                 <p class="welcome-label">Welcome to</p>
                 <h1 id="welcome-title">GeoBattles</h1>
                 <div class="play-card">
-                    <button class="btn btn-command play-button" type="button" :disabled="creating" :aria-busy="creating" @click="play">
-                        <span>{{ creating ? "Creating lobby…" : "PLAY NOW" }}</span
-                        ><span v-if="creating" class="spinner" /><UiIcon v-else name="arrow" />
+                    <NuxtLink class="btn btn-command join-button" to="/lobby/join">Join with code <UiIcon name="arrow" /></NuxtLink>
+                    <button class="btn btn-secondary create-button" type="button" :disabled="creating" :aria-busy="creating" @click="create">
+                        {{ creating ? "Creating lobby…" : "Create lobby" }}<span v-if="creating" class="spinner" />
                     </button>
-                    <p class="join-prompt">or join a lobby by <NuxtLink to="/lobby/join">game code!</NuxtLink></p>
                 </div>
             </section>
         </main>
@@ -21,16 +20,16 @@ const auth = useAuthStore();
 const { createLobby } = useLobbyStore();
 const toast = useToast();
 const creating = ref(false);
-const awaitingSignIn = ref(false);
+const awaitingAuth = ref(false);
 let active = true;
-const play = async () => {
+const create = async () => {
     if (!active || creating.value) return;
     if (!auth.isAuthenticated) {
-        awaitingSignIn.value = true;
-        auth.isLoginDialog = true;
+        awaitingAuth.value = true;
+        auth.openLoginDialog("guest");
         return;
     }
-    awaitingSignIn.value = false;
+    awaitingAuth.value = false;
     creating.value = true;
     try {
         await createLobby();
@@ -43,18 +42,18 @@ const play = async () => {
 watch(
     () => auth.isAuthenticated,
     (signedIn) => {
-        if (signedIn && awaitingSignIn.value) void play();
+        if (signedIn && awaitingAuth.value) void create();
     }
 );
 watch(
     () => auth.isLoginDialog,
     (open) => {
-        if (!open && !auth.isAuthenticated) awaitingSignIn.value = false;
+        if (!open && !auth.isAuthenticated) awaitingAuth.value = false;
     }
 );
 onBeforeUnmount(() => {
     active = false;
-    awaitingSignIn.value = false;
+    awaitingAuth.value = false;
 });
 useHead({ title: "GeoBattles" });
 </script>
@@ -127,26 +126,17 @@ h1 {
     margin-top: clamp(1.25rem, 4vw, 2rem);
     border-top: 1px solid var(--gb-line);
 }
-.play-button {
+.join-button {
     width: 100%;
     min-height: 56px;
     justify-content: space-between;
     padding-inline: 1.25rem;
     font-size: 0.95rem;
     font-weight: 800;
-    letter-spacing: 0.16em;
+    letter-spacing: normal;
 }
-.join-prompt {
-    color: var(--gb-muted);
-    font-size: clamp(0.75rem, 3vw, 0.85rem);
-}
-.join-prompt a {
-    display: inline-flex;
-    align-items: center;
+.create-button {
     min-height: 44px;
-    color: var(--gb-accent);
-    text-decoration: underline;
-    text-underline-offset: 4px;
 }
 @media (min-width: 1024px) {
     .landing-main {
@@ -177,9 +167,8 @@ h1 {
     .play-card {
         margin-top: 0.75rem;
         padding-top: 0.75rem;
-        gap: 0;
     }
-    .play-button {
+    .join-button {
         min-height: 52px;
     }
 }

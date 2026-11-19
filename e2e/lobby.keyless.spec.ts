@@ -28,9 +28,9 @@ test("independent guests: invite, settings, ready gate, reload, offline recovery
             })
             .toBe(true);
     };
-    await expect(start).toBeDisabled();
+    await expect(start).toHaveCount(0);
     await setReady(host, true);
-    await expect(start).toBeDisabled();
+    await expect(start).toHaveCount(0);
     await setReady(peer, true);
     await readyStartState(); // Blank-key builds intentionally keep START disabled; guards still forbid every START.
     await expect(host.row(peer.name)).toHaveAttribute("data-ready", "true");

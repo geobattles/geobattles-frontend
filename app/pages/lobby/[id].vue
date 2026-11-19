@@ -3,17 +3,15 @@
         <Header />
         <main id="main-content" class="page-shell waiting-lobby">
             <div class="page-heading">
-                <div>
-                    <h1 class="command-heading" data-testid="lobby-name">{{ mounted && waitingView ? lobby.lobbySettings?.conf.name || "Lobby" : "Lobby" }}</h1>
-                </div>
+                <h1 class="command-heading" data-testid="lobby-name">{{ mounted && waitingView ? lobby.lobbySettings?.conf.name || "Lobby" : "Lobby" }}</h1>
                 <LobbyLeave v-if="mounted && waitingView" class="lobby-leave" @click="leave" />
             </div>
             <ClientOnly>
                 <SocketSessionFeedback :retained="waitingView" @leaveLobby="leave" />
                 <div v-if="waitingView" class="lobby-layout">
-                    <section class="lobby-actions" aria-label="Get ready to play">
+                    <div class="lobby-actions">
                         <LobbyStartGame />
-                    </section>
+                    </div>
                     <section class="room-invite" aria-label="Invite friends">
                         <div class="room-code">
                             <span class="section-label">Game code</span
@@ -129,7 +127,7 @@ useHead({ title: "Lobby" });
     background: var(--gb-surface);
     box-shadow: 0 16px 48px #0003;
 }
-.lobby-layout > section {
+.lobby-layout > * {
     min-width: 0;
     padding: 1rem;
 }
@@ -196,43 +194,23 @@ useHead({ title: "Lobby" });
         border-bottom: 0;
     }
 }
-@media (max-height: 540px) and (orientation: landscape) {
+@media (max-width: 640px), (max-height: 540px) and (orientation: landscape) {
     .waiting-lobby {
-        padding-block: 0.625rem;
+        padding-block: 0.5rem;
     }
-    .waiting-lobby .page-heading {
-        margin-bottom: 0.5rem;
-    }
-    .lobby-layout > section {
-        padding: 0.625rem;
-    }
-    .lobby-settings .panel-heading {
-        gap: 0.5rem;
-        margin-bottom: 0.25rem;
-    }
-}
-@media (max-width: 640px) {
     .waiting-lobby :deep(.btn) {
         min-height: 44px;
         padding: 0.35rem 0.6rem;
-    }
-    .waiting-lobby :deep(.ready-actions > button) {
-        min-height: 48px;
     }
     .waiting-lobby .page-heading {
         flex-wrap: nowrap;
         gap: 0.5rem;
         margin-bottom: 0.5rem;
     }
-    .page-heading > div {
-        min-width: 0;
-    }
-    .waiting-lobby .eyebrow {
-        font-size: 0.65rem;
-        margin-bottom: 0.1rem;
-    }
     .waiting-lobby h1 {
+        min-width: 0;
         font-size: 1.25rem;
+        overflow-wrap: anywhere;
     }
     .waiting-lobby .lobby-leave {
         flex: none;
@@ -245,36 +223,36 @@ useHead({ title: "Lobby" });
     .lobby-leave :deep(svg) {
         font-size: 1.1rem;
     }
-    .lobby-layout > section {
+    .lobby-layout > * {
         padding: 0.625rem;
     }
-    .room-invite {
-        gap: 0.4rem 0.6rem;
+    .lobby-actions {
+        border-left: 0;
+        border-bottom: 1px solid var(--gb-line);
     }
     .room-code {
         gap: 0.4rem;
     }
     .room-code > .section-label {
-        font-size: 0.6rem;
+        font-size: 0.65rem;
     }
     .lobby-code {
         font-size: 1.15rem;
         letter-spacing: 0.12em;
     }
-}
-@media (max-width: 640px) and (orientation: portrait) {
     .lobby-layout > .lobby-actions,
     .lobby-layout > .room-invite {
-        padding: 0.4rem 0.625rem;
+        padding-block: 0.5rem;
     }
     .lobby-actions :deep(.ready-check) {
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) auto;
         align-items: center;
         gap: 0.25rem 0.5rem;
     }
-    .lobby-actions :deep(.ready-heading h2) {
-        display: none;
+    .lobby-actions :deep(.ready-heading) {
+        grid-column: 2;
+        grid-row: 1;
     }
     .lobby-actions :deep(.ready-status) {
         padding: 0;
@@ -286,6 +264,8 @@ useHead({ title: "Lobby" });
         display: none;
     }
     .lobby-actions :deep(.ready-actions) {
+        grid-column: 1;
+        grid-row: 1;
         margin-top: 0;
         gap: 0.35rem;
     }
@@ -295,28 +275,13 @@ useHead({ title: "Lobby" });
         gap: 0.3rem;
         letter-spacing: normal;
     }
-    .lobby-actions :deep(.ready-actions svg) {
-        display: none;
-    }
     .lobby-actions :deep(.field-help) {
         grid-column: 1 / -1;
         margin-top: 0;
     }
-    .lobby-actions :deep(.routine-feedback),
-    .room-code > .section-label {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-    }
     .room-invite {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-columns: minmax(min-content, 1fr) auto auto;
         gap: 0.35rem;
     }
     .room-code {
@@ -327,7 +292,9 @@ useHead({ title: "Lobby" });
     .room-invite > :deep(.badge) {
         grid-column: 3;
         grid-row: 1;
+        justify-self: start;
         border: 0;
+        padding-inline: 0;
         background: transparent;
     }
     .room-invite :deep(.invite-link) {
@@ -349,6 +316,33 @@ useHead({ title: "Lobby" });
     .room-invite :deep(.invite-link > .field) {
         grid-column: 1 / -1;
         margin-top: 0.25rem;
+    }
+}
+@media (min-width: 641px) and (max-height: 540px) and (orientation: landscape) {
+    .lobby-layout {
+        grid-template-areas: "actions actions" "invite invite" "players settings";
+    }
+    .lobby-settings {
+        border-top: 0;
+        border-left: 1px solid var(--gb-line);
+    }
+}
+@media (max-width: 640px) {
+    .lobby-layout {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: "actions" "invite" "players" "settings";
+    }
+    .lobby-settings {
+        border-left: 0;
+    }
+}
+@media (max-width: 340px) {
+    .room-invite {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+    .room-invite > :deep(.badge) {
+        grid-column: 1 / -1;
+        grid-row: 2;
     }
 }
 </style>

@@ -12,6 +12,11 @@ export const useAuthStore = () => {
     const isAuthenticated = useState("auth:authenticated", () => false);
     const authError = useState<string | null>("auth:error", () => null);
     const isLoginDialog = useState("auth:loginDialog", () => false);
+    const loginDialogMode = useState<"login" | "guest">("auth:loginDialogMode", () => "login");
+    const openLoginDialog = (mode: "login" | "guest" = "login") => {
+        loginDialogMode.value = mode;
+        isLoginDialog.value = true;
+    };
     const isRefreshingToken = useState("auth:refreshing", () => false);
     const revision = useState("auth:revision", () => 0);
 
@@ -101,7 +106,7 @@ export const useAuthStore = () => {
     const expireSession = () => {
         clearSession();
         authError.value = "Your session has expired. Please log in again.";
-        isLoginDialog.value = true;
+        if (!isLoginDialog.value) openLoginDialog();
     };
     const readinessExpired = (epoch: number) => {
         if (epoch !== revision.value) return;
@@ -116,7 +121,7 @@ export const useAuthStore = () => {
         const epoch = clearSession(true);
         const isNavigationCurrent = app.$gameRuntime?.captureNavigation() ?? (() => true);
         authError.value = null;
-        isLoginDialog.value = true;
+        openLoginDialog();
         try {
             await revocation;
         } catch (error) {
@@ -275,6 +280,8 @@ export const useAuthStore = () => {
         isAuthenticated,
         authError,
         isLoginDialog,
+        loginDialogMode,
+        openLoginDialog,
         isRefreshingToken,
         login,
         register,

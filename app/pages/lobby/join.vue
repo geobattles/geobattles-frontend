@@ -3,7 +3,6 @@
         <Header />
         <main id="main-content" class="join-shell">
             <section class="join-card" aria-labelledby="join-title">
-                <p class="eyebrow">Multiplayer</p>
                 <h1 id="join-title">Join a lobby</h1>
                 <form class="join-form" @submit.prevent="submit">
                     <fieldset :disabled="joining" class="code-fieldset" :aria-describedby="error ? 'join-help join-error' : 'join-help'">
@@ -34,7 +33,7 @@
                             />
                         </div>
                     </fieldset>
-                    <p id="join-help" class="field-help">Enter all four characters to join automatically, or paste a code or invite link.</p>
+                    <p id="join-help" class="field-help">Enter or paste the 4-character code from your host.</p>
                     <p v-if="error" id="join-error" class="field-error" role="alert">{{ error }}</p>
                     <button class="btn btn-command join-button" type="submit" :disabled="joining" :aria-busy="joining">
                         <span v-if="joining" class="spinner" />{{ joining ? "Joining…" : "Join lobby" }}<UiIcon v-if="!joining" name="arrow" />
@@ -167,7 +166,7 @@ const join = async (id: string) => {
     if (!auth.isAuthenticated) {
         if (pending.value === id && auth.isLoginDialog) return;
         pending.value = id;
-        auth.isLoginDialog = true;
+        auth.openLoginDialog("guest");
         return;
     }
     pending.value = null;
@@ -204,11 +203,9 @@ watch(
     }
 );
 onMounted(() => {
-    if (hasInvite) {
-        const id = applyCode(initialCode);
-        if (id) void join(id);
-        else focusCharacter(0);
-    } else focusCharacter(0);
+    if (!hasInvite) return;
+    const id = applyCode(initialCode);
+    if (id) void join(id);
 });
 onBeforeUnmount(() => {
     active = false;

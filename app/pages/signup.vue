@@ -47,7 +47,7 @@
                     <button type="submit" class="btn btn-large" :disabled="busy" :aria-busy="busy">
                         <span v-if="busy" class="spinner" />{{ busy ? "Creating your account" : "Create account" }}<UiIcon v-if="!busy" name="arrow" />
                     </button>
-                    <p class="field-help">Already an explorer? <button type="button" class="text-link" @click="auth.isLoginDialog = true">Sign in</button></p>
+                    <p class="field-help">Already an explorer? <button type="button" class="text-link" @click="auth.openLoginDialog()">Sign in</button></p>
                 </form>
             </section>
         </main>

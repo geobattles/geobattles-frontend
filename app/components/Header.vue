@@ -23,7 +23,7 @@
             <div class="header-account">
                 <span v-if="!accountMounted" class="badge account-placeholder">Your account</span>
                 <template v-else>
-                    <button v-if="!auth.isAuthenticated" class="btn btn-secondary" type="button" @click="auth.isLoginDialog = true">Sign in <UiIcon name="arrow" /></button>
+                    <button v-if="!auth.isAuthenticated" class="btn btn-secondary" type="button" @click="auth.openLoginDialog()">Sign in <UiIcon name="arrow" /></button>
                     <details v-else ref="accountMenu" class="account-menu">
                         <summary class="account-summary">
                             <span class="avatar">{{ (player.displayName || "E").slice(0, 1).toUpperCase() }}</span
@@ -40,9 +40,7 @@
                 </template>
             </div>
         </div>
-        <UiDialog v-model:open="auth.isLoginDialog" title="Your next expedition" eyebrow="Welcome, explorer" wide>
-            <Login @userLogged="auth.isLoginDialog = false" />
-        </UiDialog>
+        <Login />
     </header>
 </template>
 <script setup lang="ts">
@@ -235,7 +233,7 @@ onBeforeUnmount(() => {
 .account-popover p {
     padding: 0.6rem;
 }
-@media (max-width: 850px) {
+@media (max-width: 850px), (max-width: 1100px) and (max-height: 540px) and (orientation: landscape) {
     .header-inner {
         min-height: var(--gb-header-height);
         padding-block: 0.25rem;

@@ -140,7 +140,7 @@ const perform = async (id: string) => {
     if (disposed || working.value) return;
     if (!auth.isAuthenticated) {
         pending.value = id;
-        auth.isLoginDialog = true;
+        auth.openLoginDialog("guest");
         return;
     }
     working.value = id;

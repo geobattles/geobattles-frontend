@@ -19,6 +19,10 @@ export async function registerGuest(actor: Actor) {
     const { page } = actor;
     await actor.goto("/");
     await page.getByRole("button", { name: /^(login|sign in)$/i }).click();
+    await page
+        .getByRole("dialog")
+        .getByRole("button", { name: /^play as guest$/i })
+        .click();
     await page.getByRole("textbox", { name: /^(guest )?display name$/i }).fill(actor.name);
     const registered = page.waitForResponse((response) => response.url() === `${env.backend}/auth/register/guest` && response.request().method() === "POST");
     await page.getByRole("button", { name: /^continue as guest$/i }).click();
@@ -46,22 +50,28 @@ export async function joinInvite(actor: Actor, lobbyId: string) {
 }
 
 export async function connected(actor: Actor) {
-    await expect(actor.page.getByTestId("connection-status")).toHaveText(/^connected$/i);
+    const connectionStatus = actor.page.getByTestId("connection-status");
+    await expect(connectionStatus).toHaveText(/^connected$/i);
     expect(actor.latest?.playerList[actor.id]?.connected).toBe(true);
-    if (actor.latest?.phase === "WAITING") await expect(actor.row()).toHaveAttribute("data-connected", "true");
+    if (actor.latest?.phase === "WAITING") {
+        await expect(connectionStatus).toBeVisible();
+        await expect(actor.row()).toHaveAttribute("data-connected", "true");
+    }
 }
 
 export function readyButton(actor: Actor) {
-    return actor.page.getByRole("button", { name: /^(ready|not ready|i.m ready)$/i });
+    return actor.page.getByRole("button", { name: /^(ready|not ready|i.m ready|undo ready)$/i });
 }
 
 export async function setReady(actor: Actor, value: boolean) {
     const button = readyButton(actor);
-    await expect(button).toHaveAttribute("aria-pressed", String(!value));
+    const initialName = value ? /^(ready|i.m ready)$/i : /^(not ready|undo ready)$/i;
+    const updatedName = value ? /^(not ready|undo ready)$/i : /^(ready|i.m ready)$/i;
+    await expect(button).toHaveAccessibleName(initialName);
     const mark = actor.mark();
     await button.click();
     await actor.snapshot((snapshot) => snapshot.playerList[actor.id]?.ready === value, mark);
-    await expect(button).toHaveAttribute("aria-pressed", String(value));
+    await expect(button).toHaveAccessibleName(updatedName);
     if (actor.latest?.phase === "WAITING") await expect(actor.row()).toHaveAttribute("data-ready", String(value));
 }
 

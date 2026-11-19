@@ -2,7 +2,7 @@
 
 ## Shared UI
 
-Keep the charcoal `#181818` / `#242424`, sage `#b6e388` and forest `#5f8d4e` theme. Home is a short Welcome/GeoBattles/Play/code-join surface over the existing wallpaper, without a decorative 3D globe or marketing dashboard. Use local fonts, native HTML controls and small local SVG icons.
+Keep the charcoal `#181818` / `#242424`, sage `#b6e388` and forest `#5f8d4e` theme. Home leads with **Join with code** and keeps **Create lobby** separate and secondary. Use local fonts, native HTML controls and small local SVG icons.
 
 Controls need visible focus, meaningful accessible names and at least 44px hit targets; primary mobile gameplay actions use at least 52px. Inputs retain 16px text to avoid focus zoom. Reduce density through component spacing/type tokens, not root-font scaling, disabled zoom or text adjustment. Honor reduced motion and reader preferences.
 
@@ -10,11 +10,13 @@ Native dialogs own focus/inert background, Escape, deliberate backdrop closing a
 
 ## Lobby flow
 
-Four labelled code boxes support ASCII capitalization, keyboard editing and valid code/same-origin-invite paste. Do not repair malformed Unicode/lookalike codes. Completing a valid code submits once; prevent concurrent submissions and keep an explicit retry after failure.
+Four labelled code boxes support ASCII capitalization, keyboard editing and valid code/same-origin-invite paste. Do not repair malformed Unicode/lookalike codes. Completing a valid code submits once; prevent concurrent submissions and keep an explicit retry after failure. Invite links and code entry resume the intended lobby join after authentication.
 
-The waiting room puts readiness/actions and people first on portrait screens, followed by a visible game-plan map and essential settings. Included countries and advanced rules use disclosures. Wide landscape separates the settings inspector from roster/actions. Directory rows preserve search, sorting, capacity and phase eligibility rather than hiding metadata to fit.
+The sign-in dialog shows one form at a time. Joining or creating a lobby opens guest entry; explicit sign-in opens account entry. Opening the dialog or code page does not focus a text field. The auth dialog tracks the visual viewport while open so its controls can be scrolled into view above the software keyboard.
 
-Keep region selection concise: mode buttons, one selected-region line, the map and a searchable flag list. Avoid repeated instructions, numbered steps and duplicate selection cards. Retain accessible search labels, selection/result announcements and map keyboard guidance even when their visible counterparts are unnecessary. The waiting-room overview shows region, map and essential values; scoring details belong in Advanced rules. Mobile controls use compact padding without shrinking touch targets below 44px.
+The waiting room leads with **I’m ready** for unready players. The host sees **Start game** only when everyone is ready; server eligibility and connection checks still apply. Ready players can undo their choice. Narrow and short landscape layouts put readiness and the invite ahead of the roster and settings. Keep the region and round values visible; the map, country list and rules are available on demand. Directory rows preserve search, sorting, capacity and phase eligibility.
+
+Keep region selection concise: mode buttons, one selected-region line, the map and a searchable flag list. Avoid repeated instructions, numbered steps and duplicate selection cards. Retain accessible search labels, selection/result announcements and map keyboard guidance even when their visible counterparts are unnecessary. Scoring details belong in Advanced rules. Mobile controls use compact padding without shrinking touch targets below 44px.
 
 Settings use a local draft with explicit Save/Cancel. Escape/close/unmount never saves. Live membership/host/readiness updates continue while editing; loss of authority invalidates the editor. Backend broadcasts commit settings and ordinary settings changes preserve Ready values. [Regions](region-settings.md) covers geographic selection and Advanced scoring.
 

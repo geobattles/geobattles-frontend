@@ -10,8 +10,6 @@
                 {{ conf.mode === 1 ? "Battle Royale" : "Country Battle (unfinished)" }}
             </p>
         </div>
-        <RegionMap v-if="catalog" class="region-overview" :catalog="catalog" :selected-codes="selectedCodes" :mode="overviewMode" readonly />
-
         <dl class="settings-summary">
             <div>
                 <dt>Round time</dt>
@@ -26,46 +24,50 @@
                 <dd>{{ conf.numAttempt }}</dd>
             </div>
         </dl>
-        <details v-if="selectedCodes.length > 1" class="settings-disclosure">
-            <summary>
-                Included countries <span>{{ selectedCodes.length }}</span>
-            </summary>
-            <div class="country-preview" tabindex="0" role="region" aria-label="Selected countries">
-                <span v-for="code in selectedCodes" :key="code" class="country-chip"
-                    ><span class="flag" :style="{ backgroundPosition: getFlagBackgroundPosition(code) }" aria-hidden="true" />{{
-                        countryDisplayName(code, flags.get(code)?.name)
-                    }}</span
-                >
-            </div>
-        </details>
         <details class="settings-disclosure">
-            <summary>Advanced rules</summary>
-            <dl class="rule-list">
-                <div>
-                    <dt>Max players</dt>
-                    <dd>{{ conf.maxPlayers }}</dd>
+            <summary>Map and rules</summary>
+            <RegionMap v-if="catalog" class="region-overview" :catalog="catalog" :selected-codes="selectedCodes" :mode="overviewMode" readonly />
+            <details v-if="selectedCodes.length > 1" class="settings-disclosure">
+                <summary>
+                    Included countries <span>{{ selectedCodes.length }}</span>
+                </summary>
+                <div class="country-preview" tabindex="0" role="region" aria-label="Selected countries">
+                    <span v-for="code in selectedCodes" :key="code" class="country-chip"
+                        ><span class="flag" :style="{ backgroundPosition: getFlagBackgroundPosition(code) }" aria-hidden="true" />{{
+                            countryDisplayName(code, flags.get(code)?.name)
+                        }}</span
+                    >
                 </div>
-                <div v-if="conf.mode === 1">
-                    <dt>Scoring</dt>
-                    <dd>{{ conf.scoringMode === "auto" ? "Region-adaptive" : `Manual · ${conf.scoreFactor}` }}</dd>
-                </div>
-                <div>
-                    <dt>Dynamic lives</dt>
-                    <dd class="rule-state" :class="{ 'rule-on': conf.dynLives }">{{ conf.dynLives ? "On" : "Off" }}</dd>
-                </div>
-                <div>
-                    <dt>Placement bonus</dt>
-                    <dd class="rule-state" :class="{ 'rule-on': conf.placeBonus }">{{ conf.placeBonus ? "On" : "Off" }}</dd>
-                </div>
-                <div>
-                    <dt>Double score</dt>
-                    <dd class="rule-state" :class="{ 'rule-on': conf.powerups?.[0] }">{{ conf.powerups?.[0] ? "On" : "Off" }}</dd>
-                </div>
-                <div>
-                    <dt>Duel</dt>
-                    <dd class="rule-state" :class="{ 'rule-on': conf.powerups?.[1] }">{{ conf.powerups?.[1] ? "On" : "Off" }}</dd>
-                </div>
-            </dl>
+            </details>
+            <details class="settings-disclosure">
+                <summary>Advanced rules</summary>
+                <dl class="rule-list">
+                    <div>
+                        <dt>Max players</dt>
+                        <dd>{{ conf.maxPlayers }}</dd>
+                    </div>
+                    <div v-if="conf.mode === 1">
+                        <dt>Scoring</dt>
+                        <dd>{{ conf.scoringMode === "auto" ? "Region-adaptive" : `Manual · ${conf.scoreFactor}` }}</dd>
+                    </div>
+                    <div>
+                        <dt>Dynamic lives</dt>
+                        <dd class="rule-state" :class="{ 'rule-on': conf.dynLives }">{{ conf.dynLives ? "On" : "Off" }}</dd>
+                    </div>
+                    <div>
+                        <dt>Placement bonus</dt>
+                        <dd class="rule-state" :class="{ 'rule-on': conf.placeBonus }">{{ conf.placeBonus ? "On" : "Off" }}</dd>
+                    </div>
+                    <div>
+                        <dt>Double score</dt>
+                        <dd class="rule-state" :class="{ 'rule-on': conf.powerups?.[0] }">{{ conf.powerups?.[0] ? "On" : "Off" }}</dd>
+                    </div>
+                    <div>
+                        <dt>Duel</dt>
+                        <dd class="rule-state" :class="{ 'rule-on': conf.powerups?.[1] }">{{ conf.powerups?.[1] ? "On" : "Off" }}</dd>
+                    </div>
+                </dl>
+            </details>
         </details>
     </div>
     <p v-else class="muted">Waiting for the server’s lobby settings.</p>
@@ -226,6 +228,20 @@ onMounted(() => {
 @container (max-width: 360px) {
     .rule-list {
         grid-template-columns: minmax(0, 1fr);
+    }
+}
+@media (max-width: 640px), (max-height: 540px) and (orientation: landscape) {
+    .region-summary {
+        margin-bottom: 0.4rem;
+    }
+    .settings-summary {
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+    .settings-summary > div {
+        padding: 0;
+        border: 0;
+        background: none;
     }
 }
 </style>
