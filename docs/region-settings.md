@@ -20,6 +20,8 @@ Normal frontend installation and builds use the committed generated assets and d
 
 The backdrop's public-domain provenance and hash-checked regeneration are documented in [geography attribution](../public/globe/README.md). Generation fails on malformed/truncated land paths. No runtime asset service, Maps initialization, new dependency or external font is needed.
 
+After a backend supported-country addition, regenerate both the region map and then the country viewports described below. Runtime catalog membership alone adds a chooser row, not a bundled interactive outline or single-country camera. Kazakhstan (`KZ`) uses the existing flag/name mapping and belongs to Asia; its full outline is decorative, while backend sampling is restricted to curated urban areas. See `docs/location-selection.md` in the matching release of the [backend repository](https://github.com/geobattles/geobattles-backend) for coverage and returned-point policy.
+
 ## Gameplay starting camera
 
 Exactly one distinct supported `ccList` code (including Custom with one country) frames that country's public outline at round start or initial recovery. Empty World, the full supported list, multiple countries and any unknown code retain center `0,0` / zoom `2`. Duplicate instances of the same supported code count once; malformed codes are not normalized. No answer, playable sampling bounds, catalog request or geocoding service influences this camera.

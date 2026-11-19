@@ -1,25 +1,27 @@
-import { SocketType } from "~/types/socketTypes";
-import type { createSocketHandlers } from "~/composables/socketHandlers";
+import { SocketStatus, SocketType, type GameSocketEvent, type SocketCommand } from "~/types/socketTypes";
+import { decodeGameSocketEvent, decodeRequestError, decodeSocketFrame, socketEventContext, type SocketEnvelope } from "~/runtime/socketProtocol";
 import type { useAuthStore } from "~/composables/auth";
 import type { RequestError } from "~/composables/requestState";
 
 export const createSocketRuntime = (
     endpoint: string,
     auth: ReturnType<typeof useAuthStore>,
-    handlers: ReturnType<typeof createSocketHandlers>,
-    invalidate: () => void,
-    release: () => void
+    ports: {
+        apply: (event: GameSocketEvent) => void;
+        afterFrame: () => void;
+        closeAttempt: () => void;
+        invalidateViews: () => void;
+        releaseSession: () => void;
+    }
 ) => {
     const { connectionState, isOnline, recoveryDeadline, recoverySecondsRemaining, retryAttempt, nextRetryAt, connectionError } = useSocketState();
     const request = useRequestState();
     const player = usePlayerInfo();
-    const mapsConfigured = !!useRuntimeConfig().public.GMAPS_API.trim();
-    const startUnavailableReason = mapsConfigured ? "" : "Maps is not configured in this browser build. Ask the operator to configure the browser Maps key before starting a game.";
     const recoveryBudget = 30_000;
     const maxAttempts = 12;
     const heartbeatTimeout = 10_000;
+    const availabilityTimeout = 3_000;
     type Failure = RequestError & { terminal?: boolean };
-    type Incoming = { command?: unknown; status?: unknown; type?: unknown; seq?: unknown; payload?: any };
     type Attempt = {
         generation: number;
         socket: WebSocket | null;
@@ -30,6 +32,7 @@ export const createSocketRuntime = (
         resumeUntil: number;
         wasHidden: boolean;
         lastSeq: number;
+        availabilityCheck?: AbortController;
     };
     let lobbyId: string | null = null;
     let identity: string | null = null;
@@ -46,7 +49,6 @@ export const createSocketRuntime = (
     let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
     let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
     let statusTimer: ReturnType<typeof setInterval> | undefined;
-    let readyAckTimer: ReturnType<typeof setTimeout> | undefined;
     const failure = (code: string, message: string, terminal = false): Failure => ({ command: "", code, message, terminal });
     const unavailable = () => failure("CONNECTION_FAILED", "The lobby connection is unavailable. Wait for reconnection before retrying.");
     const cancelled = () => new Error("Lobby connection was cancelled or expired.");
@@ -78,9 +80,10 @@ export const createSocketRuntime = (
         attempt = null;
         generation++;
         clearTimeout(admissionTimer);
-        clearTimeout(readyAckTimer);
         clearInterval(heartbeatTimer);
-        admissionTimer = readyAckTimer = heartbeatTimer = undefined;
+        admissionTimer = heartbeatTimer = undefined;
+        ports.closeAttempt();
+        previous?.availabilityCheck?.abort();
         const socket = previous?.socket;
         if (!socket) return;
         // Only a committed leave/logout sends this membership-removing command.
@@ -112,7 +115,7 @@ export const createSocketRuntime = (
         clearBudget();
         clearAttempt(intentional);
         settleReadiness(cancelled());
-        invalidate();
+        ports.invalidateViews();
         lobbyId = identity = null;
         hasAdmitted = false;
         retryAttempt.value = 0;
@@ -129,7 +132,7 @@ export const createSocketRuntime = (
         disconnect();
         connectionError.value = { command: error.command, code: error.code, message: error.message };
         request.fail(connectionError.value);
-        release();
+        ports.releaseSession();
     };
     const expire = () =>
         terminate(
@@ -180,7 +183,7 @@ export const createSocketRuntime = (
         if (!withinBudget()) return;
         clearRetry();
         clearAttempt();
-        invalidate();
+        ports.invalidateViews();
         request.resetPending();
         connectionState.value = hasAdmitted ? "reconnecting" : "connecting";
         waitForReadiness();
@@ -248,31 +251,18 @@ export const createSocketRuntime = (
         )
             request.clearError();
     };
-    const dispatch = async (data: Incoming, admitted: boolean) => {
-        if (data.status === "ERR") {
-            const error: Failure = {
-                command: typeof data.payload?.command === "string" ? data.payload.command : "",
-                code: typeof data.payload?.code === "string" ? data.payload.code : "REQUEST_FAILED",
-                message:
-                    data.type === "REQUEST_ERROR" && typeof data.payload?.message === "string" ? data.payload.message.slice(0, 500) : "The request failed. Reconnect or try again.",
-            };
+    const dispatch = async (data: SocketEnvelope, admitted: boolean) => {
+        if (data.status === SocketStatus.ERROR) {
+            const error = decodeRequestError(data);
             if (!admitted || error.code === "PLAYER_NOT_IN_LOBBY") {
-                error.terminal = error.code !== "LOBBY_BUSY";
-                throw error;
+                throw { ...error, terminal: error.code !== "LOBBY_BUSY" } satisfies Failure;
             }
             request.fail(error);
-            if (error.command === "setReady") {
-                clearTimeout(readyAckTimer);
-                readyAckTimer = undefined;
-            }
-            return;
+        } else {
+            const event = decodeGameSocketEvent(data);
+            if (event) await ports.apply(event);
         }
-        const handler = handlers[data.type as keyof typeof handlers];
-        if (handler) await (handler as (message: Incoming) => void | Promise<void>)(data);
-        if (!request.isReadyPending) {
-            clearTimeout(readyAckTimer);
-            readyAckTimer = undefined;
-        }
+        ports.afterFrame();
     };
     const open = () => {
         if (!withinBudget() || !isOnline.value || attempt || retryAttempt.value >= maxAttempts) return;
@@ -321,8 +311,9 @@ export const createSocketRuntime = (
             const url = `${endpoint.replace(/\/$/, "").replace(/^http(s)?:\/\//, "ws$1://")}/lobbySocket?id=${encodeURIComponent(id)}`;
             const socket = new WebSocket(url, ["json", token]);
             owner.socket = socket;
+            const receiving = () => current(owner) && !owner.availabilityCheck && withinBudget();
             let messages = Promise.resolve();
-            let companion: { phase: string; round: number; gameId?: string } | null = null;
+            let companion: { phase: unknown; round: unknown; gameId: unknown } | null = null;
             admissionTimer = setTimeout(
                 () => {
                     if (current(owner) && !owner.admitted)
@@ -331,7 +322,6 @@ export const createSocketRuntime = (
                 Math.min(10_000, recoveryDeadline.value! - Date.now())
             );
             const markReady = () => {
-                if (!current(owner) || !withinBudget()) return;
                 owner.admitted = hasAdmitted = true;
                 clearTimeout(admissionTimer);
                 admissionTimer = undefined;
@@ -343,11 +333,11 @@ export const createSocketRuntime = (
                 settleReadiness();
             };
             socket.onopen = () => {
-                if (!current(owner) || !withinBudget()) return;
+                if (!receiving()) return;
                 owner.lastActivity = Date.now();
                 owner.lastHeartbeatCheck = Date.now();
                 heartbeatTimer = setInterval(() => {
-                    if (!current(owner)) return;
+                    if (!receiving()) return;
                     const now = Date.now();
                     const suspended = now - owner.lastHeartbeatCheck > heartbeatTimeout;
                     owner.lastHeartbeatCheck = now;
@@ -363,53 +353,51 @@ export const createSocketRuntime = (
                 }, 2000);
             };
             socket.onmessage = (event) => {
-                if (!current(owner) || !withinBudget()) return;
-                let data: Incoming;
+                if (!receiving()) return;
+                let data: SocketEnvelope;
                 try {
-                    if (typeof event.data !== "string") throw new Error();
-                    data = JSON.parse(event.data);
-                    if (!data || typeof data !== "object" || Array.isArray(data)) throw new Error();
+                    const frame = decodeSocketFrame(event.data);
                     owner.lastActivity = Date.now();
                     owner.resumeUntil = 0;
-                    if (data.command === "ping") {
+                    if (frame.kind === "ping") {
                         if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ command: "pong" }));
                         return;
                     }
-                    if (typeof data.type !== "string" || !["OK", "WRN", "ERR"].includes(String(data.status))) throw new Error();
-                    if (data.seq !== undefined && (!Number.isSafeInteger(data.seq) || (data.seq as number) <= 0)) throw new Error();
+                    data = frame.envelope;
                 } catch {
                     failed(failure("CLIENT_STATE_INVALID", "The lobby update was invalid. Restoring an authoritative snapshot."));
                     return;
                 }
                 messages = messages
                     .then(async () => {
-                        if (!current(owner) || !withinBudget()) return;
+                        if (!receiving()) return;
                         // Optional for compatibility; gaps are legal (unicast and
                         // omitted event types), never evidence of a lost replay log.
-                        if (typeof data.seq === "number" && data.seq <= owner.lastSeq) return;
-                        const ownJoin = data.type === SocketType.JOINED_LOBBY && data.payload?.user === owner.identity && data.payload?.lobby?.ID === id;
-                        if (!owner.admitted && !ownJoin && data.status !== "ERR") return;
-                        const snapshot = data.payload?.lobby;
+                        if (data.seq !== undefined && data.seq <= owner.lastSeq) return;
+                        const context = socketEventContext(data.payload);
+                        const snapshot = context.lobby;
+                        const ownJoin = data.status !== SocketStatus.ERROR && data.type === SocketType.JOINED_LOBBY && context.user === owner.identity && snapshot?.ID === id;
+                        if (!owner.admitted && !ownJoin && data.status !== SocketStatus.ERROR) return;
                         if (snapshot && snapshot.ID !== id) throw new Error("Unexpected lobby.");
                         const repeatedAdmission =
                             companion &&
                             data.type === SocketType.REJOIN_ROUND &&
                             snapshot?.ID === id &&
-                            data.payload.phase === companion.phase &&
-                            data.payload.round === companion.round &&
-                            (data.payload.gameId ?? snapshot.gameId) === companion.gameId;
+                            context.phase === companion.phase &&
+                            context.round === companion.round &&
+                            (context.gameId ?? snapshot.gameId) === companion.gameId;
                         companion = null;
                         if (!repeatedAdmission) await dispatch(data, owner.admitted);
-                        if (!current(owner) || !withinBudget()) return;
-                        if (typeof data.seq === "number") owner.lastSeq = data.seq;
-                        if (ownJoin) {
-                            if (snapshot.playerList?.[owner.identity!]?.connected !== true) throw new Error("Missing connected membership.");
+                        if (!receiving()) return;
+                        if (data.seq !== undefined) owner.lastSeq = data.seq;
+                        if (ownJoin && snapshot) {
+                            // The JOINED_LOBBY handler validated the connected own membership.
                             companion = { phase: snapshot.phase, round: snapshot.currentRound, gameId: snapshot.gameId };
                             markReady();
                         }
                     })
                     .catch((error: unknown) => {
-                        if (!current(owner)) return;
+                        if (!receiving()) return;
                         const known =
                             error &&
                             typeof error === "object" &&
@@ -424,23 +412,34 @@ export const createSocketRuntime = (
                         failed(known ? (error as Failure) : failure("CLIENT_STATE_INVALID", "The game update could not be applied. Restoring an authoritative snapshot."));
                     });
             };
-            // Upgrade failures are opaque to browsers. Confirm disappearance
-            // through the public HTTP listing; a failed probe is NOT proof of it.
-            let checkingAvailability = false;
             const transportFailed = async () => {
-                if (!current(owner) || checkingAvailability) return;
-                checkingAvailability = true;
-                // Stop presenting a dead transport as connected while HTTP is
-                // in flight. The probe consumes the same recovery deadline.
-                beginBudget();
-                if (!current(owner) || !withinBudget()) return;
-                connectionState.value = hasAdmitted ? "reconnecting" : "connecting";
-                request.resetPending();
+                if (!current(owner) || owner.availabilityCheck) return;
+                // Reconnect after an admitted socket drops without waiting on
+                // the public lobby list. If a replacement fails before its
+                // own JOINED snapshot, use the existing diagnostic path there.
+                if (owner.admitted || !isOnline.value) {
+                    failed(unavailable());
+                    return;
+                }
+                if (!withinBudget()) return;
+                // Browsers don't expose rejection bodies on failed admission.
+                // One bounded check belongs to this failed attempt only.
+                const check = new AbortController();
+                owner.availabilityCheck = check;
+                const timeout = setTimeout(() => check.abort(), availabilityTimeout);
                 try {
-                    const response = await fetch(`${endpoint.replace(/\/$/, "")}/lobby`, { cache: "no-store", signal: AbortSignal.timeout(3000) });
+                    const response = await fetch(`${endpoint.replace(/\/$/, "")}/lobby`, { cache: "no-store", signal: check.signal });
                     if (response.ok) {
                         const lobbies: unknown = await response.json();
-                        if (current(owner) && lobbies && typeof lobbies === "object" && !Array.isArray(lobbies) && !Object.hasOwn(lobbies, id)) {
+                        if (
+                            current(owner) &&
+                            !check.signal.aborted &&
+                            withinBudget() &&
+                            lobbies &&
+                            typeof lobbies === "object" &&
+                            !Array.isArray(lobbies) &&
+                            !Object.hasOwn(lobbies, id)
+                        ) {
                             failed(
                                 failure(
                                     "LOBBY_NOT_FOUND",
@@ -453,6 +452,8 @@ export const createSocketRuntime = (
                     }
                 } catch {
                     // Offline, timeout and server errors retain normal recovery.
+                } finally {
+                    clearTimeout(timeout);
                 }
                 if (current(owner)) failed(unavailable());
             };
@@ -489,44 +490,25 @@ export const createSocketRuntime = (
         if (isOnline.value) open();
         return ready;
     };
-    const sendMessage = (message: { command: string; [key: string]: unknown }): boolean => {
-        if (message.command === "start" && startUnavailableReason) {
-            request.fail({ command: "start", code: "MAPS_NOT_CONFIGURED", message: startUnavailableReason });
-            return false;
-        }
-        if (message.command === "start" && request.isStartPending) return false;
-        if (message.command === "setReady" && (typeof message.ready !== "boolean" || request.isReadyPending)) return false;
+    const writeCommand = (message: SocketCommand, beforeWrite: () => void, onUnavailable: (error: RequestError) => void): (() => boolean) | undefined => {
+        const reject = () => onUnavailable({ ...unavailable(), command: message.command });
         const owner = attempt;
         if (!owner || !current(owner) || !withinBudget() || !owner.admitted || connectionState.value !== "connected" || owner.socket?.readyState !== WebSocket.OPEN) {
-            request.fail({ ...unavailable(), command: message.command });
-            return false;
+            reject();
+            return;
         }
         if (Date.now() - owner.lastActivity > heartbeatTimeout && Date.now() >= owner.resumeUntil) {
             recover();
-            request.fail({ ...unavailable(), command: message.command });
-            return false;
+            reject();
+            return;
         }
-        request.clearError();
-        if (message.command === "start") request.isStartPending = true;
-        if (message.command === "setReady") request.readyTarget = message.ready as boolean;
+        beforeWrite();
         try {
             owner.socket.send(JSON.stringify(message));
-            if (message.command === "setReady") {
-                readyAckTimer = setTimeout(() => {
-                    if (current(owner) && request.isReadyPending)
-                        request.fail({
-                            command: "setReady",
-                            code: "READY_ACK_TIMEOUT",
-                            message: "Ready status was not acknowledged. Check the displayed server status before trying again.",
-                        });
-                    readyAckTimer = undefined;
-                }, 5000);
-            }
-            return true;
+            return () => current(owner);
         } catch {
-            request.fail({ ...unavailable(), command: message.command });
+            reject();
             recover();
-            return false;
         }
     };
     // Network presentation outlives terminal lobby attempts so an offline
@@ -534,30 +516,26 @@ export const createSocketRuntime = (
     isOnline.value = navigator.onLine;
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
-    return reactive({
-        connectionState,
-        isOnline,
-        recoveryDeadline,
-        recoverySecondsRemaining,
-        retryAttempt,
-        nextRetryAt,
-        connectionError,
-        isConnected: computed(() => connectionState.value === "connected"),
-        isRecovering: computed(() => connectionState.value === "connecting" || connectionState.value === "reconnecting"),
-        startUnavailableReason,
+    return {
+        status: reactive({
+            connectionState,
+            isOnline,
+            recoveryDeadline,
+            recoverySecondsRemaining,
+            retryAttempt,
+            nextRetryAt,
+            connectionError,
+            isConnected: computed(() => connectionState.value === "connected"),
+            isRecovering: computed(() => connectionState.value === "connecting" || connectionState.value === "reconnecting"),
+        }),
         getLobbyId: () => lobbyId,
         captureSession: () => {
             const epoch = sessionGeneration;
             return () => !disposed && epoch === sessionGeneration;
         },
-        captureGeneration: () => {
-            const epoch = generation;
-            return () => !disposed && epoch === generation;
-        },
         connect,
         disconnect,
-        setReady: (ready: boolean) => sendMessage({ command: "setReady", ready }),
-        sendMessage,
+        writeCommand,
         dispose: () => {
             if (disposed) return;
             disposed = true;
@@ -565,5 +543,5 @@ export const createSocketRuntime = (
             window.removeEventListener("online", onOnline);
             window.removeEventListener("offline", onOffline);
         },
-    });
+    };
 };

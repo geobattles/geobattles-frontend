@@ -1,5 +1,7 @@
 <template>
     <form v-if="draft" class="settings-form" @submit.prevent="save">
+        <SocketConnectionBanner :status="connectionStatus" :round-running="false" />
+        <p v-if="socket.connectionState === 'disconnected' && socket.connectionError" class="field-error">Connection lost. Close settings to return to recovery options.</p>
         <p v-if="!lobby.isPlayerAdmin()" class="notice notice-warn" role="status">The host has changed. Only the current host can save settings.</p>
         <div v-if="loadingCountries" class="catalog-state" role="status">Loading available regions…</div>
         <div v-else-if="!catalog" class="catalog-state">
@@ -80,6 +82,12 @@ import { regionScoreScale, sameCountries } from "~/utils/regionScoring";
 const emit = defineEmits<{ close: [] }>();
 const lobby = useLobbyStore();
 const socket = useWebSocketStore();
+const connectionStatus = computed(() => {
+    if (socket.connectionState === "disconnected") return null;
+    if (!socket.isOnline) return "offline";
+    return socket.connectionState === "reconnecting" ? "reconnecting" : null;
+});
+const actions = useLobbySocketActions();
 const catalog = useCountryCatalog();
 const { fetchCountryCatalog } = useRegionActions();
 const draft = ref<LobbyInfo["conf"] | null>(lobby.lobbySettings ? JSON.parse(JSON.stringify(lobby.lobbySettings.conf)) : null);
@@ -170,7 +178,7 @@ function save() {
         powerups: [doubleScore.value, duel.value],
     };
     // scoreScaleKm belongs to the server. Never send a preview as authoritative configuration.
-    if (socket.sendMessage({ command: SOCKET_COMMANDS.UPDATE_LOBBY_SETTINGS, conf: payload })) emit("close");
+    if (actions.updateSettings(payload)) emit("close");
 }
 </script>
 <style scoped>

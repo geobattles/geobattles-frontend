@@ -138,3 +138,29 @@ export type MsgGameEndData = SocketMessage<{
 export type MsgNoCountryData = SocketMessage<{
     no_country: any;
 }>;
+
+export type LobbySettingsPatch = Partial<Omit<LobbyInfo["conf"], "scoreScaleKm" | "ccList">> & { ccList?: string[] | null };
+
+export type SocketCommand =
+    | { command: "start" }
+    | { command: "setReady"; ready: boolean }
+    | { command: "submit_location"; location: Coordinates }
+    | { command: "update_lobby_settings"; conf: LobbySettingsPatch };
+
+type EventPayloads = {
+    [SocketType.JOINED_LOBBY]: MsgJoinedLobbyData["payload"];
+    [SocketType.LEFT_LOBBY]: MsgLeftLobbyData["payload"];
+    [SocketType.REJOIN_ROUND]: MsgRejoinRound["payload"];
+    [SocketType.UPDATED_LOBBY]: MsgUpdatedLobbyData["payload"];
+    [SocketType.START_ROUND]: MsgStartRoundData["payload"];
+    [SocketType.NEW_RESULT]: MsgNewResultData["payload"];
+    [SocketType.ROUND_RESULT]: MsgRoundResultData["payload"];
+    [SocketType.GAME_END]: MsgGameEndData["payload"];
+    [SocketType.ROUND_FINISHED]: undefined;
+    [SocketType.TIMES_UP]: undefined;
+    [SocketType.NO_COUNTRY]: undefined;
+    [SocketType.CC]: { polygon?: unknown; cc?: string };
+};
+
+export type GameSocketEvent<T extends SocketType = SocketType> = { [K in T]: { type: K; payload: EventPayloads[K] } }[T];
+export type SocketEventHandlers = { [T in SocketType]: (event: GameSocketEvent<T>) => void };

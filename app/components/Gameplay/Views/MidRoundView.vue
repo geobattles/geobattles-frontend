@@ -39,14 +39,14 @@
                         v-if="lobby.isPlayerAdmin()"
                         class="btn btn-large btn-command"
                         type="button"
-                        :disabled="!socket.isConnected || !socket.isOnline || request.isStartPending || !!socket.startUnavailableReason"
+                        :disabled="!socket.isConnected || !socket.isOnline || request.isStartPending || !!actions.startUnavailableReason"
                         :aria-busy="request.isStartPending"
                         @click="start"
                     >
                         <span v-if="request.isStartPending" class="spinner" />Next round <UiIcon name="arrow" />
                     </button>
                     <p v-else class="muted text-sm">Take a look around. Your host will start the next round.</p>
-                    <p v-if="socket.startUnavailableReason" class="field-help">{{ socket.startUnavailableReason }}</p>
+                    <p v-if="actions.startUnavailableReason" class="field-help">{{ actions.startUnavailableReason }}</p>
                     <p class="field-help">Round {{ game.modeLogic.currentRound }} of {{ lobby.lobbySettings?.conf.numRounds }}</p>
                 </footer>
             </div>
@@ -58,6 +58,7 @@ const emit = defineEmits<{ leaveLobby: [] }>();
 const game = useGameMode();
 const lobby = useLobbyStore();
 const socket = useWebSocketStore();
+const actions = useLobbySocketActions();
 const request = useRequestState();
 const ui = useUIManagerStore();
 const tab = ref<"round" | "total">("round");
@@ -81,7 +82,7 @@ watch(
     }
 );
 const start = () => {
-    if (socket.isConnected && socket.isOnline && !request.isStartPending && !socket.startUnavailableReason) socket.sendMessage({ command: SOCKET_COMMANDS.START });
+    if (socket.isConnected && socket.isOnline && !request.isStartPending && !actions.startUnavailableReason) actions.start();
 };
 </script>
 <style>

@@ -27,7 +27,7 @@ const router = useRouter();
 const auth = useAuthStore();
 const request = useRequestState();
 const { connectionError } = useSocketState();
-// Lobby recovery owns its connection message, including the dismissed pill.
+// The connection surface owns its failure message, including the dismissed pill.
 // Other action/auth errors must still reach the global alert.
 const showRequestError = computed(() => {
     const error = request.requestError;

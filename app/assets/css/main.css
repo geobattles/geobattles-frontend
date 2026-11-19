@@ -108,6 +108,20 @@ h3 {
     background-position: right top;
     background-repeat: no-repeat;
 }
+/* Standalone connection states replace the route chrome on phones. Keep the
+   screen in document flow so zoom and unusually tall copy can still scroll. */
+@media (max-width: 600px), (max-width: 980px) and (max-height: 500px) and (orientation: landscape) {
+    #main-content.waiting-lobby:has(> .connection-panel--standalone),
+    #main-content.game-page .connection-entry:has(> .connection-panel--standalone) {
+        max-width: none;
+        padding: 0;
+    }
+    .game-shell:has(> .waiting-lobby > .connection-panel--standalone) > .site-header,
+    .waiting-lobby:has(> .connection-panel--standalone) > .page-heading,
+    .app-root:has(.connection-panel--standalone) > .build-notice {
+        display: none;
+    }
+}
 .command-heading {
     font-weight: 800;
     letter-spacing: -0.045em;

@@ -1,4 +1,5 @@
 import type { LobbyInfo } from "~/types/appTypes";
+import type { LobbySettingsPatch } from "~/types/socketTypes";
 import { createLobbyService } from "~/services/lobbyService";
 
 /**
@@ -144,47 +145,31 @@ export const useLobbyStore = () => {
         }
     };
 
-    // Type definitions for settings manipulation
-    type ConfField = keyof LobbyInfo["conf"];
-    type ConfValue = LobbyInfo["conf"][ConfField];
-    type LobbySettings = Record<ConfField, ConfValue>;
-
     /**
      * Compare current settings with original settings and return only the changed fields
      * Handles special cases for country lists and complex objects
      */
-    const getChangedSettings = (): LobbySettings => {
+    const getChangedSettings = (): LobbySettingsPatch => {
         if (!lobbySettings.value || !lobbySettingsOriginal.value) {
             throw new Error("Lobby settings are not initialized");
         }
 
-        const countryList = countries.value;
-        const ls = lobbySettings.value;
-        const lso = lobbySettingsOriginal.value;
-
-        // Configure special handling for country list
-        const specialFields = {
-            ccList: () => processCountryList(ls, countryList),
-        };
-
-        // Get changed settings using utility function
-        return getSettingsDiff(ls.conf, lso.conf, specialFields) as LobbySettings;
+        const { ccList: _currentCountries, scoreScaleKm: _currentScale, ...current } = lobbySettings.value.conf;
+        const { ccList: _originalCountries, scoreScaleKm: _originalScale, ...original } = lobbySettingsOriginal.value.conf;
+        return { ccList: processCountryList(lobbySettings.value, countries.value), ...getSettingsDiff(current, original) };
     };
 
     /**
      * Apply changed lobby settings and send updated configuration to the server via WebSocket
      */
     const applyLobbySettings = () => {
-        const socketStore = app.$gameRuntime.socket;
+        const actions = app.$gameRuntime.socketActions;
         try {
             // Get only the settings that have changed
             const changedSettings = getChangedSettings();
 
             // Send the changes to the server
-            socketStore.sendMessage({
-                command: SOCKET_COMMANDS.UPDATE_LOBBY_SETTINGS,
-                conf: changedSettings,
-            });
+            actions.updateSettings(changedSettings);
         } catch {
             // Do not log HTTP/socket payloads or configuration in error objects.
             console.warn("Lobby settings could not be applied.");
@@ -276,6 +261,6 @@ export const useLobbyStore = () => {
         fetchLobbyList,
         checkIfLobby,
         isPlayerAdmin,
-        setReady: (ready: boolean) => app.$gameRuntime.socket.setReady(ready),
+        setReady: (ready: boolean) => app.$gameRuntime.socketActions.setReady(ready),
     });
 };

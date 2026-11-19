@@ -31,7 +31,7 @@ The backend owns membership, host, readiness, round numbers, scores and deadline
 - Full snapshots replace authoritative state. Raw attempts, scored best results and aggregate totals are distinct; never add recovered totals a second time.
 - `timeRemaining` is milliseconds and zero is valid. The clock continues during disconnection. In-memory lobbies do not survive a backend restart.
 
-See [runtime recovery](frontend-recovery.md) for ownership and cancellation rules. Cross-repository changes must update backend DTOs, frontend types/handlers and protocol verification together.
+See [frontend socket architecture](socket-architecture.md) for the component diagram and extension points, and [runtime recovery](frontend-recovery.md) for cancellation rules. Cross-repository changes must update backend DTOs, frontend types/handlers and protocol verification together.
 
 ## Expedition Journal
 

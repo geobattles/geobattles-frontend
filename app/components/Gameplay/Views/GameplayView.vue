@@ -96,7 +96,7 @@
     </div>
 </template>
 <script setup lang="ts">
-const emit = defineEmits<{ leaveLobby: [] }>();
+const emit = defineEmits<{ leaveLobby: []; connectionTarget: [target: HTMLElement | null] }>();
 const game = useGameMode();
 const ui = useUIManagerStore();
 const google = useGoogleStore();
@@ -117,6 +117,7 @@ const updatePortrait = () => {
     portraitViewport.value = portraitQuery?.matches ?? false;
 };
 const mapPanel = ref<HTMLElement | null>(null);
+watch([mapModal, mapPanel], ([modal, target]) => emit("connectionTarget", modal ? target : null), { flush: "post" });
 const mapToggle = ref<HTMLButtonElement | null>(null);
 let returnFocus: HTMLElement | null = null;
 

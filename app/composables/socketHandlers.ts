@@ -1,73 +1,18 @@
-import type {
-    MsgJoinedLobbyData,
-    MsgLeftLobbyData,
-    MsgUpdatedLobbyData,
-    MsgStartRoundData,
-    MsgNewResultData,
-    MsgRoundResultData,
-    MsgCCData,
-    MsgGameEndData,
-    MsgRejoinRound,
-} from "~/types/socketTypes";
-import { SocketType } from "~/types/socketTypes";
-import { type Coordinates, type LobbyInfo, type LobbyPhase, type ResultData, type Results } from "~/types/appTypes";
+import { SocketType, type GameSocketEvent, type SocketEventHandlers } from "~/types/socketTypes";
+import type { createUIRuntime } from "~/runtime/ui";
+import type { createRoundClock } from "~/runtime/roundClock";
+import { decodeSocketCoordinates, decodeSocketResult, isSocketRecord } from "~/runtime/socketValues";
+import type { Coordinates, LobbyInfo, LobbyPhase, Results } from "~/types/appTypes";
 
-const wireRecord = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
-const decodeCoordinates = (value: unknown): Coordinates => {
-    if (
-        !wireRecord(value) ||
-        typeof value.lat !== "number" ||
-        typeof value.lng !== "number" ||
-        !Number.isFinite(value.lat) ||
-        !Number.isFinite(value.lng) ||
-        Math.abs(value.lat) > 90 ||
-        Math.abs(value.lng) > 180
-    )
-        throw new Error("Invalid archived coordinates.");
-    return { lat: value.lat, lng: value.lng };
-};
-const wireInteger = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value);
 const decodeScoredRound = (value: unknown): Results => {
-    if (!wireRecord(value)) throw new Error("Invalid scored round archive.");
-    return Object.fromEntries(
-        Object.entries(value).map(([playerId, row]) => {
-            if (
-                !wireRecord(row) ||
-                !wireInteger(row.attempt) ||
-                row.attempt < 0 ||
-                !wireInteger(row.baseScr) ||
-                !wireInteger(row.lives) ||
-                typeof row.distance !== "number" ||
-                !Number.isFinite(row.distance) ||
-                row.distance < 0
-            )
-                throw new Error("Invalid scored result.");
-            const result: ResultData = { attempt: row.attempt, baseScr: row.baseScr, lives: row.lives, distance: row.distance, location: decodeCoordinates(row.location) };
-            for (const field of ["placeScr", "dblScr", "duelScr", "total", "time"] as const) {
-                const score = row[field];
-                if (score !== undefined) {
-                    if (!wireInteger(score)) throw new Error("Invalid scored result.");
-                    result[field] = score;
-                }
-            }
-            if (row.cc !== undefined) {
-                if (typeof row.cc !== "string") throw new Error("Invalid scored result.");
-                result.cc = row.cc;
-            }
-            if (row.player_countries !== undefined) {
-                if (!Array.isArray(row.player_countries) || !row.player_countries.every((country): country is string => typeof country === "string"))
-                    throw new Error("Invalid scored result.");
-                result.player_countries = [...row.player_countries];
-            }
-            return [playerId, result];
-        })
-    );
+    if (!isSocketRecord(value)) throw new Error("Invalid scored round archive.");
+    return Object.fromEntries(Object.entries(value).map(([playerId, row]) => [playerId, decodeSocketResult(row)]));
 };
 // The transport validates envelopes; decode optional archives here, before any
 // state mutation. Reconstruct values instead of casting untrusted coordinate maps.
 const decodeRoundArchive = <T>(value: unknown, lastRound: number, decode: (entry: unknown) => T): Record<number, T> | undefined => {
     if (value === undefined) return undefined;
-    if (!wireRecord(value)) throw new Error("Invalid round archive.");
+    if (!isSocketRecord(value)) throw new Error("Invalid round archive.");
     return Object.fromEntries(
         Object.entries(value).map(([key, entry]) => {
             const round = Number(key);
@@ -77,16 +22,13 @@ const decodeRoundArchive = <T>(value: unknown, lastRound: number, decode: (entry
     );
 };
 
-export const SOCKET_COMMANDS = {
-    START: "start",
-    SUBMIT_LOCATION: "submit_location",
-    LOC_TO_CC: "loc_to_cc",
-    UPDATE_LOBBY_SETTINGS: "update_lobby_settings",
-    SET_READY: "setReady",
+type GameEventEffects = Pick<ReturnType<typeof createUIRuntime>, "showPlayerLeftToast" | "applyGuessStyles"> & {
+    clock: Pick<ReturnType<typeof createRoundClock>, "apply" | "reset">;
+    reconcileLobbyRoute: () => void;
+    render: (operation: () => Promise<void>) => void;
 };
 
-export const createSocketHandlers = () => {
-    const app = useNuxtApp();
+export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showPlayerLeftToast, applyGuessStyles }: GameEventEffects) => {
     const lobby = useLobbyStore();
     const mode = useGameMode();
     const results = useResultsStore();
@@ -94,20 +36,9 @@ export const createSocketHandlers = () => {
     const battleState = useBattleRoyaleState();
     const player = usePlayerInfo();
     const request = useRequestState();
-    const { roundDeadline, finalResultsReady, finalResultsPlayerId, revealedAnswers } = useLobbyState();
+    const { finalResultsReady, finalResultsPlayerId, revealedAnswers } = useLobbyState();
     const { getPlayerNameFromID } = usePlayerLookup();
-    const render = (operation: () => Promise<void>) => {
-        const owner = app.$gameRuntime.battleRoyale;
-        // Only applied round/phase state grants mapView/activeRound. SDK waits
-        // remain detached from ordered dispatch and admission acknowledgement.
-        const pending = operation();
-        const epoch = owner.generation;
-        owner.trackRender(
-            pending.catch(() => {
-                if (epoch === owner.generation && lobby.lobbySettings) owner.renderError.value = true;
-            })
-        );
-    };
+
     const setPhase = (phase: LobbyPhase, round: number) => {
         if (lobby.lobbySettings) {
             lobby.lobbySettings.phase = phase;
@@ -115,7 +46,7 @@ export const createSocketHandlers = () => {
             lobby.lobbySettings.round = round;
         }
         if (mode.currentMode === "BattleRoyale") battleState.currentRound.value = round;
-        app.$gameRuntime.reconcileLobbyRoute();
+        reconcileLobbyRoute();
     };
     const acceptsGame = (gameId?: string) => !gameId || !lobby.lobbySettings?.gameId || gameId === lobby.lobbySettings.gameId;
     const applySnapshot = (snapshot: LobbyInfo, ownAdmission = false) => {
@@ -136,13 +67,14 @@ export const createSocketHandlers = () => {
             !snapshot.totalResults
         )
             throw new Error("Missing recovery state.");
-        if (!player.value.ID || snapshot.playerList[player.value.ID]?.connected !== true) throw new Error("Missing connected membership.");
+        const playerId = player.value.ID;
+        if (!playerId || snapshot.playerList[playerId]?.connected !== true) throw new Error("Missing connected membership.");
         if (snapshot.phase !== "WAITING" && (!snapshot.location || snapshot.currentRound < 1)) throw new Error("Missing round solution.");
-        const location = snapshot.location === undefined ? undefined : decodeCoordinates(snapshot.location);
+        const location = snapshot.location === undefined ? undefined : decodeSocketCoordinates(snapshot.location);
         const endResults = decodeRoundArchive(snapshot.endResults, snapshot.currentRound, decodeScoredRound);
         if (!endResults) throw new Error("Missing scored round archive.");
         const lastRevealedRound = snapshot.phase === "WAITING" ? 0 : snapshot.currentRound - (snapshot.phase === "PLAYING" ? 1 : 0);
-        const answers = decodeRoundArchive(snapshot.revealedAnswers, lastRevealedRound, decodeCoordinates);
+        const answers = decodeRoundArchive(snapshot.revealedAnswers, lastRevealedRound, decodeSocketCoordinates);
         const previous = lobby.lobbySettings;
         const changed =
             !previous || previous.ID !== snapshot.ID || previous.gameId !== snapshot.gameId || previous.phase !== snapshot.phase || previous.currentRound !== snapshot.currentRound;
@@ -171,16 +103,15 @@ export const createSocketHandlers = () => {
             lobby.lobbySettings.roundRes = results.bestResults;
             lobby.lobbySettings.totalResults = results.totalResults;
         }
-        lobby.rejoinTimer = snapshot.phase === "PLAYING" ? Math.max(0, Math.ceil(snapshot.timeRemaining / 1000)) : null;
         if (snapshot.phase === "PLAYING") {
-            const deadline = Date.now() + snapshot.timeRemaining;
-            // Repeated membership/recovery snapshots may arrive with different
-            // latency. They can shorten this round, never grant extra time.
-            roundDeadline.value = !changed && roundDeadline.value !== null ? Math.min(roundDeadline.value, deadline) : deadline;
-        } else roundDeadline.value = null;
+            lobby.rejoinTimer = clock.apply({ lobbyId: snapshot.ID, playerId, gameId: snapshot.gameId, round: snapshot.currentRound }, snapshot.timeRemaining);
+        } else {
+            lobby.rejoinTimer = null;
+            clock.reset();
+        }
         revealedAnswers.value = nextAnswers;
         if (location) mode.modeLogic.setSearchedLocationCoords(location);
-        finalResultsPlayerId.value = snapshot.phase === "FINISHED" ? player.value.ID : null;
+        finalResultsPlayerId.value = snapshot.phase === "FINISHED" ? playerId : null;
         finalResultsReady.value = snapshot.phase === "FINISHED";
         const member = player.value.ID ? snapshot.playerList[player.value.ID] : undefined;
         request.acknowledgeReady(member?.ready);
@@ -189,21 +120,22 @@ export const createSocketHandlers = () => {
             if (mode.currentMode === "BattleRoyale") render(() => battle.restoreRound(phase, snapshot.currentRound));
         }
     };
-    return {
-        [SocketType.JOINED_LOBBY]: (message: MsgJoinedLobbyData) => {
+    const handlers: SocketEventHandlers = {
+        [SocketType.JOINED_LOBBY]: (message) => {
             const { lobby: snapshot, user } = message.payload;
             if (!snapshot || !user) throw new Error("Missing lobby state.");
             // Full peer snapshots replace data too, but ordinary membership /
             // readiness updates never recreate this player's map or countdown.
             applySnapshot(snapshot, user === player.value.ID);
         },
-        [SocketType.LEFT_LOBBY]: (message: MsgLeftLobbyData) => {
+        [SocketType.LEFT_LOBBY]: (message) => {
             const { lobby: snapshot, user } = message.payload;
             if (!snapshot || !user) throw new Error("Missing lobby state.");
-            app.$gameRuntime.ui.showPlayerLeftToast(getPlayerNameFromID(user) ?? "Unknown Player", !!snapshot.playerList[user]);
+            const name = getPlayerNameFromID(user) ?? "Unknown Player";
             applySnapshot(snapshot);
+            showPlayerLeftToast(name, !!snapshot.playerList[user]);
         },
-        [SocketType.REJOIN_ROUND]: (message: MsgRejoinRound) => {
+        [SocketType.REJOIN_ROUND]: (message) => {
             const data = message.payload;
             if (data.gameId && data.lobby.gameId && data.gameId !== data.lobby.gameId) throw new Error("Conflicting recovery match identity.");
             applySnapshot(
@@ -224,14 +156,15 @@ export const createSocketHandlers = () => {
                 true
             );
         },
-        [SocketType.UPDATED_LOBBY]: (message: MsgUpdatedLobbyData) => {
+        [SocketType.UPDATED_LOBBY]: (message) => {
             if (!message.payload.lobby) throw new Error("Missing lobby state.");
             applySnapshot(message.payload.lobby);
         },
-        [SocketType.START_ROUND]: (message: MsgStartRoundData) => {
+        [SocketType.START_ROUND]: (message) => {
             const data = message.payload;
             const previous = lobby.lobbySettings;
-            if (!previous || !data.location || !data.players || data.phase !== "PLAYING") throw new Error("Missing round state.");
+            const playerId = player.value.ID;
+            if (!previous || !playerId || !data.players || data.phase !== "PLAYING") throw new Error("Missing round state.");
             const round = data.round;
             if (!Number.isInteger(round) || round < 1) throw new Error("Missing authoritative round.");
             const sameGame = !data.gameId || !previous.gameId || data.gameId === previous.gameId;
@@ -264,12 +197,12 @@ export const createSocketHandlers = () => {
             finalResultsPlayerId.value = null;
             request.resetPending();
             setPhase(data.phase, round);
-            roundDeadline.value = Date.now() + remaining;
+            clock.apply({ lobbyId: previous.ID, playerId, gameId: previous.gameId, round }, remaining);
             mode.modeLogic.setSearchedLocationCoords(data.location);
             request.clearError();
             render(() => mode.startRound());
         },
-        [SocketType.NEW_RESULT]: (message: MsgNewResultData) => {
+        [SocketType.NEW_RESULT]: (message) => {
             const { user, playerRes, round, gameId } = message.payload;
             if (!user || !playerRes || !Number.isInteger(playerRes.attempt) || playerRes.attempt < 1) throw new Error("Missing player result.");
             const snapshot = lobby.lobbySettings;
@@ -283,17 +216,17 @@ export const createSocketHandlers = () => {
             snapshot.results[round] = results.rawResults;
             snapshot.endResults[round] = results.bestResults;
             if (snapshot.playerList[user]) snapshot.playerList[user].lives = playerRes.lives;
-            if (leaders) app.$gameRuntime.ui.applyGuessStyles(user, leaders.leaderBefore, leaders.leaderAfter);
             if (user === player.value.ID) battle.acceptGuess(round);
+            if (leaders) applyGuessStyles(user, leaders.leaderBefore, leaders.leaderAfter);
         },
-        [SocketType.ROUND_RESULT]: (message: MsgRoundResultData) => {
+        [SocketType.ROUND_RESULT]: (message) => {
             const data = message.payload;
             const snapshot = lobby.lobbySettings;
             if (!data.totalResults || !data.roundRes || !data.players || !data.fullroundRes || !data.location) throw new Error("Missing round results.");
             if (!snapshot || !acceptsGame(data.gameId) || data.round < snapshot.currentRound) return;
             if (snapshot.phase === "FINISHED" && data.phase !== "FINISHED") return;
             if (!Number.isInteger(data.round) || data.round < 1 || (data.phase !== "MID-ROUND" && data.phase !== "FINISHED")) throw new Error("Invalid round results.");
-            const location = decodeCoordinates(data.location);
+            const location = decodeSocketCoordinates(data.location);
             const roundResults = decodeScoredRound(data.roundRes);
             const changed = snapshot.phase !== data.phase || snapshot.currentRound !== data.round;
             results.restoreRound(data.players, data.fullroundRes, roundResults);
@@ -313,19 +246,19 @@ export const createSocketHandlers = () => {
             revealedAnswers.value[data.round] = { ...location };
             mode.modeLogic.setSearchedLocationCoords(location);
             lobby.rejoinTimer = null;
-            roundDeadline.value = null;
+            clock.reset();
             setPhase(data.phase, data.round);
             request.resetPending();
             if (changed) render(() => Promise.resolve(mode.finishRound(data.round, data.polygon)));
             if (data.phase === "FINISHED") mode.finishGame();
         },
-        [SocketType.GAME_END]: (message: MsgGameEndData) => {
+        [SocketType.GAME_END]: (message) => {
             const data = message.payload;
             const snapshot = lobby.lobbySettings;
             if (!data.totalResults || !data.results || data.phase !== "FINISHED" || !Number.isInteger(data.round) || data.round < 1) throw new Error("Missing final results.");
             if (!snapshot || !acceptsGame(data.gameId) || data.round < snapshot.currentRound) return;
             const endResults = decodeRoundArchive(data.endResults, data.round, decodeScoredRound);
-            const answers = decodeRoundArchive(data.revealedAnswers, data.round, decodeCoordinates);
+            const answers = decodeRoundArchive(data.revealedAnswers, data.round, decodeSocketCoordinates);
             const previousAnswer = revealedAnswers.value[data.round];
             const answer = answers?.[data.round] ?? previousAnswer;
             const restoreFinalMap =
@@ -348,7 +281,7 @@ export const createSocketHandlers = () => {
             results.syncTotalResults(data.totalResults);
             snapshot.totalResults = results.totalResults;
             lobby.rejoinTimer = null;
-            roundDeadline.value = null;
+            clock.reset();
             setPhase(data.phase, data.round);
             request.resetPending();
             if (answer) {
@@ -372,9 +305,10 @@ export const createSocketHandlers = () => {
         },
         [SocketType.TIMES_UP]: () => {},
         [SocketType.NO_COUNTRY]: () => {},
-        [SocketType.CC]: (message: MsgCCData) => {
+        [SocketType.CC]: (message) => {
             const { polygon, cc } = message.payload;
             if (polygon && cc) mode.processClickedCountry(polygon, cc);
         },
     };
+    return <T extends SocketType>(event: GameSocketEvent<T>) => handlers[event.type](event);
 };

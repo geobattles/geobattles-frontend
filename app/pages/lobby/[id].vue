@@ -4,12 +4,13 @@
         <main id="main-content" class="page-shell waiting-lobby">
             <div class="page-heading">
                 <div>
-                    <h1 class="command-heading" data-testid="lobby-name">{{ mounted ? lobby.lobbySettings?.conf.name || "Lobby" : "Lobby" }}</h1>
+                    <h1 class="command-heading" data-testid="lobby-name">{{ mounted && waitingView ? lobby.lobbySettings?.conf.name || "Lobby" : "Lobby" }}</h1>
                 </div>
-                <LobbyLeave class="lobby-leave" @click="leave" />
+                <LobbyLeave v-if="mounted && waitingView" class="lobby-leave" @click="leave" />
             </div>
             <ClientOnly>
-                <div class="lobby-layout">
+                <SocketSessionFeedback :retained="waitingView" @leaveLobby="leave" />
+                <div v-if="waitingView" class="lobby-layout">
                     <section class="lobby-actions" aria-label="Get ready to play">
                         <LobbyStartGame />
                     </section>
@@ -34,15 +35,15 @@
                         <div class="settings-body"><LobbyDisplaySettings /></div>
                     </section>
                 </div>
-                <GameplayLostConnectionDialog @leaveLobby="leave" /><UiDialog v-model:open="lobby.modifySettingsModal" title="Lobby settings" wide
-                    ><LobbyModifySettings @close="lobby.modifySettingsModal = false" /></UiDialog
-                ><template #fallback
-                    ><section class="panel">
-                        <h2>Connecting to lobby {{ route.params.id }}</h2>
-                        <p class="muted mt-3">Waiting for the server to confirm your place.</p>
-                    </section></template
-                ></ClientOnly
-            >
+                <UiDialog v-if="waitingView" v-model:open="lobby.modifySettingsModal" title="Lobby settings" wide>
+                    <LobbyModifySettings @close="lobby.modifySettingsModal = false" />
+                </UiDialog>
+                <template #fallback>
+                    <SocketConnectionPanel tone="joining" title="Joining lobby…" description="Waiting for the game server to confirm your place." :code="lobbyId">
+                        <NuxtLink to="/" class="btn btn-secondary">Cancel</NuxtLink>
+                    </SocketConnectionPanel>
+                </template>
+            </ClientOnly>
         </main>
     </div>
 </template>
@@ -51,16 +52,31 @@ definePageMeta({ key: (route) => `lobby-${String(route.params.id)}` });
 const lobby = useLobbyStore();
 const mounted = ref(false);
 
-const { connectionState } = useSocketState();
+const { connectionState, connectionError } = useSocketState();
 const isConnected = computed(() => connectionState.value === "connected");
 const route = useRoute();
+const lobbyId = computed(() => routeLobbyId(route));
+const minimumJoinDisplayMs = 2000;
+const joinDisplayComplete = ref(false);
+let joinDisplayTimer: ReturnType<typeof setTimeout> | undefined;
+const finishJoinDisplay = () => {
+    clearTimeout(joinDisplayTimer);
+    joinDisplayComplete.value = true;
+};
+const waitingView = computed(() => joinDisplayComplete.value && !!lobby.lobbySettings && lobby.lobbySettings.ID === lobbyId.value && lobby.lobbySettings.phase === "WAITING");
+// This is only a presentation minimum. Admission runs in parallel; don't
+// hold a recovery notice or a terminal failure behind the animation.
+watch([connectionState, connectionError], ([state, error]) => {
+    if (state === "reconnecting" || (state === "disconnected" && error)) finishJoinDisplay();
+});
 const { goHome: leave } = useLobbyLeaveGuard();
 const { fetchCountryList } = useCountryActions();
 onMounted(() => {
     mounted.value = true;
-
+    if (!joinDisplayComplete.value) joinDisplayTimer = setTimeout(finishJoinDisplay, minimumJoinDisplayMs);
     void fetchCountryList().catch(() => console.warn("Country list could not be loaded."));
 });
+onBeforeUnmount(() => clearTimeout(joinDisplayTimer));
 
 useHead({ title: "Lobby" });
 </script>
@@ -72,6 +88,9 @@ useHead({ title: "Lobby" });
 .waiting-lobby .page-heading {
     margin-bottom: 1rem;
     align-items: center;
+}
+.waiting-lobby :deep(.connection-strip) {
+    margin-bottom: 0.65rem;
 }
 .waiting-lobby .eyebrow {
     margin-bottom: 0.25rem;

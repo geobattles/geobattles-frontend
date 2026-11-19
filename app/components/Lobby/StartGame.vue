@@ -40,6 +40,7 @@
 const props = defineProps<{ replay?: boolean }>();
 const lobby = useLobbyStore();
 const socket = useWebSocketStore();
+const actions = useLobbySocketActions();
 const player = usePlayerInfo();
 const request = useRequestState();
 const members = computed(() => Object.values(lobby.lobbySettings?.playerList ?? {}));
@@ -52,7 +53,7 @@ const blockedReason = computed(() => {
     if (members.value.some((member) => !member.connected)) return "Waiting for disconnected explorers to return.";
     if (!lobby.allPlayersReady) return "Waiting for every explorer to mark ready.";
     if (lobby.modifySettingsModal) return "Finish reviewing the settings first.";
-    return socket.startUnavailableReason;
+    return actions.startUnavailableReason;
 });
 const feedback = computed(() => {
     if (request.isReadyPending) return "Waiting for the server to confirm your ready status…";
@@ -62,7 +63,7 @@ const feedback = computed(() => {
     return props.replay ? "Everyone is ready for a new game." : "The crew is ready. Let’s explore.";
 });
 const start = () => {
-    if (!blockedReason.value && !request.isStartPending && !request.isReadyPending) socket.sendMessage({ command: SOCKET_COMMANDS.START });
+    if (!blockedReason.value && !request.isStartPending && !request.isReadyPending) actions.start();
 };
 </script>
 <style scoped>

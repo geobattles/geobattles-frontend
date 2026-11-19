@@ -3,6 +3,7 @@
 Start with [Contributing](../CONTRIBUTING.md) for setup and review.
 
 - [Architecture](architecture.md): source layout, wire contracts and journal data.
+- [Frontend socket architecture](socket-architecture.md): connection and membership owners, event flow and where to add commands.
 - [Native state](native-state.md): request scope, client resource ownership and SSR.
 - [Runtime recovery](frontend-recovery.md): auth, sockets, Maps and diagnostics.
 - [Layout and controls](layout-controls.md): responsive gameplay and accessibility.

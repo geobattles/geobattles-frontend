@@ -231,12 +231,7 @@ export const useBattleRoyaleStore = () => {
         resources().invalidatePinPlacement();
         isGuessPending.value = true;
 
-        const socket_message = {
-            command: SOCKET_COMMANDS.SUBMIT_LOCATION,
-            location: { ...currentMapPin.value },
-        };
-
-        if (app.$gameRuntime.socket.sendMessage(socket_message)) {
+        if (app.$gameRuntime.socketActions.submitLocation({ ...currentMapPin.value })) {
             // Freeze the sent marker. Only this command's ACK/error or an
             // explicit phase/connection reset may release its pending gate.
             resources().draftMarker.value = null;
