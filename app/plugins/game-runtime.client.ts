@@ -22,7 +22,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         clock,
         reconcileLobbyRoute: () => session.reconcileLobbyRoute(),
         showPlayerLeftToast: ui.showPlayerLeftToast,
-        applyGuessStyles: ui.applyGuessStyles,
+        showLiveGuess: ui.showLiveGuess,
         render: (operation) => {
             // Start the view grant synchronously after state application, but
             // never wait for SDK work in dispatch or let its failure reconnect.

@@ -1,4 +1,5 @@
 import type { LiveResultsHashMap, ResultData, Results, TotalResults, playerListObject } from "~/types/appTypes";
+import { describeLiveGuess } from "~/utils/resultUtils";
 
 export const useResultsStore = () => {
     const liveResults = useLiveResults();
@@ -10,7 +11,7 @@ export const useResultsStore = () => {
     const sortResultsByDistance = () => {
         liveResults.value = Object.fromEntries(Object.entries(liveResults.value).sort(([, a], [, b]) => guessDistance(a) - guessDistance(b)));
     };
-    const getCurrentRoundLeader = () => Object.entries(liveResults.value).find(([, result]) => hasGuess(result))?.[0];
+
     const resetResults = () => {
         liveResults.value = {};
         totalResults.value = {};
@@ -56,14 +57,14 @@ export const useResultsStore = () => {
     };
     const applySingleResult = (userID: string, result: ResultData) => {
         if (currentMode.value !== "BattleRoyale") return;
-        const leaderBefore = getCurrentRoundLeader();
         result = normalizeResult(result);
+        const feedback = lobbySettings.value?.playerList[userID] ? describeLiveGuess(liveResults.value, userID, result) : undefined;
         const attempts = rawResults.value[userID] ?? [];
         rawResults.value[userID] = [...attempts, result];
         if (lobbySettings.value?.playerList[userID]) liveResults.value[userID] = mergeBestGuess(liveResults.value[userID], result);
         bestResults.value[userID] = selectBestGuess(bestResults.value[userID], result);
         sortResultsByDistance();
-        return { leaderBefore, leaderAfter: getCurrentRoundLeader() };
+        return feedback;
     };
     return reactive({ liveResults, totalResults, rawResults, bestResults, applySingleResult, restoreRound, syncMembers, syncTotalResults, resetResults });
 };

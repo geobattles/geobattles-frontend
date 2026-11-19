@@ -1,5 +1,5 @@
 <template>
-    <section class="results-screen" :class="{ 'mobile-map-active': mobileView === 'map' }" aria-label="Round results">
+    <section class="results-screen midround-screen" :class="{ 'mobile-map-active': mobileView === 'map' }" aria-label="Round results">
         <header class="results-header">
             <div class="results-title">
                 <span class="result-mark" aria-hidden="true">{{ game.modeLogic.currentRound }}</span>
@@ -27,12 +27,12 @@
             <div id="midround-map-slot" class="results-map-slot" aria-label="Round answer and closest guesses"></div>
             <div id="midround-results-container" class="results-inspector">
                 <div class="results-details" :tabindex="compactViewport ? 0 : undefined" role="region" aria-label="Round debrief and player results">
-                    <GameplayRoundDebrief :compact="compactViewport" />
                     <div class="tab-buttons" role="group" aria-label="Choose results view">
-                        <button class="btn btn-secondary" type="button" :aria-pressed="tab === 'round'" @click="tab = 'round'">This round</button
-                        ><button class="btn btn-secondary" type="button" :aria-pressed="tab === 'total'" @click="tab = 'total'">Total points</button>
+                        <button class="btn btn-secondary" type="button" :aria-pressed="tab === 'total'" @click="tab = 'total'">Total points</button
+                        ><button class="btn btn-secondary" type="button" :aria-pressed="tab === 'round'" @click="tab = 'round'">This round</button>
                     </div>
                     <GameplayBattleRoyaleLiveStatistics v-if="tab === 'round'" :compact="compactViewport" /><GameplayTotalStatistics v-else />
+                    <GameplayRoundDebrief :compact="compactViewport" />
                 </div>
                 <footer class="round-actions">
                     <button
@@ -45,7 +45,7 @@
                     >
                         <span v-if="request.isStartPending" class="spinner" />Next round <UiIcon name="arrow" />
                     </button>
-                    <p v-else class="muted text-sm">Take a look around. Your host will start the next round.</p>
+                    <p v-else class="muted text-sm">Waiting for the host.</p>
                     <p v-if="actions.startUnavailableReason" class="field-help">{{ actions.startUnavailableReason }}</p>
                     <p class="field-help">Round {{ game.modeLogic.currentRound }} of {{ lobby.lobbySettings?.conf.numRounds }}</p>
                 </footer>
@@ -61,7 +61,7 @@ const socket = useWebSocketStore();
 const actions = useLobbySocketActions();
 const request = useRequestState();
 const ui = useUIManagerStore();
-const tab = ref<"round" | "total">("round");
+const tab = ref<"round" | "total">("total");
 const mobileView = ref<"results" | "map">("results");
 // Keep the table density in step with the mobile CSS, including orientation changes.
 const compactViewport = ref(false);
@@ -75,12 +75,11 @@ onMounted(() => {
     viewportQuery.addEventListener("change", syncViewport);
 });
 onBeforeUnmount(() => viewportQuery?.removeEventListener("change", syncViewport));
-watch(
-    () => game.modeLogic.currentState,
-    (state) => {
-        if (state === "MID-ROUND") mobileView.value = "results";
-    }
-);
+watch([() => game.modeLogic.currentState, () => game.modeLogic.currentRound], ([state]) => {
+    if (state !== "MID-ROUND") return;
+    tab.value = "total";
+    mobileView.value = "results";
+});
 const start = () => {
     if (socket.isConnected && socket.isOnline && !request.isStartPending && !actions.startUnavailableReason) actions.start();
 };
@@ -317,6 +316,35 @@ const start = () => {
         padding: 0.4rem;
         min-height: 44px;
         font-size: 0.8rem;
+    }
+}
+.midround-screen .results-details > .round-debrief {
+    margin-top: 0.65rem;
+}
+@media (max-width: 850px) and (orientation: portrait), (max-width: 1100px) and (pointer: coarse) and (orientation: portrait) {
+    .midround-screen .results-mobile-switch {
+        display: none;
+    }
+    .midround-screen .results-layout {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: repeat(2, minmax(0, 1fr));
+    }
+    .midround-screen .results-map-slot {
+        display: block;
+        grid-row: 2;
+        border-top: 1px solid var(--gb-line);
+    }
+    .midround-screen .results-inspector {
+        display: flex;
+        grid-row: 1;
+        padding-block: 0.4rem;
+    }
+    .midround-screen .round-actions {
+        margin-bottom: 0.25rem;
+        padding-bottom: 0.35rem;
+    }
+    .midround-screen .results-inspector .tab-buttons {
+        margin-bottom: 0.25rem;
     }
 }
 /* Wide mobile landscape uses both panes; the native map host stays in its slot.

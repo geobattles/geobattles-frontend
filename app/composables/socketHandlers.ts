@@ -22,13 +22,13 @@ const decodeRoundArchive = <T>(value: unknown, lastRound: number, decode: (entry
     );
 };
 
-type GameEventEffects = Pick<ReturnType<typeof createUIRuntime>, "showPlayerLeftToast" | "applyGuessStyles"> & {
+type GameEventEffects = Pick<ReturnType<typeof createUIRuntime>, "showPlayerLeftToast" | "showLiveGuess"> & {
     clock: Pick<ReturnType<typeof createRoundClock>, "apply" | "reset">;
     reconcileLobbyRoute: () => void;
     render: (operation: () => Promise<void>) => void;
 };
 
-export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showPlayerLeftToast, applyGuessStyles }: GameEventEffects) => {
+export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showPlayerLeftToast, showLiveGuess }: GameEventEffects) => {
     const lobby = useLobbyStore();
     const mode = useGameMode();
     const results = useResultsStore();
@@ -210,14 +210,14 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
             // Legacy frames without seq are idempotent by per-player attempt.
             // A duplicate cannot add raw history or ACK a newer pending guess.
             if ((results.rawResults[user] ?? []).some((guess) => guess.attempt >= playerRes.attempt)) return;
-            const leaders = results.applySingleResult(user, playerRes);
+            const feedback = results.applySingleResult(user, playerRes);
             snapshot.fullroundRes = results.rawResults;
             snapshot.roundRes = results.bestResults;
             snapshot.results[round] = results.rawResults;
             snapshot.endResults[round] = results.bestResults;
             if (snapshot.playerList[user]) snapshot.playerList[user].lives = playerRes.lives;
             if (user === player.value.ID) battle.acceptGuess(round);
-            if (leaders) applyGuessStyles(user, leaders.leaderBefore, leaders.leaderAfter);
+            if (feedback) showLiveGuess(feedback);
         },
         [SocketType.ROUND_RESULT]: (message) => {
             const data = message.payload;

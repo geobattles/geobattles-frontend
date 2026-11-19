@@ -60,13 +60,13 @@ export async function connected(actor: Actor) {
 }
 
 export function readyButton(actor: Actor) {
-    return actor.page.getByRole("button", { name: /^(ready|not ready|i.m ready|undo ready)$/i });
+    return actor.page.getByRole("button", { name: /^(ready|not ready|mark ready|change ready status)$/i });
 }
 
 export async function setReady(actor: Actor, value: boolean) {
     const button = readyButton(actor);
-    const initialName = value ? /^(ready|i.m ready)$/i : /^(not ready|undo ready)$/i;
-    const updatedName = value ? /^(not ready|undo ready)$/i : /^(ready|i.m ready)$/i;
+    const initialName = value ? /^(ready|mark ready)$/i : /^(not ready|change ready status)$/i;
+    const updatedName = value ? /^(not ready|change ready status)$/i : /^(ready|mark ready)$/i;
     await expect(button).toHaveAccessibleName(initialName);
     const mark = actor.mark();
     await button.click();

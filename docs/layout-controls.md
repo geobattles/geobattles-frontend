@@ -14,7 +14,7 @@ Four labelled code boxes support ASCII capitalization, keyboard editing and vali
 
 The sign-in dialog shows one form at a time. Joining or creating a lobby opens guest entry; explicit sign-in opens account entry. Opening the dialog or code page does not focus a text field. The auth dialog tracks the visual viewport while open so its controls can be scrolled into view above the software keyboard.
 
-The waiting room leads with **I’m ready** for unready players. The host sees **Start game** only when everyone is ready; server eligibility and connection checks still apply. Ready players can undo their choice. Narrow and short landscape layouts put readiness and the invite ahead of the roster and settings. Keep the region and round values visible; the map, country list and rules are available on demand. Directory rows preserve search, sorting, capacity and phase eligibility.
+The waiting room uses the room name and a labelled **Leave** button instead of the site navbar. **Mark ready** is an outlined action with a brief pulse when motion is allowed. A server-confirmed ready state has its own label and a separate **Change** action. The host sees **Start game** only when everyone is ready; server eligibility and connection checks still apply. Narrow and short landscape layouts put readiness and the invite ahead of the roster and settings, without stretching the ready button across landscape. Keep the region and round values visible; the map, country list and rules are available on demand. Directory rows preserve search, sorting, capacity and phase eligibility.
 
 Keep region selection concise: mode buttons, one selected-region line, the map and a searchable flag list. Avoid repeated instructions, numbered steps and duplicate selection cards. Retain accessible search labels, selection/result announcements and map keyboard guidance even when their visible counterparts are unnecessary. Scoring details belong in Advanced rules. Mobile controls use compact padding without shrinking touch targets below 44px.
 
@@ -32,11 +32,11 @@ A single client-owned responsive query coordinates compact styling, score column
 
 Opening the mobile map fills the actual gameplay viewport. Move the same map host, live scoreboard and timer into its dialog focus scope rather than leaving them inert underneath or duplicating their state. Closing restores them without changing the round deadline or recreating SDK objects. Keep Close, guesses remaining, submit and provider attribution unobscured.
 
-Portrait scores have a player-count-independent height cap, focusable scrolling for every row and a 44px Hide/Show header. Preserve the collapsed preference through orientation changes. Landscape/desktop retain their separate full table behavior.
+Portrait scores retain the column labels and focusable, height-capped scrolling, without an extra title or toggle bar. In Battle Royale a confirmed guess briefly marks the row with a pin. Overtaking scored players adds a rising rank badge; taking the sole lead adds a gold crown. Presentation follows the existing best-distance order, never invents a score or animates a restored snapshot, and uses static cues with reduced motion.
 
 ## Results
 
-Wide mobile landscape can show map and results together; narrow layouts switch between them. Keep Next round and replay readiness outside scrolling details. Compact personal debriefs use native disclosure, while final standings, debrief and roster share a focusable scrolling region so lower rows stay reachable. First-place ties receive equal treatment.
+Between rounds, open **Total points** by default and keep **This round** available. Compact portrait divides the space below the header between scrollable results above and the answer map below. Wide mobile landscape shows the two panes side by side. Keep Next round and replay readiness outside scrolling details. Compact personal debriefs use native disclosure, while final standings, debrief and roster share a focusable scrolling region so lower rows stay reachable. First-place ties receive equal treatment.
 
 Maps retain authoritative result bounds and refit after a visible layout change; gameplay pan/zoom has different ownership. See [runtime recovery](frontend-recovery.md#maps-only-recovery).
 

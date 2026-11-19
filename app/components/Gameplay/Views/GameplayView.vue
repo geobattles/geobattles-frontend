@@ -24,29 +24,8 @@
         </div>
         <Teleport :to="mapPanel || 'body'" :disabled="!mapModal">
             <aside class="gameplay-scoreboard" :class="{ 'map-scoreboard': mapModal }" aria-label="Live scores">
-                <button
-                    v-if="portraitScores"
-                    type="button"
-                    class="scoreboard-toggle"
-                    :aria-expanded="scoresVisible"
-                    :aria-label="scoresVisible ? 'Hide scores' : 'Show scores'"
-                    aria-controls="live-score-details"
-                    @click="scoresVisible = !scoresVisible"
-                >
-                    <span
-                        >Scores <span class="scoreboard-count">{{ scorePlayerCount }}</span></span
-                    >
-                    <span class="scoreboard-toggle-label">{{ scoresVisible ? "Hide" : "Show" }}</span>
-                </button>
-                <h2 v-else>Round scores</h2>
-                <div
-                    id="live-score-details"
-                    v-show="!portraitScores || scoresVisible"
-                    class="scoreboard-body"
-                    tabindex="0"
-                    role="region"
-                    aria-label="Player scores, scroll for more players"
-                >
+                <h2 v-if="!portraitScores">Round scores</h2>
+                <div class="scoreboard-body" tabindex="0" role="region" aria-label="Player scores, scroll for more players">
                     <GameplayBattleRoyaleLiveStatistics v-if="game.currentMode === 'BattleRoyale'" :compact="compactViewport" player-hooks /><GameplayCountryBattleLiveStatistics
                         v-else
                     />
@@ -106,9 +85,6 @@ const { isGuessPending } = useBattleRoyaleState();
 const compactViewport = ref(false);
 const portraitViewport = ref(false);
 const portraitScores = computed(() => compactViewport.value && portraitViewport.value);
-const scoresVisible = ref(true);
-const { lobbySettings } = useLobbyState();
-const scorePlayerCount = computed(() => Object.keys(lobbySettings.value?.playerList ?? {}).length);
 const mapOpen = ref(true);
 const mapModal = computed(() => compactViewport.value && mapOpen.value);
 let viewportQuery: MediaQueryList | null = null;
@@ -307,38 +283,10 @@ onBeforeUnmount(() => {
 .gameplay-scoreboard.map-scoreboard .scoreboard-body {
     touch-action: pan-y;
 }
-/* Portrait keeps only a few rows visible, regardless of lobby size.
-   The full table remains scrollable and can be tucked into a 44px header. */
+/* Portrait keeps the table columns and scrollable rows, without a title bar. */
 .portrait-gameplay .gameplay-scoreboard {
     width: min(240px, calc(100% - max(0.5rem, env(safe-area-inset-left)) - max(0.5rem, env(safe-area-inset-right))));
-    max-height: min(168px, 26dvh, calc(100dvh - max(0.5rem, env(safe-area-inset-top)) - 56px - var(--gameplay-action-bottom) - 5px - 52px - 12px));
-}
-.scoreboard-toggle {
-    flex: none;
-    width: 100%;
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.375rem 0.5rem;
-    border: 0;
-    border-bottom: 1px solid var(--gb-line);
-    border-radius: 7px 7px 0 0;
-    background: var(--gb-surface);
-    color: var(--gb-text);
-    font-size: 0.7rem;
-    text-align: left;
-    cursor: pointer;
-}
-.scoreboard-count {
-    color: var(--gb-muted);
-    margin-left: 0.25rem;
-    font-variant-numeric: tabular-nums;
-}
-.scoreboard-toggle-label {
-    color: var(--gb-accent);
-    font-size: 0.65rem;
+    max-height: min(150px, 24dvh, calc(100dvh - max(0.5rem, env(safe-area-inset-top)) - 56px - var(--gameplay-action-bottom) - 5px - 52px - 12px));
 }
 .gameplay-scoreboard h2 {
     flex: none;

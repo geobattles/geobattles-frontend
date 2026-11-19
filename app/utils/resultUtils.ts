@@ -40,6 +40,26 @@ export const mergeBestGuess = (previous: ResultData | undefined, latest: ResultD
     lives: latest.lives,
 });
 
+export type LiveGuessFeedback = { playerId: string; attempt: number; kind: "guess" | "climb" | "lead"; passed: number };
+
+// Follow the live table's best-distance order. A tie never counts as a pass.
+export const describeLiveGuess = (rows: Results, playerId: string, latest: ResultData): LiveGuessFeedback | undefined => {
+    const previous = rows[playerId];
+    if (!previous || !hasGuess(latest)) return;
+    const before = guessDistance(previous);
+    const after = Math.min(before, latest.distance);
+    let closestRival = Infinity;
+    let passed = 0;
+    for (const [id, row] of Object.entries(rows)) {
+        if (id === playerId || !hasGuess(row)) continue;
+        const distance = row.distance;
+        closestRival = Math.min(closestRival, distance);
+        if (before >= distance && after < distance) passed++;
+    }
+    const kind = after < closestRival && before >= closestRival ? "lead" : passed > 0 ? "climb" : "guess";
+    return { playerId, attempt: latest.attempt, kind, passed };
+};
+
 export const formatGuessDistance = (result: ResultData): string => {
     if (!hasGuess(result)) return "--";
     const meters = result.distance < 1000;

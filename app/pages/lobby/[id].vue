@@ -1,10 +1,10 @@
 <template>
     <div class="game-shell">
-        <Header />
+        <Login />
         <main id="main-content" class="page-shell waiting-lobby">
             <div class="page-heading">
                 <h1 class="command-heading" data-testid="lobby-name">{{ mounted && waitingView ? lobby.lobbySettings?.conf.name || "Lobby" : "Lobby" }}</h1>
-                <LobbyLeave v-if="mounted && waitingView" class="lobby-leave" @click="leave" />
+                <LobbyLeave v-if="mounted && waitingView" class="lobby-leave" short @click="leave" />
             </div>
             <ClientOnly>
                 <SocketSessionFeedback :retained="waitingView" @leaveLobby="leave" />
@@ -214,11 +214,7 @@ useHead({ title: "Lobby" });
     }
     .waiting-lobby .lobby-leave {
         flex: none;
-        width: 44px;
-        height: 44px;
-        padding: 0;
-        font-size: 0;
-        gap: 0;
+        gap: 0.35rem;
     }
     .lobby-leave :deep(svg) {
         font-size: 1.1rem;
@@ -316,6 +312,14 @@ useHead({ title: "Lobby" });
     .room-invite :deep(.invite-link > .field) {
         grid-column: 1 / -1;
         margin-top: 0.25rem;
+    }
+}
+@media (max-height: 540px) and (orientation: landscape) {
+    .lobby-actions :deep(.ready-actions > button) {
+        flex: 0 1 clamp(7.5rem, 22vw, 11rem);
+    }
+    .lobby-actions :deep(.ready-actions > .undo-ready) {
+        flex: 0 1 auto;
     }
 }
 @media (min-width: 641px) and (max-height: 540px) and (orientation: landscape) {

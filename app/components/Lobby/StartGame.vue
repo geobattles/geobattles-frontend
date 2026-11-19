@@ -8,18 +8,25 @@
         </div>
 
         <div class="ready-actions">
+            <span v-if="!replay && lobby.isPlayerReady" class="ready-confirmation"><span class="status-dot" aria-hidden="true" />{{ showStart ? "Ready" : "You’re ready" }}</span>
             <button
                 ref="readyButton"
                 class="btn btn-command"
-                :class="{ 'btn-secondary': replay || lobby.isPlayerReady, 'is-ready': replay && lobby.isPlayerReady, 'undo-ready': !replay && lobby.isPlayerReady }"
+                :class="{
+                    'btn-secondary': replay || !lobby.isPlayerReady,
+                    'btn-quiet undo-ready': !replay && lobby.isPlayerReady,
+                    'ready-prompt': !replay && !lobby.isPlayerReady,
+                    'is-ready': replay && lobby.isPlayerReady,
+                }"
                 type="button"
+                :aria-label="!replay && lobby.isPlayerReady ? 'Change ready status' : undefined"
                 :aria-pressed="replay ? lobby.isPlayerReady : undefined"
                 :disabled="!canReady || request.isStartPending"
                 :aria-disabled="request.isReadyPending || undefined"
                 :aria-busy="request.isReadyPending"
                 @click="toggleReady"
             >
-                <span v-if="request.isReadyPending" class="spinner" /><UiIcon v-else :name="lobby.isPlayerReady ? 'check' : 'user'" />{{ readyLabel }}
+                <span v-if="request.isReadyPending" class="spinner" /><UiIcon v-else-if="replay" :name="lobby.isPlayerReady ? 'check' : 'user'" />{{ readyLabel }}
             </button>
             <button
                 v-if="showStart"
@@ -59,14 +66,14 @@ const blockedReason = computed(() => {
     return actions.startUnavailableReason;
 });
 const showStart = computed(() => lobby.isPlayerAdmin() && (props.replay || lobby.allPlayersReady || request.isStartPending));
-const readyLabel = computed(() => (props.replay ? (lobby.isPlayerReady ? "Not ready" : "Ready") : lobby.isPlayerReady ? "Undo ready" : "I’m ready"));
+const readyLabel = computed(() => (props.replay ? (lobby.isPlayerReady ? "Not ready" : "Ready") : lobby.isPlayerReady ? "Change" : "Mark ready"));
 const feedback = computed(() => {
     if (!props.replay) {
         if (request.isReadyPending) return "Updating readiness…";
         if (request.isStartPending) return "Finding a location…";
         if (!socket.isConnected || !socket.isOnline) return "";
         if (showStart.value) return blockedReason.value || "Everyone is ready.";
-        if (lobby.isPlayerReady) return lobby.allPlayersReady ? "Waiting for the host to start." : "You’re ready. Waiting for the other players.";
+        if (lobby.isPlayerReady) return lobby.allPlayersReady ? "Waiting for the host to start." : "Waiting for the other players.";
         return "";
     }
     if (request.isReadyPending) return "Waiting for the server to confirm your ready status…";
@@ -132,10 +139,41 @@ const start = () => {
 }
 .waiting-ready .ready-actions {
     margin-top: 0.4rem;
+    align-items: center;
+}
+.ready-confirmation {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--gb-accent);
+    font-weight: 700;
+    font-size: 0.8rem;
 }
 .waiting-ready .ready-actions > .undo-ready {
     flex: 0 1 auto;
     min-height: 44px;
+    letter-spacing: normal;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+}
+.ready-prompt {
+    border-color: #8b9386;
+    background: var(--gb-bg);
+}
+@media (prefers-reduced-motion: no-preference) {
+    .ready-prompt:not(:disabled, [aria-disabled="true"]) {
+        animation: ready-outline 2.5s ease-in-out 2;
+    }
+}
+@keyframes ready-outline {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 #e5efda00;
+    }
+    50% {
+        box-shadow: 0 0 0 3px #e5efda40;
+    }
 }
 .ready-actions > [aria-disabled="true"] {
     opacity: 0.65;
