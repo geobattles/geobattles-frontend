@@ -7,6 +7,7 @@
             :autocomplete="autocomplete"
             :required="required"
             :minlength="minlength"
+            :enterkeyhint="enterkeyhint"
             :aria-invalid="invalid || undefined"
             :aria-describedby="describedby"
             class="input"
@@ -17,7 +18,7 @@
     </div>
 </template>
 <script setup lang="ts">
-defineProps<{ id: string; autocomplete?: string; required?: boolean; minlength?: number; invalid?: boolean; describedby?: string }>();
+defineProps<{ id: string; autocomplete?: string; required?: boolean; minlength?: number; invalid?: boolean; describedby?: string; enterkeyhint?: "go" }>();
 const model = defineModel<string>({ required: true });
 const visible = ref(false);
 </script>

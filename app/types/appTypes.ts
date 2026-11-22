@@ -1,3 +1,5 @@
+import type { PowerupState } from "./powerups";
+
 // ====================== User data ======================
 export type User = {
     username: string;
@@ -26,6 +28,7 @@ export type LobbyInfo = {
     roundRes: Results;
     timeRemaining: number;
     powerLog: Powerup[];
+    powerupState?: PowerupState;
     location?: Coordinates;
     numPlayers: number;
     playerList: playerListObject;

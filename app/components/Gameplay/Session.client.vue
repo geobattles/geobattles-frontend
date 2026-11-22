@@ -1,9 +1,10 @@
 <template>
-    <GameplayViewsCountdownView v-if="game.modeLogic.currentState === 'STARTING'" />
-    <GameplayViewsGameplayView v-show="roundRunning" @leaveLobby="emit('leaveLobby')" @connectionTarget="mapConnectionTarget = $event" />
+    <Transition name="round-reveal" :css="game.modeLogic.currentState === 'PLAYING'">
+        <GameplayViewsCountdownView v-if="countdown" :key="game.modeLogic.currentRound" :remaining="countdown" />
+    </Transition>
+    <GameplayViewsGameplayView v-show="roundRunning" :inert="!!countdown" @leaveLobby="emit('leaveLobby')" @connectionTarget="mapConnectionTarget = $event" />
     <GameplayViewsMidRoundView v-show="game.modeLogic.currentState === 'MID-ROUND'" @leaveLobby="emit('leaveLobby')" />
     <GameplayViewsEndGameView v-show="game.modeLogic.currentState === 'FINISHED'" @leaveLobby="emit('leaveLobby')" />
-    <GameplayMapRecovery v-if="['MID-ROUND', 'FINISHED'].includes(game.modeLogic.currentState)" />
     <div :class="{ 'page-shell connection-entry': !retained }">
         <SocketSessionFeedback
             :retained="retained"
@@ -25,6 +26,8 @@ const route = useRoute();
 const { lobbySettings } = useLobbyState();
 const retained = computed(() => !!lobbySettings.value && lobbySettings.value.ID === routeLobbyId(route) && game.modeLogic.currentState !== "WAITING");
 const roundRunning = computed(() => game.modeLogic.currentState === "PLAYING" || game.modeLogic.currentState === "STARTING");
+const { countdownRemaining } = useNuxtApp().$gameRuntime.battleRoyale;
+const countdown = computed(() => (game.modeLogic.currentState === "STARTING" ? countdownRemaining.value : null));
 const mapConnectionTarget = shallowRef<HTMLElement | null>(null);
 const playerLeft = (event: CustomEvent<{ playerName: string; disconnected: boolean }>) => {
     toast.add({

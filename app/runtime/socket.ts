@@ -10,8 +10,9 @@ export const createSocketRuntime = (
         apply: (event: GameSocketEvent) => void;
         afterFrame: () => void;
         closeAttempt: () => void;
-        invalidateViews: () => void;
+        invalidateViews: (preserveDraft?: boolean) => void;
         releaseSession: () => void;
+        requestError?: (error: RequestError) => boolean;
     }
 ) => {
     const { connectionState, isOnline, recoveryDeadline, recoverySecondsRemaining, retryAttempt, nextRetryAt, connectionError } = useSocketState();
@@ -183,7 +184,7 @@ export const createSocketRuntime = (
         if (!withinBudget()) return;
         clearRetry();
         clearAttempt();
-        ports.invalidateViews();
+        ports.invalidateViews(true);
         request.resetPending();
         connectionState.value = hasAdmitted ? "reconnecting" : "connecting";
         waitForReadiness();
@@ -257,7 +258,7 @@ export const createSocketRuntime = (
             if (!admitted || error.code === "PLAYER_NOT_IN_LOBBY") {
                 throw { ...error, terminal: error.code !== "LOBBY_BUSY" } satisfies Failure;
             }
-            request.fail(error);
+            if (!ports.requestError?.(error)) request.fail(error);
         } else {
             const event = decodeGameSocketEvent(data);
             if (event) await ports.apply(event);

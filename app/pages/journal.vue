@@ -1,10 +1,10 @@
 <template>
-    <div class="journal-page">
+    <div class="journal-page atlas-menu-shell">
         <Header />
         <main id="main-content" class="journal-main">
             <header class="journal-heading">
                 <div>
-                    <p class="eyebrow">YOUR ROUTES. YOUR PROGRESS.</p>
+                    <p class="eyebrow">Match archive</p>
                     <h1>Expedition <span>Journal.</span></h1>
                     <p class="journal-intro">A closer look at the places you guessed — and the answers you found.</p>
                 </div>
@@ -80,8 +80,8 @@
                     ><span>NO EXPEDITIONS RECORDED</span>
                 </div>
                 <div class="empty-copy">
-                    <p class="eyebrow">A BLANK PAGE IS A GOOD START.</p>
-                    <h2 id="empty-title">Your next game has<br />a story worth keeping.</h2>
+                    <p class="eyebrow">First entry</p>
+                    <h2 id="empty-title">No matches recorded yet.</h2>
                     <p v-if="mounted && identityId">
                         Finish a Battle Royale game to save the rounds, your guesses, the revealed answers and your scores here. Only complete results are recorded — no sample
                         matches, no invented progress.
@@ -94,12 +94,8 @@
                         >{{ mounted && identityId ? "Find your next game" : "Choose how to play"
                         }}<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.5" /></svg
                     ></NuxtLink>
-                    <p class="empty-footnote">Local history starts with this feature. A game missing any authoritative round answers is not saved.</p>
                 </div>
             </section>
-            <footer class="journal-footer">
-                <span>Learn the landscape. Leave the pressure behind.</span><span>No streaks. No global rankings. Just your saved expeditions.</span>
-            </footer>
         </main>
         <dialog ref="clearDialog" class="clear-dialog" aria-labelledby="clear-title" aria-describedby="clear-description" @close="clearTarget = null" @click="closeFromBackdrop">
             <form @submit.prevent="confirmClear">
@@ -189,7 +185,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .journal-page {
     min-height: 100dvh;
-    background: var(--gb-bg);
+    background-color: var(--gb-bg);
     color: var(--gb-text);
 }
 .journal-main {
@@ -213,7 +209,9 @@ onBeforeUnmount(() => {
 }
 h1 {
     font-size: clamp(2.3rem, 5vw, 3.8rem);
-    font-weight: 600;
+    font-family: var(--gb-font-headline);
+    font-style: italic;
+    font-weight: 900;
     letter-spacing: -0.055em;
     line-height: 1.12;
     margin: 0;
@@ -441,21 +439,6 @@ button:focus-visible {
 }
 .primary-link:hover {
     filter: brightness(1.06);
-}
-.empty-copy > .empty-footnote {
-    font-size: 0.68rem !important;
-    color: var(--gb-muted) !important;
-}
-.journal-footer {
-    display: flex;
-    gap: 0.7rem;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    color: var(--gb-muted);
-    border-top: 1px solid var(--gb-line);
-    padding-top: 1.3rem;
-    margin-top: 3rem;
-    font-size: 0.65rem;
 }
 .clear-dialog {
     color: var(--gb-text);

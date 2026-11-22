@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 300" fill="none">
+  <defs>
+    <path id="ridge" d="M-80 299C52 344 109 222 162 242S255 306 317 245 354 158 410 176 504 229 545 170 572 66 639 85 716 58 810-29"/>
+    <pattern id="ticks" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M16 14v4m-2-2h4" stroke="#96b9a5" opacity=".22"/></pattern>
+  </defs>
+  <path fill="url(#ticks)" d="M0 0h760v300H0z"/>
+  <g stroke="#70d9af" stroke-width="1" opacity=".26">
+    <use href="#ridge" y="-98"/><use href="#ridge" y="-84"/><use href="#ridge" y="-70"/><use href="#ridge" y="-56"/><use href="#ridge" y="-42"/><use href="#ridge" y="-28"/><use href="#ridge" y="-14"/><use href="#ridge"/><use href="#ridge" y="14"/><use href="#ridge" y="28"/><use href="#ridge" y="42"/><use href="#ridge" y="56"/><use href="#ridge" y="70"/><use href="#ridge" y="84"/><use href="#ridge" y="98"/>
+  </g>
+</svg>

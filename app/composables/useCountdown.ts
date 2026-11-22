@@ -1,27 +1,28 @@
-export function useCountdown(initialValue: number) {
-    const counter = ref<number>(initialValue);
-    let intervalId: ReturnType<typeof setInterval> | null = null;
+import type { Ref } from "vue";
+import { ROUND_COUNTDOWN_MS } from "~/runtime/roundClock";
 
-    const startCountdown = () => {
-        if (intervalId) clearInterval(intervalId);
-        counter.value = initialValue;
-        intervalId = setInterval(() => {
-            if (counter.value > 1) {
-                counter.value--;
-            } else {
-                counter.value = 0;
-                clearInterval(intervalId!); // Stop countdown when it reaches 0
-                intervalId = null;
+export const useCountdown = (remainingTime: () => number, surface: Readonly<Ref<HTMLElement | null>>) => {
+    const seconds = ref(Math.ceil(remainingTime() / 1000));
+    let frame: number | undefined;
+
+    onMounted(() => {
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        const sample = () => {
+            const remaining = remainingTime();
+            const nextSecond = Math.ceil(remaining / 1000);
+            seconds.value = nextSecond;
+            if (!reducedMotion.matches) {
+                const beat = remaining > 0 ? nextSecond - remaining / 1000 : 1;
+                surface.value?.style.setProperty("--countdown-beat", String(beat));
+                surface.value?.style.setProperty("--countdown-progress", String(1 - remaining / ROUND_COUNTDOWN_MS));
             }
-        }, 1000);
-    };
-
-    onUnmounted(() => {
-        if (intervalId) clearInterval(intervalId); // Cleanup interval on unmount
+            if (remaining > 0) frame = requestAnimationFrame(sample);
+        };
+        sample();
     });
 
-    return {
-        counter,
-        startCountdown,
-    };
-}
+    onBeforeUnmount(() => {
+        if (frame !== undefined) cancelAnimationFrame(frame);
+    });
+    return seconds;
+};

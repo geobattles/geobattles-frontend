@@ -19,8 +19,8 @@ export const createUIRuntime = (googleStore: ReturnType<typeof import("./google"
         cancelAnimationFrame(resizeFrame);
         resizeFrame = requestAnimationFrame(() => {
             resizeFrame = 0;
-            // Preserve gameplay camera; result framing is reapplied only after
-            // layout, including revealing the mobile Answer map tab.
+            // Preserve the gameplay camera. Reframe results after the map
+            // host moves or its visible dimensions change.
             googleStore.refreshMapLayout();
         });
     };

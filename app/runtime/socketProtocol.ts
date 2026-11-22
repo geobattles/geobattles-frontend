@@ -1,6 +1,7 @@
 import { SocketStatus, SocketType, type GameSocketEvent } from "~/types/socketTypes";
 import type { RequestError } from "~/composables/requestState";
 import { decodeSocketCoordinates, decodeSocketResult, isSocketRecord } from "~/runtime/socketValues";
+import { decodePowerupState, decodePowerupEffect } from "~/runtime/powerupProtocol";
 
 const needRecord = (value: unknown): Record<string, unknown> => {
     if (!isSocketRecord(value)) throw new Error("Invalid socket payload.");
@@ -19,6 +20,10 @@ const checkSnapshot = (value: unknown) => {
     const lobby = needRecord(value);
     if (typeof lobby.ID !== "string" || !lobby.ID) throw new Error("Invalid snapshot lobby.");
     checkIdentity(lobby);
+    lobby.powerupState = decodePowerupState(lobby.powerupState);
+    const state = lobby.powerupState;
+    if (isSocketRecord(state) && (state.gameId !== lobby.gameId || state.round !== lobby.currentRound || (state.status === "OPEN" && lobby.phase !== "MID-ROUND")))
+        throw new Error("Conflicting powerup snapshot context.");
     checkRecords(lobby, ["conf", "playerList", "results", "endResults", "fullroundRes", "roundRes", "totalResults"]);
 };
 const eventTypes: ReadonlySet<string> = new Set(Object.values(SocketType));
@@ -49,6 +54,9 @@ export const decodeRequestError = (message: SocketEnvelope): RequestError => {
     const payload = isSocketRecord(message.payload) ? message.payload : undefined;
     return {
         command: typeof payload?.command === "string" ? payload.command : "",
+        requestId: typeof payload?.requestId === "string" ? payload.requestId : undefined,
+        gameId: typeof payload?.gameId === "string" ? payload.gameId : undefined,
+        round: typeof payload?.round === "number" ? payload.round : undefined,
         code: typeof payload?.code === "string" ? payload.code : "REQUEST_FAILED",
         message: message.type === "REQUEST_ERROR" && typeof payload?.message === "string" ? payload.message.slice(0, 500) : "The request failed. Reconnect or try again.",
     };
@@ -66,7 +74,34 @@ export const decodeGameSocketEvent = ({ type, payload }: SocketEnvelope): GameSo
     }
     const body = needRecord(payload);
     checkIdentity(body);
+    if (body.powerupState !== undefined) body.powerupState = decodePowerupState(body.powerupState);
+    const state = body.powerupState;
+    if (
+        isSocketRecord(state) &&
+        (state.gameId !== body.gameId ||
+            (body.round !== undefined && state.round !== body.round) ||
+            (body.phase !== undefined && body.phase !== "MID-ROUND" && state.status === "OPEN"))
+    )
+        throw new Error("Conflicting powerup event context.");
     switch (type) {
+        case SocketType.DUEL_FROM:
+            checkUser(body.user);
+            if (typeof body.gameId !== "string" || typeof body.effectId !== "string" || !Number.isSafeInteger(body.round)) throw new Error("Invalid Duel warning.");
+            break;
+        case SocketType.POWERUP_STATE:
+            needRecord(body.players);
+            if (!body.powerupState || !Number.isSafeInteger(body.round) || !["WAITING", "PLAYING", "MID-ROUND", "FINISHED"].includes(String(body.phase)))
+                throw new Error("Invalid powerup event.");
+            break;
+        case SocketType.POWERUP_USED:
+        case SocketType.POWERUP_READY:
+            if (!body.powerupState || typeof body.requestId !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(body.requestId) || typeof body.gameId !== "string")
+                throw new Error("Invalid powerup receipt.");
+            if (type === SocketType.POWERUP_USED) {
+                needRecord(body.players);
+                body.effect = decodePowerupEffect(body.effect);
+            }
+            break;
         case SocketType.JOINED_LOBBY:
         case SocketType.LEFT_LOBBY:
             checkUser(body.user);

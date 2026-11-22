@@ -1,6 +1,7 @@
 import type { Coordinates } from "~/types/appTypes";
 import type { LobbySettingsPatch, SocketCommand } from "~/types/socketTypes";
 import type { RequestError } from "~/composables/requestState";
+import { createPowerupRuntime } from "~/runtime/powerups";
 
 type WriteSocketCommand = (command: SocketCommand, beforeWrite: () => void, unavailable: (error: RequestError) => void) => (() => boolean) | undefined;
 
@@ -8,6 +9,9 @@ type WriteSocketCommand = (command: SocketCommand, beforeWrite: () => void, unav
 // acknowledge a command; ordered events and attempt teardown settle it.
 export const createSocketActions = () => {
     const request = useRequestState();
+    const lobby = useLobbyStore();
+    const player = usePlayerInfo();
+    const powerups = createPowerupRuntime({ lobby: () => lobby.lobbySettings, playerId: () => player.value.ID, startPending: () => request.isStartPending });
     const startUnavailableReason = useRuntimeConfig().public.GMAPS_API.trim()
         ? ""
         : "Maps is not configured in this browser build. Ask the operator to configure the browser Maps key before starting a game.";
@@ -18,14 +22,17 @@ export const createSocketActions = () => {
     };
     const afterFrame = () => {
         if (!request.isReadyPending) clearReadyDeadline();
+        powerups.sync();
     };
     const bind = (write: WriteSocketCommand) => {
+        powerups.bind(write);
         const send = (message: SocketCommand) => {
             if (message.command === "start" && startUnavailableReason) {
                 request.fail({ command: "start", code: "MAPS_NOT_CONFIGURED", message: startUnavailableReason });
                 return false;
             }
             if (message.command === "start" && request.isStartPending) return false;
+            if (message.command === "start" && powerups.view.pending) return false;
             if (message.command === "setReady" && request.isReadyPending) return false;
             const isCurrent = write(
                 message,
@@ -54,11 +61,31 @@ export const createSocketActions = () => {
         };
         return {
             startUnavailableReason,
-            start: () => send({ command: "start" }),
+            powerups,
+            start: () => {
+                const snapshot = lobby.lobbySettings;
+                if (snapshot?.phase === "MID-ROUND") {
+                    if (!snapshot.gameId || !snapshot.powerupState || snapshot.powerupState.startRequested || snapshot.powerupState.starting) return false;
+                    return send({ command: "start", gameId: snapshot.gameId, round: snapshot.currentRound });
+                }
+                return send({ command: "start" });
+            },
             setReady: (ready: boolean) => send({ command: "setReady", ready }),
             submitLocation: (location: Coordinates) => send({ command: "submit_location", location }),
             updateSettings: (conf: LobbySettingsPatch) => send({ command: "update_lobby_settings", conf }),
         };
     };
-    return { bind, afterFrame, clearReadyDeadline };
+    return {
+        bind,
+        afterFrame,
+        powerups,
+        closeAttempt: () => {
+            clearReadyDeadline();
+            powerups.closeAttempt();
+        },
+        dispose: () => {
+            clearReadyDeadline();
+            powerups.dispose();
+        },
+    };
 };

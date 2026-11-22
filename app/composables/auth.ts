@@ -12,7 +12,7 @@ export const useAuthStore = () => {
     const isAuthenticated = useState("auth:authenticated", () => false);
     const authError = useState<string | null>("auth:error", () => null);
     const isLoginDialog = useState("auth:loginDialog", () => false);
-    const loginDialogMode = useState<"login" | "guest">("auth:loginDialogMode", () => "login");
+    const loginDialogMode = useState<"login" | "guest" | "register">("auth:loginDialogMode", () => "login");
     const openLoginDialog = (mode: "login" | "guest" = "login") => {
         loginDialogMode.value = mode;
         isLoginDialog.value = true;
@@ -64,14 +64,14 @@ export const useAuthStore = () => {
             return false;
         }
     };
-    const clearSession = (intentional = false) => {
+    const clearSession = (reason: "expired" | "logout" | "sign-in-failed" = "expired") => {
         const epoch = ++revision.value;
         clearTokens();
         player.value = {} as User;
         isAuthenticated.value = false;
         isRefreshingToken.value = false;
-        if (intentional) app.$gameRuntime?.leave(true);
-        else app.$gameRuntime?.failAuthentication();
+        if (reason === "logout") app.$gameRuntime?.leave(true);
+        else if (reason === "expired") app.$gameRuntime?.failAuthentication();
         return epoch;
     };
     const guardAuth = (epoch: number, assertDeadline: () => void) => () => {
@@ -118,7 +118,7 @@ export const useAuthStore = () => {
         const accessToken = tokenCookie("access_token");
         // Install the shared issuance fence before clearing state/notifying UI.
         const revocation = accessToken && runtime ? runtime.revokeLogout((signal) => service.logout(accessToken, signal)) : runtime?.waitForLogout();
-        const epoch = clearSession(true);
+        const epoch = clearSession("logout");
         const isNavigationCurrent = app.$gameRuntime?.captureNavigation() ?? (() => true);
         authError.value = null;
         openLoginDialog();
@@ -210,7 +210,8 @@ export const useAuthStore = () => {
                     saveResponse(data, assertReady);
                 } catch (error) {
                     if (epoch === revision.value) {
-                        clearSession();
+                        // An anonymous form attempt has its own error and no lobby session to release.
+                        clearSession(isAuthenticated.value || routeLobbyId(router.currentRoute.value) ? "expired" : "sign-in-failed");
                         authError.value = error instanceof Error ? error.message : "Authentication failed. Please try again.";
                     }
                     throw error;

@@ -1,10 +1,10 @@
 <template>
-    <div>
+    <div class="atlas-menu-shell">
         <Header />
         <main id="main-content" class="page-shell">
             <div class="page-heading">
                 <div>
-                    <p class="eyebrow">Your explorer identity</p>
+                    <p class="eyebrow">Player credentials</p>
                     <h1>Profile</h1>
                 </div>
                 <NuxtLink to="/journal" class="btn btn-secondary"><UiIcon name="journal" /> Expedition journal</NuxtLink>
@@ -12,7 +12,8 @@
             <ClientOnly
                 ><div class="profile-layout">
                     <aside class="panel identity-panel">
-                        <div class="profile-avatar">{{ (player.displayName || "E").slice(0, 1).toUpperCase() }}</div>
+                        <div class="pass-band"><span>Player pass</span><span aria-hidden="true">GB / ID</span></div>
+                        <div class="profile-avatar" aria-hidden="true">{{ (player.displayName || "E").slice(0, 1).toUpperCase() }}</div>
                         <h2>{{ player.displayName || "Explorer" }}</h2>
                         <span class="badge mt-4">{{ player.guest ? "Guest explorer" : "Registered explorer" }}</span>
                         <hr class="divider" />
@@ -27,17 +28,18 @@
                             </div>
                         </dl>
                     </aside>
-                    <section v-if="!player.guest" class="panel">
-                        <h2>Make it yours</h2>
+                    <section v-if="!player.guest" class="panel account-panel" :data-compact-form="compact || undefined" :style="viewportStyle">
+                        <h2>Account settings</h2>
                         <p class="muted mt-2 mb-6">Update your name, or choose a new password.</p>
-                        <form class="form-stack" @submit.prevent="submit">
-                            <div class="field">
+                        <form ref="editor" class="form-stack profile-form" :data-viewport-scroll="compact || undefined" @submit.prevent="submit">
+                            <div class="field" data-viewport-field>
                                 <label for="profile-display">Display name</label
                                 ><input
                                     id="profile-display"
                                     v-model="form.displayName"
                                     class="input"
                                     autocomplete="nickname"
+                                    autocapitalize="words"
                                     minlength="3"
                                     maxlength="15"
                                     required
@@ -46,12 +48,12 @@
                                 <p id="profile-name-help" class="field-help">3–15 characters. Shown to other players.</p>
                             </div>
                             <hr class="divider !my-1" />
-                            <div class="field">
+                            <div class="field" data-viewport-field>
                                 <label for="profile-password">New password <span class="muted font-normal">(optional)</span></label
                                 ><UiPassword id="profile-password" v-model="form.password" autocomplete="new-password" describedby="profile-password-help" />
                                 <p id="profile-password-help" class="field-help">Leave blank to keep your current password.</p>
                             </div>
-                            <div class="field">
+                            <div class="field" data-viewport-field>
                                 <label for="profile-confirm">Confirm new password</label
                                 ><UiPassword
                                     id="profile-confirm"
@@ -68,6 +70,7 @@
                             <p v-if="error" class="field-error" role="alert">{{ error }}</p>
                             <p v-if="saved" class="accent" role="status">Your profile has been updated.</p>
                             <div class="btn-row justify-end">
+                                <UiKeyboardDone v-if="compact" @click="finishEditing" />
                                 <button class="btn btn-secondary" type="button" :disabled="busy" @click="reset">Reset changes</button
                                 ><button class="btn" type="submit" :disabled="!valid || busy" :aria-busy="busy">
                                     <span v-if="busy" class="spinner" /><UiIcon v-else name="check" />Save changes
@@ -76,7 +79,7 @@
                         </form>
                     </section>
                     <section v-else class="panel guest-profile">
-                        <p class="eyebrow">Travel light</p>
+                        <p class="eyebrow">Guest access</p>
                         <h2>You’re exploring as a guest.</h2>
                         <p class="muted mt-4">Your guest name works in every lobby. To customize a profile or sign in again later, create an account.</p>
                         <p class="field-help mt-4">A new account is a separate identity. Your current guest journal stays with this guest on this device.</p>
@@ -96,6 +99,10 @@
 <script setup lang="ts">
 const player = usePlayerInfo();
 const auth = useAuthStore();
+const editor = useTemplateRef("editor");
+const { visibleHeight, editingHeightLoss, finishEditing } = useViewportForm(editor);
+const compact = computed(() => editingHeightLoss.value >= 64 && visibleHeight.value < 300);
+const viewportStyle = useViewportFit(() => compact.value);
 const busy = ref(false);
 const error = ref("");
 const saved = ref(false);
@@ -139,6 +146,23 @@ useHead({ title: "Profile" });
     gap: 1.5rem;
     align-items: start;
 }
+.identity-panel {
+    background:
+        linear-gradient(145deg, #162a23d9 30%, var(--gb-surface) 75%),
+        url("/images/atlas-relief.svg") center / cover;
+}
+.pass-band {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 1.3rem;
+    padding-bottom: 0.7rem;
+    color: var(--gb-success);
+    border-bottom: 1px dashed var(--gb-line);
+    font: 700 0.72rem var(--gb-font-mono);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
 .identity-panel h2 {
     overflow-wrap: anywhere;
     margin-top: 1.5rem;
@@ -149,9 +173,10 @@ useHead({ title: "Profile" });
     width: 70px;
     height: 70px;
     border: 1px solid var(--gb-line);
-    border-radius: 50%;
-    color: var(--gb-accent);
-    font-size: 2rem;
+    background: var(--gb-accent);
+    color: var(--gb-on-accent);
+    clip-path: polygon(15% 0, 100% 0, 100% 82%, 82% 100%, 0 100%, 0 15%);
+    font: italic 900 2.3rem var(--gb-font-headline);
 }
 .identity-details {
     display: grid;
@@ -167,6 +192,18 @@ useHead({ title: "Profile" });
 }
 .guest-profile {
     padding-block: 2.5rem;
+}
+.profile-form :deep(.input) {
+    font-size: max(16px, 1rem);
+}
+.account-panel[data-compact-form] > p {
+    display: none;
+}
+.account-panel[data-compact-form] .profile-form {
+    max-height: max(5rem, calc(var(--visible-height, var(--gb-viewport-height)) - 3rem - var(--gb-safe-bottom)));
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 0.3rem;
 }
 @media (max-width: 700px) {
     .profile-layout {

@@ -3,6 +3,9 @@
         ref="dialog"
         class="ui-dialog"
         :class="{ 'ui-dialog-wide': wide }"
+        :style="viewportStyle"
+        :data-viewport-fit="viewportStyle ? true : undefined"
+        data-viewport-scroll
         :aria-labelledby="titleId"
         :aria-describedby="description ? descriptionId : undefined"
         @cancel="cancel"
@@ -11,7 +14,7 @@
         @pointerdown="rememberPointer"
     >
         <div v-if="mounted && open" class="ui-dialog-inner">
-            <header class="ui-dialog-header">
+            <header class="ui-dialog-header" data-viewport-sticky>
                 <div>
                     <p v-if="eyebrow" class="eyebrow">{{ eyebrow }}</p>
                     <h2 :id="titleId">{{ title }}</h2>
@@ -28,6 +31,8 @@ const props = withDefaults(defineProps<{ open: boolean; title: string; descripti
 const emit = defineEmits<{ "update:open": [value: boolean] }>();
 const dialog = ref<HTMLDialogElement | null>(null);
 const mounted = ref(false);
+const { editable } = useMobileViewport();
+const viewportStyle = useViewportFit(() => props.open && (!editable.value || dialog.value?.contains(editable.value) === true));
 const id = useId();
 const titleId = `${id}-title`;
 const descriptionId = `${id}-description`;
@@ -39,8 +44,10 @@ const cancel = (event: Event) => {
     if (props.closable) close();
 };
 const closed = () => {
+    if (dialog.value?.open) return;
     if (props.open) close();
     if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
+    previousFocus = null;
 };
 const rememberPointer = (event: PointerEvent) => {
     pointerOnBackdrop = event.target === dialog.value;

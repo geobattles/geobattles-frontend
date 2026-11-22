@@ -1,5 +1,5 @@
 <template>
-    <div class="field number-setting">
+    <div class="field number-setting" data-viewport-field>
         <div class="number-heading">
             <label :for="inputId">{{ label }}</label>
             <span class="number-bounds" :id="`${inputId}-bounds`">{{ min }}–{{ max }}</span>
@@ -17,6 +17,7 @@
                 step="1"
                 required
                 inputmode="numeric"
+                enterkeyhint="done"
                 :aria-describedby="`${inputId}-bounds`"
             />
             <button type="button" :aria-label="`Increase ${label.toLowerCase()}`" :disabled="model >= max" @click="step(1)"><span aria-hidden="true">+</span></button>
@@ -38,11 +39,18 @@ function step(direction: number) {
 <style scoped>
 .number-setting {
     min-width: 0;
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.2rem 0.75rem;
+    padding-block: 0.15rem;
+    border-bottom: 1px solid var(--gb-line);
 }
 .number-heading {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
+    flex: 1 1 8rem;
     flex-wrap: wrap;
     gap: 0.15rem 0.5rem;
 }
@@ -56,26 +64,22 @@ function step(direction: number) {
 }
 .number-stepper {
     display: grid;
-    grid-template-columns: 44px minmax(0, 1fr) 44px;
-    border: 1px solid var(--gb-line);
-    border-radius: 10px;
-    background: var(--gb-bg);
-}
-.number-stepper:focus-within {
-    border-color: var(--gb-accent);
+    grid-template-columns: 44px minmax(44px, 1fr) 44px;
+    width: 9rem;
+    max-width: 100%;
 }
 .number-stepper button {
     min-width: 44px;
     min-height: 44px;
-    border-radius: 9px;
-    background: var(--gb-raised);
+    border: 0;
+    background: transparent;
     color: var(--gb-accent);
     font-size: 1.25rem;
     font-weight: 700;
     cursor: pointer;
 }
 .number-stepper button:hover:not(:disabled) {
-    background: #394536;
+    background: var(--gb-raised);
 }
 .number-stepper button:disabled {
     opacity: 0.4;
@@ -87,6 +91,8 @@ function step(direction: number) {
     padding: 0.4rem 0.15rem;
     border: 0;
     border-radius: 0;
+    background: transparent;
+    box-shadow: inset 0 -1px var(--gb-success);
     text-align: center;
     font-size: 1rem;
     font-weight: 700;

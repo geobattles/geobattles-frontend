@@ -1,16 +1,30 @@
 <template>
     <div class="landing">
-        <Header />
+        <picture class="scenery" aria-hidden="true">
+            <source media="(max-width: 700px) and (orientation: portrait)" srcset="/images/emerald-lake-portrait.webp" />
+            <img src="/images/emerald-lake.webp" alt="" width="1672" height="941" fetchpriority="high" />
+        </picture>
+        <Header scenic :install-blocked="creating || awaitingAuth" />
         <main id="main-content" class="landing-main">
-            <section class="welcome-card" aria-labelledby="welcome-title">
-                <p class="welcome-label">Welcome to</p>
-                <h1 id="welcome-title">GeoBattles</h1>
-                <div class="play-card">
-                    <NuxtLink class="btn btn-command join-button" to="/lobby/join">Join with code <UiIcon name="arrow" /></NuxtLink>
-                    <button class="btn btn-secondary create-button" type="button" :disabled="creating" :aria-busy="creating" @click="create">
-                        {{ creating ? "Creating lobby…" : "Create lobby" }}<span v-if="creating" class="spinner" />
+            <section class="welcome" aria-labelledby="welcome-title">
+                <div class="hero-brand">
+                    <img src="/images/emerald-mark.svg" alt="" width="104" height="109" />
+                    <h1 id="welcome-title">Geo<span>Battles</span></h1>
+                </div>
+                <p>Multiplayer geography guessing game.</p>
+                <div class="hero-actions">
+                    <NuxtLink class="hero-button play-button" to="/lobby/join">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" d="M6 3.8a1 1 0 0 1 1.5-.86l13 8.2a1 1 0 0 1 0 1.72l-13 8.2A1 1 0 0 1 6 20.2Z" />
+                        </svg>
+                        Play Now
+                    </NuxtLink>
+                    <button class="hero-button create-button" type="button" :disabled="creating" :aria-busy="creating" @click="create">
+                        <span v-if="creating" class="spinner" aria-hidden="true" /><UiIcon v-else name="plus" />
+                        {{ creating ? "Creating lobby…" : "Create Lobby" }}
                     </button>
                 </div>
+                <PwaInstallBanner class="landing-install" placement="home" :ready="!creating && !awaitingAuth" />
             </section>
         </main>
     </div>
@@ -59,117 +73,232 @@ useHead({ title: "GeoBattles" });
 </script>
 <style scoped>
 .landing {
+    --emerald-forest: #052e24;
+    --emerald-lime: var(--gb-scenic-lime);
+    --emerald-white: #f8fafc;
+    --scenic-side: clamp(1rem, 4vw, 4rem);
+    position: relative;
+    isolation: isolate;
     display: flex;
-    flex-direction: column;
     min-height: 100dvh;
+    flex-direction: column;
+    overflow: clip;
+    border: 1px solid #8ce2a54d;
+    border-radius: clamp(0.75rem, 1.5vw, 1.4rem);
+    background: var(--emerald-forest);
+    color: var(--emerald-white);
+}
+.scenery,
+.scenery::after {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.scenery {
+    z-index: -1;
+}
+.scenery img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 61% 56%;
+}
+.scenery::after {
+    content: "";
     background:
-        linear-gradient(90deg, #181818ed, #18181880 65%, #18181855),
-        url("/images/wallpaper.jpg") center / cover no-repeat;
+        radial-gradient(ellipse at 36% 55%, #011810d9, #011c1580 31%, transparent 65%), linear-gradient(180deg, #001c2a33, transparent 32%, #001e1570),
+        radial-gradient(ellipse at bottom left, #10b98170, transparent 42%);
 }
 .landing-main {
-    display: flex;
+    display: grid;
+    width: min(76%, 82rem);
     flex: 1;
+    place-items: center;
+    min-width: 0;
+    padding: clamp(1.5rem, 5dvh, 4.25rem) max(var(--scenic-side), env(safe-area-inset-right)) max(clamp(1rem, 4dvh, 3rem), env(safe-area-inset-bottom))
+        max(var(--scenic-side), env(safe-area-inset-left));
+}
+.welcome {
+    width: min(100%, 40rem);
+    text-align: center;
+    text-shadow: 0 2px 10px #00140ebf;
+}
+.hero-brand {
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 100%;
-    padding: clamp(1.5rem, 6vw, 5rem) 1rem;
+    gap: clamp(0.45rem, 1.4vw, 1.1rem);
 }
-.welcome-card {
-    position: relative;
-    width: min(100%, 36rem);
-    padding: clamp(1.25rem, 4vw, 2.5rem);
-    border: 1px solid #b6e38835;
-    border-radius: var(--gb-radius);
-    background: #181818ed;
-    box-shadow: 0 24px 64px #0005;
-}
-/* Survey corners tie the title screen to the command-room frame. */
-.welcome-card::before,
-.welcome-card::after {
-    content: "";
-    position: absolute;
-    width: 18px;
-    height: 18px;
-    pointer-events: none;
-    border-color: var(--gb-accent);
-    border-style: solid;
-}
-.welcome-card::before {
-    top: -1px;
-    left: -1px;
-    border-width: 2px 0 0 2px;
-}
-.welcome-card::after {
-    right: -1px;
-    bottom: -1px;
-    border-width: 0 2px 2px 0;
-}
-.welcome-label {
-    margin-bottom: 0.7rem;
-    color: var(--gb-muted);
-    font: 600 0.75rem / 1.4 var(--gb-font-mono);
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
+.hero-brand img {
+    width: clamp(3.5rem, 8vw, 6.5rem);
+    height: auto;
+    flex: none;
+    filter: drop-shadow(0 3px 5px #001b14bb);
 }
 h1 {
-    font-size: clamp(2.35rem, 8vw, 4.5rem);
-    font-weight: 800;
-    letter-spacing: -0.065em;
-    line-height: 1.05;
-    color: var(--gb-accent);
-    overflow-wrap: normal;
+    color: var(--emerald-white);
+    font: italic 950 clamp(2.7rem, 5.25vw, 5.4rem) / 0.99 var(--gb-font-display);
+    letter-spacing: -0.06em;
+    text-wrap: initial;
 }
-.play-card {
+h1 span {
+    color: var(--emerald-lime);
+}
+.welcome > p {
+    margin-top: clamp(0.65rem, 1.5dvh, 1.1rem);
+    font-size: clamp(1rem, 2vw, 1.38rem);
+    font-weight: 600;
+    line-height: 1.35;
+}
+.landing-install {
+    width: min(100%, 32rem);
+    margin: clamp(0.7rem, 2.4dvh, 1.25rem) auto 0;
+}
+.hero-actions {
     display: grid;
-    gap: 0.5rem;
-    padding-top: clamp(1.25rem, 4vw, 2rem);
-    margin-top: clamp(1.25rem, 4vw, 2rem);
-    border-top: 1px solid var(--gb-line);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.65rem, 2vw, 1.5rem);
+    width: min(100%, 36rem);
+    margin: clamp(1.25rem, 4.5dvh, 2.15rem) auto 0;
 }
-.join-button {
-    width: 100%;
+.hero-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55em;
     min-height: 56px;
-    justify-content: space-between;
-    padding-inline: 1.25rem;
-    font-size: 0.95rem;
+    padding: 0.55rem 0.8rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: clamp(0.96rem, 1.7vw, 1.22rem);
     font-weight: 800;
-    letter-spacing: normal;
+    line-height: 1.2;
+    text-decoration: none;
+    text-shadow: none;
+    transition:
+        background-color 160ms ease,
+        border-color 160ms ease,
+        box-shadow 160ms ease,
+        transform 160ms ease;
+}
+.hero-button svg {
+    width: 1.2em;
+    height: 1.2em;
+    flex: none;
+}
+.play-button {
+    border-color: var(--gb-scenic-action-border);
+    background: var(--gb-scenic-action-fill);
+    color: var(--gb-scenic-action-ink);
+    box-shadow: var(--gb-scenic-action-shadow);
+}
+.play-button:hover {
+    box-shadow: var(--gb-scenic-action-hover-shadow);
 }
 .create-button {
-    min-height: 44px;
+    border-color: #ccf2d4b3;
+    color: var(--emerald-white);
+    background: #05261fb8;
+    backdrop-filter: blur(6px);
 }
-@media (min-width: 1024px) {
-    .landing-main {
-        justify-content: flex-start;
-        padding-inline: clamp(2rem, 8vw, 8rem);
+.create-button:not(:disabled):hover {
+    border-color: var(--emerald-lime);
+    background: #0d4233e6;
+}
+.create-button:disabled {
+    opacity: 0.72;
+}
+.hero-button:not(:disabled):active {
+    transform: translateY(1px);
+}
+.hero-button:focus-visible {
+    outline-color: var(--emerald-white);
+}
+@media (max-width: 700px) and (orientation: portrait) {
+    .scenery img {
+        object-position: 53% center;
     }
-}
-@media (max-width: 640px) {
-    .landing {
+    .scenery::after {
         background:
-            linear-gradient(#18181899, #181818cf),
-            url("/images/wallpaper.jpg") center / cover no-repeat;
+            radial-gradient(ellipse at 50% 47%, #001c14bd, #001b1473 40%, transparent 76%), linear-gradient(180deg, #001c2633, transparent 23%, #001a17ad 93%),
+            radial-gradient(ellipse at bottom left, #10b98175, transparent 38%);
     }
-}
-@media (max-height: 480px) and (orientation: landscape) {
     .landing-main {
-        padding-block: 0.75rem;
+        width: 100%;
+        padding-block: clamp(1.25rem, 4dvh, 2.25rem) max(clamp(3.25rem, 17dvh, 10rem), env(safe-area-inset-bottom));
     }
-    .welcome-card {
-        padding: 0.75rem 1.25rem;
+    .landing-main:has(.landing-install) {
+        padding-block-end: max(clamp(1.25rem, 5dvh, 3.25rem), var(--gb-safe-bottom));
     }
-    .welcome-label {
-        margin-bottom: 0.3rem;
+    .hero-brand {
+        flex-direction: column;
+        gap: 0.45rem;
+    }
+    .hero-brand img {
+        width: clamp(3.6rem, 12dvh, 5.4rem);
     }
     h1 {
-        font-size: 2.5rem;
+        font-size: clamp(2.25rem, 11.7vw, 4rem);
     }
-    .play-card {
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
+    .welcome > p {
+        max-width: 23ch;
+        margin: clamp(0.7rem, 2.7dvh, 1.35rem) auto 0;
+        font-size: clamp(1.04rem, 4.6vw, 1.3rem);
     }
-    .join-button {
-        min-height: 52px;
+    .hero-actions {
+        grid-template-columns: minmax(0, 1fr);
+        width: min(100%, 17.5rem);
+        gap: clamp(0.65rem, 1.8dvh, 1.1rem);
+        margin-top: clamp(1rem, 5dvh, 2.3rem);
+    }
+    .hero-button {
+        min-height: 54px;
+        font-size: 1.1rem;
+    }
+}
+@media (max-width: 700px) and (orientation: portrait) and (max-height: 540px) {
+    .landing-main {
+        padding-block: 0.8rem max(1rem, env(safe-area-inset-bottom));
+    }
+}
+@media (orientation: landscape) and (max-height: 480px) {
+    .scenery img {
+        object-position: 70% 61%;
+    }
+    .landing-main {
+        --scenic-side: clamp(0.75rem, 3vw, 2rem);
+        width: min(76%, 42rem);
+        padding-block: 0.7rem max(0.85rem, env(safe-area-inset-bottom));
+    }
+    .hero-brand img {
+        width: clamp(2.7rem, 9vw, 4.5rem);
+    }
+    h1 {
+        font-size: clamp(1.85rem, 5.6vw, 3.25rem);
+    }
+    .welcome > p {
+        margin-top: 0.35rem;
+        font-size: 1rem;
+    }
+    .hero-actions {
+        width: min(100%, 25rem);
+        margin-top: clamp(0.75rem, 5dvh, 1.25rem);
+        gap: 0.6rem;
+    }
+    .hero-button {
+        min-height: 46px;
+    }
+}
+@media (max-width: 440px) and (orientation: landscape) {
+    .landing-main {
+        width: 100%;
+    }
+}
+@media (display-mode: standalone) {
+    .landing {
+        border-radius: 0;
+        border-color: transparent;
     }
 }
 </style>

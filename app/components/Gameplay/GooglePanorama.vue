@@ -11,8 +11,10 @@ export default {
         const { lobbySettings } = useLobbyState();
         const owner = useNuxtApp().$gameRuntime.battleRoyale;
         let unmounted = false;
+        let layoutObserver: ResizeObserver | undefined;
         onBeforeUnmount(() => {
             unmounted = true;
+            layoutObserver?.disconnect();
         });
 
         // Keep the DOM mounted across phases, but only initialize Street View
@@ -71,27 +73,18 @@ export default {
                     if (!unmounted && owner.activeRound.value && authorization !== owner.activeRound.value) ensurePanorama();
                 });
         };
-        onMounted(ensurePanorama);
+        onMounted(() => {
+            ensurePanorama();
+            const host = google_panorama.value;
+            if (!host) return;
+            layoutObserver = new ResizeObserver(([size]) => {
+                if (size?.contentRect.width && size.contentRect.height && googleStore.isPanoramaInitialized) google.maps.event.trigger(googleStore.getPanorama, "resize");
+            });
+            layoutObserver.observe(host);
+        });
         watch(() => [mode.modeLogic.currentState, mode.modeLogic.currentRound, owner.activeRound.value, googleStore.retryVersion], ensurePanorama, { flush: "post" });
 
         return { google_panorama };
     },
 };
 </script>
-
-<style scoped>
-:deep(.gm-style .gm-compass) {
-    transform: scale(1.2); /* Make compass larger for better visibility */
-}
-
-#panorama-container {
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-
-    will-change: transform;
-    transform: translateZ(0);
-}
-</style>

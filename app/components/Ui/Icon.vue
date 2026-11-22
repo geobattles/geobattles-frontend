@@ -20,12 +20,24 @@
             <path d="M3 12h18M5 6.5h14M5 17.5h14" />
         </template>
         <template v-else-if="name === 'arrow'"><path d="M4 12h16m-6-6 6 6-6 6" /></template>
+        <template v-else-if="name === 'search'">
+            <circle cx="10.5" cy="10.5" r="5.5" />
+            <path d="m15 15 5 5" />
+        </template>
+        <template v-else-if="name === 'bolt'"><path d="m13 2-9 12h7l-1 8 10-12h-7l1-8Z" /></template>
+        <template v-else-if="name === 'star'"><path d="M12 2.8l2.8 5.7 6.3.9-4.6 4.5 1.1 6.3-5.6-3-5.6 3 1.1-6.3L2.9 9.4l6.3-.9L12 2.8Z" /></template>
         <template v-else-if="name === 'check'"><path d="m5 12 4 4L19 6" /></template>
         <template v-else-if="name === 'close'"><path d="m6 6 12 12M6 18 18 6" /></template>
+        <template v-else-if="name === 'pencil'">
+            <path d="m4 16-1 5 5-1L20 8a2.8 2.8 0 0 0-4-4L4 16Z" />
+            <path d="m14 6 4 4M4 16l4 4" />
+        </template>
         <template v-else-if="name === 'copy'">
             <rect x="8" y="8" width="12" height="13" rx="2" />
             <path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3" />
         </template>
+        <template v-else-if="name === 'install'"><path d="M12 3v12m-4-4 4 4 4-4M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4" /></template>
+        <template v-else-if="name === 'share'"><path d="M12 15V3M8 7l4-4 4 4M8 10H6a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-2" /></template>
         <template v-else-if="name === 'user'">
             <circle cx="12" cy="8" r="4" />
             <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
@@ -63,6 +75,14 @@
             <circle cx="12" cy="12" r="3" />
         </template>
         <template v-else-if="name === 'plus'"><path d="M12 4v16M4 12h16" /></template>
+        <template v-else-if="name === 'minus'"><path d="M5 12h14" /></template>
+        <template v-else-if="name === 'shrink'"><path d="M9 3v6H3m12-6v6h6M3 15h6v6m12-6h-6v6" /></template>
+        <template v-else-if="name === 'target'">
+            <circle cx="12" cy="12" r="7" />
+            <circle cx="12" cy="12" r="2" />
+            <path d="M12 2v3m0 14v3M2 12h3m14 0h3" />
+        </template>
+        <template v-else-if="name === 'chevron-up'"><path d="m6 15 6-6 6 6" /></template>
         <template v-else-if="name === 'menu'"><path d="M4 6h16M4 12h16M4 18h16" /></template>
         <template v-else-if="name === 'info'">
             <circle cx="12" cy="12" r="9" />

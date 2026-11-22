@@ -1,381 +1,561 @@
 <template>
-    <section class="results-screen midround-screen" :class="{ 'mobile-map-active': mobileView === 'map' }" aria-label="Round results">
-        <header class="results-header">
-            <div class="results-title">
-                <span class="result-mark" aria-hidden="true">{{ game.modeLogic.currentRound }}</span>
-                <div>
-                    <p class="eyebrow !mb-1">Round complete</p>
-                    <h1>Round {{ game.modeLogic.currentRound }} debrief</h1>
-                </div>
-            </div>
-            <div class="btn-row">
-                <SocketConnectionStatus v-if="game.modeLogic.currentState === 'MID-ROUND'" /><button
-                    type="button"
-                    class="btn btn-secondary btn-icon"
-                    :aria-label="ui.isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-                    @click="ui.toggleFullscreen()"
+    <section class="round-recap" :class="{ 'compact-recap': compact, 'landscape-recap': compactLandscape }" :aria-labelledby="titleId">
+        <header class="recap-header">
+            <div class="recap-header-inner">
+                <span class="recap-brand"
+                    ><img src="/images/emerald-mark.svg" width="28" height="30" alt="GeoBattles" /><span aria-hidden="true">Geo<b>Battles</b></span></span
                 >
-                    <UiIcon name="fullscreen" /></button
-                ><LobbyLeave @click="emit('leaveLobby')" />
+                <div class="round-progress">
+                    <span :aria-label="'Round ' + round + ' of ' + roundCount"
+                        >Round <b>{{ round }}</b> <span>/ {{ roundCount }}</span></span
+                    >
+                    <progress v-if="roundCount" :value="round" :max="roundCount" aria-label="Match progress" />
+                </div>
+                <div class="recap-controls" aria-label="Game controls">
+                    <SocketConnectionStatus v-if="active && !online" />
+                    <button
+                        v-if="ui.fullscreenAvailable"
+                        class="recap-control"
+                        type="button"
+                        :aria-label="ui.isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
+                        @click="ui.toggleFullscreen()"
+                    >
+                        <UiIcon :name="ui.isFullscreen ? 'shrink' : 'fullscreen'" />
+                    </button>
+                    <button class="recap-control recap-leave" type="button" aria-label="Leave lobby" @click="emit('leaveLobby')"><UiIcon name="leave" /></button>
+                </div>
             </div>
         </header>
-        <nav class="results-mobile-switch" aria-label="Round display">
-            <button type="button" class="btn btn-secondary" :aria-pressed="mobileView === 'results'" @click="mobileView = 'results'"><UiIcon name="users" />Results</button>
-            <button type="button" class="btn btn-secondary" :aria-pressed="mobileView === 'map'" @click="mobileView = 'map'"><UiIcon name="map" />Answer map</button>
-        </nav>
-        <div id="midround-map-and-results" class="results-layout">
-            <div id="midround-map-slot" class="results-map-slot" aria-label="Round answer and closest guesses"></div>
-            <div id="midround-results-container" class="results-inspector">
-                <div class="results-details" :tabindex="compactViewport ? 0 : undefined" role="region" aria-label="Round debrief and player results">
-                    <div class="tab-buttons" role="group" aria-label="Choose results view">
-                        <button class="btn btn-secondary" type="button" :aria-pressed="tab === 'total'" @click="tab = 'total'">Total points</button
-                        ><button class="btn btn-secondary" type="button" :aria-pressed="tab === 'round'" @click="tab = 'round'">This round</button>
-                    </div>
-                    <GameplayBattleRoyaleLiveStatistics v-if="tab === 'round'" :compact="compactViewport" /><GameplayTotalStatistics v-else />
-                    <GameplayRoundDebrief :compact="compactViewport" />
+
+        <div id="midround-map-and-results" class="recap-layout">
+            <GameplayRoundResultMap class="recap-map" :active="active" :answer="answer" :distance="distance" :compact="compact" />
+            <div id="midround-results-container" class="recap-inspector">
+                <div class="recap-overview">
+                    <h1 :id="titleId">Round {{ round }} <em>Results</em></h1>
+                    <dl class="round-metrics" aria-label="Your round results">
+                        <div class="earned-points">
+                            <dt aria-label="Round points"><UiIcon name="star" />{{ compactLandscape ? "Points" : "Round points" }}</dt>
+                            <dd>{{ roundPoints }}</dd>
+                        </div>
+                        <div>
+                            <dt><UiIcon name="pin" />Best distance</dt>
+                            <dd>{{ distance || (ownResult ? "No guess" : "—") }}</dd>
+                        </div>
+                        <div>
+                            <dt><UiIcon name="trophy" />{{ compactLandscape ? "Rank" : "Overall rank" }}</dt>
+                            <dd>{{ ownStanding ? "#" + ownStanding.rank : "—" }}</dd>
+                        </div>
+                    </dl>
                 </div>
-                <footer class="round-actions">
-                    <button
-                        v-if="lobby.isPlayerAdmin()"
-                        class="btn btn-large btn-command"
-                        type="button"
-                        :disabled="!socket.isConnected || !socket.isOnline || request.isStartPending || !!actions.startUnavailableReason"
-                        :aria-busy="request.isStartPending"
-                        @click="start"
-                    >
-                        <span v-if="request.isStartPending" class="spinner" />Next round <UiIcon name="arrow" />
-                    </button>
-                    <p v-else class="muted text-sm">Waiting for the host.</p>
-                    <p v-if="actions.startUnavailableReason" class="field-help">{{ actions.startUnavailableReason }}</p>
-                    <p class="field-help">Round {{ game.modeLogic.currentRound }} of {{ lobby.lobbySettings?.conf.numRounds }}</p>
+                <GameplayRoundStandings
+                    :key="'standings-' + roundKey"
+                    class="recap-standings"
+                    :overall="overall"
+                    :round="scoredRound"
+                    :guesses="results.bestResults"
+                    :compact="compact"
+                    :landscape="compactLandscape"
+                />
+                <GameplayPowerupChoices
+                    v-if="active && snapshot && player.ID && round < roundCount"
+                    :key="'powerups-' + roundKey"
+                    class="recap-powerups"
+                    :compact="compact"
+                    :snapshot="snapshot"
+                    :player-id="player.ID"
+                    :standings="overall"
+                    :remaining-ms="powerups.view.remainingMs"
+                    :pending="powerups.view.pending"
+                    :feedback="powerups.view.feedback"
+                    :online="online"
+                    :start-pending="request.isStartPending"
+                    @use="powerups.use"
+                    @retry="powerups.retry"
+                />
+
+                <footer class="recap-footer">
+                    <div class="recap-advance">
+                        <button v-if="host && round < roundCount" class="next-round" type="button" :disabled="!canAdvance" :aria-busy="advancing" @click="start">
+                            <span v-if="advancing" class="spinner" aria-hidden="true" />
+                            {{ compact && startNote && !queued && !advancing ? "Next round unavailable" : advanceLabel }}
+                            <UiIcon v-if="!advancing && !queued && canAdvance" name="arrow" />
+                        </button>
+                        <p v-else class="round-wait" role="status">
+                            <UiIcon :name="round >= roundCount ? 'trophy' : 'clock'" />
+                            {{
+                                round >= roundCount
+                                    ? "Waiting for final standings"
+                                    : online
+                                      ? queued || advancing
+                                          ? advanceLabel
+                                          : "Waiting for the host"
+                                      : "Waiting for connection"
+                            }}
+                        </p>
+                    </div>
+                    <p v-if="host && startNote" class="advance-note" role="status">{{ startNote }}</p>
                 </footer>
             </div>
         </div>
     </section>
 </template>
+
 <script setup lang="ts">
+import type { Results } from "~/types/appTypes";
+import { formatGuessDistance, hasGuess, rankTotalResults, roundResultPoints } from "~/utils/resultUtils";
+
 const emit = defineEmits<{ leaveLobby: [] }>();
+const titleId = useId();
 const game = useGameMode();
-const lobby = useLobbyStore();
 const socket = useWebSocketStore();
 const actions = useLobbySocketActions();
+const powerups = actions.powerups;
+const player = usePlayerInfo();
 const request = useRequestState();
 const ui = useUIManagerStore();
-const tab = ref<"round" | "total">("total");
-const mobileView = ref<"results" | "map">("results");
-// Keep the table density in step with the mobile CSS, including orientation changes.
-const compactViewport = ref(false);
-let viewportQuery: MediaQueryList | undefined;
-const syncViewport = () => {
-    compactViewport.value = viewportQuery?.matches ?? false;
-};
-onMounted(() => {
-    viewportQuery = window.matchMedia("(max-width: 850px), (max-width: 1100px) and (pointer: coarse)");
-    syncViewport();
-    viewportQuery.addEventListener("change", syncViewport);
+const { measurements } = useMobileViewport();
+const { lobbySettings, revealedAnswers } = useLobbyState();
+const totals = useTotalResults();
+const results = useResultsStore();
+const emptyResults: Results = {};
+const compact = computed(() => {
+    const viewport = measurements.value;
+    return !!viewport && (viewport.orientation === "portrait" || viewport.layoutWidth <= 1100 || viewport.layoutHeight <= 540);
 });
-onBeforeUnmount(() => viewportQuery?.removeEventListener("change", syncViewport));
-watch([() => game.modeLogic.currentState, () => game.modeLogic.currentRound], ([state]) => {
-    if (state !== "MID-ROUND") return;
-    tab.value = "total";
-    mobileView.value = "results";
+const compactLandscape = computed(() => compact.value && measurements.value?.orientation === "landscape");
+
+const snapshot = computed(() => lobbySettings.value);
+const active = computed(() => game.modeLogic.currentState === "MID-ROUND" && snapshot.value?.phase === "MID-ROUND");
+const round = computed(() => snapshot.value?.currentRound ?? 0);
+const roundCount = computed(() => snapshot.value?.conf.numRounds ?? 0);
+const roundKey = computed(() => JSON.stringify([snapshot.value?.ID, snapshot.value?.gameId, round.value]));
+const answer = computed(() => (active.value ? revealedAnswers.value[round.value] : undefined));
+const scoredRound = computed(() => snapshot.value?.endResults[round.value] ?? emptyResults);
+const overall = computed(() => rankTotalResults(totals.value));
+const ownResult = computed(() => scoredRound.value[player.value.ID ?? ""]);
+const ownStanding = computed(() => overall.value.find((row) => row.id === player.value.ID));
+const roundPoints = computed(() => (ownResult.value ? roundResultPoints(ownResult.value).toLocaleString() : "—"));
+const distance = computed(() => {
+    const best = results.bestResults[player.value.ID ?? ""];
+    return best && hasGuess(best) ? formatGuessDistance(best) : "";
 });
+
+const online = computed(() => socket.isConnected && socket.isOnline);
+const host = computed(() => !!player.value.ID && snapshot.value?.admin === player.value.ID);
+const state = computed(() => snapshot.value?.powerupState);
+const queued = computed(() => !!state.value?.startRequested);
+const advancing = computed(() => request.isStartPending || !!state.value?.starting);
+const advanceLabel = computed(() => (advancing.value ? "Preparing next round…" : queued.value ? "Next round queued" : "Next Round"));
+const startNote = computed(() => {
+    if (round.value >= roundCount.value) return "";
+    if (actions.startUnavailableReason) return actions.startUnavailableReason;
+    if (!online.value) return "Reconnect to start the next round.";
+    if (powerups.view.pending?.uncertain) return "Resolve the pending choice in Powerups to continue.";
+    if (powerups.view.pending) return "Waiting for powerup confirmation.";
+    return !state.value || !snapshot.value?.gameId ? "Waiting for round state…" : "";
+});
+const canAdvance = computed(() => active.value && host.value && round.value < roundCount.value && !startNote.value && !queued.value && !advancing.value);
 const start = () => {
-    if (socket.isConnected && socket.isOnline && !request.isStartPending && !actions.startUnavailableReason) actions.start();
+    if (canAdvance.value) actions.start();
 };
 </script>
-<style>
-.results-screen {
-    min-height: 100dvh;
-    background: var(--gb-bg);
+
+<style scoped>
+.round-recap {
+    --recap-accent: #d6fb9f;
+    --recap-muted: #b5cfc1;
+    --recap-border: #9ddba85c;
+    --recap-action-fill: linear-gradient(172deg, #edffc3, #a5eb64 76%, #86d44b);
+    --recap-gutter: clamp(0.55rem, 2.35vw, 2.55rem);
+    position: relative;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: var(--gb-viewport-height);
+    overflow: clip;
+    background: #052e24;
+    color: #f8fafc;
 }
-.results-mobile-switch {
-    display: none;
+.recap-header {
+    background:
+        url("/images/atlas-relief.svg") 50% 50% / 40rem auto no-repeat,
+        linear-gradient(95deg, #0a3228, #041e1c 80%);
+    border-block-end: 1px solid #bfed8c55;
+    padding-block-start: var(--gb-safe-top);
 }
-.results-header {
-    min-height: 112px;
-    background-color: #1e201e;
-    background-image: var(--gb-contours);
-    background-size: 620px 340px;
-    background-position: right top;
-    background-repeat: no-repeat;
+.recap-header-inner,
+.recap-layout {
+    width: 100%;
+    max-width: 112rem;
+    margin-inline: auto;
+    padding-inline: max(var(--recap-gutter), var(--gb-safe-left)) max(var(--recap-gutter), var(--gb-safe-right));
+}
+.recap-header-inner {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding: 1.3rem clamp(1rem, 3vw, 2rem);
-    border-bottom: 1px solid var(--gb-line);
+    gap: clamp(0.45rem, 2vw, 1.65rem);
+    min-height: 3.65rem;
 }
-.results-title {
+.recap-brand {
+    display: inline-flex;
+    align-items: center;
+    flex: none;
+    gap: 0.43rem;
+    font: italic 900 clamp(1rem, 2.45vw, 1.45rem) / 1 var(--gb-font-display);
+    letter-spacing: -0.045em;
+}
+.recap-brand img {
+    width: clamp(1.2rem, 2.9vw, 1.65rem);
+    height: auto;
+}
+.recap-brand b,
+.round-progress b,
+.recap-overview h1 em {
+    color: var(--recap-accent);
+}
+.round-progress {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    min-width: 0;
+    gap: clamp(0.5rem, 2vw, 1.25rem);
+    padding-inline-start: clamp(0.45rem, 2vw, 1.65rem);
+    border-inline-start: 1px solid #c4e7b363;
+    font: italic 750 clamp(0.72rem, 1.52vw, 1rem) / 1 var(--gb-font-display);
+    text-transform: uppercase;
+    white-space: nowrap;
 }
-.results-title > div {
-    min-width: 0;
+.round-progress b {
+    font-size: 1.28em;
+    font-variant-numeric: tabular-nums;
 }
-.result-mark {
+.round-progress progress {
+    appearance: none;
+    inline-size: clamp(3rem, 9vw, 7rem);
+    block-size: 0.32rem;
+    overflow: hidden;
+    border: 0;
+    border-radius: 1rem;
+    background: #7bc6ae45;
+    accent-color: var(--recap-accent);
+}
+.round-progress progress::-webkit-progress-bar {
+    background: #143e35;
+}
+.round-progress progress::-webkit-progress-value {
+    background: var(--recap-accent);
+    border-radius: 1rem;
+}
+.round-progress progress::-moz-progress-bar {
+    background: var(--recap-accent);
+    border-radius: 1rem;
+}
+.recap-controls {
+    display: flex;
+    align-items: center;
+    justify-content: end;
+    min-width: 0;
+    margin-inline-start: auto;
+    gap: clamp(0.28rem, 1vw, 0.65rem);
+}
+.recap-controls :deep(.badge) {
+    white-space: nowrap;
+}
+.recap-control {
     display: grid;
     place-items: center;
     flex: none;
-    width: 52px;
-    height: 52px;
-    border: 1px solid var(--gb-accent-end);
-    border-radius: 3px;
-    color: var(--gb-accent);
-    background: var(--gb-bg);
-    font: 700 1.75rem / 1 var(--gb-font-mono);
-    font-variant-numeric: tabular-nums;
+    width: 44px;
+    height: 44px;
+    border: 1px solid #afdf9c48;
+    border-radius: 0.65rem;
+    background: #113e35ac;
 }
-.result-mark > svg {
-    width: 25px;
-    height: 25px;
+.recap-control:hover {
+    border-color: var(--recap-accent);
 }
-.results-header h1 {
-    font-size: clamp(1.4rem, 2.8vw, 2rem);
-    font-weight: 800;
+.recap-leave {
+    color: #ffcead;
 }
-.results-layout {
+.recap-layout {
     display: grid;
-    grid-template-columns: 1.1fr 1fr;
-    min-height: calc(100dvh - 112px);
+    grid-template-columns: minmax(0, 1.24fr) minmax(0, 1fr);
+    gap: clamp(0.38rem, 1.4vw, 1.2rem);
+    min-height: 0;
+    padding-block: var(--recap-gutter) max(var(--recap-gutter), var(--gb-safe-bottom));
+    background:
+        linear-gradient(180deg, #072921f2, #05251b75),
+        url("/images/emerald-horizon.webp") center bottom / cover no-repeat;
 }
-.results-map-slot {
-    position: sticky;
-    top: 0;
-    height: calc(100dvh - 112px);
-    min-height: 350px;
-    background: var(--gb-surface);
-}
-.results-map-slot > .game-map-host {
-    border-radius: 0;
-}
-.results-inspector {
+.recap-inspector {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    gap: clamp(0.38rem, 1.3dvh, 0.9rem);
     min-width: 0;
-    padding: clamp(1rem, 3vw, 2rem);
-    background: var(--gb-surface);
+    min-height: 0;
+    padding: clamp(0.5rem, 1.6vw, 1.4rem);
+    border: 1px solid var(--recap-border);
+    border-radius: clamp(0.85rem, 2vw, 1.5rem);
+    background:
+        url("/images/atlas-relief.svg") right 120% / 34rem auto no-repeat,
+        linear-gradient(160deg, #0d372ef8, #041f1dfd 62%, #093329f2);
+    box-shadow:
+        inset 0 1px #def5c820,
+        0 0.3rem 1.5rem #001c1466;
 }
-.results-inspector .tab-buttons {
-    gap: 0;
-    border-bottom: 1px solid var(--gb-line);
+.recap-overview {
+    display: grid;
+    min-width: 0;
+    gap: clamp(0.33rem, 1.1dvh, 0.78rem);
 }
-.results-inspector .tab-buttons > button {
-    border: 0;
-    border-radius: 0;
-    color: var(--gb-muted);
-    background: transparent;
+.recap-powerups {
+    grid-row: 2;
+}
+.recap-standings {
+    grid-row: 3;
+}
+.recap-overview h1 {
+    display: flex;
+    align-items: center;
+    gap: 0.28em;
+    min-height: clamp(2rem, 5.6dvh, 4rem);
+    padding-inline: 0.55rem;
+    border-radius: 0.76rem;
+    background:
+        linear-gradient(90deg, #082e26 25%, #0d372e92 80%, #0d372e25),
+        url("/images/emerald-horizon.webp") 75% 27% / cover no-repeat;
+    font: italic 850 clamp(1.16rem, 2.8vw, 2.6rem) / 1.1 var(--gb-font-display);
+    letter-spacing: -0.035em;
+}
+.round-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin: 0;
+    padding: clamp(0.36rem, 1.1dvh, 0.8rem) 0.18rem;
+    border: 1px solid #93d8aa3b;
+    border-radius: 0.78rem;
+    background: linear-gradient(115deg, #153c2c, #062621);
+}
+.round-metrics div {
+    min-width: 0;
+    padding-inline: clamp(0.32rem, 1.4vw, 0.9rem);
+}
+.round-metrics div + div {
+    border-inline-start: 1px solid #99cda03d;
+}
+.round-metrics dt {
+    display: flex;
+    align-items: center;
+    gap: 0.35em;
+    color: var(--recap-muted);
+    font-size: clamp(0.61rem, 1.75vw, 0.78rem);
+    font-weight: 650;
+    line-height: 1.25;
+}
+.round-metrics dt .ui-icon {
+    flex: none;
+    color: var(--recap-accent);
+}
+.round-metrics dd {
+    margin-block-start: 0.12em;
+    font: italic 850 clamp(0.87rem, 2.4vw, 1.48rem) / 1.22 var(--gb-font-display);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+}
+.earned-points dd {
+    color: var(--recap-accent);
+}
+.recap-footer {
+    display: grid;
+    gap: 0.28rem;
+    min-width: 0;
+    text-align: center;
+    grid-row: 4;
+}
+.recap-advance {
+    display: flex;
+    align-items: stretch;
+    gap: 0.35rem;
+    min-width: 0;
+}
+.next-round,
+.round-wait {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.58em;
+    flex: 1;
+    min-width: 0;
+    min-height: 52px;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid #caff9c;
+    border-radius: 999px;
+    background: var(--recap-action-fill);
+    box-shadow:
+        inset 0 1px #fbffeeb7,
+        0 3px 16px #a8eb6652;
+    color: var(--gb-scenic-action-ink);
+    font: italic 840 clamp(0.97rem, 2.55vw, 1.3rem) / 1.15 var(--gb-font-display);
+}
+.next-round:enabled:hover {
+    filter: brightness(1.07);
+}
+.next-round:disabled,
+.round-wait {
+    border-color: #a0cba95e;
+    background: #153b2f;
     box-shadow: none;
+    color: #dbefda;
+    font-size: 0.89rem;
 }
-.results-inspector .tab-buttons > [aria-pressed="true"] {
-    color: var(--gb-accent);
-    box-shadow: inset 0 -2px var(--gb-accent);
+.advance-note {
+    font-size: 0.7rem;
+    line-height: 1.25;
+    color: var(--recap-muted);
 }
-.results-details {
+.compact-recap {
+    --recap-gutter: clamp(0.38rem, 1.35vw, 0.8rem);
+}
+.compact-recap .recap-header-inner {
+    min-height: 3.1rem;
+    gap: clamp(0.4rem, 1.65vw, 0.9rem);
+}
+.compact-recap .recap-brand {
+    font-size: clamp(0.96rem, 3.1vw, 1.28rem);
+}
+.compact-recap .recap-layout {
+    grid-template-columns: minmax(0, 0.44fr) minmax(0, 0.56fr);
+    grid-template-rows: auto clamp(6.6rem, 27dvh, 16rem) auto minmax(0, 1fr) auto;
+    grid-template-areas:
+        "title title"
+        "map map"
+        "metrics metrics"
+        "standings standings"
+        "powerups advance";
+    gap: clamp(0.32rem, 0.95dvh, 0.57rem);
+    background:
+        linear-gradient(178deg, #052a22eb, #061e19fa),
+        url("/images/atlas-relief.svg") center bottom / 42rem auto no-repeat;
+}
+.compact-recap .recap-inspector,
+.compact-recap .recap-overview {
     display: contents;
 }
-.round-actions {
-    display: grid;
-    gap: 1rem;
-    padding-top: 1.5rem;
-    margin-top: 1.5rem;
-    border-top: 1px solid var(--gb-line);
+.compact-recap .recap-map {
+    grid-area: map;
 }
-@media (max-width: 850px), (max-width: 1100px) and (pointer: coarse) {
-    .results-screen {
-        height: 100dvh;
-        min-height: 0;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
+.compact-recap .recap-overview h1 {
+    grid-area: title;
+    min-height: clamp(1.85rem, 4dvh, 2.55rem);
+    padding-inline: 0.65rem;
+    font-size: clamp(1.14rem, 3.9vw, 1.7rem);
+}
+.compact-recap .round-metrics {
+    grid-area: metrics;
+    padding: 0.28rem 0.12rem;
+    background: linear-gradient(112deg, #164637, #082923 85%);
+}
+.compact-recap .round-metrics > div {
+    padding-inline: clamp(0.33rem, 1.45vw, 0.8rem);
+}
+.compact-recap .round-metrics dt {
+    font-size: clamp(0.59rem, 1.75vw, 0.75rem);
+}
+.compact-recap .round-metrics dd {
+    font-size: clamp(0.88rem, 3.05vw, 1.28rem);
+}
+.compact-recap .recap-standings {
+    grid-area: standings;
+}
+.compact-recap .recap-powerups {
+    grid-area: powerups;
+    align-self: start;
+}
+.compact-recap .recap-footer {
+    grid-area: advance;
+    grid-template-rows: minmax(44px, auto);
+    align-self: start;
+}
+.compact-recap .recap-layout:not(:has(.recap-powerups)) .recap-footer {
+    grid-column: 1 / -1;
+}
+.compact-recap .next-round,
+.compact-recap .round-wait {
+    min-height: 44px;
+    padding: 0.28rem 0.43rem;
+    font-size: clamp(0.84rem, 2.8vw, 1.14rem);
+}
+.compact-recap .next-round:disabled,
+.compact-recap .round-wait {
+    font-size: clamp(0.72rem, 2.15vw, 0.92rem);
+}
+.landscape-recap .recap-layout {
+    grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+        "map standings"
+        "metrics standings"
+        "powerups advance";
+}
+.landscape-recap .recap-overview h1 {
+    @apply sr-only;
+}
+.landscape-recap .recap-header-inner {
+    min-height: 3rem;
+}
+.landscape-recap .round-metrics {
+    grid-template-columns: minmax(0, 0.29fr) minmax(0, 0.46fr) minmax(0, 0.25fr);
+}
+.landscape-recap .round-metrics > div {
+    padding-inline: clamp(0.33rem, 0.8vw, 0.62rem);
+}
+.landscape-recap .round-metrics dt {
+    font-size: clamp(0.58rem, 1.45vw, 0.72rem);
+}
+.landscape-recap .round-metrics dd {
+    font-size: clamp(0.8rem, 2vw, 1.12rem);
+    overflow-wrap: normal;
+}
+@media (max-width: 480px) {
+    .compact-recap .round-progress {
+        gap: 0.38rem;
+        padding-inline-start: 0.4rem;
     }
-    .results-layout {
-        flex: 1;
-        min-height: 0;
-        grid-template-columns: 1fr;
-        grid-template-rows: minmax(0, 1fr);
+    .compact-recap .round-progress progress {
+        inline-size: clamp(1.5rem, 8vw, 2.8rem);
     }
-    .results-map-slot {
-        position: relative;
+    .recap-controls :deep(.badge) {
+        padding-inline: 0.3rem;
+        font-size: 0.65rem;
+    }
+    .recap-header-inner:has(.badge) .recap-brand > span {
         display: none;
-        height: 100%;
-        min-height: 0;
-        padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-    }
-    .mobile-map-active .results-map-slot {
-        display: block;
-    }
-    .mobile-map-active .results-inspector {
-        display: none;
-    }
-    .results-inspector {
-        min-height: 0;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        padding: 0.75rem max(0.75rem, env(safe-area-inset-right)) max(0.75rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left));
-    }
-    .results-details {
-        display: block;
-        min-height: 0;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        scrollbar-gutter: stable;
-    }
-    .results-details:focus-visible {
-        outline: 2px solid var(--gb-accent);
-        outline-offset: -2px;
-    }
-    .results-header {
-        flex: none;
-        flex-wrap: nowrap;
-        gap: 0.5rem;
-        min-height: 60px;
-        padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) 6px max(8px, env(safe-area-inset-left));
-    }
-    .results-header > div:first-child {
-        min-width: 0;
-    }
-    .results-header .eyebrow {
-        display: none;
-    }
-    .results-title {
-        gap: 0.5rem;
-    }
-    .result-mark {
-        width: 30px;
-        height: 34px;
-        font-size: 1.1rem;
-    }
-    .result-mark > svg {
-        width: 18px;
-        height: 18px;
-    }
-    .results-header h1 {
-        font-size: 1.05rem;
-    }
-    .results-header > .btn-row {
-        flex: none;
-        flex-wrap: nowrap;
-        gap: 4px;
-    }
-    .results-header .btn {
-        width: 44px;
-        height: 44px;
-        padding: 0;
-        font-size: 0;
-        gap: 0;
-    }
-    .results-header .btn > svg {
-        font-size: 1.1rem;
-    }
-    .results-header [data-testid="connection-status"] {
-        display: none;
-    }
-    .results-mobile-switch {
-        flex: none;
-        display: flex;
-        gap: 6px;
-        padding: 4px max(8px, env(safe-area-inset-right)) 4px max(8px, env(safe-area-inset-left));
-        border-bottom: 1px solid var(--gb-line);
-    }
-    .results-mobile-switch > button {
-        flex: 1;
-        min-height: 44px;
-        padding: 0.4rem;
-        font-size: 0.8rem;
-    }
-    .results-mobile-switch [aria-pressed="true"] {
-        color: var(--gb-accent);
-        background: var(--gb-raised);
-        border-color: var(--gb-accent);
-    }
-    .round-actions {
-        flex: none;
-        order: -1;
-        gap: 0.4rem;
-        margin: 0 0 0.75rem;
-        padding: 0 0 0.75rem;
-        border-top: 0;
-        border-bottom: 1px solid var(--gb-line);
-    }
-    .round-actions > .btn {
-        min-height: 52px;
-        padding: 0.5rem;
-        font-size: 0.9rem;
-    }
-    .round-actions > .field-help:last-child {
-        display: none;
-    }
-    .results-inspector .tab-buttons {
-        gap: 6px;
-        margin-bottom: 0.65rem;
-    }
-    .results-inspector .tab-buttons > button {
-        padding: 0.4rem;
-        min-height: 44px;
-        font-size: 0.8rem;
     }
 }
-.midround-screen .results-details > .round-debrief {
-    margin-top: 0.65rem;
-}
-@media (max-width: 850px) and (orientation: portrait), (max-width: 1100px) and (pointer: coarse) and (orientation: portrait) {
-    .midround-screen .results-mobile-switch {
-        display: none;
-    }
-    .midround-screen .results-layout {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: repeat(2, minmax(0, 1fr));
-    }
-    .midround-screen .results-map-slot {
-        display: block;
-        grid-row: 2;
-        border-top: 1px solid var(--gb-line);
-    }
-    .midround-screen .results-inspector {
-        display: flex;
-        grid-row: 1;
-        padding-block: 0.4rem;
-    }
-    .midround-screen .round-actions {
-        margin-bottom: 0.25rem;
-        padding-bottom: 0.35rem;
-    }
-    .midround-screen .results-inspector .tab-buttons {
-        margin-bottom: 0.25rem;
+@media (max-width: 345px) {
+    .recap-brand > span {
+        @apply sr-only;
     }
 }
-/* Wide mobile landscape uses both panes; the native map host stays in its slot.
-   Only the details scroll, keeping Next round available above every player row. */
-@media (min-width: 640px) and (max-width: 850px) and (orientation: landscape), (min-width: 640px) and (max-width: 1100px) and (pointer: coarse) and (orientation: landscape) {
-    .results-mobile-switch {
-        display: none;
+@media (max-height: 340px) {
+    .landscape-recap {
+        --recap-gutter: 0.3rem;
     }
-    .results-layout {
-        grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr);
+    .landscape-recap .recap-header-inner {
+        min-height: 2.8rem;
     }
-    .results-map-slot,
-    .mobile-map-active .results-map-slot {
-        display: block;
-        padding-right: 0;
+    .landscape-recap .round-metrics {
+        padding-block: 0.19rem;
     }
-    .results-inspector,
-    .mobile-map-active .results-inspector {
-        display: flex;
-        padding-left: 0.65rem;
-        border-left: 1px solid var(--gb-line);
+}
+@media (prefers-reduced-motion: no-preference) {
+    .recap-inspector,
+    .recap-map,
+    .compact-recap :is(.recap-standings, .recap-footer) {
+        animation: recap-in 200ms ease-out;
     }
-    .results-header {
-        min-height: 52px;
-        padding-top: max(4px, env(safe-area-inset-top));
-        padding-bottom: 4px;
-    }
-    .round-actions {
-        gap: 0.25rem;
-        margin-bottom: 0.5rem;
-        padding-bottom: 0.5rem;
+    @keyframes recap-in {
+        from {
+            opacity: 0.6;
+            translate: 0 0.25rem;
+        }
     }
 }
 </style>

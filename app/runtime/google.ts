@@ -4,6 +4,7 @@ import type { CountryViewport } from "~/utils/countryViewport";
 import { createGameplayFrame } from "~/utils/gameplayFrame";
 
 type MapResourceStatus = "idle" | "loading" | "ready" | "error" | "blocked";
+export type RoundResultPin = { position: Coordinates; title: string } & ({ kind: "answer" } | { kind: "own" | "other"; color: string } | { kind: "stop"; round: number });
 
 export const createGoogleRuntime = () => {
     let generation = 0;
@@ -56,9 +57,14 @@ export const createGoogleRuntime = () => {
     let panoramaListener: google.maps.MapsEventListener | undefined;
     let panoramaRequest = 0;
     // Retain result framing while its host is hidden, reparented or resized.
-    // Gameplay framing is separate and consumed once at the first visible layout.
-    let resultBounds: { bounds: google.maps.LatLngBounds; padding: number } | null = null;
+    // Gameplay framing is separate and consumed once at the first usable layout.
+    let resultBounds: { bounds: google.maps.LatLngBoundsLiteral; padding: google.maps.Padding } | null = null;
     const gameplayFrame = createGameplayFrame();
+    let gameplayFitIdle: google.maps.MapsEventListener | undefined;
+    const clearGameplayFitIdle = () => {
+        gameplayFitIdle?.remove();
+        gameplayFitIdle = undefined;
+    };
 
     // Constants
     const mapStartingViewPosition: Coordinates = { lat: 0, lng: 0 };
@@ -117,6 +123,7 @@ export const createGoogleRuntime = () => {
     const dispose = () => {
         generation++;
         resultBounds = null;
+        clearGameplayFitIdle();
         gameplayFrame.reset();
         mapInitialization = null;
         panoramaInitialization = null;
@@ -190,6 +197,7 @@ export const createGoogleRuntime = () => {
             googleMap.value = new Map(mapHTML as HTMLElement, {
                 center: { ...mapStartingViewPosition },
                 zoom: 2,
+                backgroundColor: "#123d35",
                 mapId: "DEMO_MAP_ID",
                 clickableIcons: false,
                 streetViewControl: false,
@@ -279,6 +287,7 @@ export const createGoogleRuntime = () => {
                 pov: { heading: 270, pitch: 0 },
                 zoom: 0,
                 fullscreenControl: false,
+                enableCloseButton: false,
                 showRoadLabels: false,
                 addressControl: false,
                 motionTracking: false,
@@ -343,26 +352,51 @@ export const createGoogleRuntime = () => {
 
     const setMapZoom = (zoom: number) => getMap.value.setZoom(zoom);
 
+    const fitPlayingMap = (map: google.maps.Map, bounds: CountryViewport | null) => {
+        clearGameplayFitIdle();
+        map.setOptions({ minZoom: bounds ? 0 : 2 });
+        if (bounds) {
+            // Keep resize handling from restoring the pre-fit center while the SDK camera settles.
+            const idle = google.maps.event.addListenerOnce(map, "idle", () => {
+                if (gameplayFitIdle === idle) gameplayFitIdle = undefined;
+            });
+            gameplayFitIdle = idle;
+            map.fitBounds({ ...bounds }, 32);
+        } else {
+            map.setCenter({ ...mapStartingViewPosition });
+            map.setZoom(2);
+        }
+    };
+
+    const resetGameplayViewport = (bounds: CountryViewport | null) => {
+        const map = googleMap.value;
+        if (!map || resultBounds) return;
+        fitPlayingMap(map, bounds);
+    };
+
     const refreshMapLayout = () => {
         const map = googleMap.value;
         const host = googleMapHTML.value;
         if (!map || !host?.isConnected) return;
         const { width, height } = host.getBoundingClientRect();
-        if (!width || !height) return; // fitBounds is a no-op on display:none hosts.
-        const center = map.getCenter();
+        if (!width || !height) return; // fitBounds is a no-op on zero-size hosts.
+        const center = !resultBounds && !gameplayFitIdle ? map.getCenter() : undefined;
+        const zoom = center ? map.getZoom() : undefined;
         google.maps.event.trigger(map, "resize");
-        if (resultBounds) map.fitBounds(resultBounds.bounds, resultBounds.padding);
-        else {
-            const framed = gameplayFrame.apply(true, (bounds) => {
-                // Wide/overseas outlines must fit even in a small minimap.
-                map.setOptions({ minZoom: bounds ? 0 : 2 });
-                if (bounds) map.fitBounds({ ...bounds }, 32);
-                else {
-                    map.setCenter({ ...mapStartingViewPosition });
-                    map.setZoom(2);
-                }
+        if (resultBounds) {
+            const { bounds, padding } = resultBounds;
+            map.fitBounds(bounds, {
+                top: Math.min(padding.top ?? 0, height * 0.26),
+                bottom: Math.min(padding.bottom ?? 0, height * 0.26),
+                left: Math.min(padding.left ?? 0, width * 0.2),
+                right: Math.min(padding.right ?? 0, width * 0.2),
             });
-            if (!framed && center) map.setCenter(center);
+        } else {
+            const framed = gameplayFrame.apply(true, (bounds) => fitPlayingMap(map, bounds));
+            if (!framed && center) {
+                if (zoom !== undefined && map.getZoom() !== zoom) map.setZoom(zoom);
+                map.setCenter(center);
+            }
         }
     };
 
@@ -371,10 +405,13 @@ export const createGoogleRuntime = () => {
         resultBounds = null;
         refreshMapLayout();
     };
-    const cancelGameplayFrame = () => gameplayFrame.reset();
-
-    const fitCustomBounds = (bounds: google.maps.LatLngBounds, padding: number) => {
+    const cancelGameplayFrame = () => {
+        clearGameplayFitIdle();
         gameplayFrame.reset();
+    };
+
+    const fitCustomBounds = (bounds: google.maps.LatLngBoundsLiteral, padding: google.maps.Padding) => {
+        cancelGameplayFrame();
         resultBounds = { bounds, padding };
         // A small result viewport must be allowed to show widely spread guesses.
         getMap.value.setOptions({ minZoom: 0 });
@@ -382,6 +419,7 @@ export const createGoogleRuntime = () => {
     };
     const clearMapBounds = () => {
         resultBounds = null;
+        clearGameplayFitIdle();
         gameplayFrame.clear();
         // Do not clamp a retained same-round camera during reconnect cleanup.
         // Each genuinely new gameplay/result frame sets its own minimum zoom.
@@ -391,135 +429,42 @@ export const createGoogleRuntime = () => {
 
     const drawPolygonToMap = (polygon: google.maps.Data) => polygon.setMap(getMap.value);
 
-    const addNewMapMarker = async (coordinates: Coordinates, marker_color: string, playerName?: string) => {
+    const createRoundResultMarkers = async (pins: RoundResultPin[]) => {
+        const { AdvancedMarkerElement } = (await loadLibrary("marker")) as google.maps.MarkerLibrary;
+        return pins.map((pin) => {
+            const { position, kind, title } = pin;
+            const content = document.createElement("span");
+            content.className = "round-result-pin";
+            content.dataset.kind = kind;
+            if (pin.kind === "stop") {
+                content.textContent = String(pin.round);
+            } else if (pin.kind !== "answer") content.style.color = pin.color;
+            return new AdvancedMarkerElement({ position, content, title, zIndex: kind === "answer" || kind === "stop" ? 3 : kind === "own" ? 2 : 1 });
+        });
+    };
+
+    const addGuessMarker = async (position: Coordinates, color: string, draft: boolean) => {
         const { AdvancedMarkerElement } = (await google.maps.importLibrary("marker")) as google.maps.MarkerLibrary;
-
-        // Get marker content
-        const markerContent = await getMarkerContent(marker_color, playerName);
-
-        // Create marker
-        const marker = new AdvancedMarkerElement({
-            position: coordinates,
-            title: "Pin",
-            content: markerContent,
-        });
-        return marker;
+        const content = document.createElement("span");
+        content.className = "gameplay-guess-pin";
+        content.dataset.state = draft ? "draft" : "submitted";
+        content.style.setProperty("--player-pin-color", color);
+        return new AdvancedMarkerElement({ position, content, title: draft ? "Selected guess" : "Submitted guess" });
     };
 
-    const createSearchedLocationMarker = async (coordinates: Coordinates) => {
-        const epoch = generation;
-        const { AdvancedMarkerElement, PinElement } = (await google.maps.importLibrary("marker")) as google.maps.MarkerLibrary;
-
-        // Change the background color.
-        const pinBackground = new PinElement({
-            background: "black",
-            borderColor: "white",
-            glyphColor: "white",
-            scale: 1.5,
-        });
-
-        const marker = new AdvancedMarkerElement({
-            position: coordinates,
-            title: "Searched location",
-            map: epoch === generation ? googleMap.value : null,
-            content: pinBackground.element,
-        });
-
-        return marker;
+    const confirmGuessMarker = (marker: google.maps.marker.AdvancedMarkerElement) => {
+        marker.title = "Submitted guess";
+        if (marker.content instanceof HTMLElement) marker.content.dataset.state = "confirmed";
     };
 
-    const shadeColor = (color: string, percent: number): string => {
-        // Parse the hex color
-        let R = parseInt(color.substring(1, 3), 16);
-        let G = parseInt(color.substring(3, 5), 16);
-        let B = parseInt(color.substring(5, 7), 16);
-
-        // Calculate the new values
-        if (percent < 0) {
-            // Darken the color (multiply components)
-            R = Math.round(R * (1 + percent / 100));
-            G = Math.round(G * (1 + percent / 100));
-            B = Math.round(B * (1 + percent / 100));
-        } else {
-            // Lighten the color (add white)
-            R = Math.round(R + (255 - R) * (percent / 100));
-            G = Math.round(G + (255 - G) * (percent / 100));
-            B = Math.round(B + (255 - B) * (percent / 100));
-        }
-
-        // Ensure values stay within range
-        R = Math.min(255, Math.max(0, R));
-        G = Math.min(255, Math.max(0, G));
-        B = Math.min(255, Math.max(0, B));
-
-        // Convert back to hex
-        const RR = R.toString(16).padStart(2, "0");
-        const GG = G.toString(16).padStart(2, "0");
-        const BB = B.toString(16).padStart(2, "0");
-
-        return `#${RR}${GG}${BB}`;
-    };
-
-    const getMarkerContent = async (playerColor: string, playerName: string | undefined) => {
-        const { PinElement } = (await google.maps.importLibrary("marker")) as google.maps.MarkerLibrary;
-
-        // Change the background color.
-        const pinBackground = new PinElement({
-            background: playerColor,
-            borderColor: shadeColor(playerColor, -10),
-            glyphColor: shadeColor(playerColor, -20),
-            scale: 1.2,
-        });
-
-        if (!playerName) return pinBackground.element;
-
-        // Create marker content with player name
-        const markerContent = document.createElement("div");
-        markerContent.style.display = "flex";
-        markerContent.style.flexDirection = "column";
-        markerContent.style.alignItems = "center";
-
-        const nameElement = document.createElement("div");
-        nameElement.style.textAlign = "center";
-        nameElement.style.marginBottom = "1px";
-        nameElement.style.fontWeight = "bold";
-        nameElement.style.fontSize = "11px";
-        nameElement.style.color = "var(--gb-text)";
-        nameElement.style.backgroundColor = "var(--gb-bg)";
-        nameElement.style.borderRadius = "3px";
-        nameElement.style.padding = "1px 3px";
-        nameElement.style.letterSpacing = "0.5px";
-        nameElement.innerText = playerName;
-
-        markerContent.appendChild(nameElement);
-        markerContent.appendChild(pinBackground.element);
-
-        return markerContent;
-    };
-
-    const makePolyline = (from: Coordinates, to: Coordinates) => {
-        // Create polyline object
-        const lineSymbol = {
-            path: "M 0,-1 0,1",
-            strokeOpacity: 1,
-            scale: 2,
-        };
-
-        const polyline = new google.maps.Polyline({
+    const makeResultLine = (from: Coordinates, to: Coordinates, color: string, own: boolean) =>
+        new google.maps.Polyline({
             path: [from, to],
-            strokeColor: "#000000",
+            geodesic: true,
+            clickable: false,
             strokeOpacity: 0,
-            icons: [
-                {
-                    icon: lineSymbol,
-                    offset: "0",
-                    repeat: "10px",
-                },
-            ],
+            icons: [{ icon: { path: "M 0,-1 0,1", strokeColor: color, strokeOpacity: 1, scale: own ? 2 : 1.2 }, offset: "0", repeat: "9px" }],
         });
-
-        return polyline;
-    };
 
     return reactive({
         installLoader,
@@ -558,15 +503,17 @@ export const createGoogleRuntime = () => {
         // Map functions
         setMapZoom,
         frameGameplay,
+        resetGameplayViewport,
         cancelGameplayFrame,
         fitCustomBounds,
         clearMapBounds,
         refreshMapLayout,
         addGeoJSON,
         drawPolygonToMap,
-        addNewMapMarker,
-        createSearchedLocationMarker,
+        createRoundResultMarkers,
+        addGuessMarker,
+        confirmGuessMarker,
         updatePanoramaView,
-        makePolyline,
+        makeResultLine,
     });
 };

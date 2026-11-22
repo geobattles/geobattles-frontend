@@ -1,5 +1,5 @@
 <template>
-    <section v-if="visible" class="maps-recovery" data-testid="maps-recovery" aria-label="Map loading and recovery">
+    <section v-if="visible" class="maps-recovery" :class="{ 'has-failure': failed || blocked }" data-testid="maps-recovery" aria-label="Map loading and recovery">
         <div class="recovery-line">
             <p role="status"><span v-if="loading && !failed" class="spinner" />{{ message }}</p>
             <button
@@ -47,14 +47,18 @@ const message = computed(() => {
     width: min(440px, calc(100% - 24px));
     margin-inline: auto;
     padding: 0.5rem 0.65rem;
-    background: var(--gb-bg);
+    background: linear-gradient(110deg, #1d352a, var(--gb-bg));
     color: var(--gb-text);
     border: 1px solid var(--gb-line);
-    border-radius: 8px;
+    border-radius: 2px 10px 2px 2px;
+    border-left: 3px solid var(--gb-success);
     box-shadow: 0 6px 24px #0005;
     font-size: 0.8rem;
     max-height: calc(100dvh - 160px);
     overflow-y: auto;
+}
+.has-failure {
+    border-left-color: var(--gb-coral);
 }
 .recovery-line {
     display: flex;

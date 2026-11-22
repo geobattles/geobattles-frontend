@@ -19,6 +19,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     const ui = createUIRuntime(google, currentState, useUIState());
     const commandPolicy = createSocketActions();
     const apply = createSocketHandlers({
+        powerupReceipt: commandPolicy.powerups.receipt,
         clock,
         reconcileLobbyRoute: () => session.reconcileLobbyRoute(),
         showPlayerLeftToast: ui.showPlayerLeftToast,
@@ -41,13 +42,15 @@ export default defineNuxtPlugin((nuxtApp) => {
     const socket = createSocketRuntime(config.public.BACKEND_HOST, useAuthStore(), {
         apply,
         afterFrame: commandPolicy.afterFrame,
-        closeAttempt: commandPolicy.clearReadyDeadline,
+        closeAttempt: commandPolicy.closeAttempt,
+        requestError: commandPolicy.powerups.reject,
         invalidateViews: battleRoyale.clearMap,
         releaseSession: () => session.releaseSession(),
     });
     const session = createLobbySession(useRouter(), socket, {
         clock,
         clearViews: () => {
+            commandPolicy.powerups.dispose();
             battleRoyale.clearMap();
             ui.detach();
             google.dispose();
@@ -61,6 +64,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     const dispose = () => {
         session.dispose();
         socket.dispose();
+        commandPolicy.dispose();
         ui.dispose();
     };
     nuxtApp.vueApp.onUnmount(dispose);

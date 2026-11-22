@@ -24,19 +24,18 @@ const examples = computed(() => {
     margin: 0;
     display: grid;
     gap: 0.4rem;
-    padding: 0.65rem;
-    background: var(--gb-bg);
-    border: 1px solid var(--gb-line);
-    border-radius: var(--gb-radius);
+    padding-block: 0.4rem;
 }
 dl {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 7rem), 1fr));
     gap: 0.4rem 0.75rem;
     margin: 0;
 }
 dl > div {
     min-width: 0;
+    padding-block: 0.35rem;
+    border-block-start: 1px solid var(--gb-line);
 }
 dt {
     color: var(--gb-muted);
@@ -44,7 +43,7 @@ dt {
 }
 dd {
     margin: 0;
-    color: var(--gb-accent);
+    color: var(--gb-success);
     font-size: 0.95rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;

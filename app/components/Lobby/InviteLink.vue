@@ -1,21 +1,39 @@
 <template>
     <div class="invite-link">
-        <button type="button" class="btn btn-secondary" :aria-label="copied ? 'Invite copied' : 'Copy invite link'" :disabled="!inviteLink || copying" @click="copy">
-            <UiIcon :name="copied ? 'check' : 'copy'" /><span class="invite-label">{{ copied ? "Copied" : "Copy invite" }}</span>
-            <span class="invite-compact-label">{{ copied ? "Copied" : "Invite" }}</span>
+        <button
+            type="button"
+            class="btn btn-secondary"
+            :class="{ 'code-button': codeOnly }"
+            :aria-label="codeOnly ? (copied ? 'Lobby code copied' : 'Copy lobby code') : copied ? 'Invite copied' : 'Copy invite link'"
+            :aria-describedby="codeOnly ? codeId : undefined"
+            :disabled="!copyValue || copying"
+            @click="copy"
+        >
+            <template v-if="codeOnly"
+                ><span class="code-label">Code</span><strong :id="codeId" data-testid="lobby-code">{{ lobby.lobbySettings?.ID }}</strong></template
+            >
+            <UiIcon :name="copied ? 'check' : codeOnly ? 'copy' : 'users'" />
+            <template v-if="!codeOnly">
+                <span class="invite-label">{{ copied ? "Copied" : "Copy invite" }}</span>
+                <span class="invite-compact-label">{{ copied ? "Copied" : "Invite" }}</span>
+            </template>
         </button>
-        <div v-if="manual" class="field mt-3">
-            <label :for="inputId">Copy this invite link</label><input :id="inputId" ref="input" class="input" :value="inviteLink" readonly @focus="select" />
-            <p class="field-help" role="status">Clipboard access isn’t available. Select the link, then use your device’s Copy action.</p>
-        </div>
-        <span v-if="copied" class="sr-only" role="status">Invite link copied to your clipboard.</span>
+        <UiDialog v-model:open="manual" :title="codeOnly ? 'Copy lobby code' : 'Copy invite link'">
+            <div class="field">
+                <label :for="inputId">{{ codeOnly ? "Lobby code" : "Invite link" }}</label>
+                <input :id="inputId" class="input" :value="copyValue" readonly autofocus @focus="select" />
+                <p class="field-help">Use your device’s Copy action to copy the selected text.</p>
+            </div>
+        </UiDialog>
+        <span v-if="copied" class="sr-only" role="status">{{ codeOnly ? "Lobby code copied." : "Invite link copied to your clipboard." }}</span>
     </div>
 </template>
 <script setup lang="ts">
+const props = defineProps<{ codeOnly?: boolean }>();
 const lobby = useLobbyStore();
 const origin = ref("");
 const inputId = useId();
-const input = ref<HTMLInputElement | null>(null);
+const codeId = `${inputId}-code`;
 const copied = ref(false);
 const copying = ref(false);
 const manual = ref(false);
@@ -28,13 +46,14 @@ const inviteLink = computed(() => {
     url.searchParams.set("id", id);
     return url.href;
 });
-const select = () => input.value?.select();
+const copyValue = computed(() => (props.codeOnly ? (lobby.lobbySettings?.ID ?? "") : inviteLink.value));
+const select = (event: FocusEvent) => (event.currentTarget as HTMLInputElement).select();
 const copy = async () => {
-    if (!inviteLink.value || copying.value) return;
+    if (!copyValue.value || copying.value) return;
     copying.value = true;
     try {
         if (!window.isSecureContext || !navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
-        await navigator.clipboard.writeText(inviteLink.value);
+        await navigator.clipboard.writeText(copyValue.value);
         if (!active) return;
         copied.value = true;
         manual.value = false;
@@ -45,11 +64,6 @@ const copy = async () => {
     } catch {
         if (!active) return;
         manual.value = true;
-        await nextTick();
-        if (active) {
-            input.value?.focus();
-            select();
-        }
     } finally {
         if (active) copying.value = false;
     }

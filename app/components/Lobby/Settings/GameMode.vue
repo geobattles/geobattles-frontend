@@ -8,3 +8,19 @@
 <script setup lang="ts">
 const model = defineModel<number>({ required: true });
 </script>
+<style scoped>
+fieldset {
+    min-width: 0;
+    margin: 0;
+    border: 0;
+    padding: 0;
+}
+.check-row {
+    padding-block: 0.2rem;
+    border-bottom: 1px solid var(--gb-line);
+}
+.check-row:has(:disabled) {
+    cursor: not-allowed;
+    color: var(--gb-muted);
+}
+</style>

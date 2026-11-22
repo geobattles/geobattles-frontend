@@ -10,6 +10,8 @@ import {
     type Powerup,
 } from "~/types/appTypes";
 
+import type { PowerupCommand, PowerupEffect, PowerupState } from "./powerups";
+
 export enum SocketStatus {
     NORMAL = "OK",
     WARNING = "WRN",
@@ -17,6 +19,10 @@ export enum SocketStatus {
 }
 
 export enum SocketType {
+    POWERUP_STATE = "POWERUP_STATE",
+    POWERUP_USED = "POWERUP_USED",
+    POWERUP_READY = "POWERUP_READY",
+    DUEL_FROM = "DUEL_FROM",
     JOINED_LOBBY = "JOINED_LOBBY",
     LEFT_LOBBY = "LEFT_LOBBY",
     REJOIN_ROUND = "REJOIN_ROUND",
@@ -82,6 +88,7 @@ export type MsgUpdatedLobbyData = SocketMessage<{
 }>;
 
 export type MsgStartRoundData = SocketMessage<{
+    powerupState?: PowerupState;
     location: Coordinates;
     players: playerListObject;
     powerLog: Powerup[];
@@ -99,6 +106,7 @@ export type MsgNewResultData = SocketMessage<{
 }>;
 
 export type MsgRoundResultData = SocketMessage<{
+    powerupState?: PowerupState;
     powerLog: Powerup[];
     round: number;
     players: playerListObject;
@@ -126,6 +134,7 @@ export type MsgCCData = SocketMessage<{
 }>;
 
 export type MsgGameEndData = SocketMessage<{
+    powerupState?: PowerupState;
     results: Record<number, LiveResultsHashMap>;
     /** Detached scored history/answers; optional for older servers. */
     endResults?: LobbyInfo["endResults"];
@@ -142,12 +151,17 @@ export type MsgNoCountryData = SocketMessage<{
 export type LobbySettingsPatch = Partial<Omit<LobbyInfo["conf"], "scoreScaleKm" | "ccList">> & { ccList?: string[] | null };
 
 export type SocketCommand =
-    | { command: "start" }
+    | PowerupCommand
+    | { command: "start"; gameId?: string; round?: number }
     | { command: "setReady"; ready: boolean }
     | { command: "submit_location"; location: Coordinates }
     | { command: "update_lobby_settings"; conf: LobbySettingsPatch };
 
 type EventPayloads = {
+    [SocketType.POWERUP_STATE]: { gameId?: string; round: number; phase: LobbyPhase; players: playerListObject; powerupState: PowerupState };
+    [SocketType.POWERUP_USED]: { gameId: string; requestId: string; effect: PowerupEffect; powerupState: PowerupState; players: playerListObject };
+    [SocketType.POWERUP_READY]: { gameId: string; requestId: string; powerupState: PowerupState };
+    [SocketType.DUEL_FROM]: { user: string; gameId: string; round: number; effectId: string };
     [SocketType.JOINED_LOBBY]: MsgJoinedLobbyData["payload"];
     [SocketType.LEFT_LOBBY]: MsgLeftLobbyData["payload"];
     [SocketType.REJOIN_ROUND]: MsgRejoinRound["payload"];

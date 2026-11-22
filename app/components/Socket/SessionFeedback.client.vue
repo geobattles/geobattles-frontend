@@ -1,13 +1,29 @@
 <template>
     <p class="sr-only" role="alert">{{ inlineFailure ? `${failureTitle}. ${failureMessage}` : "" }}</p>
-    <SocketConnectionPanel v-if="!retained && !failure" tone="joining" :title="entryTitle" :description="entryMessage" :code="lobbyCode">
+    <Transition name="horizon" @before-leave="revealLobby">
+        <CinematicTransition
+            v-if="cinematicDuration !== undefined && !retained"
+            :duration="cinematicDuration"
+            :title="inlineFailure ? failureTitle : 'Entering your lobby'"
+            :subtitle="inlineFailure ? failureMessage : cinematicStatus"
+            :failed="inlineFailure"
+        >
+            <template #cancel
+                ><button class="btn btn-secondary" type="button" @click="emit('leaveLobby')">{{ inlineFailure ? cancelLabel || "Cancel" : "Cancel" }}</button></template
+            >
+            <template v-if="inlineFailure" #default>
+                <button class="btn" type="button" :disabled="busy || !socket.isOnline" :aria-busy="busy" @click="recover">{{ missingLobby ? "New lobby" : "Retry" }}</button>
+            </template>
+        </CinematicTransition>
+    </Transition>
+    <SocketConnectionPanel v-if="cinematicDuration === undefined && !retained && !failure" tone="joining" :title="entryTitle" :description="entryMessage" :code="lobbyCode">
         <button ref="cancelJoin" class="btn btn-secondary" type="button" @click="emit('leaveLobby')">Cancel</button>
     </SocketConnectionPanel>
-    <SocketConnectionPanel v-else-if="inlineFailure" tone="lost" :title="failureTitle" :description="failureMessage" :code="lobbyCode">
+    <SocketConnectionPanel v-else-if="cinematicDuration === undefined && inlineFailure" tone="lost" :title="failureTitle" :description="failureMessage" :code="lobbyCode">
         <button class="btn" type="button" :disabled="busy || !socket.isOnline" :aria-busy="busy" @click="recover">{{ recoveryAction }}</button>
         <button ref="failureHome" class="btn btn-secondary" type="button" @click="emit('leaveLobby')">Home</button>
     </SocketConnectionPanel>
-    <template v-else>
+    <template v-else-if="retained">
         <Teleport :to="bannerTarget || 'body'" :disabled="!bannerTarget">
             <SocketConnectionBanner :status="lobby.modifySettingsModal ? null : banner" :round-running="!!roundRunning" :class="{ 'game-connection-banner': gameplay }" />
             <button v-if="failure && dismissed" ref="failurePill" type="button" class="connection-failure-pill btn btn-secondary" @click="dismissed = false">
@@ -24,8 +40,10 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ retained: boolean; gameplay?: boolean; roundRunning?: boolean; bannerTarget?: HTMLElement | null }>();
-const emit = defineEmits<{ leaveLobby: [] }>();
+import CinematicTransition from "~/components/Transitions/CinematicTransition.vue";
+
+const props = defineProps<{ retained: boolean; gameplay?: boolean; roundRunning?: boolean; bannerTarget?: HTMLElement | null; cinematicDuration?: number; cancelLabel?: string }>();
+const emit = defineEmits<{ leaveLobby: []; focusLobby: [] }>();
 const socket = useWebSocketStore();
 const router = useRouter();
 const route = useRoute();
@@ -58,6 +76,16 @@ const entryMessage = computed(() => {
     if (socket.isConnected) return props.gameplay ? "Opening the game…" : "Opening the lobby…";
     return "Waiting for the game server to confirm your place.";
 });
+const cinematicStatus = computed(() => {
+    if (!socket.isOnline) return "Waiting for internet. We’ll reconnect when you’re back online.";
+    if (socket.connectionState === "reconnecting") return "Reconnecting to the lobby…";
+    if (socket.isConnected) return "Lobby confirmed. Opening the room…";
+    return "Connecting to the game server…";
+});
+const revealLobby = (element: Element) => {
+    if (element.contains(document.activeElement)) emit("focusLobby");
+    element.setAttribute("inert", "");
+};
 const interrupted = computed(() => props.retained && !failure.value && (!socket.isOnline || socket.connectionState === "reconnecting"));
 const banner = computed(() => {
     if (interrupted.value) return socket.isOnline ? "reconnecting" : "offline";

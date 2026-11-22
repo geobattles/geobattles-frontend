@@ -1,8 +1,9 @@
 import { SocketType, type GameSocketEvent, type SocketEventHandlers } from "~/types/socketTypes";
 import type { createUIRuntime } from "~/runtime/ui";
-import type { createRoundClock } from "~/runtime/roundClock";
+import { ROUND_COUNTDOWN_MS, type createRoundClock } from "~/runtime/roundClock";
 import { decodeSocketCoordinates, decodeSocketResult, isSocketRecord } from "~/runtime/socketValues";
 import type { Coordinates, LobbyInfo, LobbyPhase, Results } from "~/types/appTypes";
+import type { PowerupEffect, PowerupState } from "~/types/powerups";
 
 const decodeScoredRound = (value: unknown): Results => {
     if (!isSocketRecord(value)) throw new Error("Invalid scored round archive.");
@@ -23,12 +24,13 @@ const decodeRoundArchive = <T>(value: unknown, lastRound: number, decode: (entry
 };
 
 type GameEventEffects = Pick<ReturnType<typeof createUIRuntime>, "showPlayerLeftToast" | "showLiveGuess"> & {
+    powerupReceipt: (gameId: string, requestId: string, effect?: PowerupEffect) => void;
     clock: Pick<ReturnType<typeof createRoundClock>, "apply" | "reset">;
     reconcileLobbyRoute: () => void;
     render: (operation: () => Promise<void>) => void;
 };
 
-export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showPlayerLeftToast, showLiveGuess }: GameEventEffects) => {
+export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showPlayerLeftToast, showLiveGuess, powerupReceipt }: GameEventEffects) => {
     const lobby = useLobbyStore();
     const mode = useGameMode();
     const results = useResultsStore();
@@ -120,7 +122,32 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
             if (mode.currentMode === "BattleRoyale") render(() => battle.restoreRound(phase, snapshot.currentRound));
         }
     };
+    const applyPowerups = (state: PowerupState, players?: LobbyInfo["playerList"]) => {
+        const snapshot = lobby.lobbySettings;
+        if (!snapshot || state.gameId !== snapshot.gameId || state.round !== snapshot.currentRound) return;
+        const previous = snapshot.powerupState;
+        if (previous && previous.gameId === state.gameId && previous.round === state.round && previous.status === "CLOSED" && state.status === "OPEN") return;
+        snapshot.powerupState = state;
+        if (players) lobby.updateLobbySetting("playerList", players);
+        if (state.startRequested || state.starting) request.isStartPending = false;
+    };
     const handlers: SocketEventHandlers = {
+        [SocketType.POWERUP_STATE]: ({ payload: data }) => {
+            const snapshot = lobby.lobbySettings;
+            if (!snapshot || data.gameId !== snapshot.gameId || data.round !== snapshot.currentRound || data.phase !== snapshot.phase) return;
+            applyPowerups(data.powerupState, data.players);
+        },
+        [SocketType.POWERUP_USED]: ({ payload: data }) => {
+            powerupReceipt(data.gameId, data.requestId, data.effect);
+            applyPowerups(data.powerupState, data.players);
+        },
+        [SocketType.POWERUP_READY]: ({ payload: data }) => {
+            powerupReceipt(data.gameId, data.requestId);
+            applyPowerups(data.powerupState);
+        },
+        // Persistent incoming effects, not a consent prompt. The ledger also
+        // restores this notification after a missed warning/reconnect.
+        [SocketType.DUEL_FROM]: () => {},
         [SocketType.JOINED_LOBBY]: (message) => {
             const { lobby: snapshot, user } = message.payload;
             if (!snapshot || !user) throw new Error("Missing lobby state.");
@@ -172,7 +199,7 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
             if (sameGame && round === previous.currentRound && (previous.phase === "PLAYING" || previous.phase === "MID-ROUND")) return;
             if (data.gameId && previous.gameId === data.gameId && previous.phase === "FINISHED") return;
             if (!sameGame && (round !== 1 || (previous.phase !== "WAITING" && previous.phase !== "FINISHED"))) throw new Error("Unexpected match start.");
-            const remaining = data.timeRemaining === undefined ? previous.conf.roundTime * 1000 + 3000 : data.timeRemaining;
+            const remaining = data.timeRemaining === undefined ? previous.conf.roundTime * 1000 + ROUND_COUNTDOWN_MS : data.timeRemaining;
             if (!Number.isSafeInteger(remaining) || remaining < 0) throw new Error("Invalid round clock.");
             // Never clear a completed summary when merely REQUESTING a replay.
             if (round === 1) {
@@ -191,6 +218,7 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
             previous.fullroundRes = {};
             previous.roundRes = {};
             previous.powerLog = data.powerLog;
+            previous.powerupState = data.powerupState;
             previous.location = data.location;
             lobby.rejoinTimer = null;
             finalResultsReady.value = false;
@@ -241,6 +269,7 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
             snapshot.endResults[data.round] = roundResults;
             snapshot.totalResults = results.totalResults;
             snapshot.powerLog = data.powerLog;
+            snapshot.powerupState = data.powerupState;
             snapshot.location = location;
             snapshot.timeRemaining = 0;
             revealedAnswers.value[data.round] = { ...location };
@@ -268,6 +297,7 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
                 previousAnswer?.lng !== answer?.lng;
             if (data.gameId !== undefined) snapshot.gameId = data.gameId;
             snapshot.results = Object.fromEntries(Object.entries(data.results).map(([round, raw]) => [round, normalizeRawResults(raw)]));
+            snapshot.powerupState = data.powerupState;
             // On legacy servers, only prior finalized answers prove which
             // locally retained score rounds finished. A live best row alone
             // must not become a scored archive when ROUND_RESULT was missed.

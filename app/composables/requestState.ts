@@ -1,4 +1,7 @@
 export interface RequestError {
+    requestId?: string;
+    gameId?: string;
+    round?: number;
     command: string;
     code: string;
     message: string;

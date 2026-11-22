@@ -422,17 +422,30 @@ watch(
     position: relative;
     height: clamp(210px, 24vw, 280px);
     overflow: hidden;
-    border: 1px solid #41483c;
-    border-radius: 12px;
-    background: radial-gradient(ellipse at 48% 40%, #2b342d 0%, #1c221f 64%, #181c1a 100%);
-    box-shadow: inset 0 0 40px #10151160;
+    border: 1px solid var(--gb-line);
+    border-radius: var(--gb-radius);
+    background: radial-gradient(ellipse at 48% 40%, #234836 0%, #152e23 64%, var(--gb-bg) 100%);
+    box-shadow: inset 0 0 40px #08170f60;
+}
+.is-readonly .map-stage::before {
+    content: "";
+    position: absolute;
+    inset: 0.4rem;
+    pointer-events: none;
+    background:
+        linear-gradient(var(--gb-success), var(--gb-success)) left top/14px 1px,
+        linear-gradient(var(--gb-success), var(--gb-success)) left top/1px 14px,
+        linear-gradient(var(--gb-success), var(--gb-success)) right bottom/14px 1px,
+        linear-gradient(var(--gb-success), var(--gb-success)) right bottom/1px 14px;
+    background-repeat: no-repeat;
+    opacity: 0.6;
 }
 .map-stage::after {
     content: "";
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    box-shadow: inset 0 0 28px #11171155;
+    box-shadow: inset 0 0 28px #08170f55;
     pointer-events: none;
 }
 .map-canvas {
@@ -447,12 +460,12 @@ watch(
     touch-action: pan-y;
 }
 .map-backdrop {
-    fill: #374037;
+    fill: #112319;
     pointer-events: none;
 }
 .map-grid {
     fill: none;
-    stroke: #a0b295;
+    stroke: #ccdecf;
     stroke-width: 0.6;
     stroke-dasharray: 2 6;
     opacity: 0.16;
@@ -463,14 +476,14 @@ watch(
     outline: none;
 }
 .map-country path {
-    fill: #68795d;
-    stroke: #252e25;
+    fill: #56725f;
+    stroke: var(--gb-surface);
     stroke-width: 0.65;
     stroke-linejoin: round;
 }
 .map-country.is-selected path {
-    fill: #b6e388;
-    stroke: #698b51;
+    fill: var(--gb-success);
+    stroke: #3a7759;
 }
 .map-country.is-hovered path {
     fill: var(--gb-accent-end);
@@ -541,9 +554,9 @@ watch(
     min-width: 44px;
     min-height: 44px;
     padding: 0.35rem 0.5rem;
-    border: 1px solid #41483c;
+    border: 1px solid var(--gb-line);
     border-radius: 8px;
-    background: #242b24;
+    background: var(--gb-surface);
     color: var(--gb-text);
     font-size: 0.75rem;
     font-weight: 600;
@@ -602,9 +615,9 @@ figcaption {
         content: "";
         position: absolute;
         inset: 6px 0;
-        border: 1px solid #41483c;
+        border: 1px solid var(--gb-line);
         border-radius: 7px;
-        background: #242b24;
+        background: var(--gb-surface);
         pointer-events: none;
     }
     .map-control {

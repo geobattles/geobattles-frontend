@@ -1,5 +1,8 @@
 import type { Ref } from "vue";
 
+// The server adds this lead-in to the configured playing time.
+export const ROUND_COUNTDOWN_MS = 3000;
+
 type ActiveRound = { lobbyId: string; playerId: string; gameId?: string; round: number };
 
 // Keep the authority limit separate from the visible countdown. Transport

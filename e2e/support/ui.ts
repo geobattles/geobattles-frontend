@@ -1,3 +1,4 @@
+import type { Locator } from "@playwright/test";
 import { expect } from "./fixtures";
 import type { Actor } from "./fixtures";
 import { settings } from "./safety.mjs";
@@ -60,13 +61,15 @@ export async function connected(actor: Actor) {
 }
 
 export function readyButton(actor: Actor) {
-    return actor.page.getByRole("button", { name: /^(ready|not ready|mark ready|change ready status)$/i });
+    return actor.page.getByRole("button", { name: /^(ready\?|ready to play|not ready|change ready status|ready for rematch|cancel rematch readiness)$/i });
 }
 
 export async function setReady(actor: Actor, value: boolean) {
     const button = readyButton(actor);
-    const initialName = value ? /^(ready|mark ready)$/i : /^(not ready|change ready status)$/i;
-    const updatedName = value ? /^(not ready|change ready status)$/i : /^(ready|mark ready)$/i;
+    const unready = /^(ready\?|ready to play|ready for rematch)$/i;
+    const ready = /^(not ready|change ready status|cancel rematch readiness)$/i;
+    const initialName = value ? unready : ready;
+    const updatedName = value ? ready : unready;
     await expect(button).toHaveAccessibleName(initialName);
     const mark = actor.mark();
     await button.click();
@@ -75,15 +78,28 @@ export async function setReady(actor: Actor, value: boolean) {
     if (actor.latest?.phase === "WAITING") await expect(actor.row()).toHaveAttribute("data-ready", String(value));
 }
 
+export async function openSettingsSection(dialog: Locator, name: "Lobby" | "Rounds" | "Map" | "Scoring & powerups") {
+    await expect(dialog).toBeVisible();
+    // A resize can report the previous drill-in state until the next rendering
+    // update. Settle it before deciding whether Back is part of this path.
+    await dialog.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+    const back = dialog.getByRole("button", { name: "All settings", exact: true });
+    if (await back.isVisible()) await back.click();
+    const nav = dialog.getByRole("navigation", { name: "Settings sections", exact: true });
+    await nav.getByRole("button", { name, exact: true }).click();
+}
+
 export async function changeSettings(actor: Actor, values: { name: string; rounds?: number; attempts?: number; seconds?: number; country?: string }) {
     const mark = actor.mark();
     await actor.page.getByRole("button", { name: /^(modify|edit settings|settings)$/i }).click();
     const dialog = actor.page.getByRole("dialog", { name: /^lobby settings$/i });
+    await openSettingsSection(dialog, "Lobby");
     await dialog.getByRole("textbox", { name: /^lobby name$/i }).fill(values.name);
     // Paid QA uses a source-verified supported country, not a guaranteed provider
     // result. Keyless callers leave the normal all-country selection untouched.
     const country = values.country ?? (env.maps ? "NL" : undefined);
     if (country !== undefined) {
+        await openSettingsSection(dialog, "Map");
         expect(country).toMatch(/^[A-Z]{2}$/);
         await dialog
             .getByRole("group", { name: /^region type$/i })
@@ -92,38 +108,29 @@ export async function changeSettings(actor: Actor, values: { name: string; round
         const search = dialog.getByRole("searchbox", { name: /^choose a country$/i });
         await expect(search).toBeVisible();
         await search.fill(country);
-        const choice = dialog.getByRole("group", { name: /^country search results$/i }).getByRole("button", { name: new RegExp(` ${country}$`) });
+        const choice = dialog.getByRole("radiogroup", { name: /^country search results$/i }).getByRole("radio", { name: new RegExp(` ${country}$`) });
         await expect(choice, "The actual country list must support this QA selection; never fall back to new provider attempts").toHaveCount(1);
         await choice.click();
-        await expect(choice).toHaveAttribute("aria-pressed", "true");
+        await expect(choice).toBeChecked();
     }
+    if (values.rounds !== undefined || values.attempts !== undefined || values.seconds !== undefined) await openSettingsSection(dialog, "Rounds");
     if (values.rounds !== undefined) await dialog.getByRole("spinbutton", { name: /^rounds$/i }).fill(String(values.rounds));
     if (values.attempts !== undefined) await dialog.getByRole("spinbutton", { name: /^(guesses per round|attempts)$/i }).fill(String(values.attempts));
     if (values.seconds !== undefined) {
         const timer = dialog.locator(".timer-setting");
-        const slider = timer.getByRole("slider", { name: /^round timer adjustment$/i });
-        await expect(slider).toHaveCount(0);
-        await timer.getByRole("button", { name: /^edit$/i }).click();
-        await expect(dialog.getByRole("button", { name: /^save settings$/i })).toBeDisabled();
-        const min = Number(await slider.getAttribute("min"));
-        const max = Number(await slider.getAttribute("max"));
-        const step = Number(await slider.getAttribute("step"));
-        expect(values.seconds).toBeGreaterThanOrEqual(min);
-        expect(values.seconds).toBeLessThanOrEqual(max);
-        expect(Number.isInteger((values.seconds - min) / step)).toBe(true);
-        await slider.press("Home");
-        // Use the actual native range keyboard behavior, not a DOM/store mutation.
-        for (let value = min; value < values.seconds; value += step) await slider.press("ArrowRight");
-        await expect(slider).toHaveValue(String(values.seconds));
-        await expect(timer.getByRole("spinbutton", { name: /^time in seconds$/i })).toHaveValue(String(values.seconds));
-        await timer.getByRole("button", { name: /^save time$/i }).click();
-        await expect(slider).toHaveCount(0);
-        await expect(timer.getByRole("button", { name: /^edit$/i })).toBeFocused();
-        await expect(timer.locator(".timer-value strong")).toHaveText(String(values.seconds));
+        await timer.getByRole("spinbutton", { name: /^time in seconds$/i }).fill(String(values.seconds));
+        await expect(timer.getByRole("slider", { name: /^round timer adjustment$/i })).toHaveValue(String(values.seconds));
     }
-    await expect(dialog.getByRole("button", { name: /^save settings$/i })).toBeEnabled();
-    await dialog.getByRole("button", { name: /^(save settings|save)$/i }).click();
-    const snapshot = await actor.snapshot((lobby) => lobby.conf.name === values.name, mark);
+    await dialog.getByRole("button", { name: /^close dialog$/i }).click();
+    const snapshot = await actor.snapshot(
+        (lobby) =>
+            lobby.conf.name === values.name &&
+            (values.rounds === undefined || lobby.conf.numRounds === values.rounds) &&
+            (values.attempts === undefined || lobby.conf.numAttempt === values.attempts) &&
+            (values.seconds === undefined || lobby.conf.roundTime === values.seconds) &&
+            (country === undefined || JSON.stringify(lobby.conf.ccList) === JSON.stringify([country])),
+        mark
+    );
     if (values.rounds !== undefined) expect(snapshot.conf.numRounds).toBe(values.rounds);
     if (values.attempts !== undefined) expect(snapshot.conf.numAttempt).toBe(values.attempts);
     if (values.seconds !== undefined) expect(snapshot.conf.roundTime).toBe(values.seconds);
@@ -209,17 +216,15 @@ export async function mapsReady(actor: Actor) {
 export async function guess(actor: Actor) {
     await mapsReady(actor); // Includes all rounds of the existing three-player case.
     const mark = actor.mark();
-    const showMap = actor.page.getByRole("button", { name: /^(show map|map)$/i });
+    const showMap = actor.page.getByRole("button", { name: /^(Open map|Place Guess)$/ }).first();
     if (await showMap.isVisible()) await showMap.click();
     const map = actor.page.getByTestId("guess-map");
     await expect(map).toBeVisible();
     await expect(map.locator(".gm-style").first()).toBeVisible();
-    // Enter the real hover-expanded map rather than mutating its layout.
-    await map.hover();
     const box = await map.boundingBox();
     if (!box) throw new Error("Actual Google guess map has no visible hit target");
     await map.click({ position: { x: Math.floor(box.width * 0.45), y: Math.floor(box.height * 0.55) } });
-    const button = actor.page.getByRole("button", { name: /^guess$/i });
+    const button = actor.page.getByRole("button", { name: "Confirm Guess", exact: true });
     await expect(button).toBeEnabled();
     await button.click();
     await actor.event("NEW_RESULT", (event) => event.payload?.user === actor.id, mark);

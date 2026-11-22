@@ -28,6 +28,8 @@ Ready, start and guess have command-specific pending state. An authoritative mat
 
 Apply membership, phase, round, raw attempts, scored best rows, history and totals as one authoritative snapshot. Restore PLAYING with its remaining deadline; MID-ROUND/FINISHED must not start a countdown or panorama. New game history clears only after successful first-round START.
 
+While submitting a guess, keep the draft and freeze its location until the ordered result or command error arrives. On transport recovery, compare the saved player, lobby, match and round with the restored snapshot. Restore the draft only when the player still has a guess available and the snapshot contains no attempt newer than the one recorded before the send. Resubmission requires a new player action.
+
 The backend deadline remains authoritative. START and recovery provide `timeRemaining` in milliseconds, including valid zero. Same-game/round/phase updates may shorten the client deadline but must not extend it. On terminal expiry the countdown is hidden; the limit is kept in memory across deliberate Retry only when a server game ID can distinguish the same round from a replay. A different identity, lobby, game or round never inherits it. Presentation uses wall-clock elapsed time and refreshes on resume; network latency means it is not an exact synchronized clock.
 
 Score presence requires a real attempt and finite distance, not truthiness: zero metres and zero coordinates are valid. Best geometry is selected by distance, not capped score. Disconnected/removed members' scored history remains available. Incomplete finalized history must not become a journal entry.

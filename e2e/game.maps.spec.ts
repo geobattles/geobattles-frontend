@@ -178,7 +178,7 @@ test("real Maps round: map-only retry, recovery clock, ordered results, ready-ga
     expect(Object.keys(first.payload?.totalResults ?? {}).sort()).toEqual([host.id, peer.id].sort());
     run.assertHealthy();
 
-    const rematch = host.page.getByRole("button", { name: /^(new game|rematch)$/i });
+    const rematch = host.page.getByRole("button", { name: "Start New Game" });
     await expect(rematch).toBeDisabled();
     const secondMarks = [host.mark(), peer.mark()];
     await run.probeReadinessRejection(host);
