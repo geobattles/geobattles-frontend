@@ -15,6 +15,8 @@ test("independent guests: invite, settings, ready gate, reload, offline recovery
     await expect(host.row(peer.name)).toHaveAttribute("data-connected", "true");
     await expect(peer.row(host.name)).toHaveAttribute("data-host", "true");
     await expect(peer.page.getByTestId("lobby-code")).toHaveText(lobbyId);
+    await expect(peer.page.getByRole("navigation", { name: "Main navigation" })).toHaveCount(0);
+    await expect(peer.page.getByRole("button", { name: "Leave lobby", exact: true })).toHaveText("Leave");
     expect(await peer.page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), "The mobile lobby must fit its viewport").toBe(true);
 
     const start = host.page.getByRole("button", { name: /^start game$/i });
@@ -28,9 +30,13 @@ test("independent guests: invite, settings, ready gate, reload, offline recovery
             })
             .toBe(true);
     };
-    await expect(start).toBeDisabled();
+    await expect(start).toHaveCount(0);
     await setReady(host, true);
-    await expect(start).toBeDisabled();
+    await expect(start).toHaveCount(0);
+    await setReady(peer, true);
+    await expect(peer.page.getByText("You’re ready", { exact: true })).toBeVisible();
+    await setReady(peer, false);
+    await expect(start).toHaveCount(0);
     await setReady(peer, true);
     await readyStartState(); // Blank-key builds intentionally keep START disabled; guards still forbid every START.
     await expect(host.row(peer.name)).toHaveAttribute("data-ready", "true");

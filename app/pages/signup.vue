@@ -1,118 +1,157 @@
 <template>
-    <div>
-        <Header />
-        <main id="main-content" class="page-shell signup-shell">
-            <section class="signup-intro">
-                <p class="eyebrow">Make yourself at home</p>
-                <h1>One name.<br />A whole world.</h1>
-                <p class="muted mt-6">Create your explorer account, gather your friends, and see where the next expedition takes you.</p>
-                <NuxtLink to="/" class="text-link mt-6">Back to the world <UiIcon name="arrow" /></NuxtLink>
+    <main id="main-content" class="auth-page" :style="viewportStyle">
+        <picture class="auth-scenery" aria-hidden="true">
+            <source media="(max-width: 760px) and (orientation: portrait)" srcset="/images/emerald-lake-portrait.webp" />
+            <img src="/images/emerald-lake.webp" alt="" fetchpriority="high" />
+        </picture>
+        <div class="auth-stage">
+            <section class="auth-surface auth-card" aria-labelledby="auth-page-title" data-viewport-scroll>
+                <header class="auth-card-header" data-viewport-sticky>
+                    <NuxtLink to="/" class="auth-back" aria-label="Back to homepage"><UiIcon name="arrow" /></NuxtLink>
+                    <h1 id="auth-page-title">{{ title }}</h1>
+                </header>
+                <UiAuthExperience v-model:mode="mode" @submitting="rememberNavigation" @authenticated="finish" />
             </section>
-            <section class="panel">
-                <h2>Create an account</h2>
-                <p class="muted mt-2 mb-6">Your display name is what other explorers see.</p>
-                <form class="form-stack" @submit.prevent="submit">
-                    <div class="field">
-                        <label for="signup-username">Username</label
-                        ><input
-                            id="signup-username"
-                            v-model="username"
-                            class="input"
-                            autocomplete="username"
-                            required
-                            minlength="3"
-                            :aria-invalid="(submitted && username.length < 3) || undefined"
-                            aria-describedby="signup-username-help"
-                        />
-                        <p id="signup-username-help" class="field-help">At least 3 characters. Use this to sign in.</p>
-                    </div>
-                    <div class="field">
-                        <label for="signup-display">Display name</label
-                        ><input
-                            id="signup-display"
-                            v-model="displayName"
-                            class="input"
-                            autocomplete="nickname"
-                            required
-                            minlength="3"
-                            maxlength="15"
-                            aria-describedby="signup-display-help"
-                        />
-                        <p id="signup-display-help" class="field-help">3–15 characters. Visible in lobbies and games.</p>
-                    </div>
-                    <div class="field">
-                        <label for="signup-password">Password</label><UiPassword id="signup-password" v-model="password" autocomplete="new-password" required />
-                    </div>
-                    <p v-if="error" class="field-error" role="alert">{{ error }}</p>
-                    <button type="submit" class="btn btn-large" :disabled="busy" :aria-busy="busy">
-                        <span v-if="busy" class="spinner" />{{ busy ? "Creating your account" : "Create account" }}<UiIcon v-if="!busy" name="arrow" />
-                    </button>
-                    <p class="field-help">Already an explorer? <button type="button" class="text-link" @click="auth.isLoginDialog = true">Sign in</button></p>
-                </form>
-            </section>
-        </main>
-    </div>
+        </div>
+    </main>
 </template>
+
 <script setup lang="ts">
-const auth = useAuthStore();
+const mode = ref<"login" | "guest" | "register">("register");
+const viewportStyle = useViewportFit();
+const titles = { login: "Sign in", guest: "Play as guest", register: "Create account" };
+const title = computed(() => titles[mode.value]);
 const router = useRouter();
 const app = useNuxtApp();
-const username = ref("");
-const displayName = ref("");
-const password = ref("");
-const error = ref("");
-const submitted = ref(false);
-const busy = ref(false);
-const submit = async () => {
-    if (busy.value) return;
-    submitted.value = true;
-    if (username.value.length < 3 || displayName.value.trim().length < 3 || displayName.value.trim().length > 15 || !password.value) {
-        error.value = "Check your username, display name, and password.";
-        return;
-    }
-    error.value = "";
-    busy.value = true;
-    const isCurrent = app.$gameRuntime.captureNavigation();
-    try {
-        await auth.register(username.value, password.value, displayName.value.trim());
-        password.value = "";
-        if (isCurrent()) {
-            auth.isLoginDialog = false;
-            await router.push("/");
-        }
-    } catch (cause) {
-        error.value = cause instanceof Error ? cause.message : "Could not create an account. Please try again.";
-    } finally {
-        busy.value = false;
-    }
-};
-useHead({ title: "Create account" });
+let isNavigationCurrent: (() => boolean) | undefined;
+
+function rememberNavigation() {
+    isNavigationCurrent = app.$gameRuntime.captureNavigation();
+}
+
+function finish() {
+    if (isNavigationCurrent?.()) void router.push("/");
+}
+
+useHead({ title });
 </script>
+
 <style scoped>
-.signup-shell {
+.auth-page {
+    position: relative;
+    height: var(--gb-viewport-height);
+    overflow: hidden;
+    background: #052e24;
+}
+.auth-scenery,
+.auth-scenery img,
+.auth-page::after {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+}
+.auth-scenery img {
+    object-fit: cover;
+    object-position: center 52%;
+}
+.auth-page::after {
+    content: "";
+    background: linear-gradient(90deg, #031c1a0a 20%, #021b1abc), linear-gradient(0deg, #0219158f, transparent 55%);
+}
+.auth-stage {
+    position: absolute;
+    z-index: 1;
+    inset-inline: 0;
+    top: var(--visible-top, 0px);
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: clamp(2rem, 8vw, 7rem);
-    max-width: 1100px;
-    align-items: start;
+    justify-items: end;
+    align-items: center;
+    height: var(--visible-height, var(--gb-viewport-height));
+    padding: max(0.5rem, var(--gb-safe-top)) max(clamp(1rem, 9vw, 10rem), var(--gb-safe-right)) max(0.5rem, var(--gb-safe-bottom)) max(1rem, var(--gb-safe-left));
 }
-.signup-intro {
-    padding-top: 2rem;
+.auth-card {
+    width: min(100%, 31rem);
+    max-height: 100%;
+    min-height: 0;
 }
-.signup-intro h1 {
-    font-size: clamp(2.6rem, 5vw, 4.5rem);
+.auth-card-header {
+    position: sticky;
+    z-index: 1;
+    top: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0.65rem var(--auth-pad);
+    border-bottom: 1px solid #b5f7dd29;
+    background: linear-gradient(110deg, #0b352feb, #062320f5);
 }
-.signup-intro > p.muted {
-    max-width: 26rem;
-    line-height: 1.8;
+.auth-card-header h1 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+.auth-back {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 0.7rem;
+    border: 1px solid #a5ead847;
+    background: #b2f8df0a;
+    color: #e7fff8;
+}
+.auth-back:hover {
+    background: #b2f8df23;
+}
+.auth-back .ui-icon {
+    rotate: 180deg;
+}
+.auth-card :deep(.auth-experience) {
+    padding: var(--auth-pad);
+}
+.auth-card:has([data-auth-compact]) .auth-card-header {
+    padding-block: 0;
+    background: #0b302b;
+}
+.auth-card:has([data-auth-compact]) .auth-back:focus-visible {
+    outline-offset: -3px;
+}
+.auth-card:has([data-auth-short]) .auth-card-header {
+    display: none;
+}
+.auth-page:has([data-auth-compact]) .auth-scenery {
+    visibility: hidden;
+}
+:global(.app-root:has(.auth-page) > .build-notice) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
 }
 @media (max-width: 760px) {
-    .signup-shell {
-        grid-template-columns: 1fr;
-        gap: 2rem;
+    .auth-stage {
+        justify-items: center;
+        padding-inline: max(0.65rem, env(safe-area-inset-left)) max(0.65rem, env(safe-area-inset-right));
     }
-    .signup-intro {
-        padding-top: 0;
+    .auth-page::after {
+        background: linear-gradient(0deg, #02221bb8, #031f1659 60%, #0824182e);
+    }
+}
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 560px) {
+    .auth-stage {
+        justify-items: center;
+        padding-inline: max(0.75rem, env(safe-area-inset-left)) max(0.75rem, env(safe-area-inset-right));
+    }
+    .auth-card {
+        width: min(100%, 40rem);
+    }
+    .auth-card-header {
+        padding-block: 0.25rem;
     }
 }
 </style>

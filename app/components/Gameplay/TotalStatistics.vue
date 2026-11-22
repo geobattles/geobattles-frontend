@@ -1,115 +1,194 @@
 <template>
-    <div class="table-scroll">
-        <table class="data-table total-table">
-            <caption class="sr-only">
-                Expedition leaderboard
-            </caption>
-            <thead>
-                <tr>
-                    <th scope="col">Place</th>
-                    <th scope="col">Explorer</th>
-                    <th scope="col" class="numeric">Total points</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="row in ranked" :key="row.id" :class="{ 'leader-row': row.rank === 1, 'own-row': row.id === player.ID }">
-                    <td class="rank">
-                        <span class="rank-number">{{ String(row.rank).padStart(2, "0") }}</span
-                        ><UiIcon v-if="row.rank === 1" name="trophy" />
-                    </td>
-                    <td>
-                        <span class="player-identity"
-                            ><span class="player-swatch" :style="{ backgroundColor: getPlayerColorByID(row.id) }" />{{ getPlayerNameFromID(row.id)
-                            }}<span v-if="row.id === player.ID" class="self-label">(you)</span></span
-                        >
-                    </td>
-                    <td class="numeric score">{{ row.result.total ?? 0 }}</td>
-                </tr>
-            </tbody>
-        </table>
-        <p v-if="!ranked.length" class="muted mt-4">No scored rounds yet.</p>
-    </div>
+    <table class="total-table">
+        <caption class="sr-only">
+            Final standings and rematch readiness
+        </caption>
+        <thead>
+            <tr>
+                <th scope="col" class="place-col">Place</th>
+                <th scope="col">Player</th>
+                <th scope="col" class="score-col">Points</th>
+                <th scope="col" class="ready-col">Rematch</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="row in rows" :key="row.id" :class="{ 'own-row': row.id === player.ID }">
+                <td class="final-place">
+                    <span v-if="row.rank !== undefined" class="place-number" :data-rank="row.rank">{{ row.rank }}</span>
+                    <span v-else>—<span class="sr-only">Joined for rematch</span></span>
+                </td>
+                <th scope="row">
+                    <span class="final-player">
+                        <PlayerAvatar :color="getPlayerColorByID(row.id)" />
+                        <span class="final-name" :title="getPlayerNameFromID(row.id)">{{ getPlayerNameFromID(row.id) }}</span>
+                        <span v-if="row.id === player.ID" class="self-label">You</span>
+                    </span>
+                </th>
+                <td class="final-points">{{ row.score?.toLocaleString() ?? "—" }}</td>
+                <td class="final-readiness">
+                    <span v-if="row.member?.connected && row.member.ready" class="final-ready"><UiIcon name="check" />Ready</span>
+                    <span v-else>{{ row.member ? (row.member.connected ? "Waiting" : "Offline") : "Left lobby" }}</span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
 </template>
+
 <script setup lang="ts">
-const results = useResultsStore();
+import PlayerAvatar from "~/components/Ui/PlayerAvatar.vue";
+import type { RankedResult } from "~/utils/resultUtils";
+
+const props = defineProps<{ ranked: RankedResult[] }>();
 const player = usePlayerInfo();
+const { lobbySettings } = useLobbyState();
 const { getPlayerColorByID, getPlayerNameFromID } = usePlayerLookup();
-const ranked = computed(() => {
-    const rows = Object.entries(results.totalResults).sort(([, a], [, b]) => (b.total ?? 0) - (a.total ?? 0));
-    let rank = 0;
-    let previous: number | undefined;
-    return rows.map(([id, result], index) => {
-        const score = result.total ?? 0;
-        if (score !== previous) rank = index + 1;
-        previous = score;
-        return { id, result, rank };
-    });
+const rows = computed(() => {
+    const members = lobbySettings.value?.playerList ?? {};
+    const scoredPlayers = new Set(props.ranked.map(({ id }) => id));
+    return [
+        ...props.ranked.map((row) => ({ ...row, member: members[row.id] })),
+        ...Object.entries(members)
+            .filter(([id]) => !scoredPlayers.has(id))
+            .map(([id, member]) => ({ id, member, rank: undefined, score: undefined })),
+    ];
 });
 </script>
+
 <style scoped>
 .total-table {
-    font-size: 0.85rem;
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    color: #f1faf2;
+    font-size: clamp(0.75rem, 1.32vw, 0.94rem);
+    line-height: 1.22;
 }
-.total-table th {
-    background: #1e201e;
+.total-table :is(th, td) {
+    border-bottom: 1px solid #a0d8b123;
+    padding: clamp(0.38rem, 0.78dvh, 0.73rem) clamp(0.27rem, 0.72vw, 0.62rem);
 }
-.rank {
-    width: 4.75rem;
-    color: var(--gb-muted);
-    font: 600 0.8rem var(--gb-font-mono);
-    white-space: nowrap;
+.total-table thead th {
+    color: #b8d3c3;
+    font: 650 0.7rem / 1.3 var(--gb-font-display);
+    text-align: start;
 }
-.rank-number {
+.total-table thead .score-col {
+    text-align: end;
+}
+.place-col {
+    width: 3.2rem;
+}
+.score-col {
+    width: 5.1rem;
+}
+.ready-col {
+    width: clamp(4.5rem, 12vw, 6rem);
+}
+.place-number {
     display: inline-grid;
     place-items: center;
-    min-width: 1.6rem;
-    min-height: 1.6rem;
+    min-width: 1.55em;
+    aspect-ratio: 1;
+    border-radius: 0.3rem;
+    background: #193d30;
+    color: #d8ebdc;
+    font: 750 0.86em / 1 var(--gb-font-mono);
 }
-.rank svg {
-    margin-left: 0.3rem;
-    width: 14px;
-    height: 14px;
-    color: var(--gb-accent);
+.place-number[data-rank="1"] {
+    background: #684c285e;
+    color: #ffe6a2;
 }
-.score {
-    color: var(--gb-text);
-    font-weight: 700;
-    font-size: 1.05rem;
+.place-number[data-rank="2"] {
+    background: #6d8c984f;
+    color: #e0edfa;
 }
-.leader-row {
-    background: color-mix(in srgb, var(--gb-accent) 7%, var(--gb-surface));
+.place-number[data-rank="3"] {
+    background: #955b3c54;
+    color: #ffd0a5;
 }
-.leader-row .score,
-.leader-row .rank-number {
-    color: var(--gb-accent);
+.final-player {
+    --player-avatar-size: clamp(0.95rem, 3.5vw, 1.62rem);
+    display: flex;
+    align-items: center;
+    gap: 0.38rem;
+    min-width: 0;
+    text-align: start;
 }
-.leader-row .rank-number {
-    background: #b6e38812;
-}
-.own-row .player-identity {
+.final-name {
+    min-width: 0;
+    overflow-wrap: anywhere;
     font-weight: 700;
 }
 .self-label {
-    color: var(--gb-muted);
-    font-size: 0.68rem;
-    font-weight: 400;
+    color: #d2fa98;
+    font-size: 0.71em;
+    font-weight: 630;
 }
-@media (max-width: 850px), (pointer: coarse), (max-height: 600px) and (orientation: landscape) {
-    .total-table {
-        font-size: 0.78rem;
+.final-points {
+    color: #efffcc;
+    font-style: italic;
+    font-weight: 850;
+    font-variant-numeric: tabular-nums;
+    text-align: end;
+}
+.final-readiness {
+    color: #bed5c8;
+    font-size: 0.82em;
+}
+.final-ready {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    color: #c5f39f;
+}
+.own-row > :is(th, td) {
+    background: #abf47e1b;
+}
+.own-row > :first-child {
+    box-shadow: inset 2px 0 #c5f394;
+}
+@media (max-width: 540px), (orientation: landscape) and (max-height: 520px) {
+    .place-col {
+        width: 2.34rem;
     }
-    .total-table :is(td, th) {
-        padding: 0.6rem 0.35rem;
+    .score-col {
+        width: 4.05rem;
     }
-    .total-table .player-identity {
-        flex-wrap: wrap;
-        gap: 0.3rem;
-    }
-    .rank {
+    .ready-col {
         width: 3.75rem;
     }
-    .score {
-        font-size: 0.95rem;
+    .total-table :is(th, td) {
+        padding-block: 0.32rem;
+    }
+    .final-player {
+        --player-avatar-size: 1.03rem;
+    }
+}
+@media (orientation: landscape) {
+    .total-table {
+        font-size: clamp(0.72rem, 1.3vw, 0.89rem);
+        line-height: 1.16;
+    }
+    .total-table :is(th, td) {
+        padding-block: 0.25rem;
+    }
+    .total-table thead th {
+        position: sticky;
+        z-index: 1;
+        inset-block-start: 0;
+        background: #10382e;
+    }
+    .final-player {
+        --player-avatar-size: clamp(1rem, 2.55vw, 1.24rem);
+    }
+    .final-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .final-points {
+        white-space: nowrap;
     }
 }
 </style>

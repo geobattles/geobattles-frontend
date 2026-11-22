@@ -52,10 +52,10 @@ test("three independent guests: two real rounds, MID-ROUND reload, ungated Next 
     for (const actor of [peer, guest]) await actor.snapshot((lobby) => lobby.conf.name === `Crew-${lobbyId}` && lobby.conf.numRounds === plan.rounds.length);
     expect(run.sdkRequests, "The new lobby must not load Maps before a real start").toBe(0);
     const startButton = host.page.getByRole("button", { name: /^start game$/i });
-    await expect(startButton).toBeDisabled();
+    await expect(startButton).toHaveCount(0);
     for (const [index, actor] of actors.entries()) {
         await setReady(actor, true);
-        if (index < actors.length - 1) await expect(startButton).toBeDisabled();
+        if (index < actors.length - 1) await expect(startButton).toHaveCount(0);
     }
     await expect(startButton).toBeEnabled();
 

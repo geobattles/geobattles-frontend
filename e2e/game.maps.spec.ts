@@ -51,7 +51,7 @@ test("real Maps round: map-only retry, recovery clock, ordered results, ready-ga
     await peer.snapshot((lobby) => lobby.conf.numRounds === 1 && lobby.conf.numAttempt === 1 && lobby.conf.name === `Maps-${lobbyId}`);
     const firstMarks = [host.mark(), peer.mark()];
     expect(run.sdkRequests, "Lobby/landing must not load Maps before an authoritative round").toBe(0);
-    await expect(host.page.getByRole("button", { name: /^start game$/i })).toBeDisabled();
+    await expect(host.page.getByRole("button", { name: /^start game$/i })).toHaveCount(0);
     await run.probeReadinessRejection(host); // Real server rejection; never synthesize provider/phase success.
     await setReady(host, true);
     await setReady(peer, true);
@@ -178,7 +178,7 @@ test("real Maps round: map-only retry, recovery clock, ordered results, ready-ga
     expect(Object.keys(first.payload?.totalResults ?? {}).sort()).toEqual([host.id, peer.id].sort());
     run.assertHealthy();
 
-    const rematch = host.page.getByRole("button", { name: /^(new game|rematch)$/i });
+    const rematch = host.page.getByRole("button", { name: "Start New Game" });
     await expect(rematch).toBeDisabled();
     const secondMarks = [host.mark(), peer.mark()];
     await run.probeReadinessRejection(host);

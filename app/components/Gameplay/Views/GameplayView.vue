@@ -1,188 +1,278 @@
 <template>
-    <div id="gameplay_container" class="gameplay-container" :class="{ 'desktop-gameplay': !compactViewport, 'portrait-gameplay': portraitScores }">
+    <div
+        id="gameplay_container"
+        ref="gameplayRoot"
+        class="gameplay-container"
+        :class="{ 'is-compact-game': compactViewport, 'is-landscape-game': landscapeLayout, 'has-full-map': mapModal }"
+    >
         <GameplayGooglePanorama class="google-panorama" :inert="mapModal" />
-        <div class="gameplay-hud" :inert="mapModal">
-            <div class="gameplay-topbar" :inert="mapModal">
-                <GameplayMenu :compact="compactViewport" @leaveLobbyClicked="emit('leaveLobby')" />
-            </div>
-            <Teleport :to="mapPanel || 'body'" :disabled="!mapModal">
-                <div class="gameplay-timer" :class="{ 'map-timer': mapModal }">
-                    <GameplayTimerBar v-if="game.modeLogic.currentState === 'PLAYING'" />
-                    <span v-else class="muted text-xs">Preparing…</span>
+        <div class="gameplay-chrome" :inert="mapModal">
+            <GameplayMenu
+                ref="menu"
+                :players="playerCount"
+                :compact="compactViewport"
+                :scores-open="scoreboardVisible"
+                :scoreboard-id="scoreboardId"
+                @toggle-scores="toggleScores()"
+                @leave-lobby-clicked="emit('leaveLobby')"
+            >
+                <section class="round-hud" aria-label="Round status">
+                    <div class="round-hud-content">
+                        <p class="round-label">
+                            <span>Round</span> <strong>{{ round }}</strong
+                            ><span class="round-total"> / {{ roundCount }}</span>
+                        </p>
+                        <SocketConnectionStatus v-if="!compactViewport" class="round-connection" />
+                    </div>
+                    <progress class="match-progress" :value="round" :max="Math.max(1, roundCount)" aria-label="Match progress" />
+                </section>
+                <div v-show="landscapeLayout" ref="headerScoresHost" class="header-scores-host" />
+            </GameplayMenu>
+            <Teleport :to="scoresHost || 'body'" :disabled="!scoresHost">
+                <div class="gameplay-scores">
+                    <div v-if="compactViewport" class="round-score-strip">
+                        <dl class="round-score-readings" aria-label="Your round scores" aria-live="polite" aria-atomic="true">
+                            <div>
+                                <dt>Last <span :class="{ 'sr-only': landscapeLayout }">guess</span><span class="sr-only"> distance</span></dt>
+                                <dd>{{ lastGuess ? formatGuessDistance(lastGuess) : "—" }}</dd>
+                            </div>
+                            <div class="round-best-distance">
+                                <dt>Best<span class="sr-only"> distance</span></dt>
+                                <dd>{{ bestGuess ? formatGuessDistance(bestGuess) : "—" }}</dd>
+                            </div>
+                            <div>
+                                <dt><span class="sr-only">Round </span>Place</dt>
+                                <dd>
+                                    <strong>{{ liveRank ? `#${liveRank}` : "—" }}</strong> <span v-if="playerCount" class="place-total">/ {{ playerCount }}</span>
+                                </dd>
+                            </div>
+                        </dl>
+                        <button
+                            ref="scoresToggle"
+                            class="round-score-toggle"
+                            type="button"
+                            aria-label="Round scores"
+                            title="Round scores"
+                            :aria-controls="scoreboardId"
+                            :aria-expanded="scoreboardVisible"
+                            @click="toggleScores"
+                        >
+                            <UiIcon name="trophy" /><span>Scores</span><UiIcon name="chevron-up" class="scores-chevron" />
+                        </button>
+                    </div>
+                    <aside v-show="scoreboardVisible" :id="scoreboardId" class="gameplay-scoreboard" :class="{ 'scores-expanded': scoresExpanded }" :aria-labelledby="scoreTitleId">
+                        <header :class="compactViewport ? 'sr-only' : 'scoreboard-header'">
+                            <h2 :id="scoreTitleId">Round scores</h2>
+                            <div v-if="!compactViewport" class="scoreboard-tools">
+                                <button
+                                    class="hud-button"
+                                    type="button"
+                                    :title="scoresExpanded ? 'Compact scores' : 'Expand scores'"
+                                    :aria-label="scoresExpanded ? 'Compact scores' : 'Expand scores'"
+                                    :aria-expanded="scoresExpanded"
+                                    @click="scoresExpanded = !scoresExpanded"
+                                >
+                                    <UiIcon :name="scoresExpanded ? 'shrink' : 'fullscreen'" />
+                                </button>
+                                <button class="hud-button" type="button" aria-label="Hide round scores" title="Hide round scores" @click="closeScores">
+                                    <UiIcon name="close" />
+                                </button>
+                            </div>
+                        </header>
+                        <div ref="scoreboardBody" class="scoreboard-body" tabindex="0" role="region" aria-label="Player scores, scroll for more players">
+                            <GameplayBattleRoyaleLiveStatistics v-if="game.currentMode === 'BattleRoyale'" :compact="compactViewport" player-hooks />
+                            <GameplayCountryBattleLiveStatistics v-else />
+                        </div>
+                    </aside>
                 </div>
             </Teleport>
-            <button
-                class="btn btn-secondary btn-icon gameplay-fullscreen"
-                type="button"
-                :inert="mapModal"
-                :aria-label="ui.isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-                :title="ui.isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'"
-                @click="ui.toggleFullscreen()"
-            >
-                <UiIcon name="fullscreen" />
-            </button>
         </div>
-        <Teleport :to="mapPanel || 'body'" :disabled="!mapModal">
-            <aside class="gameplay-scoreboard" :class="{ 'map-scoreboard': mapModal }" aria-label="Live scores">
-                <button
-                    v-if="portraitScores"
-                    type="button"
-                    class="scoreboard-toggle"
-                    :aria-expanded="scoresVisible"
-                    :aria-label="scoresVisible ? 'Hide scores' : 'Show scores'"
-                    aria-controls="live-score-details"
-                    @click="scoresVisible = !scoresVisible"
-                >
-                    <span
-                        >Scores <span class="scoreboard-count">{{ scorePlayerCount }}</span></span
-                    >
-                    <span class="scoreboard-toggle-label">{{ scoresVisible ? "Hide" : "Show" }}</span>
-                </button>
-                <h2 v-else>Round scores</h2>
-                <div
-                    id="live-score-details"
-                    v-show="!portraitScores || scoresVisible"
-                    class="scoreboard-body"
-                    tabindex="0"
-                    role="region"
-                    aria-label="Player scores, scroll for more players"
-                >
-                    <GameplayBattleRoyaleLiveStatistics v-if="game.currentMode === 'BattleRoyale'" :compact="compactViewport" player-hooks /><GameplayCountryBattleLiveStatistics
-                        v-else
-                    />
-                </div>
-            </aside>
-        </Teleport>
-        <div
-            ref="mapPanel"
-            class="gameplay-map-wrapper"
-            :class="{ 'map-is-open': mapOpen }"
-            :role="mapModal ? 'dialog' : undefined"
-            :aria-modal="mapModal || undefined"
-            :aria-label="mapModal ? 'Choose your guess on the map' : undefined"
-        >
-            <div class="map-controls">
-                <button
-                    ref="mapToggle"
-                    class="btn btn-secondary map-toggle"
-                    type="button"
-                    :aria-label="mapOpen ? (compactViewport ? 'Close map' : 'Hide map') : 'Show map'"
-                    :title="mapOpen ? (compactViewport ? 'Close map' : 'Hide map') : 'Show map'"
-                    :aria-expanded="mapOpen"
-                    aria-controls="gameplay-map-slot"
-                    @click="toggleMap"
-                >
-                    <UiIcon :name="mapOpen && compactViewport ? 'close' : 'map'" /><span v-if="!compactViewport || !mapOpen">{{ mapOpen ? "Hide map" : "Map" }}</span></button
-                ><span class="own-lives" data-testid="guesses-left"><UiIcon name="pin" />{{ lives }} guesses left</span>
-            </div>
-            <div id="gameplay-map-slot" class="gameplay-map-slot" :inert="!mapOpen"><GameplayGoogleMap /></div>
-            <p v-if="google.mapStatus === 'ready' && google.panoramaStatus === 'ready'" data-testid="maps-ready" class="sr-only">Map initialized and landscape available</p>
-            <button
-                v-show="!compactViewport || mapOpen || !game.modeLogic.isSubmitDisabled || isGuessPending"
-                class="btn btn-icon guess-button"
-                type="button"
-                :aria-label="guessLabel"
-                :title="guessLabel"
-                :disabled="game.modeLogic.isSubmitDisabled || !socket.isConnected || !socket.isOnline"
-                :aria-busy="isGuessPending"
-                @click="game.submitGuess()"
-            >
-                <span v-if="isGuessPending" class="spinner" /><UiIcon v-else name="pin" /><span :class="{ 'sr-only': compactViewport && !mapOpen }">{{ guessLabel }}</span>
-            </button>
+        <div v-show="playing" class="street-timer-slot" :class="{ 'clear-of-scores': scoreboardVisible }">
+            <Teleport :to="timerHost || 'body'" :disabled="!timerHost">
+                <GameplayRoundTimer v-show="playing" ref="roundTimer" :seconds="roundDeadline === null ? null : countdown" :duration="fullRoundTime" />
+            </Teleport>
         </div>
-        <Teleport :to="mapPanel || 'body'" :disabled="!mapModal">
-            <GameplayMapRecovery panorama :active="['STARTING', 'PLAYING'].includes(game.modeLogic.currentState)" />
+        <GameplayGuessMapPanel
+            ref="guessMap"
+            :class="{ 'map-scores-open': mapModal && scoreboardVisible }"
+            :mode="mapMode"
+            :fullscreen="mapModal"
+            :compact="compactViewport"
+            :landscape="landscapeLayout"
+            :playing="playing"
+            :seconds="countdown"
+            :lives="lives"
+            :confirmed="confirmed"
+            @open="openMap"
+            @close="closeMap"
+            @expand="toggleMapSize"
+        />
+        <p v-if="google.mapStatus === 'ready' && google.panoramaStatus === 'ready'" data-testid="maps-ready" class="sr-only">Map initialized and landscape available</p>
+        <Teleport :to="connectionTarget || 'body'" :disabled="!mapModal || !connectionTarget">
+            <GameplayMapRecovery class="gameplay-map-recovery" panorama :active="playing" />
         </Teleport>
     </div>
 </template>
 <script setup lang="ts">
-const emit = defineEmits<{ leaveLobby: [] }>();
+import { formatGuessDistance, guessDistance, hasGuess, type LiveGuessFeedback } from "~/utils/resultUtils";
+
+const emit = defineEmits<{ leaveLobby: []; connectionTarget: [target: HTMLElement | null] }>();
 const game = useGameMode();
 const ui = useUIManagerStore();
 const google = useGoogleStore();
-const socket = useWebSocketStore();
 const player = usePlayerInfo();
-const { isGuessPending } = useBattleRoyaleState();
-const compactViewport = ref(false);
-const portraitViewport = ref(false);
-const portraitScores = computed(() => compactViewport.value && portraitViewport.value);
-const scoresVisible = ref(true);
-const { lobbySettings } = useLobbyState();
-const scorePlayerCount = computed(() => Object.keys(lobbySettings.value?.playerList ?? {}).length);
-const mapOpen = ref(true);
-const mapModal = computed(() => compactViewport.value && mapOpen.value);
-let viewportQuery: MediaQueryList | null = null;
-let portraitQuery: MediaQueryList | null = null;
-const updatePortrait = () => {
-    portraitViewport.value = portraitQuery?.matches ?? false;
-};
-const mapPanel = ref<HTMLElement | null>(null);
-const mapToggle = ref<HTMLButtonElement | null>(null);
-let returnFocus: HTMLElement | null = null;
+const results = useResultsStore();
+const { lobbySettings, roundDeadline } = useLobbyState();
+const playing = computed(() => game.modeLogic.currentState === "PLAYING");
+const round = computed(() => lobbySettings.value?.currentRound ?? 0);
+const roundCount = computed(() => lobbySettings.value?.conf.numRounds ?? 0);
+const playerCount = computed(() => Object.keys(lobbySettings.value?.playerList ?? {}).length);
+const roundKey = computed(() => JSON.stringify([lobbySettings.value?.ID, lobbySettings.value?.gameId, round.value]));
+const lives = computed(() => ("getUserLives" in game.modeLogic ? game.modeLogic.getUserLives(player.value.ID || "") : 0));
 
-const toggleMap = () => {
-    if (!mapOpen.value) returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    mapOpen.value = !mapOpen.value;
-};
-watch(mapOpen, async (open) => {
-    await nextTick();
-    if (open) mapToggle.value?.focus({ preventScroll: true });
-    else if (!open && game.modeLogic.currentState === "PLAYING") {
-        const target =
-            returnFocus && returnFocus !== document.body && returnFocus.isConnected && returnFocus.getClientRects().length && !returnFocus.closest("[inert]")
-                ? returnFocus
-                : mapToggle.value;
-        target?.focus({ preventScroll: true });
-        returnFocus = null;
-    }
+const compactViewport = ref(false);
+const landscapeLayout = computed(() => compactViewport.value && !ui.isVertical);
+let viewportQuery: MediaQueryList | undefined;
+const updateViewport = () => (compactViewport.value = viewportQuery?.matches ?? false);
+const guessMap = useTemplateRef<{
+    surface: HTMLElement | null;
+    scoresHost: HTMLElement | null;
+    timerHost: HTMLElement | null;
+    focusLauncher: () => void;
+    focusClose: () => void;
+}>("guessMap");
+const menu = useTemplateRef("menu");
+const gameplayRoot = useTemplateRef("gameplayRoot");
+const headerScoresHost = useTemplateRef("headerScoresHost");
+const mapPreference = ref<"closed" | "compact" | "expanded" | null>(null);
+const mapMode = computed(() => {
+    const preference = mapPreference.value ?? (compactViewport.value ? "closed" : "compact");
+    return compactViewport.value && preference !== "closed" ? "expanded" : preference;
 });
-const onMapKeydown = (event: KeyboardEvent) => {
-    if (!mapOpen.value || !["STARTING", "PLAYING"].includes(game.modeLogic.currentState)) return;
-    // Native recovery/confirmation dialogs take priority over the map overlay.
-    if (document.querySelector("dialog[open]")) return;
+const mapModal = computed(() => playing.value && compactViewport.value && mapMode.value === "expanded");
+const timerHost = computed(() => (playing.value && mapMode.value === "expanded" ? guessMap.value?.timerHost : null));
+const roundTimer = useTemplateRef<{ draw: (remainingMs: number, expiryProgress: number) => void }>("roundTimer");
+const { countdown, fullRoundTime } = useTimer(
+    () => playing.value,
+    (remainingMs, expiryProgress) => roundTimer.value?.draw(remainingMs, expiryProgress)
+);
+const scoresHost = computed(() => (mapModal.value ? guessMap.value?.scoresHost : landscapeLayout.value ? headerScoresHost.value : null) ?? null);
+const connectionTarget = computed(() => (mapModal.value ? guessMap.value?.surface : gameplayRoot.value) ?? null);
+watch(connectionTarget, (target) => emit("connectionTarget", target), { flush: "post" });
+
+const scoreboardId = useId();
+const scoreTitleId = useId();
+const scoreboardBody = useTemplateRef("scoreboardBody");
+const scoresToggle = useTemplateRef("scoresToggle");
+const scoreboardVisible = ref(true);
+const scoresExpanded = ref(false);
+const playerId = computed(() => player.value.ID ?? "");
+const lastGuess = computed(() => results.rawResults[playerId.value]?.findLast(hasGuess));
+const bestGuess = computed(() => {
+    const own = results.liveResults[playerId.value];
+    return own && hasGuess(own) ? own : undefined;
+});
+const liveRank = computed(() => {
+    const own = bestGuess.value;
+    if (!own) return null;
+    const members = lobbySettings.value?.playerList;
+    return 1 + Object.entries(results.liveResults).filter(([id, result]) => members?.[id] && guessDistance(result) < own.distance).length;
+});
+const closeScores = () => {
+    scoreboardVisible.value = false;
+    void nextTick(() => {
+        if (compactViewport.value) scoresToggle.value?.focus({ preventScroll: true });
+        else menu.value?.focusScores();
+    });
+};
+const toggleScores = () => {
+    if (scoreboardVisible.value) closeScores();
+    else scoreboardVisible.value = true;
+};
+
+const openMap = async () => {
+    mapPreference.value = compactViewport.value ? "expanded" : "compact";
+    await nextTick();
+    if (playing.value && mapMode.value !== "closed" && !mapModal.value) guessMap.value?.focusClose();
+};
+const closeMap = async () => {
+    mapPreference.value = "closed";
+    await nextTick();
+    if (playing.value && mapMode.value === "closed" && !document.querySelector("dialog[open]")) guessMap.value?.focusLauncher();
+};
+const toggleMapSize = () => {
+    mapPreference.value = mapMode.value === "expanded" ? "compact" : "expanded";
+};
+watch(scoresHost, (target) => {
+    // Reparenting the roster resets its scroll offset.
+    const scrollTop = scoreboardBody.value?.scrollTop ?? 0;
+    void nextTick(() => {
+        if (scoresHost.value === target && scoreboardBody.value) scoreboardBody.value.scrollTop = scrollTop;
+    });
+});
+watch(mapModal, (modal, _previous, onCleanup) => {
+    if (!modal) return;
+    const frame = requestAnimationFrame(() => guessMap.value?.focusClose());
+    onCleanup(() => cancelAnimationFrame(frame));
+});
+
+const onOverlayKeydown = (event: KeyboardEvent) => {
+    if (!playing.value || document.querySelector("dialog[open]")) return;
     if (event.key === "Escape") {
+        const inMap = !!guessMap.value?.surface?.contains(document.activeElement);
+        if (compactViewport.value && scoreboardVisible.value) closeScores();
+        else if (mapModal.value || (inMap && mapMode.value !== "closed")) void closeMap();
+        else if (scoreboardVisible.value) closeScores();
+        else return;
         event.preventDefault();
         event.stopPropagation();
-        mapOpen.value = false;
-    } else if (mapModal.value && event.key === "Tab") {
-        const controls = Array.from(
-            mapPanel.value?.querySelectorAll<HTMLElement>(
-                'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary:not([aria-disabled="true"]), [tabindex]:not([tabindex="-1"])'
-            ) ?? []
-        ).filter(
-            (element) =>
-                (!element.hasAttribute("tabindex") || element.tabIndex >= 0) &&
-                !element.matches(':disabled, [aria-disabled="true"]') &&
-                element.getClientRects().length &&
-                getComputedStyle(element).visibility === "visible" &&
-                !element.closest("[inert]")
-        );
-        const first = controls[0];
-        const last = controls.at(-1);
-        if (first && last && (!mapPanel.value?.contains(document.activeElement) || (event.shiftKey ? document.activeElement === first : document.activeElement === last))) {
-            event.preventDefault();
-            (event.shiftKey ? last : first).focus();
-        }
+        return;
+    }
+    if (!mapModal.value || event.key !== "Tab") return;
+    const panel = guessMap.value?.surface;
+    if (!panel) return;
+    const controls = Array.from(panel.querySelectorAll<HTMLElement>("button, a[href], input, select, textarea, summary, [tabindex]")).filter(
+        (element) =>
+            element.tabIndex >= 0 &&
+            !element.matches(':disabled, [aria-disabled="true"]') &&
+            element.getClientRects().length &&
+            getComputedStyle(element).visibility === "visible" &&
+            !element.closest("[inert]")
+    );
+    const first = controls[0];
+    const last = controls.at(-1);
+    if (first && last && (!panel.contains(document.activeElement) || (event.shiftKey ? document.activeElement === first : document.activeElement === last))) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
     }
 };
 
+const confirmed = ref(false);
+let confirmationTimer: ReturnType<typeof setTimeout> | undefined;
+const clearConfirmation = () => {
+    clearTimeout(confirmationTimer);
+    confirmed.value = false;
+};
+const onGuess = (event: CustomEvent<LiveGuessFeedback>) => {
+    if (!playing.value || event.detail.playerId !== player.value.ID) return;
+    clearConfirmation();
+    confirmed.value = true;
+    if (mapModal.value && lives.value > 0 && (roundDeadline.value ?? 0) - Date.now() > 15_000) void closeMap();
+    confirmationTimer = setTimeout(clearConfirmation, 1700);
+};
+const resetRoundPanels = () => {
+    mapPreference.value = null;
+    scoreboardVisible.value = true;
+    scoresExpanded.value = false;
+    clearConfirmation();
+};
+watch(roundKey, resetRoundPanels);
 watch(
     () => game.modeLogic.currentState,
-    (state) => {
-        if (state === "STARTING") {
-            mapOpen.value = !compactViewport.value;
-
-            returnFocus = null;
-        }
+    (phase) => {
+        if (phase !== "PLAYING" && phase !== "STARTING") resetRoundPanels();
     }
 );
-const lives = computed(() => ("getUserLives" in game.modeLogic ? game.modeLogic.getUserLives(player.value.ID || "") : 0));
-const guessLabel = computed(() => {
-    if (!socket.isConnected || !socket.isOnline) return "Waiting for connection";
-    if (isGuessPending.value) return "Confirming your guess";
-    if (lives.value <= 0) return "No guesses left · keep exploring";
-    return game.modeLogic.isSubmitDisabled ? "Place your pin on the map" : "Guess";
-});
 watch(
     () => google.isMapInitialized,
     (initialized) => {
@@ -190,488 +280,475 @@ watch(
     },
     { flush: "post" }
 );
-const updateViewport = () => {
-    compactViewport.value = viewportQuery?.matches ?? false;
-    // Desktop keeps the original visible minimap; mobile starts on panorama.
-    mapOpen.value = !compactViewport.value;
-    returnFocus = null;
-};
 onMounted(() => {
-    viewportQuery = window.matchMedia("(max-width: 850px), (max-width: 1100px) and (pointer: coarse)");
-    portraitQuery = window.matchMedia("(orientation: portrait)");
-    updatePortrait();
-    portraitQuery.addEventListener("change", updatePortrait);
+    viewportQuery = window.matchMedia("(max-width: 850px), (max-width: 1100px) and (pointer: coarse), (max-height: 520px)");
     updateViewport();
     viewportQuery.addEventListener("change", updateViewport);
-    document.addEventListener("keydown", onMapKeydown, true);
+    document.addEventListener("keydown", onOverlayKeydown, true);
+    ui.on("liveGuess", onGuess);
     if (google.isMapInitialized) ui.mountingProcess();
 });
 onBeforeUnmount(() => {
     viewportQuery?.removeEventListener("change", updateViewport);
-    portraitQuery?.removeEventListener("change", updatePortrait);
-    document.removeEventListener("keydown", onMapKeydown, true);
+    document.removeEventListener("keydown", onOverlayKeydown, true);
+    clearConfirmation();
+    ui.off("liveGuess", onGuess);
     ui.detach();
 });
 </script>
+
 <style>
 .gameplay-container {
-    /* Shared thumb-action baseline, leaving provider branding unobscured. */
-    --gameplay-action-bottom: max(1.75rem, calc(env(safe-area-inset-bottom) + 0.5rem));
+    --round-accent: #d5fa86;
+    --hud-edge: clamp(0.75rem, 1.65vw, 1.8rem);
+    --hud-left: max(var(--hud-edge), env(safe-area-inset-left));
+    --hud-right: max(var(--hud-edge), env(safe-area-inset-right));
+    --hud-bottom: max(3rem, calc(env(safe-area-inset-bottom) + 2.6rem));
+    --hud-header: calc(3.75rem + env(safe-area-inset-top));
+    --hud-panel-top: calc(var(--hud-header) + var(--hud-edge));
+    --hud-glass: radial-gradient(ellipse at 12% 0%, #567e4c40, transparent 55%), linear-gradient(130deg, #082f28f5, #06211fef);
+    --hud-border: #b6efa371;
+    --hud-shadow: 0 8px 24px #00161175, inset 0 1px #dff9cf28;
+    --timer-diameter: clamp(5.25rem, 6.35vw, 6.75rem);
     position: relative;
-    width: 100%;
-    height: 100dvh;
-    overflow: hidden;
-    background: var(--gb-bg);
+    isolation: isolate;
+    inline-size: 100%;
+    block-size: 100dvh;
+    overflow: clip;
+    background: #092b25;
+    color: #f5fbf2;
 }
-.google-panorama {
+.gameplay-container .google-panorama {
     position: absolute;
+    inset: var(--hud-header) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.gameplay-chrome {
+    position: absolute;
+    z-index: 7;
     inset: 0;
-    width: 100%;
-    height: 100%;
-}
-.gameplay-hud {
-    display: contents;
-}
-.gameplay-topbar {
-    position: absolute;
-    z-index: 4;
-    top: max(0.5rem, env(safe-area-inset-top));
-    left: max(0.5rem, env(safe-area-inset-left));
-    max-width: min(180px, calc(50% - 48px));
-    padding: 2px;
-    background: var(--gb-bg);
-    border: 1px solid var(--gb-line);
-    border-radius: 8px;
-    box-shadow: 0 3px 12px #0004;
-}
-.gameplay-timer {
-    position: absolute;
-    z-index: 4;
-    top: max(0.5rem, env(safe-area-inset-top));
-    left: 50%;
-    transform: translateX(-50%);
-    width: clamp(72px, 12vw, 112px);
-    min-height: 44px;
-    display: grid;
-    align-items: center;
-    padding: 4px 8px;
-    background: var(--gb-bg);
-    border: 1px solid var(--gb-line);
-    border-radius: 8px;
-    box-shadow: 0 3px 12px #0004;
-}
-.gameplay-fullscreen {
-    position: absolute;
-    z-index: 4;
-    top: max(0.5rem, env(safe-area-inset-top));
-    right: max(0.5rem, env(safe-area-inset-right));
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    background: var(--gb-bg);
-    box-shadow: 0 3px 12px #0004;
-}
-.gameplay-timer.map-timer {
-    /* Move the existing clock into the modal, never mount a second timer. */
     pointer-events: none;
 }
-.gameplay-container:not(.desktop-gameplay) .map-is-open .own-lives {
-    /* Reserve the centered clock at narrow widths without hiding guess counts. */
-    max-width: calc(50% - 52px);
-    min-height: 44px;
-    white-space: normal;
-    text-align: right;
+.street-timer-slot {
+    --street-center: calc(50% + (var(--gb-safe-left) - var(--gb-safe-right)) / 2);
+    position: absolute;
+    z-index: 6;
+    inset-block-start: var(--hud-panel-top);
+    inset-inline-start: var(--street-center);
+    translate: -50% 0;
+    pointer-events: none;
+}
+.gameplay-container .hud-button {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    padding-inline: 0.54rem;
+    border: 1px solid #90cdb848;
+    border-radius: 0.72rem;
+    background: #0b322b;
+    color: #edf9ef;
+    line-height: 1;
+}
+.gameplay-container .hud-button:enabled:hover {
+    border-color: #b6e691a6;
+    background: #21493a;
+}
+.gameplay-container .hud-button:disabled {
+    opacity: 0.51;
+}
+.gameplay-container .hud-button .ui-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+.gameplay-container :is(button, [tabindex]):focus-visible {
+    outline: 2px solid #dcffab;
+    outline-offset: -3px;
+}
+.gameplay-container .round-hud {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.66rem, 1.4vw, 1.45rem);
+    min-inline-size: 0;
+    pointer-events: none;
+}
+.round-hud-content {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.5rem, 1.2vw, 1.1rem);
+    flex: none;
+}
+.round-label {
+    color: #f1faec;
+    white-space: nowrap;
+    font: italic 800 clamp(0.8rem, 1.25vw, 1.05rem) / 1.1 var(--gb-font-display);
+    letter-spacing: 0.075em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+}
+.round-label strong {
+    margin-inline: 0.12em;
+    color: var(--round-accent);
+    font-size: 1.74em;
+    line-height: 0.9;
+}
+.round-total {
+    letter-spacing: 0.02em;
+}
+.gameplay-container .round-connection {
+    width: fit-content;
+    border-color: transparent;
+    border-radius: 999px;
+    padding: 0.18rem 0.5rem;
+    font-size: 0.68rem;
     line-height: 1.2;
+}
+.gameplay-container .match-progress {
+    display: block;
+    inline-size: clamp(1.5rem, 8vw, 6.4rem);
+    block-size: 0.33rem;
+    border: 0;
+    border-radius: 999px;
+    appearance: none;
+    color: var(--round-accent);
+    background: #b3ecce37;
 }
 .gameplay-scoreboard {
     position: absolute;
-    z-index: 3;
-    left: max(0.5rem, env(safe-area-inset-left));
-    top: calc(max(0.5rem, env(safe-area-inset-top)) + 56px);
-    width: min(260px, calc(100% - max(0.5rem, env(safe-area-inset-left)) - max(0.5rem, env(safe-area-inset-right))));
-    max-height: min(260px, calc(100dvh - 180px));
+    inset: var(--hud-panel-top) var(--hud-right) auto auto;
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--gb-line);
-    border-radius: 8px;
-    background: var(--gb-surface);
-    box-shadow: 0 3px 12px #0004;
-}
-.gameplay-scoreboard.map-scoreboard {
-    /* Keep the same scoreboard inside the map dialog and its focus scope.
-       Reserve the top controls and the entire bottom thumb-action area. */
-    max-height: min(240px, calc(100dvh - max(0.5rem, env(safe-area-inset-top)) - 56px - var(--gameplay-action-bottom) - 5px - 52px - 12px));
+    inline-size: min(26rem, 35vw);
+    max-block-size: min(15.5rem, calc(100dvh - var(--hud-panel-top) - var(--hud-bottom)));
+    min-inline-size: 0;
     overflow: hidden;
+    border: 1px solid var(--hud-border);
+    border-radius: 1.15rem;
+    background: var(--hud-glass);
+    box-shadow: var(--hud-shadow);
+    pointer-events: auto;
 }
-.gameplay-scoreboard.map-scoreboard .scoreboard-body {
-    touch-action: pan-y;
+.gameplay-scoreboard.scores-expanded {
+    max-block-size: min(53dvh, calc(100dvh - var(--hud-panel-top) - var(--hud-bottom)));
 }
-/* Portrait keeps only a few rows visible, regardless of lobby size.
-   The full table remains scrollable and can be tucked into a 44px header. */
-.portrait-gameplay .gameplay-scoreboard {
-    width: min(240px, calc(100% - max(0.5rem, env(safe-area-inset-left)) - max(0.5rem, env(safe-area-inset-right))));
-    max-height: min(168px, 26dvh, calc(100dvh - max(0.5rem, env(safe-area-inset-top)) - 56px - var(--gameplay-action-bottom) - 5px - 52px - 12px));
-}
-.scoreboard-toggle {
-    flex: none;
-    width: 100%;
-    min-height: 44px;
+.scoreboard-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
-    padding: 0.375rem 0.5rem;
-    border: 0;
-    border-bottom: 1px solid var(--gb-line);
-    border-radius: 7px 7px 0 0;
-    background: var(--gb-surface);
-    color: var(--gb-text);
-    font-size: 0.7rem;
-    text-align: left;
-    cursor: pointer;
+    gap: 0.4rem;
+    padding: 0.22rem 0.42rem 0.22rem 1rem;
+    border-block-end: 1px solid #acd29e42;
+    background: url("/images/atlas-relief.svg") 120% 22% / 14rem auto no-repeat;
 }
-.scoreboard-count {
-    color: var(--gb-muted);
-    margin-left: 0.25rem;
-    font-variant-numeric: tabular-nums;
+.scoreboard-header h2 {
+    color: #eff9ee;
+    font: italic 850 0.98rem / 1.25 var(--gb-font-display);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
 }
-.scoreboard-toggle-label {
-    color: var(--gb-accent);
-    font-size: 0.65rem;
+.scoreboard-tools {
+    display: flex;
+    gap: 0.26rem;
 }
-.gameplay-scoreboard h2 {
-    flex: none;
-    padding: 6px 8px;
-    border-bottom: 1px solid var(--gb-line);
-    color: var(--gb-muted);
-    font-size: 0.65rem;
-    letter-spacing: 0.02em;
+.gameplay-container .scoreboard-tools .hud-button {
+    background: #0b322b91;
 }
 .scoreboard-body {
     min-height: 0;
-    overflow-y: auto;
+    overflow: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
 }
-.gameplay-map-wrapper {
+.gameplay-container.is-compact-game {
+    --hud-edge: clamp(0.36rem, 2.25vw, 0.85rem);
+    --hud-header: calc(3rem + env(safe-area-inset-top));
+    --mobile-score-height: max(44px, 2.75rem);
+    --hud-panel-top: calc(var(--hud-header) + var(--mobile-score-height) + var(--hud-edge));
+    --hud-bottom: max(2.5rem, calc(env(safe-area-inset-bottom) + 2.15rem));
+    --mobile-dock-height: calc(clamp(6.75rem, 15.4dvh, 8.75rem) + env(safe-area-inset-bottom));
+    --mobile-notice-bottom: calc(var(--mobile-dock-height) + 2.15rem);
+    --portrait-timer-diameter: clamp(4.6rem, 21vw, 5.8rem);
+    --timer-diameter: var(--portrait-timer-diameter);
+    --mobile-roster-width: min(15rem, 64vw);
+    --mobile-roster-height: min(9rem, 30dvh);
+}
+.gameplay-container.is-compact-game .google-panorama {
+    inset-block: calc(var(--hud-header) + var(--mobile-score-height)) var(--mobile-dock-height);
+}
+.is-compact-game:not(.is-landscape-game) .street-timer-slot.clear-of-scores {
+    --timer-room: calc(100vw - var(--hud-left) - var(--hud-right) - var(--mobile-roster-width) - var(--hud-edge));
+    --timer-diameter: min(var(--portrait-timer-diameter), calc(var(--timer-room) / 1.53));
+    inset-inline-start: calc(100% - var(--hud-right) - var(--timer-room) / 2);
+}
+.is-compact-game .round-hud {
+    flex: 0 1 auto;
+    gap: clamp(0.3rem, 1.7vw, 0.9rem);
+}
+.is-compact-game .round-label {
+    font-size: clamp(0.68rem, 1.65vw, 0.86rem);
+}
+.is-compact-game .match-progress {
+    flex: 0 1 auto;
+    inline-size: clamp(1.5rem, 7.35vw, 4.4rem);
+}
+.match-progress::-webkit-progress-bar {
+    border-radius: 999px;
+    background: #b3ecce37;
+}
+.match-progress::-webkit-progress-value {
+    border-radius: 999px;
+    background: currentColor;
+}
+.match-progress::-moz-progress-bar {
+    border-radius: 999px;
+    background: currentColor;
+}
+.is-compact-game .gameplay-scores {
     position: absolute;
-    z-index: 3;
-    left: max(0.5rem, env(safe-area-inset-left));
-    bottom: var(--gameplay-action-bottom);
-    max-width: calc(100% - 1rem);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 4px;
-    border: 1px solid var(--gb-line);
-    border-radius: 10px;
-    background: var(--gb-bg);
-    box-shadow: 0 4px 16px #0004;
-}
-.gameplay-map-wrapper.map-is-open {
-    z-index: 10;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    max-width: none;
-    display: block;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-}
-.map-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-}
-.map-toggle {
-    min-height: 44px;
-    padding: 0.5rem 0.65rem;
-}
-.map-is-open .map-controls {
-    display: contents;
-}
-.map-is-open .map-toggle {
-    position: absolute;
-    z-index: 2;
-    top: max(0.5rem, env(safe-area-inset-top));
-    left: max(0.5rem, env(safe-area-inset-left));
-    width: 44px;
-    height: 44px;
-    padding: 0;
-    background: var(--gb-bg);
-    box-shadow: 0 3px 12px #0004;
-}
-.own-lives {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    color: var(--gb-muted);
-    font-size: 0.75rem;
-    white-space: nowrap;
-    padding-right: 0.25rem;
-}
-.map-is-open .own-lives {
-    position: absolute;
-    z-index: 2;
-    top: max(0.5rem, env(safe-area-inset-top));
-    right: max(0.5rem, env(safe-area-inset-right));
-    min-height: 32px;
-    padding: 0.35rem 0.65rem;
-    border: 1px solid var(--gb-line);
-    border-radius: 8px;
-    background: var(--gb-bg);
-    box-shadow: 0 3px 12px #0004;
-}
-.gameplay-map-slot {
-    position: absolute;
-    z-index: 0;
-    width: 0;
-    height: 0;
-    overflow: hidden;
-    visibility: hidden;
+    inset: var(--hud-header) 0 auto;
     pointer-events: none;
 }
-.map-is-open .gameplay-map-slot {
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    visibility: visible;
+.is-compact-game .guess-map-scores .gameplay-scores {
+    inset-block-start: 0;
+}
+.round-score-strip {
+    display: flex;
+    align-items: stretch;
+    gap: 0.35rem;
+    block-size: var(--mobile-score-height);
+    padding-inline: var(--hud-left) var(--hud-right);
+    background: linear-gradient(105deg, #12382b, #092721 76%);
+    box-shadow: inset 0 -1px #b2d9a64f;
     pointer-events: auto;
 }
-.game-map-host {
-    width: 100%;
-    height: 100%;
-    min-height: 0;
-    border-radius: 7px;
-    background: var(--gb-surface);
-    color-scheme: light;
-}
-.map-is-open .game-map-host {
-    border-radius: 0;
-}
-.guess-button {
-    width: 44px;
-    height: 44px;
-    min-height: 44px;
-    padding: 0;
-    font-size: 0.9rem;
-    flex: none;
-}
-.map-is-open .guess-button {
-    position: absolute;
-    z-index: 2;
-    bottom: calc(var(--gameplay-action-bottom) + 5px);
-    left: calc(max(0.5rem, env(safe-area-inset-left)) + 5px);
-    width: auto;
-    max-width: calc(100% - max(0.5rem, env(safe-area-inset-left)) - max(0.5rem, env(safe-area-inset-right)));
-    height: auto;
-    padding: 0.6rem 0.85rem;
-    gap: 0.5rem;
-    background: var(--gb-bg);
-    color: var(--gb-accent);
-    border: 1px solid var(--gb-accent);
-    box-shadow: 0 3px 12px #0005;
-}
-.map-is-open .guess-button:not(:disabled):hover {
-    background: var(--gb-raised);
-}
-.map-is-open .guess-button:disabled {
-    opacity: 1;
-    color: var(--gb-muted);
-    border-color: var(--gb-line);
-}
-.map-is-open .guess-button:not(:disabled):active {
-    transform: translateY(1px);
-}
-.panorama-loading {
-    position: absolute;
-    z-index: 2;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    max-width: 360px;
-    width: calc(100% - 3rem);
-    text-align: center;
-    pointer-events: none;
-}
-
-/* Mobile actions share a 52px target and baseline in either view. */
-.gameplay-container:not(.desktop-gameplay) .gameplay-map-wrapper:not(.map-is-open) .map-toggle,
-.gameplay-container:not(.desktop-gameplay) .guess-button {
-    min-height: 52px;
-}
-.gameplay-container:not(.desktop-gameplay) .gameplay-map-wrapper:not(.map-is-open) .guess-button {
-    width: 52px;
-    height: 52px;
-}
-.gameplay-container:not(.desktop-gameplay) .map-is-open .guess-button {
-    padding: 0.75rem 1rem;
-    max-width: calc(100% - max(0.5rem, env(safe-area-inset-left)) - max(0.5rem, env(safe-area-inset-right)) - 10px);
-}
-.gameplay-container:not(.desktop-gameplay) .guess-button > svg {
-    width: 1.25rem;
-    height: 1.25rem;
-}
-/* Preserve the previous desktop composition; compact floating UI is mobile-only. */
-.desktop-gameplay .gameplay-hud {
-    position: absolute;
-    z-index: 4;
-    top: max(0.75rem, env(safe-area-inset-top));
-    left: 0.75rem;
-    width: min(540px, calc(100% - min(480px, 40vw) - 2.25rem));
-    display: flex;
-    justify-content: space-between;
+.round-score-readings {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(max-content, 1fr));
     align-items: center;
-    gap: 0.75rem;
-    padding: 0.7rem 0.9rem;
-    background: var(--gb-bg);
-    border: 1px solid var(--gb-line);
-    border-radius: 12px;
-    box-shadow: 0 6px 20px #0003;
+    flex: 1;
+    max-inline-size: 26rem;
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.14;
+    white-space: nowrap;
 }
-.desktop-gameplay .gameplay-topbar,
-.desktop-gameplay .gameplay-timer,
-.desktop-gameplay .gameplay-fullscreen {
-    position: static;
-    transform: none;
-    max-width: none;
-    padding: 0;
-    border: 0;
-    background: transparent;
-    box-shadow: none;
+.round-score-readings > div {
+    padding-inline: clamp(0.25rem, 1.8vw, 0.85rem);
+    border-inline-start: 1px solid #c4e5b42e;
 }
-.desktop-gameplay .gameplay-timer {
-    width: 100px;
-    min-height: 0;
-    flex: none;
+.round-score-readings > div:first-child {
+    padding-inline-start: 0;
+    border-inline-start: 0;
 }
-.desktop-gameplay .gameplay-fullscreen {
-    background: var(--gb-raised);
-    flex: none;
+.round-score-readings dt {
+    margin-block-end: 0.15rem;
+    color: #b7d2c1;
+    font-size: 0.64rem;
+    font-weight: 650;
 }
-.desktop-gameplay .gameplay-topbar .game-menu {
-    gap: 1rem;
-}
-.desktop-gameplay .gameplay-topbar .round-meta {
-    display: block;
-    padding: 0;
-}
-.desktop-gameplay .gameplay-topbar .round-label {
+.round-score-readings dd {
+    margin: 0;
+    color: #eff9ee;
     font-size: 0.8rem;
-    margin-bottom: 0.25rem;
+    font-weight: 760;
 }
-.desktop-gameplay .gameplay-topbar .game-connection {
-    width: auto;
-    font-size: 0.65rem;
-    padding: 0.2rem 0.45rem;
-    border: 1px solid var(--gb-line);
-    background: var(--gb-raised);
+.round-score-readings .round-best-distance dd {
+    color: var(--round-accent);
 }
-.desktop-gameplay .gameplay-timer .timer-label {
-    gap: 0.5rem;
+.round-score-readings .place-total {
+    color: #b7d2c1;
+    font-weight: 600;
 }
-.desktop-gameplay .gameplay-timer .timer-label > svg {
-    display: block;
-}
-.desktop-gameplay .gameplay-timer strong {
-    font-size: 1.55rem;
-}
-.desktop-gameplay .gameplay-timer strong span {
-    font-size: 0.8rem;
-}
-.desktop-gameplay .gameplay-timer progress {
-    height: 3px;
-    margin-top: 0.4rem;
-}
-.desktop-gameplay .gameplay-scoreboard {
-    left: auto;
-    right: 0.75rem;
-    top: 0.75rem;
-    width: min(480px, 40vw);
-    max-height: calc(100dvh - 1.5rem);
-    border-radius: 12px;
-}
-.desktop-gameplay .gameplay-scoreboard h2 {
-    padding: 0.8rem 1rem;
-    font-size: 0.8rem;
-}
-.desktop-gameplay .scoreboard-body {
-    padding: 0 0.7rem 0.5rem;
-}
-.desktop-gameplay .gameplay-map-wrapper {
-    z-index: 3;
-    inset: auto;
-    left: 0.75rem;
-    bottom: max(2.5rem, calc(env(safe-area-inset-bottom) + 1.5rem));
-    width: clamp(300px, 30vw, 390px);
-    height: auto;
-    max-width: calc(100% - 1.5rem);
-    display: block;
-    padding: 0.6rem;
-    border: 1px solid var(--gb-line);
-    border-radius: 12px;
-    box-shadow: 0 8px 30px #0004;
-}
-.desktop-gameplay .map-controls {
+.round-score-toggle {
     display: flex;
-    justify-content: space-between;
-    padding-bottom: 0.5rem;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    padding-inline: 0.48rem;
+    border-inline-start: 1px solid #c4e5b42e;
+    color: #e6f4d9;
+    font-size: 0.72rem;
+    font-weight: 750;
 }
-.desktop-gameplay .map-toggle {
-    position: static;
-    width: auto;
-    height: auto;
-    padding: 0.5rem 0.65rem;
-    background: var(--gb-raised);
-    box-shadow: none;
+.round-score-toggle:is(:hover, [aria-expanded="true"]) {
+    background: #b3e9911b;
+    color: var(--round-accent);
 }
-.desktop-gameplay .gameplay-map-wrapper .own-lives {
-    position: static;
-    min-height: 0;
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
+.round-score-toggle .ui-icon {
+    inline-size: 0.95rem;
+    block-size: 0.95rem;
+    color: var(--round-accent);
+}
+.round-score-toggle .scores-chevron {
+    inline-size: 0.69rem;
+    block-size: 0.69rem;
+}
+.round-score-toggle[aria-expanded="false"] .scores-chevron {
+    rotate: 180deg;
+}
+.is-compact-game .gameplay-scoreboard {
+    inset: calc(100% + 0.35rem) var(--hud-right) auto var(--hud-left);
+    inline-size: auto;
+    max-inline-size: var(--mobile-roster-width);
+    max-block-size: var(--mobile-roster-height);
+    border-radius: 0.65rem;
+    background: #0a2923;
+}
+.is-compact-game .guess-map-scores .gameplay-scoreboard {
+    inset-inline-end: calc(env(safe-area-inset-right) + 3.7rem);
+}
+.gameplay-container .gameplay-map-recovery {
+    pointer-events: auto;
+}
+.gameplay-container.is-compact-game:not(.has-full-map) :is(.gameplay-map-recovery, .game-connection-banner, .connection-failure-pill) {
+    inset-block-end: var(--mobile-notice-bottom);
+}
+.is-compact-game:not(.has-full-map) .gameplay-map-recovery {
+    max-block-size: calc(100dvh - var(--mobile-notice-bottom) - var(--hud-panel-top));
+}
+@media (max-width: 345px) {
+    .is-compact-game .expedition-brand > span {
+        display: none;
+    }
+}
+.gameplay-container.is-landscape-game {
+    --hud-edge: clamp(0.4rem, 1.55vw, 0.9rem);
+    --hud-panel-top: calc(var(--hud-header) + var(--hud-edge));
+    --landscape-dock-bottom: calc(2.35rem + env(safe-area-inset-bottom));
+    --landscape-map-height: clamp(3.25rem, 17dvh, 4.25rem);
+    --mobile-notice-bottom: calc(var(--landscape-dock-bottom) + var(--landscape-map-height) + 0.45rem);
+    --timer-diameter: clamp(3.55rem, 17dvh, 4.6rem);
+    --timer-warning-scale: 1.06;
+    --timer-critical-scale: 1.14;
+    --timer-final-scale: 1.28;
+    --mobile-roster-height: min(7.5rem, 30dvh);
+}
+.gameplay-container.is-landscape-game .google-panorama {
+    inset-block: var(--hud-header) env(safe-area-inset-bottom);
+}
+.is-landscape-game .street-timer-slot.clear-of-scores {
+    inset-inline-start: max(var(--street-center), calc(var(--hud-left) + var(--mobile-roster-width) + var(--hud-edge) + var(--timer-diameter) * 0.68));
+}
+.is-landscape-game .expedition-topbar {
+    gap: clamp(0.24rem, 1vw, 0.65rem);
+    justify-content: flex-start;
+    background: linear-gradient(105deg, #11352c, #051f1b 78%);
+}
+.is-landscape-game .round-hud {
+    flex: none;
+    gap: 0.34rem;
+}
+.is-landscape-game .match-progress {
+    display: none;
+}
+.is-landscape-game .round-label {
     font-size: 0.7rem;
 }
-.desktop-gameplay .gameplay-map-slot {
+.is-landscape-game .round-label strong {
+    font-size: 1.45em;
+}
+.is-landscape-game .header-scores-host {
+    flex: 1;
+    min-inline-size: 0;
+}
+.is-landscape-game .gameplay-scores {
     position: static;
-    width: 100%;
-    height: 0;
 }
-.desktop-gameplay .map-is-open .gameplay-map-slot {
-    height: clamp(160px, 29dvh, 320px);
-    margin-bottom: 0.6rem;
-}
-.desktop-gameplay .game-map-host {
-    border-radius: 7px;
-}
-.desktop-gameplay .gameplay-map-wrapper .guess-button {
-    position: static;
-    width: 100%;
-    max-width: none;
-    min-height: 48px;
-    height: auto;
-    padding: 0.75rem;
-    background: var(--gb-accent);
-    color: var(--gb-on-accent);
-    border: 0;
+.is-landscape-game .round-score-strip {
+    align-items: center;
+    padding: 0;
+    block-size: var(--mobile-score-height);
+    background: none;
     box-shadow: none;
 }
-.desktop-gameplay .gameplay-map-wrapper .guess-button:disabled {
-    opacity: 0.5;
+.is-landscape-game .round-score-readings {
+    grid-template-columns: repeat(2, minmax(max-content, 1fr)) minmax(max-content, 0.64fr);
+    max-inline-size: 23rem;
 }
-@media (hover: hover) and (pointer: fine) and (min-width: 1100px) and (min-height: 601px) {
-    .desktop-gameplay .gameplay-map-wrapper.map-is-open:hover,
-    .desktop-gameplay .gameplay-map-wrapper.map-is-open:focus-within {
-        width: min(540px, 48vw);
+.is-landscape-game .round-score-readings > div {
+    padding-inline: clamp(0.26rem, 1.05vw, 0.65rem);
+}
+.is-landscape-game .round-score-readings dd {
+    font-size: 0.76rem;
+}
+.is-landscape-game .round-score-toggle {
+    border: 1px solid #b6efa353;
+    border-radius: 0.62rem;
+    padding-inline: 0.4rem;
+}
+.is-landscape-game .gameplay-scoreboard {
+    inset-block-start: calc(var(--hud-header) + 0.35rem);
+}
+.is-landscape-game .guess-map-scores .gameplay-scoreboard {
+    inset-inline-end: calc(env(safe-area-inset-right) + 9.4rem);
+}
+.is-landscape-game.has-full-map .gameplay-map-recovery {
+    inset: auto auto var(--hud-bottom) var(--hud-left);
+    inline-size: min(21rem, 44%);
+}
+@media (max-width: 850px) {
+    .is-landscape-game .expedition-brand > span {
+        display: none;
     }
-    .desktop-gameplay .gameplay-map-wrapper.map-is-open:hover .gameplay-map-slot,
-    .desktop-gameplay .gameplay-map-wrapper.map-is-open:focus-within .gameplay-map-slot {
-        height: min(42dvh, 420px);
+}
+@media (max-width: 700px) {
+    .is-landscape-game .round-score-toggle > span {
+        display: none;
+    }
+    .is-landscape-game .expedition-topbar {
+        gap: 0.25rem;
+    }
+    .is-landscape-game .round-hud {
+        gap: 0.25rem;
+    }
+    .is-landscape-game .round-score-strip {
+        gap: 0.2rem;
+    }
+    .is-landscape-game .round-score-readings > div {
+        padding-inline: 0.2rem;
+    }
+    .is-landscape-game .round-score-readings > div:first-child {
+        padding-inline-start: 0;
+    }
+    .is-landscape-game .round-score-readings dd {
+        font-size: 0.7rem;
+    }
+    .is-landscape-game .round-score-toggle {
+        padding-inline: 0.3rem;
+    }
+}
+@media (max-width: 620px) {
+    .is-landscape-game .expedition-brand {
+        display: none;
+    }
+    .is-landscape-game .round-label > span:first-child {
+        @apply sr-only;
+    }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .street-timer-slot {
+        transition: inset-inline-start 210ms ease-out;
+    }
+    .gameplay-container .hud-button {
+        transition:
+            background-color 140ms ease,
+            border-color 140ms ease;
+    }
+    .gameplay-scoreboard:not([style*="display: none"]) {
+        animation: game-scores-in 180ms ease-out both;
+    }
+    .is-compact-game .expedition-topbar {
+        animation: game-scores-in 170ms ease-out both;
+    }
+}
+@keyframes game-scores-in {
+    from {
+        opacity: 0;
+        transform: translateY(-5px);
     }
 }
 </style>

@@ -19,10 +19,9 @@ const model = defineModel<boolean>({ required: true });
     align-items: center;
     gap: 0.75rem;
     min-height: 44px;
-    padding: 0.65rem 0.75rem;
-    border: 1px solid var(--gb-line);
-    border-radius: 10px;
-    background: var(--gb-bg);
+    padding: 0.3rem 0;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--gb-line);
     cursor: pointer;
 }
 .toggle-setting > input {
@@ -32,6 +31,7 @@ const model = defineModel<boolean>({ required: true });
     opacity: 0;
 }
 .toggle-track {
+    order: 1;
     display: flex;
     align-items: center;
     flex: 0 0 40px;
@@ -48,8 +48,9 @@ const model = defineModel<boolean>({ required: true });
     background: var(--gb-muted);
 }
 input:checked + .toggle-track {
+    order: 1;
     border-color: var(--gb-accent-end);
-    background: var(--gb-accent);
+    background: var(--gb-success);
 }
 input:checked + .toggle-track > span {
     transform: translateX(16px);

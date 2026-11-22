@@ -1,5 +1,6 @@
 import { watch, type Ref, type WatchStopHandle } from "vue";
 import { GameState } from "~/types/appTypes";
+import type { LiveGuessFeedback } from "~/utils/resultUtils";
 
 /** One client owner moves the existing map host; it never creates another map. */
 export const createUIRuntime = (googleStore: ReturnType<typeof import("./google").createGoogleRuntime>, currentGameState: Ref<GameState>, flags: ReturnType<typeof useUIState>) => {
@@ -10,7 +11,7 @@ export const createUIRuntime = (googleStore: ReturnType<typeof import("./google"
     const fullscreenAvailable = ref(false);
     const toast = useToast();
     const listeners = new Map<string, Set<EventCallback>>();
-    const styleTimers = new Set<ReturnType<typeof setTimeout>>();
+
     let stateWatcher: WatchStopHandle | undefined;
     let mapObserver: ResizeObserver | undefined;
     let resizeFrame = 0;
@@ -18,8 +19,8 @@ export const createUIRuntime = (googleStore: ReturnType<typeof import("./google"
         cancelAnimationFrame(resizeFrame);
         resizeFrame = requestAnimationFrame(() => {
             resizeFrame = 0;
-            // Preserve gameplay camera; result framing is reapplied only after
-            // layout, including revealing the mobile Answer map tab.
+            // Preserve the gameplay camera. Reframe results after the map
+            // host moves or its visible dimensions change.
             googleStore.refreshMapLayout();
         });
     };
@@ -29,8 +30,7 @@ export const createUIRuntime = (googleStore: ReturnType<typeof import("./google"
     const detach = () => {
         stateWatcher?.();
         stateWatcher = undefined;
-        styleTimers.forEach(clearTimeout);
-        styleTimers.clear();
+
         mapObserver?.disconnect();
         mapObserver = undefined;
         cancelAnimationFrame(resizeFrame);
@@ -81,17 +81,7 @@ export const createUIRuntime = (googleStore: ReturnType<typeof import("./google"
             toast.add({ severity: "warn", summary: "Could not change fullscreen", detail: "Your browser may restrict fullscreen. You can keep playing in this window." });
         }
     };
-    const applyGuessStyles = (playerId: string, _previousLeader: string | undefined, newLeader: string | undefined) => {
-        const row = document.getElementById(`live-player-${playerId}`);
-        if (!row) return;
-        const className = newLeader === playerId ? "applied-guess-lead" : "applied-guess";
-        row.classList.add(className);
-        const timer = setTimeout(() => {
-            styleTimers.delete(timer);
-            row.classList.remove(className);
-        }, 1000);
-        styleTimers.add(timer);
-    };
+
     const on = (event: string, callback: EventCallback) => {
         if (!listeners.has(event)) listeners.set(event, new Set());
         listeners.get(event)!.add(callback);
@@ -103,6 +93,7 @@ export const createUIRuntime = (googleStore: ReturnType<typeof import("./google"
         for (const callback of listeners.get(event) ?? []) callback(new CustomEvent(event, { detail }));
     };
     const showPlayerLeftToast = (playerName: string, disconnected = false) => dispatch("showPlayerLeftToast", { playerName, disconnected });
+    const showLiveGuess = (feedback: LiveGuessFeedback) => dispatch("liveGuess", feedback);
     const dispose = () => {
         detach();
         setGameplayPageContainer(null);
@@ -123,7 +114,7 @@ export const createUIRuntime = (googleStore: ReturnType<typeof import("./google"
         moveMapToFinished,
         setGameplayPageContainer,
         toggleFullscreen,
-        applyGuessStyles,
+        showLiveGuess,
         on,
         off,
         dispatch,

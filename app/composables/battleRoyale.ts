@@ -1,19 +1,22 @@
 import { GameState, type Coordinates } from "~/types/appTypes";
 import { getCountryViewport } from "~/utils/countryViewport";
+import { expeditionStops, formatGuessDistance, roundResultBounds } from "~/utils/resultUtils";
+import type { RoundResultPin } from "~/runtime/google";
 
 export const useBattleRoyaleStore = () => {
     const app = useNuxtApp();
 
     const resultsStore = useResultsStore();
-    const { lobbySettings } = useLobbyState();
+    const { lobbySettings, roundDeadline, revealedAnswers, finalResultsReady } = useLobbyState();
     const player = usePlayerInfo();
     const { getPlayerColorByID, getPlayerNameFromID } = usePlayerLookup();
     const { currentState, currentRound, currentMapPin, searchedLocationCoords, isGuessPending } = useBattleRoyaleState();
     const setSearchedLocationCoords = (coordinates: Coordinates): Coordinates => (searchedLocationCoords.value = coordinates);
     // Browser resources are owned once by the client plugin, never by a facade.
     const resources = () => app.$gameRuntime.battleRoyale;
-    const mapMarkers = computed(() => resources().markers.value);
     const googleStore = () => app.$gameRuntime.google;
+    const draftKey = (round: number) => JSON.stringify([lobbySettings.value?.ID, lobbySettings.value?.gameId, round, player.value.ID]);
+    const roundExpired = () => roundDeadline.value !== null && Date.now() >= roundDeadline.value;
 
     const startRound = async (isCountdown: boolean = true) => {
         currentState.value = GameState.STARTING;
@@ -23,12 +26,15 @@ export const useBattleRoyaleStore = () => {
 
         clearMap();
         const owner = resources();
+        owner.finishedMapView.value = null;
         const epoch = owner.generation;
-        if (isCountdown)
-            resources().schedule(() => {
-                if (currentState.value === GameState.STARTING) currentState.value = GameState.PLAYING;
-            }, 3000);
         if (!lobbySettings.value) throw new Error("Lobby settings are not initialized.");
+
+        if (isCountdown) {
+            owner.startCountdown(roundDeadline, lobbySettings.value.conf.roundTime, () => {
+                if (currentState.value === GameState.STARTING) currentState.value = GameState.PLAYING;
+            });
+        }
 
         owner.isRestoring.value = true;
         if (!isCountdown) currentState.value = GameState.PLAYING;
@@ -42,35 +48,100 @@ export const useBattleRoyaleStore = () => {
 
     // Data is applied synchronously by socket handlers; SDK rendering must never
     // block ordered messages or the join promise / route middleware.
+    const matchKey = () => JSON.stringify([lobbySettings.value?.ID, lobbySettings.value?.gameId]);
+    const resultArtwork = () => {
+        const round = currentRound.value;
+        const owner = resources();
+        const reviewing = currentState.value === GameState.FINISHED && finalResultsReady.value;
+        const stops = reviewing ? expeditionStops(revealedAnswers.value, round) : [];
+        if (reviewing && !stops.length) return null;
+        const selection = owner.finishedMapView.value;
+        const view = reviewing && selection?.match === matchKey() ? selection.view : "journey";
+        if (view === "journey" && stops.length > 1) {
+            const pins: RoundResultPin[] = stops.map(({ round, position }) => ({ kind: "stop", round, position, title: `Round ${round} location` }));
+            const lines = stops.slice(1).map(({ position }, index) => ({ from: stops[index]!.position, to: position, color: "#b0803c", own: false }));
+            return { pins, lines };
+        }
+
+        const stop = stops.find(({ round }) => round === view) ?? stops.at(-1);
+        const answer = { ...(stop?.position ?? searchedLocationCoords.value) };
+        const rows = stop && stop.round !== round ? (lobbySettings.value?.endResults[stop.round] ?? {}) : resultsStore.bestResults;
+        const ownId = player.value.ID;
+        const guesses = Object.entries(rows)
+            .filter(([, result]) => hasGuess(result))
+            .map(([id, result]) => ({
+                position: { ...result.location },
+                kind: id === ownId ? ("own" as const) : ("other" as const),
+                color: getPlayerColorByID(id),
+                title: `${id === ownId ? "Your best guess" : getPlayerNameFromID(id)} · ${formatGuessDistance(result)}`,
+            }));
+        const pins: RoundResultPin[] = [{ position: answer, kind: "answer", title: "Actual location" }, ...guesses];
+        const lines = guesses.map(({ position, kind, color }) => ({ from: answer, to: position, color, own: kind === "own" }));
+        return { pins, lines };
+    };
+
     const renderRoundResults = async () => {
         const owner = resources();
-        const epoch = owner.generation;
-        // Frame the same authoritative geometry that this render will draw,
-        // including scored participants who have since left the lobby.
-        const answer = { ...searchedLocationCoords.value };
-        const roundRes = Object.entries(resultsStore.bestResults)
-            .filter(([, result]) => hasGuess(result))
-            .map(([id, result]) => ({ id, location: { ...result.location } }));
-        await googleStore().waitForMap();
-        if (owner !== resources() || epoch !== owner.generation) return;
-        const bounds = new google.maps.LatLngBounds();
-        bounds.extend(answer);
-        for (const { location } of roundRes) bounds.extend(location);
-        googleStore().fitCustomBounds(bounds, 50);
-        const marker = await googleStore().createSearchedLocationMarker(answer);
-        if (owner !== resources() || epoch !== owner.generation) {
-            marker.map = null;
-            return;
-        }
-        resources().markers.value = [...mapMarkers.value, marker];
+        const current = owner.captureResultRender();
+        const sdk = googleStore();
+        try {
+            await sdk.waitForMap();
+            if (!current()) return;
+            const artwork = resultArtwork();
+            const first = artwork?.pins[0];
+            if (!artwork || !first) return;
+            const markers = await sdk.createRoundResultMarkers(artwork.pins);
+            if (!current()) return;
 
-        // Draw player pins and polylines to searched location
-        for (const { id, location } of roundRes) {
-            if (owner !== resources() || epoch !== owner.generation) return;
-            const color = getPlayerColorByID(id);
-            drawPolyLine(answer, location);
-            await drawMarker(location, color, getPlayerNameFromID(id));
+            // A finished match may change rounds while a marker library
+            // request is pending. Only the latest view replaces the map layers.
+            owner.markers.value.forEach((marker) => (marker.map = null));
+            owner.polylines.forEach((line) => line.setMap(null));
+            owner.markers.value = markers;
+            sdk.fitCustomBounds(
+                roundResultBounds(
+                    first.position,
+                    artwork.pins.slice(1).map(({ position }) => position)
+                ),
+                {
+                    top: 68,
+                    right: 40,
+                    bottom: 68,
+                    left: 40,
+                }
+            );
+            const map = sdk.getMap;
+            for (const marker of markers) marker.map = map;
+            owner.polylines.length = 0;
+            for (const { from, to, color, own } of artwork.lines) {
+                const line = sdk.makeResultLine(from, to, color, own);
+                line.setMap(map);
+                owner.polylines.push(line);
+            }
+            owner.renderError.value = false;
+        } catch (error) {
+            if (current()) throw error;
         }
+    };
+
+    const reviewFinishedMap = (view: "journey" | number) => {
+        const owner = resources();
+        const permission = owner.mapView.value;
+        if (
+            currentState.value !== GameState.FINISHED ||
+            !finalResultsReady.value ||
+            !permission ||
+            permission.lobbyId !== lobbySettings.value?.ID ||
+            permission.generation !== owner.generation
+        )
+            return;
+        owner.finishedMapView.value = { match: matchKey(), view };
+        const epoch = owner.generation;
+        owner.trackRender(
+            renderRoundResults().catch(() => {
+                if (epoch === owner.generation) owner.renderError.value = true;
+            })
+        );
     };
 
     const finishRound = (round: number) => {
@@ -87,36 +158,45 @@ export const useBattleRoyaleStore = () => {
         if (lobbySettings.value) resources().authorizeMapView(lobbySettings.value.ID, currentRound.value);
         resources().invalidatePinPlacement();
         resources().draftMarker.value = null;
+        resources().draftRound.value = null;
         currentMapPin.value = {} as Coordinates;
         isGuessPending.value = false;
         if (googleStore().isMapInitialized) googleStore().removeMapEventListener("click");
     };
     const restoreRound = async (phase: GameState, round: number) => {
+        const owner = resources();
+        const id = player.value.ID;
+        const draft = owner.draftRound.value;
+        // The recovery snapshot may contain the previously in-flight attempt.
+        const retainedPin =
+            phase === GameState.PLAYING &&
+            id &&
+            draft?.key === draftKey(round) &&
+            validPin(currentMapPin.value) &&
+            getUserLives(id) > 0 &&
+            !(resultsStore.rawResults[id] ?? []).some((guess) => draft.sentAfterAttempt !== undefined && guess.attempt > draft.sentAfterAttempt)
+                ? currentMapPin.value
+                : null;
         clearMap();
         currentState.value = phase;
         currentRound.value = round;
-        currentMapPin.value = {} as Coordinates;
-        isGuessPending.value = false;
         if (phase === GameState.WAITING) return;
-        const owner = resources();
         const epoch = owner.generation;
         if (!lobbySettings.value) throw new Error("Lobby settings are not initialized.");
         if (phase !== GameState.PLAYING) {
             owner.authorizeMapView(lobbySettings.value.ID, round);
             return renderRoundResults();
         }
+        if (retainedPin) {
+            currentMapPin.value = retainedPin;
+            owner.draftRound.value = { key: draftKey(round) };
+        }
         owner.isRestoring.value = true;
         owner.authorizeRound(lobbySettings.value.ID, round);
         await googleStore().waitForMapAndPano();
         if (owner !== resources() || epoch !== owner.generation) return;
         resetMapAndPanorama();
-        const id = player.value.ID;
-        const color = id ? getPlayerColorByID(id) : undefined;
-        if (!id || !color) return;
-        for (const guess of resultsStore.rawResults[id] ?? []) {
-            if (epoch !== owner.generation) return;
-            if (hasGuess(guess)) await drawMarker(guess.location, color);
-        }
+        if (id) await restoreGuessMarkers(id);
         if (owner !== resources() || epoch !== owner.generation) return;
         owner.isRestoring.value = false;
         setMapClickEventListener();
@@ -153,25 +233,19 @@ export const useBattleRoyaleStore = () => {
                 if (!isCurrent()) return;
                 if (owner.isRestoring.value || owner.renderError.value) {
                     // An interrupted initial/restore render could have drawn a
-                    // subset of history. No draft exists while isRestoring.
+                    // subset of history.
                     owner.markers.value.forEach((marker) => (marker.map = null));
                     owner.markers.value = [];
+                    owner.draftMarker.value = null;
                     resetMapAndPanorama();
                     const id = player.value.ID;
                     if (!id) throw new Error("Player unavailable.");
-                    for (const guess of resultsStore.rawResults[id] ?? []) {
-                        if (!isCurrent()) return;
-                        if (hasGuess(guess)) await drawMarker(guess.location, getPlayerColorByID(id));
-                    }
+                    await restoreGuessMarkers(id);
                     if (!isCurrent()) return;
                     owner.isRestoring.value = false;
                     setMapClickEventListener();
                 }
             } else if ([GameState.MID_ROUND, GameState.FINISHED].includes(currentState.value) && owner.renderError.value) {
-                owner.markers.value.forEach((marker) => (marker.map = null));
-                owner.markers.value = [];
-                owner.polylines.forEach((line) => line.setMap(null));
-                owner.polylines.length = 0;
                 await renderRoundResults();
             }
             if (isCurrent()) owner.renderError.value = false;
@@ -184,19 +258,21 @@ export const useBattleRoyaleStore = () => {
 
     const processMapPin = async (coordinates: Coordinates): Promise<void> => {
         const owner = resources();
-        if (currentState.value !== GameState.PLAYING || isGuessPending.value || owner.isRestoring.value || !validPin(coordinates)) return;
+        if (currentState.value !== GameState.PLAYING || isGuessPending.value || owner.isRestoring.value || roundExpired() || !validPin(coordinates)) return;
         const playerID = player.value.ID;
         if (!playerID || getUserLives(playerID) <= 0) return;
         const isPlacementCurrent = owner.capturePinPlacement();
         const pin = { ...coordinates };
+        const key = draftKey(currentRound.value);
         // Only the explicit unsubmitted draft may move, never history markers.
         if (owner.draftMarker.value) {
             owner.draftMarker.value.position = pin;
             currentMapPin.value = pin;
+            owner.draftRound.value = { key };
             return;
         }
         const epoch = owner.generation;
-        const marker = await googleStore().addNewMapMarker(pin, getPlayerColorByID(playerID));
+        const marker = await googleStore().addGuessMarker(pin, getPlayerColorByID(playerID), true);
         if (
             owner !== resources() ||
             epoch !== owner.generation ||
@@ -213,12 +289,16 @@ export const useBattleRoyaleStore = () => {
         owner.markers.value = [...owner.markers.value, marker];
         owner.draftMarker.value = marker;
         currentMapPin.value = pin;
+        owner.draftRound.value = { key };
     };
     const validPin = (pin: Coordinates) => Number.isFinite(pin.lat) && Number.isFinite(pin.lng) && Math.abs(pin.lat) <= 90 && Math.abs(pin.lng) <= 180;
     const acceptGuess = (round: number) => {
-        // There is only one in-flight guess. Its sent draft was already
-        // released at send; an unsolicited/old result must not consume a pin.
         if (!isGuessPending.value || round !== currentRound.value) return;
+        const owner = resources();
+        if (owner.draftMarker.value) googleStore().confirmGuessMarker(owner.draftMarker.value);
+        owner.draftMarker.value = null;
+        owner.draftRound.value = null;
+        currentMapPin.value = {} as Coordinates;
         isGuessPending.value = false;
     };
 
@@ -227,21 +307,14 @@ export const useBattleRoyaleStore = () => {
     };
 
     const submitGuess = () => {
-        if (isSubmitDisabled.value) return;
-        resources().invalidatePinPlacement();
+        const owner = resources();
+        const id = player.value.ID;
+        const draft = owner.draftRound.value;
+        if (isSubmitDisabled.value || roundExpired() || !id || !draft) return;
+        owner.invalidatePinPlacement();
+        owner.draftRound.value = { ...draft, sentAfterAttempt: resultsStore.rawResults[id]?.at(-1)?.attempt ?? 0 };
         isGuessPending.value = true;
-
-        const socket_message = {
-            command: SOCKET_COMMANDS.SUBMIT_LOCATION,
-            location: { ...currentMapPin.value },
-        };
-
-        if (app.$gameRuntime.socket.sendMessage(socket_message)) {
-            // Freeze the sent marker. Only this command's ACK/error or an
-            // explicit phase/connection reset may release its pending gate.
-            resources().draftMarker.value = null;
-            currentMapPin.value = {} as Coordinates;
-        }
+        if (!app.$gameRuntime.socketActions.submitLocation({ ...currentMapPin.value })) isGuessPending.value = false;
     };
 
     const clearMap = () => {
@@ -258,26 +331,23 @@ export const useBattleRoyaleStore = () => {
     });
 
     // ======================================== Internal functions ========================================
-    const drawPolyLine = (from: Coordinates, to: Coordinates): void => {
-        // Contrust polyline and render it on map
-        const polyline = googleStore().makePolyline(from, to);
-        polyline.setMap(googleStore().getMap);
-
-        // Save polyline to static array
-        resources().polylines.push(polyline);
-    };
-
-    const drawMarker = async (coordinates: Coordinates, color: string, playerName?: string): Promise<void> => {
-        // Create new marker and render it on map
+    const restoreGuessMarkers = async (id: string) => {
         const owner = resources();
         const epoch = owner.generation;
-        const marker = await googleStore().addNewMapMarker(coordinates, color, playerName);
-        if (owner !== resources() || epoch !== owner.generation) {
-            marker.map = null;
-            return;
+        const color = getPlayerColorByID(id);
+        const draw = async (pin: Coordinates, draft: boolean) => {
+            const marker = await googleStore().addGuessMarker(pin, color, draft);
+            if (epoch !== owner.generation) return;
+            marker.map = googleStore().getMap;
+            owner.markers.value = [...owner.markers.value, marker];
+            if (draft) owner.draftMarker.value = marker;
+        };
+        for (const guess of resultsStore.rawResults[id] ?? []) {
+            if (epoch !== owner.generation) return;
+            if (hasGuess(guess)) await draw(guess.location, false);
         }
-        marker.map = googleStore().getMap;
-        resources().markers.value = [...mapMarkers.value, marker];
+        if (epoch === owner.generation && owner.draftRound.value?.key === draftKey(currentRound.value) && getUserLives(id) > 0 && validPin(currentMapPin.value))
+            await draw(currentMapPin.value, true);
     };
 
     const resetMapAndPanorama = (): void => {
@@ -333,9 +403,9 @@ export const useBattleRoyaleStore = () => {
         finishGame,
         restoreRound,
         retryMapRendering,
+        reviewFinishedMap,
         processMapPin,
         submitGuess,
         acceptGuess,
-        drawMarker,
     });
 };

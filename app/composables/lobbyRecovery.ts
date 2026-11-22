@@ -29,6 +29,9 @@ export const useLobbyLeaveGuard = () => {
         // Native leave/update guards run before global middleware. Fence phase
         // routing while the deliberate navigation is still asking/awaiting.
         app.$gameRuntime.beginNavigation(to);
+        // An admission with no confirmed snapshot can be cancelled directly.
+        // The committed navigation still invalidates the pending socket.
+        if (lobbySettings.value?.ID !== id && !app.$gameRuntime.socket.isConnected) return true;
         // Only the server-selected route is an internal transition. All other
         // navigation (including address/back and another lobby ID) asks once.
         if (routeLobbyId(to) === id && lobbySettings.value && (to.name === "lobby-id") === (!lobbySettings.value.phase || lobbySettings.value.phase === "WAITING")) return true;

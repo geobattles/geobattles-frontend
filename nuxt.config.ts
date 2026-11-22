@@ -89,8 +89,8 @@ export default defineNuxtConfig({
             start_url: "/",
             scope: "/",
             display: "standalone",
-            theme_color: "#181818",
-            background_color: "#181818",
+            theme_color: "#0c1916",
+            background_color: "#0c1916",
             description: "GeoLocation Guessing Game",
             icons: [
                 {

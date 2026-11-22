@@ -2,21 +2,21 @@
     <main id="main-content" ref="gameplayPageContainer" class="game-page">
         <ClientOnly>
             <GameplaySession :container="gameplayPageContainer" @leaveLobby="leave" />
-            <template #fallback
-                ><div class="page-shell page-narrow">
-                    <p class="eyebrow">Your expedition</p>
-                    <h1>Finding your way back.</h1>
-                    <p class="muted mt-5">
-                        GeoBattles is restoring your lobby, round, and guesses from the game server. The interactive landscape will appear here once your connection is ready.
-                    </p>
-                    <NuxtLink class="text-link mt-6" to="/">Return to the world <UiIcon name="arrow" /></NuxtLink></div
-            ></template>
+            <template #fallback>
+                <div class="page-shell connection-entry">
+                    <SocketConnectionPanel tone="joining" title="Rejoining game…" description="Waiting for the game server to confirm your place." :code="lobbyId">
+                        <NuxtLink to="/" class="btn btn-secondary">Cancel</NuxtLink>
+                    </SocketConnectionPanel>
+                </div>
+            </template>
         </ClientOnly>
     </main>
 </template>
 <script setup lang="ts">
 definePageMeta({ key: (route) => `gameplay-${String(route.params.id)}` });
 const { goHome: leave } = useLobbyLeaveGuard();
+const route = useRoute();
+const lobbyId = computed(() => routeLobbyId(route));
 const gameplayPageContainer = ref<HTMLElement | null>(null);
 useHead({ title: "Expedition" });
 </script>
@@ -26,5 +26,8 @@ useHead({ title: "Expedition" });
     width: 100%;
     background: var(--gb-bg);
     color: var(--gb-text);
+}
+.connection-entry {
+    padding-block: clamp(1rem, 10vh, 6rem);
 }
 </style>

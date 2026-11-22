@@ -1,29 +1,51 @@
-/* Dark-only GeoBattles palette, shared by public pages and gameplay. */
+/* Night Atlas: leaf for the next action, cool jade for confirmed state, gold for standings. */
 :root {
     color-scheme: dark;
-    --gb-bg: #181818;
-    --gb-surface: #242424;
-    --gb-raised: #2d332e;
-    --gb-line: #414641;
-    --gb-text: #f3f3ef;
-    --gb-muted: #b7bdb6;
-    --gb-accent: #b6e388;
-    --gb-accent-end: #5f8d4e;
-    --gb-on-accent: #182017;
-    --gb-accent-hover: #cdebab;
+    --gb-bg: #0c1916;
+    --gb-surface: #162a23;
+    --gb-raised: #223c31;
+    --gb-line: #688972;
+    --gb-text: #f4f5eb;
+    --gb-muted: #b5c9bd;
+    --gb-accent: #b4e587;
+    --gb-accent-end: #82c879;
+    --gb-on-accent: #142515;
+    --gb-accent-hover: #d5f2b1;
     --gb-header-height: 72px;
-    --gb-coral: #ffab98;
-    --gb-danger: #ffb4b4;
-    --gb-success: #b6e388;
+    --gb-viewport-height: 100vh;
+    --gb-safe-top: env(safe-area-inset-top, 0px);
+    --gb-safe-right: env(safe-area-inset-right, 0px);
+    --gb-safe-bottom: env(safe-area-inset-bottom, 0px);
+    --gb-safe-left: env(safe-area-inset-left, 0px);
+    --gb-coral: #ff9989;
+    --gb-danger: #ffaca1;
+    --gb-success: #70d9af;
+    --gb-gold: #ffca62;
+    --gb-action-fill: linear-gradient(115deg, var(--gb-accent) 12%, var(--gb-accent-end));
+    --gb-scenic-lime: #6ef45a;
+    --gb-scenic-action-fill: linear-gradient(145deg, #c5ff96, var(--gb-scenic-lime) 44%, color-mix(in srgb, #10b981, var(--gb-scenic-lime) 48%));
+    --gb-scenic-action-border: #bdff98;
+    --gb-scenic-action-ink: #062418;
+    --gb-scenic-action-shadow: inset 0 1px 0 #ffffff8c, 0 5px 26px #10b98155;
+    --gb-scenic-action-hover-shadow: inset 0 1px 0 #ffffffb3, 0 7px 28px #10b98180;
+    --gb-font-headline: "Avenir Next Condensed", "Arial Narrow", "Franklin Gothic Medium", "Arial Black", sans-serif;
     --gb-font-display: "Avenir Next", "Trebuchet MS", Arial, sans-serif;
     --gb-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
-    --gb-radius: 4px;
-    --gb-contours: repeating-radial-gradient(ellipse at 100% 0, transparent 0 44px, #b6e38807 45px 46px, transparent 47px 88px);
+    --gb-radius: 6px;
+    --gb-contours: linear-gradient(90deg, var(--gb-bg) 20%, #0c1916b8 65%, #0c191680), url("/images/atlas-relief.svg");
+}
+@supports (height: 100dvh) {
+    :root {
+        --gb-viewport-height: 100dvh;
+    }
 }
 html {
     font-size: 16px;
     background: var(--gb-bg);
     scroll-padding-top: 6rem;
+}
+html:has(dialog:modal) {
+    overflow: hidden;
 }
 body {
     margin: 0;
@@ -94,21 +116,40 @@ h3 {
 .page-shell {
     max-width: 1180px;
     margin-inline: auto;
-    padding: clamp(1rem, 3vw, 2.25rem) clamp(0.875rem, 3vw, 2rem);
+    --page-gutter: clamp(0.875rem, 3vw, 2rem);
+    padding: clamp(1rem, 3vw, 2.25rem) max(var(--page-gutter), var(--gb-safe-right)) max(clamp(1rem, 3vw, 2.25rem), var(--gb-safe-bottom))
+        max(var(--page-gutter), var(--gb-safe-left));
 }
 .page-narrow {
     max-width: 760px;
 }
 /* A quiet cartographic field, never painted over provider-owned map surfaces. */
 .game-shell {
-    min-height: 100dvh;
+    min-height: var(--gb-viewport-height);
     background-color: var(--gb-bg);
     background-image: var(--gb-contours);
-    background-size: 960px 620px;
+    background-size:
+        min(100%, 92rem) auto,
+        min(100%, 84rem) auto;
     background-position: right top;
     background-repeat: no-repeat;
 }
+/* Standalone connection states replace the route chrome on phones. Keep the
+   screen in document flow so zoom and unusually tall copy can still scroll. */
+@media (max-width: 600px), (max-width: 980px) and (max-height: 500px) and (orientation: landscape) {
+    #main-content.waiting-lobby:has(> .connection-panel--standalone),
+    #main-content.game-page .connection-entry:has(> .connection-panel--standalone) {
+        max-width: none;
+        padding: 0;
+    }
+    .game-shell:has(> .waiting-lobby > .connection-panel--standalone) > .site-header,
+    .waiting-lobby:has(> .connection-panel--standalone) > .page-heading,
+    .app-root:has(.connection-panel--standalone) > .build-notice {
+        display: none;
+    }
+}
 .command-heading {
+    font-family: var(--gb-font-headline);
     font-weight: 800;
     letter-spacing: -0.045em;
 }
@@ -151,6 +192,7 @@ h3 {
     border-radius: var(--gb-radius);
     background: var(--gb-surface);
     padding: clamp(0.875rem, 2vw, 1.25rem);
+    box-shadow: inset 0 1px #e5f3d90c;
 }
 .panel-heading {
     display: flex;
@@ -172,7 +214,7 @@ h3 {
         inset 0 1px #ffffff40,
         inset 0 -3px #18201724;
     padding: 0.6rem 0.95rem;
-    background: var(--gb-accent);
+    background: var(--gb-accent) var(--gb-action-fill);
     color: var(--gb-on-accent);
     font-size: 0.9rem;
     font-weight: 700;
@@ -203,7 +245,7 @@ h3 {
 .btn-quiet:not(:disabled):hover {
     color: var(--gb-text);
     background: var(--gb-raised);
-    border-color: #687362;
+    border-color: #86a492;
 }
 .btn-quiet {
     color: var(--gb-muted);
@@ -268,8 +310,8 @@ h3 {
 }
 .badge-success {
     color: var(--gb-success);
-    border-color: #3e6444;
-    background: #213529;
+    border-color: #44735e;
+    background: #193d2e;
 }
 .badge-warn {
     color: var(--gb-coral);
@@ -306,7 +348,7 @@ h3 {
     width: 100%;
     min-height: 44px;
     padding: 0.6rem 0.75rem;
-    border: 1px solid #5e665c;
+    border: 1px solid #6f8d7c;
     border-radius: var(--gb-radius);
     background: var(--gb-bg);
     color: var(--gb-text);
@@ -315,7 +357,7 @@ h3 {
     outline-offset: 2px;
 }
 .input::placeholder {
-    color: #a4ada1;
+    color: #a9beb0;
     opacity: 1;
 }
 .input[aria-invalid="true"] {
@@ -370,13 +412,20 @@ input[type="range"] {
     margin: 0.8rem auto 1.5rem;
 }
 .ui-dialog {
+    --dialog-gap: 1rem;
+    --dialog-top: max(var(--dialog-gap), var(--gb-safe-top));
+    --dialog-bottom: max(var(--dialog-gap), var(--gb-safe-bottom));
+    --dialog-left: max(var(--dialog-gap), var(--gb-safe-left));
+    --dialog-right: max(var(--dialog-gap), var(--gb-safe-right));
+    --dialog-height: calc(var(--visible-height, var(--gb-viewport-height)) - var(--dialog-top) - var(--dialog-bottom));
     position: fixed;
-    inset: 0;
+    inset: calc(var(--visible-top, 0px) + var(--dialog-top)) var(--dialog-right) calc(var(--visible-bottom, 0px) + var(--dialog-bottom)) var(--dialog-left);
     margin: auto;
-    width: min(580px, calc(100% - 2rem));
-    max-height: calc(100dvh - 2rem);
+    width: min(580px, calc(100% - var(--dialog-left) - var(--dialog-right)));
+    max-height: var(--dialog-height);
     padding: 0;
     overflow: auto;
+    overscroll-behavior: contain;
     border: 1px solid var(--gb-line);
     border-radius: 6px;
     background: var(--gb-surface);
@@ -387,10 +436,47 @@ input[type="range"] {
     display: none;
 }
 .ui-dialog-wide {
-    width: min(1060px, calc(100% - 2rem));
+    width: min(1060px, calc(100% - var(--dialog-left) - var(--dialog-right)));
 }
 .ui-dialog::backdrop {
-    background: #000c;
+    background: #050e0bd9;
+}
+.ui-dialog[open] {
+    border-color: #627c6a;
+    box-shadow:
+        0 28px 92px #020b07b3,
+        inset 0 2px var(--gb-accent);
+}
+@media (prefers-reduced-motion: no-preference) {
+    .ui-dialog[open] .ui-dialog-inner,
+    .atlas-menu-shell > main {
+        animation: atlas-arrive 210ms cubic-bezier(0.2, 0.75, 0.24, 1);
+    }
+}
+@keyframes atlas-arrive {
+    from {
+        opacity: 0.35;
+        translate: 0 5px;
+    }
+    to {
+        opacity: 1;
+        translate: 0 0;
+    }
+}
+.atlas-menu-shell {
+    min-height: var(--gb-viewport-height);
+    background-color: var(--gb-bg);
+    background-image: var(--gb-contours);
+    background-position: top right;
+    background-size: min(100%, 80rem) auto;
+    background-repeat: no-repeat;
+}
+.atlas-menu-shell .page-heading h1,
+.atlas-menu-shell .signup-intro h1 {
+    font-family: var(--gb-font-headline);
+    font-style: italic;
+    font-weight: 900;
+    letter-spacing: -0.045em;
 }
 .ui-dialog-inner {
     padding: clamp(1rem, 3vw, 1.5rem);
@@ -587,7 +673,8 @@ input[type="range"] {
         font-size: 1rem;
     }
     .page-shell {
-        padding: 0.75rem var(--gb-mobile-space);
+        --page-gutter: var(--gb-mobile-space);
+        padding-block: 0.75rem max(0.75rem, var(--gb-safe-bottom));
     }
     .page-heading,
     .panel-heading,
@@ -675,43 +762,147 @@ input[type="range"] {
         padding: 0.4rem;
     }
     .ui-dialog {
-        width: calc(100% - 1rem);
-        max-height: calc(100dvh - 1rem);
+        --dialog-gap: 0.5rem;
     }
 }
-/* Only the lobby settings dialog: preserve the shared dialog elsewhere. */
+/* Both lobby settings openers use a compact folio; other dialogs keep their own proportions. */
 .ui-dialog:has(.settings-form) {
-    width: min(920px, calc(100% - 1rem));
-    max-height: calc(100dvh - 1rem);
-    scroll-padding-block: 0.75rem 5.5rem;
+    --dialog-gap: 0.375rem;
+    width: min(42.5rem, calc(100% - var(--dialog-left) - var(--dialog-right)));
+    overflow: auto;
 }
 .ui-dialog:has(.settings-form) .ui-dialog-inner {
-    padding: 0.875rem 0.875rem 0;
+    padding: 0;
 }
 .ui-dialog:has(.settings-form) .ui-dialog-header {
     align-items: center;
+    padding: 0 0.6rem 0 0.95rem;
     gap: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin: 0;
+    background: linear-gradient(95deg, #253c2e, #162a23 68%);
 }
 .ui-dialog:has(.settings-form) .ui-dialog-header h2 {
-    font-size: 1.1rem;
+    font-size: 1.02rem;
+    letter-spacing: -0.025em;
 }
-@media (max-height: 540px) and (orientation: landscape) {
+.ui-dialog:has(.settings-form) .ui-dialog-header button {
+    width: 44px;
+    min-height: 44px;
+}
+@media (max-width: 559px), (max-width: 760px) and (orientation: portrait) {
     .ui-dialog:has(.settings-form) {
-        max-height: calc(100dvh - 0.5rem);
-    }
-    .ui-dialog:has(.settings-form) .ui-dialog-inner {
-        padding-inline: 0.75rem;
+        width: min(25rem, calc(100% - 1.5rem));
     }
 }
-@media (max-width: 640px), (max-width: 850px) and (max-height: 540px) {
-    .ui-dialog:has(.settings-form) .ui-dialog-inner {
-        padding: var(--gb-mobile-space) var(--gb-mobile-space) 0;
+.ui-dialog.lobby-settings-dialog .ui-dialog-header button {
+    width: 44px;
+    border: 1px solid #75937c;
+    border-radius: 0.25rem 0.75rem 0.25rem 0.25rem;
+    background: linear-gradient(150deg, #344e3c, #172a22);
+    color: var(--gb-accent);
+    box-shadow: inset 0 -3px #0a191377;
+}
+.ui-dialog.lobby-settings-dialog .ui-dialog-header button:hover {
+    background: var(--gb-raised);
+    border-color: var(--gb-accent);
+}
+@media (max-width: 760px), (orientation: landscape) and (max-height: 540px), (orientation: landscape) and (pointer: coarse) and (max-width: 1100px) {
+    .ui-dialog.lobby-settings-dialog[open] {
+        inset: var(--visible-top, 0px) 0 auto;
+        width: 100%;
+        max-width: none;
+        height: var(--visible-height, var(--gb-viewport-height));
+        max-height: none;
+        margin: 0;
+        overflow: hidden;
+        border: 0;
+        border-radius: 0;
+        padding: var(--gb-safe-top) var(--gb-safe-right) var(--gb-safe-bottom) var(--gb-safe-left);
+        box-shadow: none;
     }
-    .ui-dialog:has(.settings-form) .ui-dialog-header h2 {
-        font-size: var(--gb-mobile-subheading);
+    .lobby-settings-dialog .ui-dialog-inner {
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+    }
+    .lobby-settings-dialog .ui-dialog-header {
+        flex: none;
+    }
+    .lobby-settings-dialog .ui-dialog-header button {
+        margin-block: 2px;
+    }
+    .lobby-settings-dialog .settings-footer {
+        padding-bottom: 0;
     }
 }
+.round-result-pin {
+    position: relative;
+    display: block;
+    width: 1.25rem;
+    height: 1.64rem;
+    color: #64748b;
+}
+.round-result-pin:is([data-kind="own"], [data-kind="other"]) {
+    filter: drop-shadow(0 0 0.7px #0c1916) drop-shadow(0 1px #0c1916);
+}
+.round-result-pin[data-kind="own"] {
+    width: 1.65rem;
+    height: 2.16rem;
+}
+.round-result-pin:is([data-kind="own"], [data-kind="other"])::after {
+    position: absolute;
+    inset: 0;
+    mask: url("/gameplay/map-icons/location.svg") center bottom / contain no-repeat;
+    background: currentColor;
+    content: "";
+}
+.round-result-pin[data-kind="answer"] {
+    width: 1.95rem;
+    height: 1.95rem;
+    color: var(--gb-text);
+}
+.round-result-pin[data-kind="answer"]::before {
+    position: absolute;
+    inset: 14%;
+    rotate: 45deg;
+    border: 1.5px solid currentColor;
+    border-radius: 0.27rem 0.27rem 0.09rem 0.27rem;
+    background: var(--gb-bg);
+    box-shadow: 0 0 0 1px var(--gb-bg);
+    content: "";
+}
+.round-result-pin[data-kind="answer"]::after {
+    position: absolute;
+    inset: 31%;
+    border: 1.5px solid currentColor;
+    border-radius: 50%;
+    background: radial-gradient(circle, currentColor 22%, transparent 28%);
+    content: "";
+}
+.round-result-pin[data-kind="stop"] {
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 2px solid #ffe9ac;
+    border-radius: 50%;
+    background: #0c2e23;
+    box-shadow: 0 0 0 1px #122320;
+    color: #fff1ca;
+    font: 800 0.73rem / 1 var(--gb-font-mono);
+}
+@media (prefers-reduced-motion: no-preference) {
+    .round-result-pin {
+        animation: result-pin-in 260ms ease-out;
+    }
+    @keyframes result-pin-in {
+        from {
+            opacity: 0;
+            translate: 0 -0.2rem;
+        }
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

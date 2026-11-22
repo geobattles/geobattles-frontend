@@ -2,7 +2,19 @@
 
 ## Installation and cache boundary
 
-The generated manifest/worker use root identity, start URL and scope `/`, standalone display and charcoal theme `#181818`. Subpath hosting needs a coordinated change. PNG icons live in `public/icons/`; manifest icons have purpose `any`, not maskable. Installation uses native browser/OS UI.
+The generated manifest and worker use root identity, start URL and scope `/`, standalone display and charcoal theme `#0c1916`. Subpath hosting needs a coordinated change. The 192px and 512px manifest icons use purpose `any` and iOS has a 180px Apple touch icon. The existing artwork extends outside the maskable safe zone.
+
+### Installation experience
+
+**How to install GeoBattles** is available beside sign-in and in the signed-in account menu. A client owner retains a compatible `beforeinstallprompt` event and consumes it on the next explicit install action. A browser installation confirmation or an installed display mode hides the entry. A regular tab can still offer installation guidance if the same site has been installed elsewhere.
+
+The manual guide uses Safari’s Share and Add to Home Screen controls on iPhone and iPad. Other browsers get guidance for their available menu options. Embedded browsers can use **Copy link** to move the current page, including an invitation query and fragment, to Safari or another regular browser. Native prompting depends on browser support and a trustworthy HTTPS or loopback origin.
+
+Mobile suggestions appear on a return to the homepage or after a player's result is confirmed and the champion reveal has closed. The results card sits after the standings so it leaves room for rematch controls. Authentication, lobby admission, settings and game actions take priority. An impression or dismissal pauses automatic suggestions for 14 days. The account entry remains available during that time. The preference stores a visit flag and timestamps on this device.
+
+### Viewport and cache
+
+The document uses `viewport-fit=contain` and the opaque iOS status-bar style so the browser can reserve system-bar space. When a browser exposes safe-area insets, the relevant header, overlay, or bottom controls apply that inset at the edge they occupy. The shell uses dynamic viewport height, with a fallback for browsers that lack support. Installed Android and iOS status bars and gesture areas need verification in portrait and landscape on the device.
 
 The worker precaches selected public build-time JS/CSS, images, icons, manifest and module-added build metadata. Explicit ignores exclude HTML and page payloads. `runtimeCaching: []` and no navigation fallback mean this worker does not cache authentication/API responses, WebSockets, private game payloads or Maps requests. It is not an offline gameplay/navigation shell; fresh offline navigation can fail.
 

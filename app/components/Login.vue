@@ -1,90 +1,99 @@
 <template>
-    <div class="login-layout">
-        <form class="form-stack" @submit.prevent="signIn">
-            <div>
-                <h3>Welcome back</h3>
-                <p class="field-help mt-2">Sign in to your explorer account.</p>
-            </div>
-            <div class="field">
-                <label :for="`${id}-username`">Username</label><input :id="`${id}-username`" v-model="username" class="input" autocomplete="username" required autofocus />
-            </div>
-            <div class="field">
-                <label :for="`${id}-password`">Password</label><UiPassword :id="`${id}-password`" v-model="password" autocomplete="current-password" required />
-            </div>
-            <p v-if="error && mode === 'login'" class="field-error" role="alert">{{ error }}</p>
-            <button class="btn" type="submit" :disabled="busy" :aria-busy="busy && mode === 'login'">
-                <span v-if="busy && mode === 'login'" class="spinner" />Sign in <UiIcon name="arrow" />
-            </button>
-        </form>
-        <form class="form-stack guest-form" @submit.prevent="playAsGuest">
-            <div>
-                <p class="eyebrow">No account needed</p>
-                <h3>Just here to explore?</h3>
-                <p class="field-help mt-2">Choose a name your friends will recognize. You can play straight away as a guest.</p>
-            </div>
-            <div class="field">
-                <label :for="`${id}-guest`">Display name</label
-                ><input :id="`${id}-guest`" v-model="displayName" class="input" autocomplete="nickname" minlength="3" maxlength="15" placeholder="Your explorer name" required />
-                <p class="field-help">3–15 characters. Visible to other players.</p>
-            </div>
-            <p v-if="error && mode === 'guest'" class="field-error" role="alert">{{ error }}</p>
-            <button class="btn btn-secondary" type="submit" :disabled="busy" :aria-busy="busy && mode === 'guest'">
-                <span v-if="busy && mode === 'guest'" class="spinner" />Continue as guest <UiIcon name="arrow" />
-            </button>
-            <p class="field-help">Prefer an account? <NuxtLink class="text-link" to="/signup">Create one</NuxtLink></p>
-        </form>
-    </div>
+    <UiDialog v-model:open="auth.isLoginDialog" class="auth-dialog auth-surface" :title="title">
+        <UiAuthExperience v-model:mode="auth.loginDialogMode" @authenticated="auth.isLoginDialog = false" />
+    </UiDialog>
 </template>
+
 <script setup lang="ts">
-const id = useId();
 const auth = useAuthStore();
-const emit = defineEmits<{ userLogged: [] }>();
-const username = ref("");
-const password = ref("");
-const displayName = ref("");
-const busy = ref(false);
-const error = ref("");
-const mode = ref<"login" | "guest">("login");
-const authenticate = async (kind: "login" | "guest") => {
-    if (busy.value) return;
-    mode.value = kind;
-    error.value = "";
-    busy.value = true;
-    try {
-        if (kind === "login") await auth.login(username.value, password.value);
-        else await auth.register(null, null, displayName.value.trim());
-        password.value = "";
-        emit("userLogged");
-    } catch (cause) {
-        error.value = cause instanceof Error ? cause.message : "Could not sign in. Please try again.";
-    } finally {
-        busy.value = false;
-    }
-};
-const signIn = () => authenticate("login");
-const playAsGuest = () => authenticate("guest");
+const titles = { login: "Sign in", guest: "Play as guest", register: "Create account" };
+const title = computed(() => titles[auth.loginDialogMode]);
 </script>
+
 <style scoped>
-.login-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
+.auth-dialog {
+    --dialog-gap: 0.5rem;
+    width: min(31rem, calc(100% - var(--dialog-left) - var(--dialog-right)));
+    height: fit-content;
 }
-.guest-form {
-    border-left: 1px solid var(--gb-line);
-    padding-left: 3rem;
-    justify-content: flex-start;
+.auth-dialog::backdrop {
+    background:
+        linear-gradient(110deg, #031d1a48, #031b17b0),
+        url("/images/emerald-lake.webp") center / cover no-repeat #052e24;
 }
-@media (max-width: 700px) {
-    .login-layout {
-        grid-template-columns: 1fr;
-        gap: 2rem;
+.auth-dialog:has([data-auth-compact])::backdrop {
+    background: #041e1c;
+}
+.auth-dialog :deep(.ui-dialog-inner) {
+    padding: 0;
+    animation: none;
+}
+.auth-dialog :deep(.ui-dialog-header) {
+    position: sticky;
+    z-index: 1;
+    top: 0;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0.65rem var(--auth-pad);
+    background: linear-gradient(110deg, #0b352feb, #062320f5);
+    border-bottom: 1px solid #b5f7dd29;
+}
+.auth-dialog :deep(.ui-dialog-header h2) {
+    margin: 0;
+    font-size: 1.25rem;
+}
+.auth-dialog :deep(.ui-dialog-header .btn) {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 0.7rem;
+    border: 1px solid #a5ead847;
+    background: #b2f8df0a;
+    color: #e7fff8;
+}
+.auth-dialog :deep(.ui-dialog-header .btn:hover) {
+    background: #b2f8df23;
+}
+.auth-dialog :deep(.auth-experience) {
+    padding: var(--auth-pad);
+}
+.auth-dialog:has([data-auth-compact]) :deep(.ui-dialog-header) {
+    padding-block: 0;
+    background: #0b302b;
+}
+.auth-dialog:has([data-auth-compact]) :deep(.ui-dialog-header .btn:focus-visible) {
+    outline-offset: -3px;
+}
+.auth-dialog:has([data-auth-short]) :deep(.ui-dialog-header) {
+    display: none;
+}
+@media (min-width: 1000px) {
+    .auth-dialog {
+        margin-inline-end: clamp(1rem, 9vw, 10rem);
     }
-    .guest-form {
-        border-left: none;
-        border-top: 1px solid var(--gb-line);
-        padding-left: 0;
-        padding-top: 2rem;
+}
+@media (orientation: portrait) and (max-width: 760px) {
+    .auth-dialog:not(:has([data-auth-compact]))::backdrop {
+        background-image: linear-gradient(0deg, #031b17b0, #031d1a48), url("/images/emerald-lake-portrait.webp");
+    }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .auth-dialog[open]::backdrop {
+        animation: auth-backdrop-in 200ms ease-out;
+    }
+}
+@keyframes auth-backdrop-in {
+    from {
+        opacity: 0;
+    }
+}
+@media (orientation: landscape) and (max-height: 500px) and (min-width: 560px) {
+    .auth-dialog {
+        width: min(41rem, calc(100% - var(--dialog-left) - var(--dialog-right)));
+    }
+    .auth-dialog :deep(.ui-dialog-header) {
+        padding-block: 0.25rem;
     }
 }
 </style>

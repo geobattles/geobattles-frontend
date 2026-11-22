@@ -25,9 +25,10 @@ export const createLobbyService = (baseEndpoint: string) => ({
     /**
      * Get list of available lobbies
      */
-    async fetchLobbyList(): Promise<Record<string, LobbyInfo>> {
+    async fetchLobbyList(options?: Pick<RequestInit, "cache" | "signal">): Promise<Record<string, LobbyInfo>> {
         const endpoint = baseEndpoint;
         const response = await fetch(`${endpoint}/lobby`, {
+            ...options,
             method: "GET",
             headers: {
                 "Content-Type": "application/json",

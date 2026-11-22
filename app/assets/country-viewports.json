@@ -1,7 +1,7 @@
 {
     "version": 1,
     "source": "app/assets/region-map.json",
-    "sourceSha256": "0defe31bdaad2f37dcd0fc8150159e0cd9d31b8e6fa2beba28903b4877a10408",
+    "sourceSha256": "a7d1a270be2b0addd92bc9f67f20939401cd84c1e28e2f6795cb65070d5ce8bc",
     "projection": {
         "name": "equirectangular",
         "width": 1024,
@@ -379,6 +379,12 @@
             "south": 33.200156,
             "west": 124.614141,
             "east": 130.919062
+        },
+        "KZ": {
+            "north": 55.435078,
+            "south": 40.585078,
+            "west": 46.479023,
+            "east": 87.323906
         },
         "LA": {
             "north": 22.496133,
