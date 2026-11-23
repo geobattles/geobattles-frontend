@@ -1,6 +1,7 @@
 export default defineNuxtRouteMiddleware(async (to) => {
     const app = useNuxtApp();
     const isCurrent = import.meta.client ? app.$gameRuntime.beginNavigation(to) : () => true;
+    if (import.meta.dev && to.name === "dev-ui") return;
     // Lobby auth belongs to the socket's absolute readiness budget, including
     // bootstrap/issuance waits. No pre-commit lobby resource changes.
     if (import.meta.client && routeLobbyId(to)) return;
