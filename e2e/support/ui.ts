@@ -168,8 +168,17 @@ export async function publicLobby(lobbyId: string) {
     return lobbies[lobbyId] as import("./types").Snapshot | undefined;
 }
 
-export async function disposed(lobbyId: string) {
-    await expect.poll(async () => !(await publicLobby(lobbyId)), { message: "The final explicit leave must dispose this exact lobby" }).toBe(true);
+export async function reservedAfterLeave(lobbyId: string) {
+    await expect
+        .poll(
+            async () => {
+                const lobby = await publicLobby(lobbyId);
+                const players = Object.values(lobby?.playerList ?? {});
+                return lobby?.admin === "" && players.length > 0 && players.every((player) => !player.connected && player.away);
+            },
+            { message: "The lobby keeps seats after the final player leaves" }
+        )
+        .toBe(true);
 }
 
 // Read-only handles: never serialize the Nuxt payload/config or change Google APIs.

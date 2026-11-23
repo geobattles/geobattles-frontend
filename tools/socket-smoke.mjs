@@ -8,7 +8,7 @@ import { check, CheckFailure, settings, socketURL } from "../e2e/support/safety.
 import { regionScoreScale, sameCountries } from "../app/utils/regionScoring.ts";
 
 const TIMEOUT = 8_000;
-const GRACE = 30_000;
+const RETURN_WINDOW = 90_000;
 const peers = new Set();
 let stage = "configuration";
 let negativeStartEnabled = false;
@@ -163,9 +163,9 @@ class Peer {
         return this.wait((e) => e.type === "UPDATED_LOBBY" && e.payload.lobby.playerList[this.identity.id]?.ready === value, after);
     }
 
-    async leave() {
+    async leave(command = "disconnect") {
         if (this.closed) return;
-        this.send("disconnect");
+        this.send(command);
         await this.until(() => this.closed, TIMEOUT, "Intentional leave did not close its owning socket");
         check(this.closeCode === 1000, "Intentional leave did not send a normal close control frame");
     }
@@ -393,32 +393,44 @@ async function run() {
     const snapshot = await recovered.join(true);
     waitingSnapshot(snapshot, 3);
     check(
-        snapshot.admin === b.id && snapshot.playerList[a.id].color === originalColor && snapshot.playerList[a.id].connected,
-        "Recovery changed identity/color or reclaimed host ownership"
+        snapshot.admin === a.id && snapshot.playerList[a.id].color === originalColor && snapshot.playerList[a.id].connected,
+        "The creator must reclaim admin and retain identity/color"
     );
     check(!snapshot.playerList[a.id].ready && snapshot.playerList[b.id].ready && snapshot.playerList[c.id].ready, "Recovery must not acknowledge readiness or clear other members");
     await recovered.ready(true);
     console.log("PASS graceful transport close, retained membership, deterministic handoff and full ordered recovery");
 
-    stage = "expiry and last-lease disposal (real 30-second grace)";
+    stage = "return after deliberate leave";
+    after = pb.events.length;
+    await recovered.leave("leave");
+    const away = await pb.wait((e) => e.type === "LEFT_LOBBY" && e.payload.user === a.id && e.payload.lobby.playerList[a.id]?.away === true, after);
+    check(away.payload.lobby.admin === b.id, "An away creator must hand off the live host role");
+    const eligibility = await http(backend, `/lobby/admission?id=${created.ID}`, { token: a.token });
+    check(eligibility.code === "OK" && eligibility.retained === true, "Admission must report the returning identity’s reserved seat");
+    const returned = new Peer(backend, created.ID, a);
+    const resumed = await returned.join(true);
+    check(resumed.admin === a.id && !resumed.playerList[a.id].away, "Explicit return must restore the creator to the live roster");
+    console.log("PASS leave preserves the seat and the returning creator reclaims host");
+
+    stage = "expiry and last-lease disposal (real 90-second return window)";
     // Run last-member expiry alongside retained-member expiry; do not shorten server timers.
     const empty = await http(backend, "/lobby", { method: "POST", token: d.token, body: conf });
     const pd = new Peer(backend, empty.ID, d);
     await pd.join();
     after = pb.events.length;
     const beforeLoss = performance.now();
-    await Promise.all([recovered.loss(), pd.loss()]);
+    await Promise.all([returned.loss(), pd.loss()]);
     await pb.wait((e) => e.type === "LEFT_LOBBY" && e.payload.user === a.id && e.payload.lobby.playerList[a.id]?.connected === false, after);
     const retained = await listed(backend, empty.ID, (lobby) => lobby?.playerList[d.id]?.connected === false);
     waitingSnapshot(retained, 1);
     check(retained.admin === "" && !retained.playerList[d.id].ready, "A lobby with no live members must retain its lease but have no host");
     const [expired] = await Promise.all([
-        pb.wait((e) => e.type === "LEFT_LOBBY" && e.payload.user === a.id && !e.payload.lobby.playerList[a.id], after, GRACE + TIMEOUT),
-        listed(backend, empty.ID, (lobby) => !lobby, GRACE + TIMEOUT).then(() => {
-            check(performance.now() - beforeLoss >= GRACE - 500, "Last-member lobby was disposed before the 30-second grace");
+        pb.wait((e) => e.type === "LEFT_LOBBY" && e.payload.user === a.id && !e.payload.lobby.playerList[a.id], after, RETURN_WINDOW + TIMEOUT),
+        listed(backend, empty.ID, (lobby) => !lobby, RETURN_WINDOW + TIMEOUT).then(() => {
+            check(performance.now() - beforeLoss >= RETURN_WINDOW - 500, "Last-member lobby was disposed before the 90-second return window");
         }),
     ]);
-    check(performance.now() - beforeLoss >= GRACE - 500, "Lease expired earlier than the 30-second server grace");
+    check(performance.now() - beforeLoss >= RETURN_WINDOW - 500, "Lease expired earlier than the 90-second server return window");
     waitingSnapshot(expired.payload.lobby, 2);
     check(expired.payload.lobby.admin === b.id, "Expiry changed a still-connected host");
     await denied(backend, empty.ID, d, 400, "LOBBY_NOT_FOUND");

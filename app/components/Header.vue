@@ -141,12 +141,17 @@ onBeforeUnmount(() => {
     border-bottom: 1px solid var(--gb-line);
     background: var(--gb-bg);
     border-top: 2px solid var(--gb-accent);
+    --header-safe-top: var(--gb-safe-top);
+}
+/* Some installed Android browsers overlap the status bar without reporting an inset. */
+:global(html[data-android-app] .site-header) {
+    --header-safe-top: max(var(--gb-safe-top), calc(2rem - var(--gb-screen-top, 0px)));
 }
 .header-inner {
     min-height: var(--gb-header-height);
     max-width: 1440px;
     margin: auto;
-    padding: max(0.5rem, var(--gb-safe-top)) max(clamp(0.875rem, 3vw, 2.5rem), var(--gb-safe-right)) 0.5rem max(clamp(0.875rem, 3vw, 2.5rem), var(--gb-safe-left));
+    padding: max(0.5rem, var(--header-safe-top)) max(clamp(0.875rem, 3vw, 2.5rem), var(--gb-safe-right)) 0.5rem max(clamp(0.875rem, 3vw, 2.5rem), var(--gb-safe-left));
     display: flex;
     align-items: center;
     gap: clamp(1rem, 3vw, 3rem);
@@ -303,7 +308,7 @@ onBeforeUnmount(() => {
 @media (max-width: 850px), (max-width: 1100px) and (max-height: 540px) and (orientation: landscape) {
     .header-inner {
         min-height: var(--gb-header-height);
-        padding-block: max(0.25rem, var(--gb-safe-top)) 0.25rem;
+        padding-block: max(0.25rem, var(--header-safe-top)) 0.25rem;
         gap: 0.75rem;
         flex-wrap: wrap;
     }
@@ -361,7 +366,7 @@ onBeforeUnmount(() => {
 .scenic-header .header-inner {
     min-height: 0;
     max-width: none;
-    padding: max(0.55rem, var(--gb-safe-top)) max(clamp(1rem, 2.65vw, 2.75rem), var(--gb-safe-right)) 0.55rem max(clamp(1rem, 2.65vw, 2.75rem), var(--gb-safe-left));
+    padding: max(0.55rem, var(--header-safe-top)) max(clamp(1rem, 2.65vw, 2.75rem), var(--gb-safe-right)) 0.55rem max(clamp(1rem, 2.65vw, 2.75rem), var(--gb-safe-left));
     flex-wrap: nowrap;
 }
 .scenic-header .brand {
@@ -422,7 +427,7 @@ onBeforeUnmount(() => {
 }
 @media (orientation: landscape) and (max-height: 480px) {
     .scenic-header .header-inner {
-        padding-top: max(0.2rem, var(--gb-safe-top));
+        padding-top: max(0.2rem, var(--header-safe-top));
         padding-bottom: 0.2rem;
     }
     .scenic-header .brand img {

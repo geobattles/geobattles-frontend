@@ -1,8 +1,13 @@
 <template>
     <section class="round-reveal-map" :class="{ 'compact-map': compact }" aria-label="Round answer and best guesses">
         <div class="round-map-stage">
-            <div id="midround-map-slot" class="round-reveal-host"></div>
-            <GameplayMapRecovery v-if="active" active class="round-map-recovery" />
+            <Teleport :to="expandedTarget || 'body'" :disabled="!expanded || !expandedTarget">
+                <div id="midround-map-slot" class="round-reveal-host"></div>
+                <GameplayMapRecovery v-if="active" active class="round-map-recovery" />
+            </Teleport>
+            <button v-if="active && compact && answer" ref="expandButton" type="button" class="result-map-button expand-map" :aria-expanded="expanded" @click="openMap">
+                <UiIcon name="fullscreen" />Expand map
+            </button>
         </div>
         <div v-if="answer" class="map-details">
             <div class="map-location">
@@ -20,6 +25,17 @@
                 </span>
             </div>
         </div>
+        <dialog ref="dialog" class="expanded-result-map" :class="{ 'is-closing': closing }" :style="viewportStyle" :aria-labelledby="dialogTitle" @cancel.prevent="closeMap()">
+            <header class="expanded-map-header">
+                <div>
+                    <h2 :id="dialogTitle">Round results map</h2>
+                    <p v-if="coordinates">{{ coordinates }}</p>
+                </div>
+                <button ref="closeButton" type="button" class="result-map-button" aria-label="Close results map" @click="closeMap()"><UiIcon name="close" /></button>
+            </header>
+            <div ref="expandedTarget" class="expanded-map-stage" />
+            <div ref="noticeTarget" />
+        </dialog>
     </section>
 </template>
 
@@ -27,6 +43,46 @@
 import type { Coordinates } from "~/types/appTypes";
 
 const props = defineProps<{ answer?: Coordinates; distance: string; active: boolean; compact?: boolean }>();
+const emit = defineEmits<{ connectionTarget: [element: HTMLElement | null] }>();
+const dialog = useTemplateRef("dialog");
+const dialogTitle = useId();
+const expandButton = useTemplateRef("expandButton");
+const closeButton = useTemplateRef("closeButton");
+const expandedTarget = useTemplateRef("expandedTarget");
+const noticeTarget = useTemplateRef("noticeTarget");
+const expanded = ref(false);
+const closing = ref(false);
+const viewportStyle = useViewportFit(() => expanded.value);
+let closeTimer: ReturnType<typeof setTimeout> | undefined;
+
+const openMap = () => {
+    if (expanded.value || !dialog.value || !props.active || !props.compact) return;
+    dialog.value.showModal();
+    expanded.value = true;
+    emit("connectionTarget", noticeTarget.value);
+    closeButton.value?.focus({ preventScroll: true });
+};
+const finishClose = (restoreFocus: boolean) => {
+    clearTimeout(closeTimer);
+    if (!expanded.value) return;
+    dialog.value?.close();
+    expanded.value = closing.value = false;
+    emit("connectionTarget", null);
+    if (restoreFocus && props.active) expandButton.value?.focus({ preventScroll: true });
+};
+const closeMap = () => {
+    if (closing.value || !expanded.value) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) finishClose(true);
+    else {
+        closing.value = true;
+        closeTimer = setTimeout(() => finishClose(true), 160);
+    }
+};
+watch([() => props.active, () => props.compact], ([active, compact]) => {
+    if (!active || !compact) finishClose(false);
+});
+onBeforeUnmount(() => finishClose(false));
+
 const google = useGoogleStore();
 const player = usePlayerInfo();
 const { getPlayerColorByID } = usePlayerLookup();
@@ -170,5 +226,93 @@ const coordinates = computed(() => (props.answer ? `${formatCoordinate(props.ans
 .compact-map :deep(.round-map-recovery) {
     inset-block-end: 1.55rem;
     max-height: calc(100% - 1.95rem);
+}
+.result-map-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 44px;
+    min-height: 44px;
+    padding-inline: 0.65rem;
+    border: 1px solid #a2dfa570;
+    border-radius: 0.7rem;
+    background: #092e26;
+    color: var(--gb-text);
+    font-size: 0.79rem;
+    font-weight: 700;
+}
+.result-map-button .ui-icon {
+    width: 1rem;
+    height: 1rem;
+}
+.expand-map {
+    position: absolute;
+    z-index: 2;
+    top: 0.32rem;
+    left: 0.32rem;
+}
+.expanded-result-map {
+    position: fixed;
+    inset: var(--visible-top, var(--gb-screen-top, 0px)) 0 auto;
+    width: 100%;
+    max-width: none;
+    height: var(--visible-height, var(--gb-viewport-height));
+    max-height: none;
+    margin: 0;
+    padding: var(--gb-safe-top) var(--gb-safe-right) var(--gb-safe-bottom) var(--gb-safe-left);
+    overflow: hidden;
+    border: 0;
+    background: var(--gb-bg);
+    color: var(--gb-text);
+}
+.expanded-result-map[open] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) 0;
+}
+.expanded-result-map::backdrop {
+    background: #031c17dc;
+}
+.expanded-map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.32rem clamp(0.5rem, 2vw, 1rem);
+    border-bottom: 1px solid #a2dfa53d;
+    background: var(--gb-surface);
+}
+.expanded-map-header h2 {
+    font-size: 1.05rem;
+}
+.expanded-map-header p {
+    color: var(--gb-muted);
+    font: 0.72rem var(--gb-font-mono);
+}
+.expanded-map-stage {
+    position: relative;
+    min-height: 0;
+    background: #102e27;
+}
+.expanded-map-stage :deep(.round-map-recovery) {
+    inset-block-end: 2.5rem;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .expanded-result-map[open] {
+        animation: result-map-in 180ms ease-out both;
+    }
+    .expanded-result-map.is-closing {
+        animation: result-map-out 150ms ease-in both;
+    }
+    @keyframes result-map-in {
+        from {
+            opacity: 0;
+        }
+    }
+    @keyframes result-map-out {
+        to {
+            opacity: 0;
+        }
+    }
 }
 </style>

@@ -14,7 +14,7 @@ For local runtime, copy `.env.example` to ignored `.env` only if it does not alr
 
 For same-origin reverse-proxy hosting, public `/api` and private `http://backend:8080` are an example pair, with `backend` replaced by the reachable private service name. The proxy must strip `/api` and forward WebSocket upgrades. Environment settings do not create the proxy. Relative `/api` cannot be fetched directly by Node SSR, so provide the private absolute base. Never expose private container names or secrets through public runtime configuration.
 
-Restrict browser Maps keys by allowed APIs and website referrers. Keep backend keys separate and restricted. Starting services with keys for manual play does not authorize automated paid rounds or experiments.
+For manual gameplay or an Android PWA play check, start both local services with their configured Maps keys. Restrict the browser key to Maps JavaScript and the actual browser referrer, including the emulator's loopback origin when testing there. Keep the backend Street View key separate and restricted. Automated Maps scenarios require a separate spending scope.
 
 ## Devcontainer
 

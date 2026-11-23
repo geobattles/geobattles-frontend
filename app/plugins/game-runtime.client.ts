@@ -22,7 +22,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         powerupReceipt: commandPolicy.powerups.receipt,
         clock,
         reconcileLobbyRoute: () => session.reconcileLobbyRoute(),
-        showPlayerLeftToast: ui.showPlayerLeftToast,
+        showPlayerPresence: ui.showPlayerPresence,
         showLiveGuess: ui.showLiveGuess,
         render: (operation) => {
             // Start the view grant synchronously after state application, but

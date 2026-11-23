@@ -28,7 +28,14 @@
         </header>
 
         <div id="midround-map-and-results" class="recap-layout">
-            <GameplayRoundResultMap class="recap-map" :active="active" :answer="answer" :distance="distance" :compact="compact" />
+            <GameplayRoundResultMap
+                class="recap-map"
+                :active="active"
+                :answer="answer"
+                :distance="distance"
+                :compact="compact"
+                @connection-target="emit('connectionTarget', $event)"
+            />
             <div id="midround-results-container" class="recap-inspector">
                 <div class="recap-overview">
                     <h1 :id="titleId">Round {{ round }} <em>Results</em></h1>
@@ -104,7 +111,7 @@
 import type { Results } from "~/types/appTypes";
 import { formatGuessDistance, hasGuess, rankTotalResults, roundResultPoints } from "~/utils/resultUtils";
 
-const emit = defineEmits<{ leaveLobby: [] }>();
+const emit = defineEmits<{ leaveLobby: []; connectionTarget: [element: HTMLElement | null] }>();
 const titleId = useId();
 const game = useGameMode();
 const socket = useWebSocketStore();

@@ -64,6 +64,7 @@ export type Player = {
     lives?: number; // Backend omits zero lives.
     powerups?: boolean[];
     connected: boolean;
+    away?: boolean;
     /** Optional for older servers; only explicit true counts as ready. */
     ready?: boolean;
 };

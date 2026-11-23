@@ -1,14 +1,15 @@
 import type { Router } from "vue-router";
 import { isNavigationFailure, NavigationFailureType } from "vue-router";
-import type { createSocketRuntime } from "~/runtime/socket";
+import type { createSocketRuntime, LobbyExit } from "~/runtime/socket";
 import type { createRoundClock } from "~/runtime/roundClock";
 import { GameState } from "~/types/appTypes";
+import { isLobbyCode } from "~/utils/lobbyCode";
 
 // The committed route owns membership; a socket attempt and an incoming
 // phase change can never implicitly leave or claim another lobby.
 export const createLobbySession = (
     router: Router,
-    socket: Pick<ReturnType<typeof createSocketRuntime>, "connect" | "disconnect" | "getLobbyId" | "captureSession" | "status">,
+    socket: Pick<ReturnType<typeof createSocketRuntime>, "connect" | "disconnect" | "getLobbyId" | "captureSession" | "status" | "failAuthentication">,
     ports: { clearViews: () => void; disposePage: () => void; releaseViews: () => void; clock: Pick<ReturnType<typeof createRoundClock>, "suspend" | "reset"> }
 ) => {
     const battleState = useBattleRoyaleState();
@@ -16,6 +17,24 @@ export const createLobbySession = (
     const lobbyState = useLobbyState();
     const results = useResultsStore();
     const request = useRequestState();
+    const player = usePlayerInfo();
+    const returnHint = useLobbyReturnState();
+    const hintKey = "geobattles:return-lobby";
+    try {
+        const saved = JSON.parse(localStorage.getItem(hintKey) ?? "null") as { id?: unknown; playerId?: unknown } | null;
+        if (saved && typeof saved.id === "string" && isLobbyCode(saved.id) && typeof saved.playerId === "string") returnHint.value = { id: saved.id, playerId: saved.playerId };
+    } catch {
+        // Return remains available in this tab when storage is unavailable.
+    }
+    const storeHint = (hint: typeof returnHint.value) => {
+        returnHint.value = hint;
+        try {
+            if (hint) localStorage.setItem(hintKey, JSON.stringify(hint));
+            else localStorage.removeItem(hintKey);
+        } catch {
+            // Storage access never determines lobby admission.
+        }
+    };
     // HTTP/create/join intent is independent of socket attempts: there may not
     // be a socket yet when navigation, logout or another join supersedes it.
     let intentGeneration = 0;
@@ -59,12 +78,16 @@ export const createLobbySession = (
         return captureNavigation();
     };
     // Root unmount/HMR are unannounced transport teardown, not user leave.
-    const resetMembership = ({ intentional = false, preserveFailure = false, sameLobbyRetry = false } = {}) => {
+    const resetMembership = ({
+        exit = "transport",
+        preserveFailure = false,
+        sameLobbyRetry = false,
+    }: { exit?: LobbyExit; preserveFailure?: boolean; sameLobbyRetry?: boolean } = {}) => {
         const failure = preserveFailure ? request.requestError : null;
         membershipId = null;
         restoration = null;
         phaseNavigation = null;
-        socket.disconnect(intentional);
+        socket.disconnect(exit);
         ports.clearViews();
         battleState.currentState.value = GameState.WAITING;
         battleState.currentRound.value = 0;
@@ -93,7 +116,8 @@ export const createLobbySession = (
         navigationGeneration++;
         pendingNavigation = null;
         cancelLobbyIntent();
-        resetMembership({ intentional });
+        if (intentional) storeHint(null);
+        resetMembership({ exit: intentional ? "disconnect" : "transport" });
     };
     const waitForLobby = async (id: string, joining: Promise<void>) => {
         const isCurrent = socket.captureSession();
@@ -169,18 +193,25 @@ export const createLobbySession = (
             });
     };
     const failAuthentication = () => {
-        const owner = restoration;
+        const id = membershipId;
         cancelLobbyIntent();
         resetMembership();
-        request.fail({ command: "", code: "AUTHENTICATION_REQUIRED", message: "Your session is unavailable. Please sign in again before joining a lobby." });
-        // Auth expiry is a genuine current failure, not root/HMR cancellation.
-        // Preserve a newer navigation's fence while releasing invalid identity
-        // resources; a cancelled navigation can then resume this fallback.
-        if (!disposed && owner && routeLobbyId(router.currentRoute.value) === owner.id) {
-            restoration = { id: owner.id, state: "failed" };
-            reconcileLobbyRoute();
+        if (!disposed && id && routeLobbyId(router.currentRoute.value) === id) {
+            membershipId = id;
+            restoration = { id, state: "failed" };
+            socket.failAuthentication();
         }
     };
+    const stopRemembering = watch([() => socket.status.isConnected, () => player.value.ID], ([connected, playerId]) => {
+        const id = socket.getLobbyId();
+        if (connected && id && playerId && lobbyState.lobbySettings.value?.ID === id) storeHint({ id, playerId });
+    });
+    const stopClearingHint = watch(
+        () => socket.status.connectionError,
+        (error) => {
+            if (error?.code === "LOBBY_NOT_FOUND" && returnHint.value?.id === routeLobbyId(router.currentRoute.value)) storeHint(null);
+        }
+    );
     const removeNavigationFence = router.beforeEach((to) => {
         if (!disposed) beginNavigation(to);
     });
@@ -206,7 +237,7 @@ export const createLobbySession = (
             automatic.committed = true;
             if (automatic.owner === restoration && automatic.owner.state === "failed" && !target) {
                 cancelLobbyIntent();
-                resetMembership({ intentional: true, preserveFailure: true });
+                resetMembership({ preserveFailure: true });
             }
             // Automatic commits NEVER call connect or reset an expired owner.
             // Auth failure can still reconcile its distinct failure owner.
@@ -217,7 +248,11 @@ export const createLobbySession = (
         const id = membershipId ?? socket.getLobbyId();
         // Native ownership outlives terminal transport expiry. Release it
         // only after successful route commit, even with no live socket ID.
-        if (id && target !== id) resetMembership({ intentional: true });
+        if (id && target !== id) {
+            if (target && returnHint.value?.id === id) storeHint(null);
+            const confirmed = lobbyState.lobbySettings.value?.ID === id;
+            resetMembership({ exit: target || !confirmed ? "disconnect" : "leave" });
+        }
         if (!target) {
             restoration = null;
             return;
@@ -234,6 +269,8 @@ export const createLobbySession = (
         removeNavigationFence();
         removeRouteCleanup();
         removeRouteError();
+        stopRemembering();
+        stopClearingHint();
         leave();
     };
     const releaseSession = () => {
@@ -253,6 +290,9 @@ export const createLobbySession = (
         captureNavigation,
         beginNavigation,
         reconcileLobbyRoute,
+        forgetReturnHint: (hint: NonNullable<typeof returnHint.value>) => {
+            if (returnHint.value === hint) storeHint(null);
+        },
         getMembershipId: () => membershipId,
         isNavigating: () => pendingNavigation !== null,
         dispose,

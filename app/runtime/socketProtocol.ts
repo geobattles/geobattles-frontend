@@ -31,10 +31,12 @@ const isKnownEvent = (type: string): type is SocketType => eventTypes.has(type);
 
 export type SocketEnvelope = { type: string; status: SocketStatus; seq?: number; payload: unknown };
 
-export const decodeSocketFrame = (raw: unknown): { kind: "ping" } | { kind: "envelope"; envelope: SocketEnvelope } => {
+export const decodeSocketFrame = (raw: unknown): { kind: "ping" } | { kind: "heartbeat"; probe: number } | { kind: "envelope"; envelope: SocketEnvelope } => {
     if (typeof raw !== "string") throw new Error("Expected a text socket frame.");
     const message = needRecord(JSON.parse(raw) as unknown);
     if (message.command === "ping") return { kind: "ping" };
+    if (message.command === "heartbeat_ack" && typeof message.probe === "number" && Number.isSafeInteger(message.probe) && message.probe > 0)
+        return { kind: "heartbeat", probe: message.probe };
     const { type, status, seq, payload } = message;
     if (typeof type !== "string" || (status !== SocketStatus.NORMAL && status !== SocketStatus.WARNING && status !== SocketStatus.ERROR))
         throw new Error("Invalid socket envelope.");

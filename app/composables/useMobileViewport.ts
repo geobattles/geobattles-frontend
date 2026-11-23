@@ -70,6 +70,7 @@ export function provideMobileViewport() {
             virtualKeyboard?: EventTarget & { boundingRect?: DOMRectReadOnly };
         };
         const keyboardApi = navigation.virtualKeyboard;
+        const android = /Android/i.test(navigation.userAgent);
         const modeQueries = (["fullscreen", "window-controls-overlay", "standalone", "minimal-ui"] as const).map(
             (mode) => [mode, window.matchMedia(`(display-mode: ${mode})`)] as const
         );
@@ -79,6 +80,21 @@ export function provideMobileViewport() {
         let settle = 0;
         let angle = screenOrientation?.angle;
         let lastEdit = -Infinity;
+        let shellHeight = "";
+        let shellTop = "";
+        const updateShell = (height = "", top = "") => {
+            const style = document.documentElement.style;
+            if (shellHeight !== height) {
+                if (height) style.setProperty("--gb-measured-height", height);
+                else style.removeProperty("--gb-measured-height");
+                shellHeight = height;
+            }
+            if (shellTop !== top) {
+                if (top) style.setProperty("--gb-screen-top", top);
+                else style.removeProperty("--gb-screen-top");
+                shellTop = top;
+            }
+        };
 
         const measure = () => {
             frame = 0;
@@ -130,10 +146,20 @@ export function provideMobileViewport() {
             };
             state.editable.value = editable;
 
-            // Capture the unoccluded height after toolbar or keyboard animation settles.
-            // Keep a separate measurement for each orientation when both viewports resize.
+            // Installed shells may differ from CSS's dynamic viewport. Freeze the
+            // shell while editing or zooming; forms already fit the usable rect.
+            const appWindow = displayMode === "standalone" || displayMode === "fullscreen";
+            const unoccluded = !editable && !keyboard && Math.abs(scale - 1) <= 0.02;
+            const sinceEdit = now - lastEdit;
+            document.documentElement.toggleAttribute("data-android-app", android && displayMode === "standalone");
+            if (!appWindow) updateShell();
+            else if (unoccluded && sinceEdit >= 350) updateShell(`${Math.floor(visual.height)}px`, `${Math.max(0, visual.top)}px`);
+
             window.clearTimeout(settle);
-            if (canMeasureRest && restHeight !== visual.height) {
+            if (unoccluded && sinceEdit < 350) {
+                settle = window.setTimeout(schedule, 350 - sinceEdit);
+            } else if (canMeasureRest && restHeight !== visual.height) {
+                // Settle the unoccluded baseline separately for each orientation.
                 settle = window.setTimeout(() => {
                     rest.set(orientation, { width: layoutWidth, height: visual.height, mode: displayMode });
                     schedule();
@@ -165,6 +191,8 @@ export function provideMobileViewport() {
             for (const [source, event] of subscriptions) source?.removeEventListener(event, schedule);
             window.cancelAnimationFrame(frame);
             window.clearTimeout(settle);
+            updateShell();
+            document.documentElement.removeAttribute("data-android-app");
         };
     });
     onBeforeUnmount(() => stop?.());

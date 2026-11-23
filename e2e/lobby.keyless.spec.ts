@@ -1,5 +1,5 @@
 import { test, expect } from "./support/fixtures";
-import { registerGuest, createLobby, joinInvite, setReady, changeSettings, connected, leave, disposed } from "./support/ui";
+import { registerGuest, createLobby, joinInvite, setReady, changeSettings, connected, leave, reservedAfterLeave } from "./support/ui";
 
 test("independent guests: invite, settings, ready gate, reload, offline recovery and deliberate leave", async ({ run }) => {
     const host = await run.actor("Host");
@@ -57,9 +57,9 @@ test("independent guests: invite, settings, ready gate, reload, offline recovery
     expect(rejoin.payload?.timeRemaining).toBe(0);
     expect(host.id).toBe(originalHostId);
     await connected(host);
-    // Reload loses the original host lease; an already-connected peer owns the handoff.
-    await expect(peer.row()).toHaveAttribute("data-host", "true");
-    await expect(host.row()).toHaveAttribute("data-host", "false");
+    expect(rejoin.payload?.lobby?.admin).toBe(originalHostId);
+    await expect(peer.row()).toHaveAttribute("data-host", "false");
+    await expect(host.row()).toHaveAttribute("data-host", "true");
 
     const offlineMark = host.mark();
     const peerRecoveryMark = peer.mark();
@@ -71,7 +71,7 @@ test("independent guests: invite, settings, ready gate, reload, offline recovery
     await expect(host.row(peer.name)).toHaveAttribute("data-connected", "false");
     await peer.setOffline(false);
     const recovery = await peer.event("REJOIN_ROUND", () => true, peerRecoveryMark);
-    expect(recovery.payload?.lobby?.admin).toBe(host.id); // Returning host must not reclaim it.
+    expect(recovery.payload?.lobby?.admin).toBe(host.id); // This guest was never the creator.
     expect(recovery.payload?.phase).toBe("WAITING");
     expect(recovery.payload?.lobby?.conf.name).toBe(name);
     await connected(peer);
@@ -80,12 +80,17 @@ test("independent guests: invite, settings, ready gate, reload, offline recovery
 
     const leaveMark = host.mark();
     await leave(peer);
-    const afterLeave = await host.snapshot((lobby) => !lobby.playerList[peer.id], leaveMark);
-    expect(afterLeave.numPlayers).toBe(1);
-    await expect(host.row(peer.name)).toHaveCount(0);
+    const afterLeave = await host.snapshot((lobby) => lobby.playerList[peer.id]?.away === true, leaveMark);
+    expect(afterLeave.numPlayers).toBe(2);
+    await expect(host.row(peer.name)).toContainText("Away");
+    const returnMark = peer.mark();
+    await peer.page.getByRole("link", { name: /return to lobby/i }).click();
+    await peer.event("REJOIN_ROUND", () => true, returnMark);
+    await connected(peer);
+    await leave(peer);
     await connected(host);
     await leave(host);
-    await disposed(lobbyId);
+    await reservedAfterLeave(lobbyId);
     expect(run.started.size).toBe(0);
     expect(run.sdkRequests).toBe(0);
     expect(run.startPermits).toBe(0);

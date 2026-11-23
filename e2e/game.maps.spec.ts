@@ -9,7 +9,7 @@ import {
     connected,
     guess,
     leave,
-    disposed,
+    reservedAfterLeave,
     readyButton,
     ownServerScore,
     journalScoreText,
@@ -204,7 +204,7 @@ test("real Maps round: map-only retry, recovery clock, ordered results, ready-ga
 
     await leave(peer);
     await leave(host);
-    await disposed(lobbyId);
+    await reservedAfterLeave(lobbyId);
     for (const actor of [host, peer]) {
         await actor.goto("/journal");
         await expect(actor.page.getByText(/local.*device|this device|stored locally/i).first()).toBeVisible();

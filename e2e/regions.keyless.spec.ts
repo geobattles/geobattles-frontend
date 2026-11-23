@@ -1,5 +1,5 @@
 import { test, expect } from "./support/fixtures";
-import { createLobby, disposed, joinInvite, leave, openSettingsSection, registerGuest, setReady } from "./support/ui";
+import { createLobby, reservedAfterLeave, joinInvite, leave, openSettingsSection, registerGuest, setReady } from "./support/ui";
 import { settings } from "./support/safety.mjs";
 import { regionScoreScale } from "../app/utils/regionScoring";
 import type { CountryCatalog } from "../app/types/regions";
@@ -377,7 +377,7 @@ test("regions: presets, single-country map, Custom, adaptive scoring and compact
     await expect(desktop).toHaveCount(0);
     await expect(peer.page.getByRole("button", { name: /^(modify|edit settings|settings)$/i })).toBeFocused();
     await leave(peer);
-    await disposed(id);
+    await reservedAfterLeave(id);
     expect(run.started.size).toBe(0);
     expect(run.sdkRequests).toBe(0);
     expect(run.startPermits).toBe(0);

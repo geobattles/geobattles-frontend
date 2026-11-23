@@ -1,36 +1,32 @@
 <template>
-    <div class="atlas-menu-shell">
-        <Header />
-        <main id="main-content" class="page-shell">
-            <div class="page-heading">
-                <div>
-                    <p class="eyebrow">Player credentials</p>
-                    <h1>Profile</h1>
-                </div>
+    <div class="profile-shell">
+        <picture class="profile-scenery" aria-hidden="true">
+            <source media="(max-width: 700px) and (orientation: portrait)" srcset="/images/emerald-lake-portrait.webp" />
+            <img src="/images/emerald-lake.webp" alt="" width="1672" height="941" />
+        </picture>
+        <Header scenic navigation />
+        <main id="main-content" class="page-shell profile-page">
+            <header class="profile-heading">
+                <h1>Profile</h1>
                 <NuxtLink to="/journal" class="btn btn-secondary"><UiIcon name="journal" /> Expedition journal</NuxtLink>
-            </div>
-            <ClientOnly
-                ><div class="profile-layout">
-                    <aside class="panel identity-panel">
-                        <div class="pass-band"><span>Player pass</span><span aria-hidden="true">GB / ID</span></div>
-                        <div class="profile-avatar" aria-hidden="true">{{ (player.displayName || "E").slice(0, 1).toUpperCase() }}</div>
-                        <h2>{{ player.displayName || "Explorer" }}</h2>
-                        <span class="badge mt-4">{{ player.guest ? "Guest explorer" : "Registered explorer" }}</span>
-                        <hr class="divider" />
-                        <dl class="identity-details">
+            </header>
+            <ClientOnly>
+                <div class="profile-layout">
+                    <aside class="profile-card identity-panel" aria-label="Player identity">
+                        <div class="identity-main">
+                            <div class="profile-avatar" aria-hidden="true">{{ (player.displayName || "E").slice(0, 1).toUpperCase() }}</div>
                             <div>
-                                <dt>Username</dt>
-                                <dd>{{ player.username || "Guest session" }}</dd>
+                                <h2>{{ player.displayName || "Explorer" }}</h2>
+                                <p class="identity-kind">{{ player.guest ? "Guest explorer" : "Registered explorer" }}</p>
                             </div>
-                            <div>
-                                <dt>Display name</dt>
-                                <dd>{{ player.displayName || "Not set" }}</dd>
-                            </div>
+                        </div>
+                        <dl v-if="player.username" class="identity-details">
+                            <dt>Username</dt>
+                            <dd>{{ player.username }}</dd>
                         </dl>
                     </aside>
-                    <section v-if="!player.guest" class="panel account-panel" :data-compact-form="compact || undefined" :style="viewportStyle">
+                    <section v-if="!player.guest" class="profile-card account-panel" :data-compact-form="compact || undefined" :style="viewportStyle">
                         <h2>Account settings</h2>
-                        <p class="muted mt-2 mb-6">Update your name, or choose a new password.</p>
                         <form ref="editor" class="form-stack profile-form" :data-viewport-scroll="compact || undefined" @submit.prevent="submit">
                             <div class="field" data-viewport-field>
                                 <label for="profile-display">Display name</label
@@ -47,7 +43,6 @@
                                 />
                                 <p id="profile-name-help" class="field-help">3–15 characters. Shown to other players.</p>
                             </div>
-                            <hr class="divider !my-1" />
                             <div class="field" data-viewport-field>
                                 <label for="profile-password">New password <span class="muted font-normal">(optional)</span></label
                                 ><UiPassword id="profile-password" v-model="form.password" autocomplete="new-password" describedby="profile-password-help" />
@@ -69,7 +64,7 @@
                             </div>
                             <p v-if="error" class="field-error" role="alert">{{ error }}</p>
                             <p v-if="saved" class="accent" role="status">Your profile has been updated.</p>
-                            <div class="btn-row justify-end">
+                            <div class="btn-row profile-actions">
                                 <UiKeyboardDone v-if="compact" @click="finishEditing" />
                                 <button class="btn btn-secondary" type="button" :disabled="busy" @click="reset">Reset changes</button
                                 ><button class="btn" type="submit" :disabled="!valid || busy" :aria-busy="busy">
@@ -78,21 +73,17 @@
                             </div>
                         </form>
                     </section>
-                    <section v-else class="panel guest-profile">
-                        <p class="eyebrow">Guest access</p>
+                    <section v-else class="profile-card guest-profile">
                         <h2>You’re exploring as a guest.</h2>
-                        <p class="muted mt-4">Your guest name works in every lobby. To customize a profile or sign in again later, create an account.</p>
-                        <p class="field-help mt-4">A new account is a separate identity. Your current guest journal stays with this guest on this device.</p>
+                        <p class="muted mt-4">Create an account to edit your profile and sign in again later.</p>
+                        <p class="field-help mt-4">A new account is a separate identity. Your guest journal stays with your guest profile on this device.</p>
                         <NuxtLink to="/signup" class="btn mt-6">Create an account <UiIcon name="arrow" /></NuxtLink>
                     </section>
                 </div>
-                <template #fallback
-                    ><section class="panel">
-                        <h2>Your explorer profile</h2>
-                        <p class="muted mt-4">Your account details and profile controls will appear once your identity is confirmed.</p>
-                    </section></template
-                ></ClientOnly
-            >
+                <template #fallback>
+                    <p class="profile-card" role="status">Loading your profile…</p>
+                </template>
+            </ClientOnly>
         </main>
     </div>
 </template>
@@ -100,8 +91,8 @@
 const player = usePlayerInfo();
 const auth = useAuthStore();
 const editor = useTemplateRef("editor");
-const { visibleHeight, editingHeightLoss, finishEditing } = useViewportForm(editor);
-const compact = computed(() => editingHeightLoss.value >= 64 && visibleHeight.value < 300);
+const { field, visibleHeight, editingHeightLoss, finishEditing } = useViewportForm(editor);
+const compact = computed(() => !!field.value && visibleHeight.value < 300 && (editingHeightLoss.value >= 64 || visibleHeight.value < 220));
 const viewportStyle = useViewportFit(() => compact.value);
 const busy = ref(false);
 const error = ref("");
@@ -140,64 +131,119 @@ const submit = async () => {
 useHead({ title: "Profile" });
 </script>
 <style scoped>
+.profile-shell {
+    position: relative;
+    isolation: isolate;
+    min-height: var(--gb-viewport-height);
+    background: var(--gb-bg);
+}
+.profile-scenery {
+    position: absolute;
+    z-index: -1;
+    inset: 0 0 auto;
+    height: min(65dvh, 32rem);
+    overflow: hidden;
+    pointer-events: none;
+}
+.profile-scenery img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 43%;
+}
+.profile-scenery::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, #041d17a8, var(--gb-bg));
+    content: "";
+}
+.profile-page {
+    max-width: 64rem;
+}
+.profile-heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-block: clamp(0.6rem, 3vw, 2rem) clamp(1rem, 3vw, 1.8rem);
+}
+.profile-heading h1 {
+    font: italic 900 clamp(2.4rem, 6vw, 4.25rem) / 1 var(--gb-font-headline);
+    letter-spacing: -0.055em;
+    text-shadow: 0 2px 16px #001810;
+}
 .profile-layout {
     display: grid;
-    grid-template-columns: minmax(230px, 0.7fr) minmax(0, 1.6fr);
-    gap: 1.5rem;
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.45fr);
+    gap: clamp(0.85rem, 2.5vw, 1.5rem);
     align-items: start;
+}
+.profile-card {
+    min-width: 0;
+    padding: clamp(1rem, 3vw, 1.7rem);
+    border: 1px solid color-mix(in srgb, var(--gb-accent) 26%, var(--gb-bg));
+    border-radius: 1rem;
+    background: var(--gb-surface);
+    box-shadow: 0 0.5rem 1.5rem #00181055;
 }
 .identity-panel {
     background:
-        linear-gradient(145deg, #162a23d9 30%, var(--gb-surface) 75%),
-        url("/images/atlas-relief.svg") center / cover;
+        linear-gradient(145deg, #102b21cc, var(--gb-surface)),
+        url("/images/atlas-relief.svg") center / cover,
+        var(--gb-surface);
 }
-.pass-band {
+.identity-main {
     display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 1.3rem;
-    padding-bottom: 0.7rem;
-    color: var(--gb-success);
-    border-bottom: 1px dashed var(--gb-line);
-    font: 700 0.72rem var(--gb-font-mono);
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
+    align-items: center;
+    min-width: 0;
+    gap: 0.85rem;
 }
 .identity-panel h2 {
     overflow-wrap: anywhere;
-    margin-top: 1.5rem;
+    font-size: clamp(1.15rem, 3vw, 1.6rem);
+}
+.identity-kind {
+    margin-top: 0.25rem;
+    color: var(--gb-success);
+    font-size: 0.86rem;
 }
 .profile-avatar {
     display: grid;
     place-items: center;
-    width: 70px;
-    height: 70px;
-    border: 1px solid var(--gb-line);
-    background: var(--gb-accent);
+    flex: none;
+    width: clamp(3rem, 8vw, 4rem);
+    aspect-ratio: 1;
+    border-radius: 0.9rem;
+    background: var(--gb-action-fill);
     color: var(--gb-on-accent);
-    clip-path: polygon(15% 0, 100% 0, 100% 82%, 82% 100%, 0 100%, 0 15%);
-    font: italic 900 2.3rem var(--gb-font-headline);
+    font: italic 900 1.9rem var(--gb-font-headline);
 }
 .identity-details {
     display: grid;
-    gap: 1.5rem;
+    gap: 0.2rem;
+    margin: 1rem 0 0;
+    padding-top: 0.8rem;
+    border-top: 1px solid color-mix(in srgb, var(--gb-line) 50%, transparent);
 }
 .identity-details dt {
-    font-size: 0.75rem;
     color: var(--gb-muted);
+    font-size: 0.8rem;
 }
 .identity-details dd {
-    margin: 0.4rem 0 0;
+    margin: 0;
     overflow-wrap: anywhere;
 }
-.guest-profile {
-    padding-block: 2.5rem;
+.profile-form {
+    margin-top: 1rem;
 }
 .profile-form :deep(.input) {
     font-size: max(16px, 1rem);
 }
-.account-panel[data-compact-form] > p {
-    display: none;
+.profile-actions {
+    justify-content: flex-end;
+    padding-top: 0.75rem;
+    border-top: 1px solid color-mix(in srgb, var(--gb-line) 50%, transparent);
 }
 .account-panel[data-compact-form] .profile-form {
     max-height: max(5rem, calc(var(--visible-height, var(--gb-viewport-height)) - 3rem - var(--gb-safe-bottom)));
@@ -207,7 +253,7 @@ useHead({ title: "Profile" });
 }
 @media (max-width: 700px) {
     .profile-layout {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 }
 </style>

@@ -39,18 +39,16 @@ defineProps<{ tone: "joining" | "lost"; title: string; description: string; code
 <style scoped>
 .connection-panel {
     --signal: var(--gb-accent);
-    --signal-grid: #b6e38818;
     width: min(100%, 420px);
     margin-inline: auto;
     overflow: hidden;
     color: var(--gb-text);
     background: var(--gb-surface);
-    border: 1px solid var(--gb-line);
-    border-radius: var(--gb-radius);
+    border: 1px solid color-mix(in srgb, var(--signal) 38%, var(--gb-bg));
+    border-radius: 1rem;
 }
 .connection-panel--lost {
     --signal: var(--gb-coral);
-    --signal-grid: #ffab981a;
 }
 .connection-panel--embedded {
     border: 0;
@@ -61,19 +59,17 @@ defineProps<{ tone: "joining" | "lost"; title: string; description: string; code
 }
 .signal-visual {
     position: relative;
-    height: clamp(94px, 22vh, 160px);
+    height: clamp(72px, 18dvh, 128px);
     overflow: hidden;
-    background-color: #1d241d;
-    background-image: linear-gradient(to right, var(--signal-grid) 1px, transparent 1px), linear-gradient(to bottom, var(--signal-grid) 1px, transparent 1px);
-    background-size: 20px 20px;
+    background: radial-gradient(ellipse at 74% 24%, #275848, transparent 76%), linear-gradient(135deg, #092b25, var(--gb-bg));
     color: var(--signal);
     border-bottom: 1px solid var(--gb-line);
 }
 .connection-panel--lost .signal-visual {
-    background-color: #2c2020;
+    background: radial-gradient(ellipse at 74% 24%, #443731, transparent 76%), linear-gradient(135deg, #162a23, var(--gb-bg));
 }
 .connection-panel--standalone .signal-visual {
-    height: clamp(156px, 29dvh, 256px);
+    height: clamp(104px, 25dvh, 195px);
 }
 .signal-map {
     position: absolute;
@@ -93,7 +89,6 @@ defineProps<{ tone: "joining" | "lost"; title: string; description: string; code
 }
 .signal-route {
     stroke-dasharray: 34 10;
-    animation: route-scan 1.7s ease-in-out 3;
 }
 .signal-break {
     stroke-dasharray: 8 5;
@@ -162,9 +157,9 @@ defineProps<{ tone: "joining" | "lost"; title: string; description: string; code
 @media (max-width: 600px), (max-width: 980px) and (max-height: 500px) and (orientation: landscape) {
     .connection-panel--standalone {
         display: grid;
-        grid-template-rows: minmax(10rem, 1fr) auto;
+        grid-template-rows: minmax(6rem, 1fr) auto;
         width: 100%;
-        min-height: 100dvh;
+        min-height: var(--gb-viewport-height);
         border: 0;
         border-radius: 0;
     }
@@ -177,7 +172,6 @@ defineProps<{ tone: "joining" | "lost"; title: string; description: string; code
         left: max(0.875rem, env(safe-area-inset-left));
     }
     .connection-panel--standalone .panel-copy {
-        min-height: 36dvh;
         padding: clamp(1.25rem, 5dvh, 2.5rem) max(1.25rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
     }
 }
@@ -197,18 +191,14 @@ defineProps<{ tone: "joining" | "lost"; title: string; description: string; code
         padding-bottom: max(1rem, env(safe-area-inset-bottom));
     }
 }
-@keyframes route-scan {
-    0%,
-    100% {
-        stroke-dashoffset: 0;
+@media (prefers-reduced-motion: no-preference) {
+    .connection-panel--joining .signal-ring {
+        animation: signal-search 1.25s ease-in-out 3;
     }
-    50% {
-        stroke-dashoffset: 22;
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    .signal-route {
-        animation: none;
+    @keyframes signal-search {
+        50% {
+            opacity: 0.18;
+        }
     }
 }
 </style>

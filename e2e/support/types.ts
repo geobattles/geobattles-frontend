@@ -2,6 +2,7 @@ export interface Player {
     name: string;
     connected: boolean;
     ready: boolean;
+    away?: boolean;
     color: string;
     lives?: number;
 }

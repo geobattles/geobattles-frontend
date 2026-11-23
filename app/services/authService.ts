@@ -1,3 +1,5 @@
+export class RefreshRejectedError extends Error {}
+
 interface AuthResponse {
     AccessToken: string;
     RefreshToken: string;
@@ -96,33 +98,14 @@ export const createAuthService = (baseEndpoint: string) => ({
     async refreshAccessToken(refreshToken: string): Promise<AuthResponse> {
         const endpoint = baseEndpoint;
 
-        try {
-            const response = await fetch(`${endpoint}/auth/refresh`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ refresh_token: refreshToken }),
-            });
-
-            if (!response.ok) {
-                let errorData;
-                try {
-                    errorData = await response.json();
-                } catch (e) {
-                    throw new Error(`Token refresh failed with status: ${response.status}`);
-                }
-                console.error("Refresh token API error:", errorData);
-                // Specific error handling for invalid refresh token might be useful
-                throw new Error(errorData?.error || `Token refresh failed with status: ${response.status}`);
-            }
-
-            const responseData = await response.json();
-            return responseData;
-        } catch (error: any) {
-            console.error("Refresh token service error:", error);
-            throw error instanceof Error ? error : new Error("An unexpected error occurred during token refresh.");
-        }
+        const response = await fetch(`${endpoint}/auth/refresh`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        if (response.status === 401 || response.status === 403) throw new RefreshRejectedError("Please sign in again.");
+        if (!response.ok) throw new Error("The authentication server is unavailable.");
+        return await response.json();
     },
 
     /**

@@ -12,7 +12,7 @@
     --gb-on-accent: #142515;
     --gb-accent-hover: #d5f2b1;
     --gb-header-height: 72px;
-    --gb-viewport-height: 100vh;
+    --gb-viewport-height: var(--gb-measured-height, 100vh);
     --gb-safe-top: env(safe-area-inset-top, 0px);
     --gb-safe-right: env(safe-area-inset-right, 0px);
     --gb-safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -36,7 +36,7 @@
 }
 @supports (height: 100dvh) {
     :root {
-        --gb-viewport-height: 100dvh;
+        --gb-viewport-height: var(--gb-measured-height, 100dvh);
     }
 }
 html {

@@ -65,29 +65,22 @@ useHead({
         { name: "theme-color", content: "#0c1916" },
     ],
 });
-const beforeUnload = (event: BeforeUnloadEvent) => {
-    if (routeLobbyId(router.currentRoute.value)) {
-        event.preventDefault();
-        event.returnValue = "";
-    }
-};
 onMounted(() => {
     mounted.value = true;
     document.addEventListener("fullscreenchange", updateAlertTarget);
     updateAlertTarget();
     app.$gameRuntime.google.installLoader(config.public.GMAPS_API);
-    window.addEventListener("beforeunload", beforeUnload);
     void auth.initializeAuth().catch(() => console.warn("Authentication initialization failed."));
 });
 onBeforeUnmount(() => {
     document.removeEventListener("fullscreenchange", updateAlertTarget);
-    window.removeEventListener("beforeunload", beforeUnload);
     app.$gameRuntime?.leave();
 });
 </script>
 <style scoped>
 .app-root {
-    min-height: var(--gb-viewport-height);
+    min-height: calc(var(--gb-viewport-height) + var(--gb-screen-top, 0px));
+    padding-block-start: var(--gb-screen-top, 0px);
 }
 .request-alert {
     position: fixed;

@@ -5,7 +5,7 @@
             <ClientOnly>
                 <SocketSessionFeedback
                     :retained="waitingView"
-                    :cinematic-duration="minimumJoinDisplayMs"
+                    :cinematic-duration="route.query.resume === '1' ? undefined : minimumJoinDisplayMs"
                     :cancel-label="entryPath === '/lobby/join' ? 'Change code' : entryPath === '/lobby/list' ? 'Back to lobbies' : undefined"
                     :banner-target="bannerTarget"
                     @leaveLobby="waitingView ? leave() : cancelEntry()"
@@ -102,7 +102,7 @@ const route = useRoute();
 const router = useRouter();
 const lobbyId = computed(() => routeLobbyId(route));
 const minimumJoinDisplayMs = 2000;
-const joinDisplayComplete = ref(false);
+const joinDisplayComplete = ref(route.query.resume === "1");
 let joinDisplayTimer: ReturnType<typeof setTimeout> | undefined;
 const finishJoinDisplay = () => {
     clearTimeout(joinDisplayTimer);
@@ -157,7 +157,7 @@ useHead({ title: "Lobby" });
     position: relative;
     isolation: isolate;
     width: 100%;
-    height: 100dvh;
+    height: var(--gb-viewport-height);
     overflow: hidden;
     background: #052e24;
     color: #f8fafc;

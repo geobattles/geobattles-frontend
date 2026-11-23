@@ -33,7 +33,9 @@
                         ><small v-if="lobby.lobbySettings?.admin === id"><UiIcon name="crown" />Host</small>
                     </div>
                     <span class="badge" :class="member.connected ? (member.ready ? 'badge-success' : '') : 'badge-warn'"
-                        ><UiIcon v-if="member.ready && member.connected" name="check" />{{ !member.connected ? "Reconnecting" : member.ready ? "Ready" : "Not ready" }}</span
+                        ><UiIcon v-if="member.ready && member.connected" name="check" />{{
+                            !member.connected ? (member.away ? "Away" : "Reconnecting") : member.ready ? "Ready" : "Not ready"
+                        }}</span
                     >
                 </li>
             </TransitionGroup>
@@ -41,7 +43,6 @@
         <button v-if="staging && overflows" class="roster-more btn btn-quiet" type="button" :aria-controls="rosterId" @click="scrollRoster">
             {{ atEnd ? "Back to top" : "Show more" }} <span aria-hidden="true">{{ atEnd ? "↑" : "⌄" }}</span>
         </button>
-        <p v-if="away" class="field-help mt-2">Waiting for disconnected players to return.</p>
     </section>
 </template>
 <script setup lang="ts">
@@ -86,7 +87,6 @@ const entries = computed(() => {
     const priority = (id: string) => (id === player.value.ID ? 0 : id === lobby.lobbySettings?.admin ? 1 : 2);
     return members.sort(([a, first], [b, second]) => priority(a) - priority(b) || first.name.localeCompare(second.name) || a.localeCompare(b));
 });
-const away = computed(() => entries.value.some(([, member]) => !member.connected));
 </script>
 <style scoped>
 .roster-title {

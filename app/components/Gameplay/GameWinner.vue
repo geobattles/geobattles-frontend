@@ -114,9 +114,9 @@ onBeforeUnmount(() => {
     --reveal-inset: clamp(0.7rem, 3.6vw, 3.8rem);
     position: fixed;
     isolation: isolate;
-    inset: 0;
+    inset: var(--gb-screen-top, 0px) 0 auto;
     width: 100%;
-    height: 100dvh;
+    height: var(--gb-viewport-height);
     max-width: none;
     max-height: none;
     margin: 0;

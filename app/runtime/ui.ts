@@ -92,7 +92,9 @@ export const createUIRuntime = (googleStore: ReturnType<typeof import("./google"
     const dispatch = (event: string, detail: unknown) => {
         for (const callback of listeners.get(event) ?? []) callback(new CustomEvent(event, { detail }));
     };
-    const showPlayerLeftToast = (playerName: string, disconnected = false) => dispatch("showPlayerLeftToast", { playerName, disconnected });
+    const showPlayerPresence = (summary: string, interrupted = false) => {
+        toast.add({ severity: interrupted ? "warn" : "info", summary, life: 4000 });
+    };
     const showLiveGuess = (feedback: LiveGuessFeedback) => dispatch("liveGuess", feedback);
     const dispose = () => {
         detach();
@@ -118,7 +120,6 @@ export const createUIRuntime = (googleStore: ReturnType<typeof import("./google"
         on,
         off,
         dispatch,
-        triggerPlayerLeft: showPlayerLeftToast,
-        showPlayerLeftToast,
+        showPlayerPresence,
     });
 };

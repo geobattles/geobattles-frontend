@@ -244,8 +244,8 @@ export const useLobbyStore = () => {
         isPlayerReady: computed(() => !!playerInfo.value.ID && lobbySettings.value?.playerList[playerInfo.value.ID]?.ready === true),
         readyPlayerCount: computed(() => Object.values(lobbySettings.value?.playerList ?? {}).filter((member) => member.connected && member.ready === true).length),
         allPlayersReady: computed(() => {
-            const members = Object.values(lobbySettings.value?.playerList ?? {});
-            return members.length > 0 && members.every((member) => member.connected && member.ready === true);
+            const connected = Object.values(lobbySettings.value?.playerList ?? {}).filter((member) => member.connected);
+            return connected.length > 0 && connected.every((member) => member.ready === true);
         }),
 
         // Methods

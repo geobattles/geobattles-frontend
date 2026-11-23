@@ -7,6 +7,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const auth = useAuthStore();
     const player = usePlayerInfo();
     const publicPaths = ["/", "/signup", "/lobby/list", "/lobby/join", "/about", "/journal"];
+    if (import.meta.client && publicPaths.includes(to.path) && app.$gameRuntime.getMembershipId()) return;
     // Runs before the guard decision on both SSR and client navigation, not in
     // the later root onBeforeMount hook. Tokens stay in scoped cookies/runtime.
     try {
