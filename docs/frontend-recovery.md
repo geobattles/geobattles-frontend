@@ -37,8 +37,10 @@ reduced motion.
 
 Leaving for Home sends resumable `leave` on a live socket and stops automatic
 retries. The home screen can show a saved lobby code for the same identity.
-The code is a navigation hint and the server decides whether the seat still
-exists. Direct lobby switches and logout send permanent `disconnect`.
+Home checks the saved code on entry, on return to the foreground, and
+periodically while visible. A successful lobby listing that omits the code
+clears the saved hint. An unavailable listing keeps the hint for a later check.
+The server decides whether the seat still exists. Direct lobby switches and logout send permanent `disconnect`.
 The creator reclaims admin on admission. Overlapping route changes and old
 socket callbacks are fenced by their existing generation checks.
 

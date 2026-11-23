@@ -33,12 +33,58 @@
     </div>
 </template>
 <script setup lang="ts">
+import { createLobbyService } from "~/services/lobbyService";
+
 const auth = useAuthStore();
 const player = usePlayerInfo();
 const returnHint = useLobbyReturnState();
-const mounted = ref(false);
-onMounted(() => (mounted.value = true));
-const returnCode = computed(() => (mounted.value && returnHint.value?.playerId === player.value.ID ? returnHint.value?.id : undefined));
+const app = useNuxtApp();
+const lobbyService = createLobbyService(useRuntimeConfig().public.BACKEND_HOST);
+const savedLobby = computed(() => (returnHint.value?.playerId === player.value.ID ? returnHint.value : null));
+const verifiedLobby = shallowRef<typeof savedLobby.value>(null);
+const returnCode = computed(() => (verifiedLobby.value === savedLobby.value ? verifiedLobby.value?.id : undefined));
+let stopReturnCheck: (() => void) | undefined;
+onMounted(() => {
+    stopReturnCheck = watch(
+        savedLobby,
+        (hint, _, cleanup) => {
+            verifiedLobby.value = null;
+            if (!hint) return;
+
+            let request: AbortController | undefined;
+            const check = async () => {
+                if (document.hidden || request) return;
+                const controller = new AbortController();
+                request = controller;
+                const timeout = window.setTimeout(() => controller.abort(), 5000);
+                try {
+                    const lobbies = await lobbyService.fetchLobbyList({ cache: "no-store", signal: controller.signal });
+                    if (controller.signal.aborted || savedLobby.value !== hint || !lobbies || typeof lobbies !== "object" || Array.isArray(lobbies)) return;
+                    if (Object.hasOwn(lobbies, hint.id)) verifiedLobby.value = hint;
+                    else app.$gameRuntime.forgetReturnHint(hint);
+                } catch {
+                    // An unavailable server cannot confirm that the lobby closed.
+                } finally {
+                    window.clearTimeout(timeout);
+                    request = undefined;
+                }
+            };
+            const refresh = () => void check();
+            const timer = window.setInterval(refresh, 15_000);
+            document.addEventListener("visibilitychange", refresh);
+            window.addEventListener("online", refresh);
+            refresh();
+            cleanup(() => {
+                request?.abort();
+                window.clearInterval(timer);
+                document.removeEventListener("visibilitychange", refresh);
+                window.removeEventListener("online", refresh);
+            });
+        },
+        { immediate: true }
+    );
+});
+onBeforeUnmount(() => stopReturnCheck?.());
 const { createLobby } = useLobbyStore();
 const toast = useToast();
 const creating = ref(false);

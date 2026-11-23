@@ -290,6 +290,9 @@ export const createLobbySession = (
         captureNavigation,
         beginNavigation,
         reconcileLobbyRoute,
+        forgetReturnHint: (hint: NonNullable<typeof returnHint.value>) => {
+            if (returnHint.value === hint) storeHint(null);
+        },
         getMembershipId: () => membershipId,
         isNavigating: () => pendingNavigation !== null,
         dispose,
