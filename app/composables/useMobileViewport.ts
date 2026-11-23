@@ -70,6 +70,7 @@ export function provideMobileViewport() {
             virtualKeyboard?: EventTarget & { boundingRect?: DOMRectReadOnly };
         };
         const keyboardApi = navigation.virtualKeyboard;
+        const android = /Android/i.test(navigation.userAgent);
         const modeQueries = (["fullscreen", "window-controls-overlay", "standalone", "minimal-ui"] as const).map(
             (mode) => [mode, window.matchMedia(`(display-mode: ${mode})`)] as const
         );
@@ -150,6 +151,7 @@ export function provideMobileViewport() {
             const appWindow = displayMode === "standalone" || displayMode === "fullscreen";
             const unoccluded = !editable && !keyboard && Math.abs(scale - 1) <= 0.02;
             const sinceEdit = now - lastEdit;
+            document.documentElement.toggleAttribute("data-android-app", android && displayMode === "standalone");
             if (!appWindow) updateShell();
             else if (unoccluded && sinceEdit >= 350) updateShell(`${Math.floor(visual.height)}px`, `${Math.max(0, visual.top)}px`);
 
@@ -190,6 +192,7 @@ export function provideMobileViewport() {
             window.cancelAnimationFrame(frame);
             window.clearTimeout(settle);
             updateShell();
+            document.documentElement.removeAttribute("data-android-app");
         };
     });
     onBeforeUnmount(() => stop?.());

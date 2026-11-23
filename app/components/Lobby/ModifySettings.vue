@@ -90,8 +90,10 @@ const form = ref<HTMLFormElement | null>(null);
 const index = ref<{ open: (id: SettingsChapter) => Promise<void>; current: SettingsChapter } | null>(null);
 const { field, visibleHeight, editingHeightLoss, landscape, finishEditing } = useViewportForm(form);
 const editingLayout = computed(() => {
-    if (editingHeightLoss.value < 64) return undefined;
+    if (!field.value) return undefined;
     const shortLandscape = landscape.value && visibleHeight.value < 250;
+    // Some browsers resize both viewports, leaving no height delta on first focus.
+    if (!shortLandscape && visibleHeight.value >= 190 && editingHeightLoss.value < 64) return undefined;
     if (field.value?.closest('[data-section="map"]') && (shortLandscape || visibleHeight.value < 340)) return "map";
     return shortLandscape || visibleHeight.value < 190 ? "field" : undefined;
 });
