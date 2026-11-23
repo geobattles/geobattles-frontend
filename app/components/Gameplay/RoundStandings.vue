@@ -24,7 +24,9 @@
                             <span class="standing-identity">
                                 <span class="standing-name" :title="row.name">{{ row.name }}</span>
                                 <small v-if="row.id === player.ID">You</small>
-                                <small v-else-if="lobbySettings?.playerList[row.id]?.connected === false" class="offline-label" title="Disconnected">Offline</small>
+                                <small v-else-if="lobbySettings?.playerList[row.id]?.connected === false" class="offline-label">{{
+                                    lobbySettings.playerList[row.id]?.away ? "Away" : "Offline"
+                                }}</small>
                             </span>
                         </span>
                         <span v-if="compact && !showRoundPoints" class="standing-distance"><span class="sr-only">Best distance </span>{{ row.distance }}</span>

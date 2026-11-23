@@ -10,17 +10,37 @@ Create/join intents are separate from socket generations and must remain current
 
 ## Socket lifecycle
 
-A single absolute 30-second admission/recovery window includes authentication, retries, offline time and suspended timers. Same-lobby callers share readiness; backoff never grants a fresh window. A complete own JOINED snapshot with connected membership establishes readiness in every phase. Its matching immediate REJOIN companion must not restore the same countdown/markers twice.
+Initial admission has a 30-second budget. A previously admitted lobby gets a
+90-second online retry window with jittered backoff. Offline time or time spent
+in the background can pause established recovery. Foreground and online events
+give it a prompt retry. Same-lobby callers share readiness. The complete own
+JOINED snapshot establishes readiness, and the matching REJOIN companion does
+not repeat restoration.
 
-An admitted socket that drops enters recovery right away; the first reconnection does not wait for the public lobby list. Normal bounded backoff still applies. If a connection fails before admission, the browser cannot read its HTTP 401/409 rejection body. An attempt-owned lobby-list check can establish a missing lobby only from a successful response for the exact ID. An offline or failed check is not proof of absence. Replacing or cancelling the attempt aborts its check.
+An admitted socket drop retries directly. If the replacement fails before
+admission, the authenticated, abortable `/lobby/admission` check distinguishes a
+closed/full lobby, an active match that cannot admit a new player, and a
+duplicate. Give an old socket time to clear before showing a duplicate error.
+A failed or offline diagnostic preserves the retry path. Older builds fall
+back to the public list for exact-room absence when the endpoint is missing.
+Transient token refresh errors leave the current credentials available for retry.
+A rejected refresh asks the player to sign in.
 
-Terminal failure releases session resources and awaits explicit retry. The server's membership grace period is a separate 30 seconds from server detection of the drop; the frontend cannot extend it or guarantee readmission.
+The connection notice is shared by gameplay and settings. Two slow foreground
+heartbeat samples expose an amber early warning and two healthy samples clear it.
+The client uses the optional heartbeat acknowledgement for round-trip latency
+and heartbeat arrival gaps for older servers. Backgrounded pages wait for fresh
+activity before measuring again. Offline and reconnect notices preserve the last
+confirmed view, and confirmation follows applied recovery. Failure panels show
+the relevant next action. The banner announces state changes and respects
+reduced motion.
 
-Lobby and game routes show a cancellable join panel instead of empty controls. On the waiting-lobby page, allow at least two seconds for the join animation while admission runs in parallel; show the lobby once both the display minimum and server confirmation are satisfied. This does not delay recoveries, connection errors or entry into an active round. A transient loss keeps the last confirmed view visible with an amber connection banner; server actions remain gated and the round clock continues. A successful snapshot clears the interruption. A terminal failure uses the red dropped-signal panel with recovery actions; map loading and map retry remain independent. The banner reports changes without announcing every retry second, and decorative motion respects reduced-motion settings.
-
-Show transient feedback inside an open settings dialog without discarding its draft. Announce failure before admission and move focus to Home if the joining Cancel control had focus. During compact gameplay, keep the dismissed recovery shortcut in the map's focus scope; give Maps recovery controls priority over the brief restored strip. A manual retry that loses route ownership must not produce a stale error toast.
-
-Transport loss retains the server's bounded lease; intentional leave/switch/logout sends `disconnect` before closing. Sending is not a removal acknowledgement. Host transfers to the longest-present connected participant; returning hosts do not reclaim it automatically. Runtime-owned online/offline presentation listeners remain useful even after a terminal socket attempt ends.
+Leaving for Home sends resumable `leave` on a live socket and stops automatic
+retries. The home screen can show a saved lobby code for the same identity.
+The code is a navigation hint and the server decides whether the seat still
+exists. Direct lobby switches and logout send permanent `disconnect`.
+The creator reclaims admin on admission. Overlapping route changes and old
+socket callbacks are fenced by their existing generation checks.
 
 Ready, start and guess have command-specific pending state. An authoritative matching snapshot acknowledges Ready; an error settles only its named command. Recovery/phase ownership changes may reset all pending commands. Never turn a local send into an optimistic server acknowledgement or automatically retry a provider error.
 

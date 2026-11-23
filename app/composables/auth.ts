@@ -1,6 +1,6 @@
 import { effectScope } from "vue";
 import type { User } from "~/types/appTypes";
-import { createAuthService } from "~/services/authService";
+import { createAuthService, RefreshRejectedError } from "~/services/authService";
 
 export const useAuthStore = () => {
     const app = useNuxtApp();
@@ -106,12 +106,15 @@ export const useAuthStore = () => {
     const expireSession = () => {
         clearSession();
         authError.value = "Your session has expired. Please log in again.";
-        if (!isLoginDialog.value) openLoginDialog();
+        if (!routeLobbyId(router.currentRoute.value) && !isLoginDialog.value) openLoginDialog();
     };
     const readinessExpired = (epoch: number) => {
         if (epoch !== revision.value) return;
         expireSession();
         authError.value = "Authentication readiness timed out. Please try signing in again.";
+    };
+    const readinessUnavailable = (epoch: number) => {
+        if (epoch === revision.value) authError.value = "The authentication server is taking too long. Try again.";
     };
     const logout = async () => {
         // Never refresh during logout: refresh failure used to recurse into logout.
@@ -156,15 +159,18 @@ export const useAuthStore = () => {
                     const data = await service.refreshAccessToken(refresh);
                     saveResponse(data, assertReady);
                     return data.AccessToken;
-                } catch {
-                    if (epoch === revision.value) expireSession();
-                    return null;
+                } catch (error) {
+                    if (epoch === revision.value && error instanceof RefreshRejectedError) {
+                        expireSession();
+                        return null;
+                    }
+                    throw error;
                 } finally {
                     // An old request must not clear a newer session's pending flag.
                     if (epoch === revision.value || !isAuthenticated.value) isRefreshingToken.value = false;
                 }
             },
-            () => readinessExpired(epoch)
+            () => readinessUnavailable(epoch)
         );
     };
     const getValidAccessToken = (assertParentReady: () => void = () => {}) => {
@@ -175,23 +181,19 @@ export const useAuthStore = () => {
                     assertParentReady();
                     assertDeadline();
                 });
-                try {
-                    assertReady();
-                    await runtime.waitForLogout();
-                    assertReady();
-                    await runtime.waitForIssuance();
-                    assertReady();
-                    const token = tokenCookie("access_token");
-                    if (token && !hasPurpose(token, "access")) {
-                        expireSession();
-                        return null;
-                    }
-                    return token && !isTokenExpired(token) ? token : await refreshToken(assertReady);
-                } catch {
+                assertReady();
+                await runtime.waitForLogout();
+                assertReady();
+                await runtime.waitForIssuance();
+                assertReady();
+                const token = tokenCookie("access_token");
+                if (token && !hasPurpose(token, "access")) {
+                    expireSession();
                     return null;
                 }
+                return token && !isTokenExpired(token) ? token : await refreshToken(assertReady);
             },
-            () => readinessExpired(epoch)
+            () => readinessUnavailable(epoch)
         );
     };
     const authenticate = (request: () => Promise<Awaited<ReturnType<typeof service.login>>>) => {
@@ -270,11 +272,11 @@ export const useAuthStore = () => {
                     }
                 } catch (error) {
                     if (epoch !== revision.value) return;
-                    clearSession();
-                    authError.value = error instanceof Error ? error.message : "Please sign in again.";
+                    authError.value = "The authentication server is unavailable. Try again.";
+                    throw error;
                 }
             },
-            () => readinessExpired(epoch)
+            () => readinessUnavailable(epoch)
         );
     };
     return reactive({

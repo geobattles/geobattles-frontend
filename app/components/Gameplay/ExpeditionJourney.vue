@@ -25,6 +25,7 @@
             <button type="button" :aria-pressed="view === 'journey'" @click="selected = null">All rounds</button>
             <button v-for="stop in stops" :key="stop.round" type="button" :aria-pressed="view === stop.round" @click="selected = stop.round">Round {{ stop.round }}</button>
         </div>
+        <div ref="connectionTarget" class="journey-connection" />
     </dialog>
 </template>
 
@@ -32,10 +33,11 @@
 import { expeditionStops, formatGuessDistance, hasGuess, roundResultPoints } from "~/utils/resultUtils";
 
 const props = defineProps<{ active: boolean; compact: boolean; open: boolean }>();
-const emit = defineEmits<{ close: [] }>();
+const emit = defineEmits<{ close: []; connectionTarget: [element: HTMLElement | null] }>();
 const titleId = useId();
 const sheet = useTemplateRef("sheet");
 const closeButton = useTemplateRef("closeButton");
+const connectionTarget = useTemplateRef("connectionTarget");
 const { lobbySettings, revealedAnswers } = useLobbyState();
 const player = usePlayerInfo();
 const battle = useBattleRoyaleStore();
@@ -82,6 +84,7 @@ const sync = () => {
     const shown = props.active && (!props.compact || modal);
     if (dialog.open && (!shown || wasModal !== modal)) dialog.close();
     wasModal = modal;
+    emit("connectionTarget", modal ? connectionTarget.value : null);
     if (!shown || dialog.open) return;
     if (modal) {
         dialog.showModal();
@@ -94,7 +97,10 @@ const sync = () => {
 };
 watch(() => [props.active, props.compact, props.open], sync, { flush: "post" });
 onMounted(sync);
-onBeforeUnmount(() => sheet.value?.close());
+onBeforeUnmount(() => {
+    emit("connectionTarget", null);
+    sheet.value?.close();
+});
 </script>
 
 <style scoped>
@@ -117,13 +123,18 @@ onBeforeUnmount(() => sheet.value?.close());
     background: linear-gradient(135deg, #123f33, #082720);
     color: #f4fbf3;
 }
+.journey-connection {
+    position: absolute;
+    width: 0;
+    height: 0;
+}
 .expedition-journey::backdrop {
     background: #031c17e0;
 }
 .expedition-journey.journey-overlay {
     position: fixed;
-    inset: 0;
-    height: 100dvh;
+    inset: var(--gb-screen-top, 0px) 0 auto;
+    height: var(--gb-viewport-height);
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
     border: 0;
     border-radius: 0;

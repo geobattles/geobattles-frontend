@@ -62,7 +62,7 @@ const player = usePlayerInfo();
 const request = useRequestState();
 const readyButton = ref<HTMLButtonElement | null>(null);
 const startButton = ref<HTMLButtonElement | null>(null);
-const members = computed(() => Object.values(lobby.lobbySettings?.playerList ?? {}));
+const members = computed(() => Object.values(lobby.lobbySettings?.playerList ?? {}).filter((member) => member.connected));
 const me = computed(() => (player.value.ID ? lobby.lobbySettings?.playerList[player.value.ID] : undefined));
 const canReady = computed(
     () => socket.isConnected && socket.isOnline && !!me.value?.connected && !lobby.modifySettingsModal && ["WAITING", "FINISHED"].includes(lobby.lobbySettings?.phase ?? "")
@@ -70,7 +70,6 @@ const canReady = computed(
 const showReadyLiquid = computed(() => !props.replay && !lobby.isPlayerReady && canReady.value && !request.isReadyPending && !request.isStartPending);
 const blockedReason = computed(() => {
     if (!socket.isConnected || !socket.isOnline) return "Reconnect before starting.";
-    if (members.value.some((member) => !member.connected)) return "Waiting for disconnected explorers to return.";
     if (!lobby.allPlayersReady) return "Waiting for every explorer to mark ready.";
     if (lobby.modifySettingsModal) return "Finish reviewing the settings first.";
     return actions.startUnavailableReason;
@@ -90,7 +89,7 @@ const feedback = computed(() => {
     if (request.isStartPending) return "Finding your next location…";
     if (!socket.isConnected || !socket.isOnline) return "Reconnecting…";
     if (!lobby.isPlayerReady) return "";
-    if (!lobby.allPlayersReady) return members.value.some((member) => !member.connected) ? "Waiting for players to reconnect." : "Waiting for players.";
+    if (!lobby.allPlayersReady) return "Waiting for players.";
     return lobby.isPlayerAdmin() ? blockedReason.value || "Everyone is ready." : "Waiting for the host.";
 });
 watch(showStart, (visible) => {

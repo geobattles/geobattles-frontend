@@ -30,6 +30,9 @@
                             <PlayerAvatar :color="getPlayerColorByID(id)" />
                             <span class="live-player-name" :title="getPlayerNameFromID(id)">{{ getPlayerNameFromID(id) }}</span>
                             <span v-if="playerHooks && id === player.ID" :class="compact ? 'sr-only' : 'your-row'">You</span>
+                            <small v-if="lobby.lobbySettings?.playerList[id]?.connected === false" class="player-connection">{{
+                                lobby.lobbySettings.playerList[id]?.away ? "Away" : "Offline"
+                            }}</small>
                             <GameplayPlayerPowerupIndicators :indicator="powerupIndicators.get(id)" />
                             <span v-if="effects.get(id)?.kind === 'lead'" :key="`lead-${effects.get(id)?.attempt}`" class="rank-cue rank-cue-lead" title="Takes the lead">
                                 <UiIcon name="crown" /><span>Lead</span>
@@ -420,5 +423,10 @@ if (props.playerHooks) {
 .is-hud.is-compact .player-identity {
     --player-avatar-size: 0.92rem;
     gap: 0.22rem;
+}
+.player-connection {
+    flex: none;
+    color: var(--gb-muted);
+    font-size: 0.65rem;
 }
 </style>

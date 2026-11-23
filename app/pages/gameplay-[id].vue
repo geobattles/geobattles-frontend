@@ -1,5 +1,6 @@
 <template>
     <main id="main-content" ref="gameplayPageContainer" class="game-page">
+        <Login />
         <ClientOnly>
             <GameplaySession :container="gameplayPageContainer" @leaveLobby="leave" />
             <template #fallback>
@@ -22,7 +23,7 @@ useHead({ title: "Expedition" });
 </script>
 <style scoped>
 .game-page {
-    min-height: 100dvh;
+    min-height: var(--gb-viewport-height);
     width: 100%;
     background: var(--gb-bg);
     color: var(--gb-text);

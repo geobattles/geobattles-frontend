@@ -1,5 +1,5 @@
 <template>
-    <div class="countdown-orbit" aria-hidden="true">
+    <div class="countdown-orbit" :class="{ 'orbit-light': light }" aria-hidden="true">
         <div class="planet">
             <img src="/images/emerald-countdown-earth.webp" width="800" height="800" alt="" fetchpriority="high" />
         </div>
@@ -41,7 +41,7 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{ seconds: number }>();
+defineProps<{ seconds: number; light: boolean }>();
 const id = useId();
 const dial = id + "-dial";
 const track = id + "-track";
@@ -169,6 +169,36 @@ const arc = id + "-arc";
     opacity: clamp(0.68, 0.68 + min(3 * var(--countdown-beat), 4.5 * (1 - var(--countdown-beat))), 1);
     transform: scale(calc(0.955 + min(0.045, 0.34 * var(--countdown-beat))));
 }
+.orbit-light :is(.secondary-flare, .flare-trail, .beat-pulse) {
+    display: none;
+}
+.orbit-light .beat-arc {
+    stroke-dashoffset: 0;
+    opacity: 0.58;
+}
+.orbit-light .countdown-numeral {
+    background: none;
+    color: #ddffac;
+    -webkit-text-fill-color: currentColor;
+    -webkit-text-stroke: 0;
+    text-shadow: 0 0.03em 0.06em #061c18;
+    filter: none;
+    opacity: 1;
+    transform: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .orbit-light .primary-flare {
+        animation: rotate-countdown-flare 1s linear var(--countdown-delay, 0s) infinite;
+    }
+    @keyframes rotate-countdown-flare {
+        from {
+            transform: rotate(0turn);
+        }
+        to {
+            transform: rotate(1turn);
+        }
+    }
+}
 @media (prefers-reduced-motion: reduce) {
     .primary-flare,
     .secondary-flare,
@@ -186,7 +216,8 @@ const arc = id + "-arc";
     }
 }
 @media (forced-colors: active) {
-    .countdown-numeral {
+    .countdown-numeral,
+    .orbit-light .countdown-numeral {
         -webkit-text-fill-color: CanvasText;
         -webkit-text-stroke: 0;
         filter: none;

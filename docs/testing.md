@@ -40,7 +40,7 @@ npm run test:socket
 npm run test:e2e
 ```
 
-The native socket harness checks guest/create/join, admission, readiness, settings authorization/preservation, host transfer, recovery, real grace expiry, intentional leave and exact-room disposal. Default execution sends no START. `GEOBATTLES_E2E_READY_REJECTION=1 npm run test:socket` adds one unready START rejection probe only after independently confirming that the backend has no Maps key. It cannot be combined with Maps mode; the native harness refuses Maps mode entirely.
+The native socket harness checks guest/create/join, admission, readiness, settings authorization/preservation, host handoff and reclaim, snapshot recovery, resumable leave, the 90-second return window and exact-room disposal. Default execution sends no START. `GEOBATTLES_E2E_READY_REJECTION=1 npm run test:socket` adds one unready START rejection probe only after independently confirming that the backend has no Maps key. It cannot be combined with Maps mode; the native harness refuses Maps mode entirely.
 
 Browser projects `keyless-chromium` and `keyless-firefox` collect `*.keyless.spec.ts`, including lobby and region scenarios. They exercise actual controls, independent identities, readiness/settings, reload/recovery and region selection without START/provider access. Chromium checks touch capability; Firefox coarse-pointer/responsive coverage is not full mobile-device emulation. Service workers are blocked, so these suites do not test PWA installation/update.
 
@@ -52,7 +52,7 @@ After setting the isolated-local target and URLs above, use these POSIX-shell np
 
 | Command                          | Purpose                                                                                  | Provider use                                    |
 | -------------------------------- | ---------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| `npm run test:socket`            | Membership, host handoff, reconnect, real grace expiry, settings and leave               | None; leave readiness-rejection opt-in disabled |
+| `npm run test:socket`            | Membership, host reclaim, reconnect, return-window expiry, settings and leave            | None; leave readiness-rejection opt-in disabled |
 | `npm run test:e2e:keyless`       | Lobby/settings controls and waiting-room reload/offline recovery in Chromium and Firefox | None                                            |
 | `npm run test:e2e:maps:recovery` | Two players: real round, PLAYING disconnect/reconnect, map retry, rematch and journals   | Up to 2 starts / 10 conservative grants         |
 | `npm run test:e2e:maps:all`      | Recovery preset plus three players, two rounds and MID-ROUND reload                      | Up to 4 starts / 24 conservative grants         |

@@ -9,7 +9,7 @@ import {
     connected,
     guess,
     leave,
-    disposed,
+    reservedAfterLeave,
     readyButton,
     ownServerScore,
     journalScoreText,
@@ -168,7 +168,7 @@ test("three independent guests: two real rounds, MID-ROUND reload, ungated Next 
     }
     expect(run.started.size).toBe(plan.rounds.length);
     for (const actor of [guest, peer, host]) await leave(actor);
-    await disposed(lobbyId);
+    await reservedAfterLeave(lobbyId);
     for (const [index, actor] of actors.entries()) {
         await actor.goto("/journal");
         await expect(actor.page.getByTestId("journal-entry")).toHaveCount(1);

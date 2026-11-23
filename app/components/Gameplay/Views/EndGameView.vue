@@ -51,7 +51,13 @@
                     </button>
                 </header>
                 <div v-show="landscape && champion && !champion.solo" ref="podiumHost" class="finish-podium" />
-                <GameplayExpeditionJourney :active="finished && !!champion" :compact="compactJourney" :open="journeyOpen" @close="closeJourney" />
+                <GameplayExpeditionJourney
+                    :active="finished && !!champion"
+                    :compact="compactJourney"
+                    :open="journeyOpen"
+                    @close="closeJourney"
+                    @connection-target="emit('connectionTarget', $event)"
+                />
             </div>
 
             <section v-if="champion" class="finish-results" aria-labelledby="standingsId">
@@ -106,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-const emit = defineEmits<{ leaveLobby: [] }>();
+const emit = defineEmits<{ leaveLobby: []; connectionTarget: [element: HTMLElement | null] }>();
 const standingsId = useId();
 const lobby = useLobbyStore();
 const socket = useWebSocketStore();
@@ -187,7 +193,7 @@ onBeforeUnmount(() => viewport?.removeEventListener("change", syncViewport));
     position: relative;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
-    height: 100dvh;
+    height: var(--gb-viewport-height);
     overflow: clip;
     background:
         linear-gradient(180deg, #05251fdc, #04211a65 50%, #061f19ef),

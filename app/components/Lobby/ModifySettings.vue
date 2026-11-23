@@ -109,11 +109,7 @@ watch(editingLayout, async (layout, previous) => {
 });
 const lobby = useLobbyStore();
 const socket = useWebSocketStore();
-const connectionStatus = computed(() => {
-    if (socket.connectionState === "disconnected") return null;
-    if (!socket.isOnline) return "offline";
-    return socket.connectionState === "reconnecting" ? "reconnecting" : null;
-});
+const connectionStatus = useConnectionNotice();
 const actions = useLobbySocketActions();
 const catalog = useCountryCatalog();
 const { fetchCountryCatalog } = useRegionActions();

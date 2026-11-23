@@ -24,6 +24,9 @@
                         {{ creating ? "Creating lobby…" : "Create Lobby" }}
                     </button>
                 </div>
+                <NuxtLink v-if="returnCode" class="btn btn-secondary return-lobby" :to="{ path: '/lobby/' + returnCode, query: { resume: '1' } }">
+                    <UiIcon name="arrow" />Return to lobby · {{ returnCode }}
+                </NuxtLink>
                 <PwaInstallBanner class="landing-install" placement="home" :ready="!creating && !awaitingAuth" />
             </section>
         </main>
@@ -31,6 +34,11 @@
 </template>
 <script setup lang="ts">
 const auth = useAuthStore();
+const player = usePlayerInfo();
+const returnHint = useLobbyReturnState();
+const mounted = ref(false);
+onMounted(() => (mounted.value = true));
+const returnCode = computed(() => (mounted.value && returnHint.value?.playerId === player.value.ID ? returnHint.value?.id : undefined));
 const { createLobby } = useLobbyStore();
 const toast = useToast();
 const creating = ref(false);
@@ -80,13 +88,17 @@ useHead({ title: "GeoBattles" });
     position: relative;
     isolation: isolate;
     display: flex;
-    min-height: 100dvh;
+    min-height: var(--gb-viewport-height);
     flex-direction: column;
     overflow: clip;
     border: 1px solid #8ce2a54d;
     border-radius: clamp(0.75rem, 1.5vw, 1.4rem);
     background: var(--emerald-forest);
     color: var(--emerald-white);
+}
+.return-lobby {
+    min-height: 44px;
+    margin-top: 0.7rem;
 }
 .scenery,
 .scenery::after {

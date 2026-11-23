@@ -3,6 +3,15 @@ import { decodeGameSocketEvent, decodeRequestError, decodeSocketFrame, socketEve
 import type { useAuthStore } from "~/composables/auth";
 import type { RequestError } from "~/composables/requestState";
 
+export type LobbyExit = "transport" | "leave" | "disconnect";
+
+const admissionFailures: Record<string, string> = {
+    LOBBY_NOT_FOUND: "This lobby is no longer available.",
+    LOBBY_FULL: "All seats are taken. Try again when a seat opens.",
+    GAME_IN_PROGRESS: "This match is underway and you don’t have a reserved seat. You can join after it ends.",
+    ALREADY_CONNECTED: "This player is already connected. Close the other tab or app window, then try again.",
+};
+
 export const createSocketRuntime = (
     endpoint: string,
     auth: ReturnType<typeof useAuthStore>,
@@ -15,11 +24,12 @@ export const createSocketRuntime = (
         requestError?: (error: RequestError) => boolean;
     }
 ) => {
-    const { connectionState, isOnline, recoveryDeadline, recoverySecondsRemaining, retryAttempt, nextRetryAt, connectionError } = useSocketState();
+    const { connectionState, isOnline, isWeak, isRestored, recoveryDeadline, recoverySecondsRemaining, retryAttempt, nextRetryAt, connectionError } = useSocketState();
     const request = useRequestState();
     const player = usePlayerInfo();
-    const recoveryBudget = 30_000;
-    const maxAttempts = 12;
+    const admissionBudget = 30_000;
+    const recoveryBudget = 90_000;
+    const duplicateWait = 12_000;
     const heartbeatTimeout = 10_000;
     const availabilityTimeout = 3_000;
     type Failure = RequestError & { terminal?: boolean };
@@ -33,6 +43,12 @@ export const createSocketRuntime = (
         resumeUntil: number;
         wasHidden: boolean;
         lastSeq: number;
+        lastPing: number;
+        probe: { id: number; sentAt: number } | null;
+        nextProbe: number;
+        measuresLatency: boolean;
+        slowSamples: number;
+        healthySamples: number;
         availabilityCheck?: AbortController;
     };
     let lobbyId: string | null = null;
@@ -41,6 +57,7 @@ export const createSocketRuntime = (
     let sessionGeneration = 0;
     let disposed = false;
     let hasAdmitted = false;
+    let duplicateSince: number | null = null;
     let attempt: Attempt | null = null;
     let readiness: Promise<void> | null = null;
     let resolveReadiness: (() => void) | undefined;
@@ -50,6 +67,7 @@ export const createSocketRuntime = (
     let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
     let heartbeatTimer: ReturnType<typeof setInterval> | undefined;
     let statusTimer: ReturnType<typeof setInterval> | undefined;
+    let restoredTimer: ReturnType<typeof setTimeout> | undefined;
     const failure = (code: string, message: string, terminal = false): Failure => ({ command: "", code, message, terminal });
     const unavailable = () => failure("CONNECTION_FAILED", "The lobby connection is unavailable. Wait for reconnection before retrying.");
     const cancelled = () => new Error("Lobby connection was cancelled or expired.");
@@ -76,22 +94,23 @@ export const createSocketRuntime = (
         retryTimer = undefined;
         nextRetryAt.value = null;
     };
-    const clearAttempt = (intentional = false) => {
+    const clearAttempt = (exit: LobbyExit = "transport") => {
         const previous = attempt;
         attempt = null;
         generation++;
         clearTimeout(admissionTimer);
         clearInterval(heartbeatTimer);
         admissionTimer = heartbeatTimer = undefined;
+        clearTimeout(restoredTimer);
+        isRestored.value = isWeak.value = false;
         ports.closeAttempt();
         previous?.availabilityCheck?.abort();
         const socket = previous?.socket;
         if (!socket) return;
-        // Only a committed leave/logout sends this membership-removing command.
-        // A close code, offline event, HMR or expiry never means intentional leave.
-        if (intentional && socket.readyState === WebSocket.OPEN) {
+        // Only committed navigation or logout sends a departure command.
+        if (exit !== "transport" && socket.readyState === WebSocket.OPEN) {
             try {
-                socket.send(JSON.stringify({ command: "disconnect" }));
+                socket.send(JSON.stringify({ command: exit }));
             } catch {
                 // Local release is still required; sending is not a server ACK.
             }
@@ -110,15 +129,16 @@ export const createSocketRuntime = (
         recoveryDeadline.value = null;
         recoverySecondsRemaining.value = 0;
     };
-    const disconnect = (intentional = false) => {
+    const disconnect = (exit: LobbyExit = "transport") => {
         sessionGeneration++;
         clearRetry();
         clearBudget();
-        clearAttempt(intentional);
+        clearAttempt(exit);
         settleReadiness(cancelled());
         ports.invalidateViews();
         lobbyId = identity = null;
         hasAdmitted = false;
+        duplicateSince = null;
         retryAttempt.value = 0;
         connectionState.value = "disconnected";
         connectionError.value = null;
@@ -135,14 +155,17 @@ export const createSocketRuntime = (
         request.fail(connectionError.value);
         ports.releaseSession();
     };
-    const expire = () =>
-        terminate(
-            failure(
-                "RECOVERY_EXPIRED",
-                "The 30-second connection window ended. Check your network and close any other tab using this identity, then deliberately re-enter the lobby. The server may no longer retain your place.",
-                true
-            )
-        );
+    const failAuthentication = () => terminate(failure("AUTHENTICATION_REQUIRED", "Sign in to reconnect to this lobby.", true));
+    const canAttempt = () => isOnline.value && (!hasAdmitted || !document.hidden);
+    const expire = () => {
+        if (hasAdmitted && !canAttempt()) {
+            clearRetry();
+            clearAttempt();
+            clearBudget();
+            return;
+        }
+        terminate(failure("RECOVERY_EXPIRED", "Automatic retries stopped. Try again to return to the lobby.", true));
+    };
     const withinBudget = () => {
         if (recoveryDeadline.value !== null && Date.now() >= recoveryDeadline.value) {
             expire();
@@ -153,7 +176,8 @@ export const createSocketRuntime = (
     const beginBudget = () => {
         if (recoveryDeadline.value !== null) return;
         const session = sessionGeneration;
-        recoveryDeadline.value = Date.now() + recoveryBudget;
+        const duration = hasAdmitted ? recoveryBudget : admissionBudget;
+        recoveryDeadline.value = Date.now() + duration;
         const tick = () => {
             if (session !== sessionGeneration || recoveryDeadline.value === null) return;
             recoverySecondsRemaining.value = Math.max(0, Math.ceil((recoveryDeadline.value - Date.now()) / 1000));
@@ -161,14 +185,15 @@ export const createSocketRuntime = (
         };
         tick();
         statusTimer = setInterval(tick, 1000);
-        deadlineTimer = setTimeout(tick, recoveryBudget);
+        deadlineTimer = setTimeout(tick, duration);
     };
     const scheduleRetry = (immediate = false) => {
-        if (!withinBudget() || attempt || retryTimer !== undefined || !isOnline.value || retryAttempt.value >= maxAttempts) return;
+        if (!lobbyId || disposed || attempt || retryTimer !== undefined || !canAttempt()) return;
+        beginBudget();
+        if (!withinBudget()) return;
         // Equal jitter avoids synchronized clients and zero-delay retry loops.
-        // Every attempt, offline wait and auth wait consumes the SAME deadline.
         const remaining = recoveryDeadline.value! - Date.now();
-        const base = Math.min(500 * 2 ** Math.max(0, retryAttempt.value - 1), 3000);
+        const base = Math.min(500 * 2 ** Math.max(0, retryAttempt.value - 1), 5000);
         const delay = Math.min(remaining, immediate ? 0 : Math.floor(base * (0.5 + Math.random() * 0.5)));
         nextRetryAt.value = Date.now() + delay;
         const session = sessionGeneration;
@@ -180,15 +205,15 @@ export const createSocketRuntime = (
     };
     const recover = () => {
         if (!lobbyId || disposed) return;
-        beginBudget();
-        if (!withinBudget()) return;
         clearRetry();
         clearAttempt();
-        ports.invalidateViews(true);
         request.resetPending();
         connectionState.value = hasAdmitted ? "reconnecting" : "connecting";
         waitForReadiness();
-        scheduleRetry();
+        if (hasAdmitted && !canAttempt()) {
+            duplicateSince = null;
+            clearBudget();
+        } else scheduleRetry();
     };
     const onOffline = () => {
         isOnline.value = false;
@@ -196,9 +221,16 @@ export const createSocketRuntime = (
     };
     const onOnline = () => {
         isOnline.value = true;
-        if (!lobbyId || !withinBudget() || attempt) return;
+        if (!lobbyId || attempt) return;
         clearRetry();
         scheduleRetry(true);
+    };
+    const sampleHealth = (owner: Attempt, slow: boolean) => {
+        if (!owner.admitted || document.hidden || owner.wasHidden || owner.resumeUntil) return;
+        owner.slowSamples = slow ? owner.slowSamples + 1 : 0;
+        owner.healthySamples = slow ? 0 : owner.healthySamples + 1;
+        if (owner.slowSamples >= 2) isWeak.value = true;
+        if (owner.healthySamples >= 2) isWeak.value = false;
     };
     const probeAfterResume = (owner: Attempt) => {
         // Browsers answer native control pings without running this page's JS.
@@ -209,6 +241,9 @@ export const createSocketRuntime = (
             return;
         }
         owner.lastHeartbeatCheck = Date.now();
+        owner.lastPing = 0;
+        owner.probe = null;
+        owner.slowSamples = owner.healthySamples = 0;
         owner.resumeUntil = Date.now() + 4000;
         owner.wasHidden = false;
         try {
@@ -219,21 +254,26 @@ export const createSocketRuntime = (
     };
     const onResume = () => {
         isOnline.value = navigator.onLine;
-        if (!lobbyId || !withinBudget()) return;
+        if (!lobbyId) return;
         if (!isOnline.value) {
             recover();
             return;
         }
         if (attempt?.admitted) {
             if (attempt.socket?.readyState !== WebSocket.OPEN) recover();
-            else if (Date.now() - attempt.lastActivity > heartbeatTimeout) probeAfterResume(attempt);
+            else if (attempt.wasHidden || Date.now() - attempt.lastActivity > heartbeatTimeout) probeAfterResume(attempt);
         } else if (!attempt) {
             clearRetry();
             scheduleRetry(true);
         }
     };
     const onVisibility = () => {
-        if (document.visibilityState === "visible") onResume();
+        if (!document.hidden) {
+            onResume();
+            return;
+        }
+        if (attempt?.admitted) attempt.wasHidden = true;
+        else if (lobbyId && hasAdmitted) recover();
     };
     const clearConnectionFeedback = () => {
         connectionError.value = null;
@@ -247,7 +287,7 @@ export const createSocketRuntime = (
                 "AUTHENTICATION_REQUIRED",
                 "IDENTITY_CHANGED",
                 "PLAYER_NOT_IN_LOBBY",
-                "LOBBY_NOT_FOUND",
+                ...Object.keys(admissionFailures),
             ].includes(request.requestError.code)
         )
             request.clearError();
@@ -266,7 +306,7 @@ export const createSocketRuntime = (
         ports.afterFrame();
     };
     const open = () => {
-        if (!withinBudget() || !isOnline.value || attempt || retryAttempt.value >= maxAttempts) return;
+        if (!withinBudget() || !canAttempt() || attempt) return;
         const id = lobbyId!;
         const owner: Attempt = {
             generation: ++generation,
@@ -278,6 +318,12 @@ export const createSocketRuntime = (
             resumeUntil: 0,
             wasHidden: document.visibilityState === "hidden",
             lastSeq: -1,
+            lastPing: 0,
+            probe: null,
+            nextProbe: 0,
+            measuresLatency: false,
+            slowSamples: 0,
+            healthySamples: 0,
         };
         attempt = owner;
         retryAttempt.value++;
@@ -323,12 +369,17 @@ export const createSocketRuntime = (
                 Math.min(10_000, recoveryDeadline.value! - Date.now())
             );
             const markReady = () => {
+                if (hasAdmitted) {
+                    isRestored.value = true;
+                    restoredTimer = setTimeout(() => (isRestored.value = false), 2200);
+                }
                 owner.admitted = hasAdmitted = true;
                 clearTimeout(admissionTimer);
                 admissionTimer = undefined;
                 clearRetry();
                 clearBudget();
                 retryAttempt.value = 0;
+                duplicateSince = null;
                 connectionState.value = "connected";
                 clearConnectionFeedback();
                 settleReadiness();
@@ -350,7 +401,9 @@ export const createSocketRuntime = (
                         probeAfterResume(owner);
                         return;
                     }
-                    if (now - owner.lastActivity > heartbeatTimeout && now >= owner.resumeUntil) failed(unavailable());
+                    const silence = now - owner.lastActivity;
+                    if (silence > heartbeatTimeout && now >= owner.resumeUntil) failed(unavailable());
+                    else if (silence > 5500) sampleHealth(owner, true);
                 }, 2000);
             };
             socket.onmessage = (event) => {
@@ -361,7 +414,23 @@ export const createSocketRuntime = (
                     owner.lastActivity = Date.now();
                     owner.resumeUntil = 0;
                     if (frame.kind === "ping") {
-                        if (socket.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ command: "pong" }));
+                        if (socket.readyState !== WebSocket.OPEN) return;
+                        const now = performance.now();
+                        if (owner.admitted && !document.hidden && !owner.wasHidden) {
+                            if (!owner.measuresLatency && owner.lastPing) sampleHealth(owner, now - owner.lastPing > 4500);
+                            if (owner.probe && owner.measuresLatency) sampleHealth(owner, true);
+                            owner.lastPing = now;
+                            owner.probe = { id: ++owner.nextProbe, sentAt: now };
+                            socket.send(JSON.stringify({ command: "pong", probe: owner.probe.id }));
+                        } else socket.send(JSON.stringify({ command: "pong" }));
+                        return;
+                    }
+                    if (frame.kind === "heartbeat") {
+                        if (owner.probe?.id === frame.probe) {
+                            owner.measuresLatency = true;
+                            sampleHealth(owner, performance.now() - owner.probe.sentAt > 750);
+                            owner.probe = null;
+                        }
                         return;
                     }
                     data = frame.envelope;
@@ -415,44 +484,47 @@ export const createSocketRuntime = (
             };
             const transportFailed = async () => {
                 if (!current(owner) || owner.availabilityCheck) return;
-                // Reconnect after an admitted socket drops without waiting on
-                // the public lobby list. If a replacement fails before its
-                // own JOINED snapshot, use the existing diagnostic path there.
-                if (owner.admitted || !isOnline.value) {
+                if (owner.admitted || !canAttempt()) {
                     failed(unavailable());
                     return;
                 }
                 if (!withinBudget()) return;
-                // Browsers don't expose rejection bodies on failed admission.
-                // One bounded check belongs to this failed attempt only.
+                // Browser upgrade errors are opaque. Diagnose only our identity
+                // and lobby, and let the next upgrade recheck capacity and lease.
                 const check = new AbortController();
                 owner.availabilityCheck = check;
                 const timeout = setTimeout(() => check.abort(), availabilityTimeout);
                 try {
-                    const response = await fetch(`${endpoint.replace(/\/$/, "")}/lobby`, { cache: "no-store", signal: check.signal });
+                    const base = endpoint.replace(/\/$/, "");
+                    const options = { cache: "no-store", signal: check.signal } as const;
+                    const response = await fetch(`${base}/lobby/admission?id=${encodeURIComponent(id)}`, { ...options, headers: { Authorization: token } });
+                    const valid = () => current(owner) && !check.signal.aborted && withinBudget();
+                    if (response.status === 401 && valid()) {
+                        failed(failure("AUTHENTICATION_REQUIRED", "Sign in to reconnect to this lobby.", true));
+                        return;
+                    }
                     if (response.ok) {
-                        const lobbies: unknown = await response.json();
-                        if (
-                            current(owner) &&
-                            !check.signal.aborted &&
-                            withinBudget() &&
-                            lobbies &&
-                            typeof lobbies === "object" &&
-                            !Array.isArray(lobbies) &&
-                            !Object.hasOwn(lobbies, id)
-                        ) {
-                            failed(
-                                failure(
-                                    "LOBBY_NOT_FOUND",
-                                    "This lobby is no longer available. It may have closed or the development server may have restarted. Create a new lobby or join another one.",
-                                    true
-                                )
-                            );
+                        const result = (await response.json()) as { code?: unknown } | null;
+                        if (!valid()) return;
+                        const code = result?.code;
+                        if (code === "ALREADY_CONNECTED") duplicateSince ??= Date.now();
+                        else duplicateSince = null;
+                        if (typeof code === "string" && Object.hasOwn(admissionFailures, code)) {
+                            const terminal = code !== "ALREADY_CONNECTED" || Date.now() - (duplicateSince ?? Date.now()) >= duplicateWait;
+                            failed(failure(code, admissionFailures[code]!, terminal));
+                            return;
+                        }
+                    } else if (response.status === 404 || response.status === 405) {
+                        // Older backends still support the exact-room absence check.
+                        const legacy = await fetch(`${base}/lobby`, options);
+                        const lobbies: unknown = legacy.ok ? await legacy.json() : null;
+                        if (valid() && lobbies && typeof lobbies === "object" && !Array.isArray(lobbies) && !Object.hasOwn(lobbies, id)) {
+                            failed(failure("LOBBY_NOT_FOUND", admissionFailures.LOBBY_NOT_FOUND!, true));
                             return;
                         }
                     }
                 } catch {
-                    // Offline, timeout and server errors retain normal recovery.
+                    // An unavailable diagnostic is still a retryable transport failure.
                 } finally {
                     clearTimeout(timeout);
                 }
@@ -521,6 +593,7 @@ export const createSocketRuntime = (
         status: reactive({
             connectionState,
             isOnline,
+            isWeak,
             recoveryDeadline,
             recoverySecondsRemaining,
             retryAttempt,
@@ -536,6 +609,7 @@ export const createSocketRuntime = (
         },
         connect,
         disconnect,
+        failAuthentication,
         writeCommand,
         dispose: () => {
             if (disposed) return;

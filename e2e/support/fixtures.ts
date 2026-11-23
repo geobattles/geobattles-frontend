@@ -430,7 +430,8 @@ class BrowserRun {
                     this.record(actor, "protocol-error", "non-json-frame");
                     return;
                 }
-                if ((event as unknown as { command?: string }).command === "ping") return;
+                const command = (event as unknown as { command?: string }).command;
+                if (command === "ping" || command === "heartbeat_ack") return;
                 if (!Number.isSafeInteger(event.seq) || event.seq <= seq) this.record(actor, "protocol-error", "sequence-absent-stale-or-reordered");
                 seq = event.seq;
                 if (actor.events.length >= 512) {

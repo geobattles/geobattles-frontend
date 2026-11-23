@@ -163,7 +163,7 @@ export const useBattleRoyaleStore = () => {
         isGuessPending.value = false;
         if (googleStore().isMapInitialized) googleStore().removeMapEventListener("click");
     };
-    const restoreRound = async (phase: GameState, round: number) => {
+    const restoreRound = async (phase: GameState, round: number, sameRound = false) => {
         const owner = resources();
         const id = player.value.ID;
         const draft = owner.draftRound.value;
@@ -177,6 +177,7 @@ export const useBattleRoyaleStore = () => {
             !(resultsStore.rawResults[id] ?? []).some((guess) => draft.sentAfterAttempt !== undefined && guess.attempt > draft.sentAfterAttempt)
                 ? currentMapPin.value
                 : null;
+        const preservePanorama = sameRound && !owner.isRestoring.value && googleStore().panoramaStatus === "ready";
         clearMap();
         currentState.value = phase;
         currentRound.value = round;
@@ -195,7 +196,7 @@ export const useBattleRoyaleStore = () => {
         owner.authorizeRound(lobbySettings.value.ID, round);
         await googleStore().waitForMapAndPano();
         if (owner !== resources() || epoch !== owner.generation) return;
-        resetMapAndPanorama();
+        resetMapAndPanorama(preservePanorama);
         if (id) await restoreGuessMarkers(id);
         if (owner !== resources() || epoch !== owner.generation) return;
         owner.isRestoring.value = false;
@@ -350,16 +351,12 @@ export const useBattleRoyaleStore = () => {
             await draw(currentMapPin.value, true);
     };
 
-    const resetMapAndPanorama = (): void => {
-        // Set Panorama to a location that needs to be guessed
-        googleStore().updatePanoramaView(searchedLocationCoords.value);
-
-        // Reset panorama POV and zoom
-        googleStore().getPanorama.setPov({
-            heading: 270,
-            pitch: 0,
-        });
-        googleStore().getPanorama.setZoom(0);
+    const resetMapAndPanorama = (preservePanorama = false): void => {
+        if (!preservePanorama) {
+            googleStore().updatePanoramaView(searchedLocationCoords.value);
+            googleStore().getPanorama.setPov({ heading: 270, pitch: 0 });
+            googleStore().getPanorama.setZoom(0);
+        }
 
         // Country framing is based only on public settings, never the answer.
         // Round identity survives render-generation changes on reconnect/retry.

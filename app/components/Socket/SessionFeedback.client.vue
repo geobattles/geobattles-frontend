@@ -12,7 +12,7 @@
                 ><button class="btn btn-secondary" type="button" @click="emit('leaveLobby')">{{ inlineFailure ? cancelLabel || "Cancel" : "Cancel" }}</button></template
             >
             <template v-if="inlineFailure" #default>
-                <button class="btn" type="button" :disabled="busy || !socket.isOnline" :aria-busy="busy" @click="recover">{{ missingLobby ? "New lobby" : "Retry" }}</button>
+                <button class="btn" type="button" :disabled="busy || !socket.isOnline" :aria-busy="busy" @click="recover()">{{ recoveryAction }}</button>
             </template>
         </CinematicTransition>
     </Transition>
@@ -20,19 +20,26 @@
         <button ref="cancelJoin" class="btn btn-secondary" type="button" @click="emit('leaveLobby')">Cancel</button>
     </SocketConnectionPanel>
     <SocketConnectionPanel v-else-if="cinematicDuration === undefined && inlineFailure" tone="lost" :title="failureTitle" :description="failureMessage" :code="lobbyCode">
-        <button class="btn" type="button" :disabled="busy || !socket.isOnline" :aria-busy="busy" @click="recover">{{ recoveryAction }}</button>
+        <button class="btn" type="button" :disabled="busy || !socket.isOnline" :aria-busy="busy" @click="recover()">{{ recoveryAction }}</button>
         <button ref="failureHome" class="btn btn-secondary" type="button" @click="emit('leaveLobby')">Home</button>
     </SocketConnectionPanel>
     <template v-else-if="retained">
         <Teleport :to="bannerTarget || 'body'" :disabled="!bannerTarget">
-            <SocketConnectionBanner :status="lobby.modifySettingsModal ? null : banner" :round-running="!!roundRunning" :class="{ 'game-connection-banner': gameplay }" />
+            <SocketConnectionBanner :status="lobby.modifySettingsModal ? null : notice" :round-running="!!roundRunning" :class="{ 'game-connection-banner': gameplay }" />
             <button v-if="failure && dismissed" ref="failurePill" type="button" class="connection-failure-pill btn btn-secondary" @click="dismissed = false">
                 <UiIcon name="wifi" />{{ failureTitle }}
             </button>
         </Teleport>
-        <UiDialog v-if="failure" class="connection-failure" :open="!dismissed" :title="failureTitle" @update:open="dismissed = !$event" @close="focusFailurePill">
+        <UiDialog
+            v-if="failure"
+            class="connection-failure"
+            :open="!dismissed && !auth.isLoginDialog"
+            :title="failureTitle"
+            @update:open="dismissed = !$event"
+            @close="focusFailurePill"
+        >
             <SocketConnectionPanel embedded tone="lost" :title="failureTitle" :description="failureMessage" :code="lobbyCode">
-                <button class="btn" type="button" :disabled="busy || !socket.isOnline" :aria-busy="busy" @click="recover">{{ recoveryAction }}</button>
+                <button class="btn" type="button" :disabled="busy || !socket.isOnline" :aria-busy="busy" @click="recover()">{{ recoveryAction }}</button>
                 <button class="btn btn-secondary" type="button" @click="emit('leaveLobby')">Home</button>
             </SocketConnectionPanel>
         </UiDialog>
@@ -45,6 +52,8 @@ import CinematicTransition from "~/components/Transitions/CinematicTransition.vu
 const props = defineProps<{ retained: boolean; gameplay?: boolean; roundRunning?: boolean; bannerTarget?: HTMLElement | null; cinematicDuration?: number; cancelLabel?: string }>();
 const emit = defineEmits<{ leaveLobby: []; focusLobby: [] }>();
 const socket = useWebSocketStore();
+const auth = useAuthStore();
+const notice = useConnectionNotice();
 const router = useRouter();
 const route = useRoute();
 const recovery = useLobbyRecovery();
@@ -56,21 +65,23 @@ const failureHome = ref<HTMLButtonElement | null>(null);
 const failurePill = ref<HTMLButtonElement | null>(null);
 const busy = ref(false);
 const dismissed = ref(false);
-const restored = ref(false);
-let restoredTimer: ReturnType<typeof setTimeout> | undefined;
-
 const lobbyCode = computed(() => routeLobbyId(route));
 const failure = computed(() => (socket.connectionState === "disconnected" ? socket.connectionError : null));
 const inlineFailure = computed(() => !props.retained && !!failure.value);
 const missingLobby = computed(() => failure.value?.code === "LOBBY_NOT_FOUND");
-const failureTitle = computed(() => (missingLobby.value ? "Lobby closed" : "Connection lost"));
-const failureMessage = computed(() => {
-    if (missingLobby.value) return "This lobby is no longer available.";
-    if (!socket.isOnline) return "Reconnect to the internet, then try again.";
-    return "Automatic retries stopped. Try again to return to the lobby.";
-});
-const recoveryAction = computed(() => (missingLobby.value ? "New lobby" : "Try again"));
-const entryTitle = computed(() => (!socket.isOnline ? "Waiting for internet…" : props.gameplay ? "Rejoining game…" : "Joining lobby…"));
+const needsSignIn = computed(() => failure.value?.code === "AUTHENTICATION_REQUIRED");
+const failureTitles: Record<string, string> = {
+    LOBBY_NOT_FOUND: "Lobby closed",
+    LOBBY_FULL: "Lobby is full",
+    GAME_IN_PROGRESS: "Match in progress",
+    ALREADY_CONNECTED: "Player already connected",
+    AUTHENTICATION_REQUIRED: "Sign in to return",
+    IDENTITY_CHANGED: "Player changed",
+};
+const failureTitle = computed(() => failureTitles[failure.value?.code ?? ""] ?? "Connection lost");
+const failureMessage = computed(() => failure.value?.message || "We couldn’t reach the lobby.");
+const recoveryAction = computed(() => (missingLobby.value ? "New lobby" : needsSignIn.value ? "Sign in" : "Try again"));
+const entryTitle = computed(() => (!socket.isOnline ? "Waiting for internet…" : props.gameplay || route.query.resume === "1" ? "Returning to lobby…" : "Joining lobby…"));
 const entryMessage = computed(() => {
     if (!socket.isOnline) return "We’ll try again when your connection returns.";
     if (socket.isConnected) return props.gameplay ? "Opening the game…" : "Opening the lobby…";
@@ -86,16 +97,6 @@ const revealLobby = (element: Element) => {
     if (element.contains(document.activeElement)) emit("focusLobby");
     element.setAttribute("inert", "");
 };
-const interrupted = computed(() => props.retained && !failure.value && (!socket.isOnline || socket.connectionState === "reconnecting"));
-const banner = computed(() => {
-    if (interrupted.value) return socket.isOnline ? "reconnecting" : "offline";
-    return props.retained && socket.isConnected && !failure.value && restored.value ? "restored" : null;
-});
-watch(interrupted, (active, wasActive) => {
-    clearTimeout(restoredTimer);
-    restored.value = !active && wasActive && socket.isConnected && socket.isOnline;
-    if (restored.value) restoredTimer = setTimeout(() => (restored.value = false), 2200);
-});
 watch(failure, () => (dismissed.value = false));
 watch(inlineFailure, async (shown) => {
     if (!shown || !cancelJoin.value || document.activeElement !== cancelJoin.value) return;
@@ -106,12 +107,15 @@ const focusFailurePill = async () => {
     await nextTick();
     if (dismissed.value && failure.value && !lobby.modifySettingsModal) failurePill.value?.focus({ preventScroll: true });
 };
-onBeforeUnmount(() => clearTimeout(restoredTimer));
 
-const recover = async () => {
+const recover = async (afterSignIn = false) => {
     const id = lobbyCode.value;
     const create = missingLobby.value;
     if (!id || busy.value || !socket.isOnline) return;
+    if (needsSignIn.value && !afterSignIn) {
+        auth.openLoginDialog();
+        return;
+    }
     busy.value = true;
     let ownsFeedback = captureNavigation();
     try {
@@ -134,15 +138,21 @@ const recover = async () => {
         busy.value = false;
     }
 };
+watch(
+    () => auth.isLoginDialog,
+    (open, wasOpen) => {
+        if (!open && wasOpen && needsSignIn.value && auth.isAuthenticated) void recover(true);
+    }
+);
 </script>
 
 <style scoped>
 .game-connection-banner {
     position: fixed;
     z-index: 46;
-    inset-inline: 12px;
+    inset-inline: max(12px, var(--gb-safe-left)) max(12px, var(--gb-safe-right));
     bottom: calc(82px + env(safe-area-inset-bottom));
-    width: min(360px, calc(100% - 24px));
+    width: min(360px, calc(100% - max(12px, var(--gb-safe-left)) - max(12px, var(--gb-safe-right))));
     margin-inline: auto;
     pointer-events: none;
 }

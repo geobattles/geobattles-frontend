@@ -60,7 +60,7 @@
                 </p>
                 <button type="button" class="confirm-guess" :disabled="submitDisabled" :aria-busy="isGuessPending" :aria-describedby="hintId" @click="game.submitGuess()">
                     <span v-if="isGuessPending" class="spinner" aria-hidden="true" /><UiIcon v-else name="pin" />
-                    {{ isGuessPending ? "Confirming…" : "Confirm Guess" }}
+                    {{ isGuessPending ? "Sending…" : "Confirm Guess" }}
                     <UiIcon v-if="!isGuessPending" class="confirm-arrow" name="arrow" />
                 </button>
             </footer>
@@ -187,7 +187,7 @@ const resetMap = () => {
 }
 .guess-map-panel.map-expanded {
     --map-width: min(57vw, 57rem);
-    --map-height: clamp(10rem, calc(100dvh - var(--hud-header) - var(--hud-bottom) - 15rem), 32rem);
+    --map-height: clamp(10rem, calc(var(--gb-viewport-height) - var(--hud-header) - var(--hud-bottom) - 15rem), 32rem);
 }
 .guess-map-frame {
     position: relative;

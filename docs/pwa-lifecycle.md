@@ -14,7 +14,7 @@ Mobile suggestions appear on a return to the homepage or after a player's result
 
 ### Viewport and cache
 
-The document uses `viewport-fit=contain` and the opaque iOS status-bar style so the browser can reserve system-bar space. When a browser exposes safe-area insets, the relevant header, overlay, or bottom controls apply that inset at the edge they occupy. The shell uses dynamic viewport height, with a fallback for browsers that lack support. Installed Android and iOS status bars and gesture areas need verification in portrait and landscape on the device.
+The document uses `viewport-fit=contain` and the opaque iOS status-bar style so the browser can reserve system-bar space. When a browser exposes safe-area insets, the relevant header, overlay, or bottom controls apply that inset at the edge they occupy. The shell uses dynamic viewport height with a CSS fallback. Standalone and fullscreen surfaces use the app’s settled visual viewport at scale 1. Keyboard editing and pinch zoom keep the last settled shell dimensions while form overlays use the visible rectangle. Installed Android and iOS status bars and gesture areas need verification in portrait and landscape on the device.
 
 The worker precaches selected public build-time JS/CSS, images, icons, manifest and module-added build metadata. Explicit ignores exclude HTML and page payloads. `runtimeCaching: []` and no navigation fallback mean this worker does not cache authentication/API responses, WebSockets, private game payloads or Maps requests. It is not an offline gameplay/navigation shell; fresh offline navigation can fail.
 

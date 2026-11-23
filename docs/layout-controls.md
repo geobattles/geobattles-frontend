@@ -12,7 +12,7 @@ Native dialogs own focus/inert background, Escape, deliberate backdrop closing a
 
 `useMobileViewport` measures the layout and visual viewports once per frame from an owner mounted at the app root. It exposes focus, scale, orientation, display mode, available height, and the difference from a settled viewport at the same width. Browsers can also report keyboard bounds. Forms combine those signals with their own space requirements. Pinch zoom uses native panning, and focusing an input in a viewport with room keeps the normal layout.
 
-Cinematic scenes use dynamic viewport height. Normal pages scroll in document flow. Native modal dialogs constrain themselves to the visible viewport and keep background scrolling locked until the last modal closes. A form can mark its internal scroll region with `data-viewport-scroll` and related field content with `data-viewport-field`. The focused field stays in the original DOM and its scroll region adjusts after viewport movement settles.
+Cinematic scenes use the shared viewport height. An installed or fullscreen app shell uses the settled, unzoomed visual viewport measurement when available. Normal pages scroll in document flow. Native modal dialogs constrain themselves to the visible viewport and keep background scrolling locked until the last modal closes. A form can mark its internal scroll region with `data-viewport-scroll` and related field content with `data-viewport-field`. The focused field stays in the original DOM and its scroll region adjusts after viewport movement settles.
 
 Short landscape Lobby Settings keeps the active field and its controls in view. Map search keeps the search field and scrollable results available. **Done typing** dismisses the keyboard while keeping the draft and settings dialog open. Authentication, lobby lookup, the profile form, and rival search each choose when to make room. The Street View and map layouts keep their own sizing and camera state.
 
@@ -32,11 +32,11 @@ In both the waiting lobby and replay, the settings field index groups the draft 
 
 Choose a round time with the presets, numeric stepper or range. Valid settings autosave after a short pause. The footer briefly shows the new round time after the server confirms it. Done waits for pending changes to save. The dialog keeps unsaved edits available until they save or the host chooses Discard. An invalid time entry returns to the last valid value when it loses focus. On phones, the settings dialog fills the viewport in both orientations. Rounds, guesses and capacity use bounded native number fields with 44px step buttons; narrow layouts stack the controls to keep the input targets usable.
 
-Recovery uses one short cause-specific sentence and two main choices: New lobby/Home for confirmed absence, Retry/Home after expiry, Keep waiting/Home during recovery. Delay the initial-admission modal so normal connection startup is not presented as a loss. Suppress only the exact duplicate connection alert, not unrelated action errors. Keep offline guards and the dismissed-dialog reopening control.
+Recovery uses an inline connection notice for slow, offline and reconnecting states. Terminal panels pair the cause with an action such as New lobby, Try again or Sign in. Delay the initial-admission modal so normal connection startup is not presented as a loss. Suppress only the exact duplicate connection alert, not unrelated action errors. Keep offline guards and the dismissed-dialog reopening control.
 
 ## Gameplay layouts
 
-The Emerald Scenic round intro centers the globe for the opening round. Later rounds add up to three players from the confirmed total standings, with the same ranks as the results table. Portrait places standings below the globe. Short landscape keeps the details beside the globe. Reduced motion shows a static orbit and readable second-by-second changes.
+The Emerald Scenic round intro centers the globe for the opening round. Later rounds add up to three players from the confirmed total standings, with the same ranks as the results table. On compact screens a CSS-driven flare rotates over a static ring and the number updates on second boundaries. Portrait places standings below the globe. Short landscape keeps the details beside the globe. Reduced motion shows a static orbit and readable second-by-second changes.
 
 Desktop places branding, round progress and game controls in a slim header, live scores on the right and a larger interactive guess map at the lower left. The map can be expanded or hidden. The score panel has a scrollable roster and an expanded view.
 
@@ -52,7 +52,7 @@ The lime pin marks the tentative guess. A server confirmation converts it into a
 
 ## Results
 
-Between rounds, portrait gives the answer map a compact band above the standings. Landscape puts the map and summary on the left and gives most of the width to the standings. The map caption sits below the interactive surface on compact screens. The summary shows official round points, the player's closest distance and overall rank.
+Between rounds, portrait gives the answer map a compact band above the standings. Landscape puts the map and summary on the left and gives most of the width to the standings. The map caption sits below the interactive surface on compact screens. Expand map opens a viewport-sized dialog in either phone orientation. The same map host moves into the dialog, then returns to the recap with focus and standings scroll preserved on close. The summary shows official round points, the player's closest distance and overall rank.
 
 **Total Points** opens by default. **This Round** uses the final scored round rows, including bonuses and Duel transfers. In compact portrait, the standings show each player's closest distance. Compact landscape pairs total and round points on the Total Points tab. The column labels stay visible while the list scrolls, and switching back to a tab restores its scroll position. Powerups and Next Round or the waiting status stay below the mobile standings.
 

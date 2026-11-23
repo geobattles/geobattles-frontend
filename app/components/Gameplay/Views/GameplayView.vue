@@ -313,7 +313,7 @@ onBeforeUnmount(() => {
     position: relative;
     isolation: isolate;
     inline-size: 100%;
-    block-size: 100dvh;
+    block-size: var(--gb-viewport-height);
     overflow: clip;
     background: #092b25;
     color: #f5fbf2;
@@ -420,7 +420,7 @@ onBeforeUnmount(() => {
     display: flex;
     flex-direction: column;
     inline-size: min(26rem, 35vw);
-    max-block-size: min(15.5rem, calc(100dvh - var(--hud-panel-top) - var(--hud-bottom)));
+    max-block-size: min(15.5rem, calc(var(--gb-viewport-height) - var(--hud-panel-top) - var(--hud-bottom)));
     min-inline-size: 0;
     overflow: hidden;
     border: 1px solid var(--hud-border);
@@ -430,7 +430,7 @@ onBeforeUnmount(() => {
     pointer-events: auto;
 }
 .gameplay-scoreboard.scores-expanded {
-    max-block-size: min(53dvh, calc(100dvh - var(--hud-panel-top) - var(--hud-bottom)));
+    max-block-size: min(53dvh, calc(var(--gb-viewport-height) - var(--hud-panel-top) - var(--hud-bottom)));
 }
 .scoreboard-header {
     display: flex;
@@ -608,7 +608,7 @@ onBeforeUnmount(() => {
     inset-block-end: var(--mobile-notice-bottom);
 }
 .is-compact-game:not(.has-full-map) .gameplay-map-recovery {
-    max-block-size: calc(100dvh - var(--mobile-notice-bottom) - var(--hud-panel-top));
+    max-block-size: calc(var(--gb-viewport-height) - var(--mobile-notice-bottom) - var(--hud-panel-top));
 }
 @media (max-width: 345px) {
     .is-compact-game .expedition-brand > span {

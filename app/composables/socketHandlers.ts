@@ -23,14 +23,14 @@ const decodeRoundArchive = <T>(value: unknown, lastRound: number, decode: (entry
     );
 };
 
-type GameEventEffects = Pick<ReturnType<typeof createUIRuntime>, "showPlayerLeftToast" | "showLiveGuess"> & {
+type GameEventEffects = Pick<ReturnType<typeof createUIRuntime>, "showPlayerPresence" | "showLiveGuess"> & {
     powerupReceipt: (gameId: string, requestId: string, effect?: PowerupEffect) => void;
     clock: Pick<ReturnType<typeof createRoundClock>, "apply" | "reset">;
     reconcileLobbyRoute: () => void;
     render: (operation: () => Promise<void>) => void;
 };
 
-export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showPlayerLeftToast, showLiveGuess, powerupReceipt }: GameEventEffects) => {
+export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showPlayerPresence, showLiveGuess, powerupReceipt }: GameEventEffects) => {
     const lobby = useLobbyStore();
     const mode = useGameMode();
     const results = useResultsStore();
@@ -119,7 +119,7 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
         request.acknowledgeReady(member?.ready);
         if (ownAdmission || changed) {
             request.resetPending();
-            if (mode.currentMode === "BattleRoyale") render(() => battle.restoreRound(phase, snapshot.currentRound));
+            if (mode.currentMode === "BattleRoyale") render(() => battle.restoreRound(phase, snapshot.currentRound, !changed));
         }
     };
     const applyPowerups = (state: PowerupState, players?: LobbyInfo["playerList"]) => {
@@ -153,14 +153,25 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
             if (!snapshot || !user) throw new Error("Missing lobby state.");
             // Full peer snapshots replace data too, but ordinary membership /
             // readiness updates never recreate this player's map or countdown.
+            const previous = lobby.lobbySettings;
+            const member = previous?.playerList[user];
+            const reclaimed = !!previous?.admin && previous.admin !== user && snapshot.admin === user;
             applySnapshot(snapshot, user === player.value.ID);
+            if (reclaimed && user === player.value.ID) showPlayerPresence("You’re hosting again");
+            else if (member && !member.connected) {
+                const name = snapshot.playerList[user]?.name ?? member.name;
+                showPlayerPresence(reclaimed ? `${name} returned as host` : `${name} returned to the lobby`);
+            }
         },
         [SocketType.LEFT_LOBBY]: (message) => {
             const { lobby: snapshot, user } = message.payload;
             if (!snapshot || !user) throw new Error("Missing lobby state.");
             const name = getPlayerNameFromID(user) ?? "Unknown Player";
             applySnapshot(snapshot);
-            showPlayerLeftToast(name, !!snapshot.playerList[user]);
+            const member = snapshot.playerList[user];
+            if (member?.away) showPlayerPresence(`${name} stepped away`);
+            else if (member) showPlayerPresence(`${name} is reconnecting`, true);
+            else showPlayerPresence(`${name} left the lobby`);
         },
         [SocketType.REJOIN_ROUND]: (message) => {
             const data = message.payload;

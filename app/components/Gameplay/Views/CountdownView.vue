@@ -1,5 +1,5 @@
 <template>
-    <section ref="screen" class="countdown-screen" :class="{ 'has-standings': standings.length > 0 }" :aria-labelledby="titleId">
+    <section ref="screen" class="countdown-screen" :class="{ 'has-standings': standings.length > 0, 'countdown-light': light }" :aria-labelledby="titleId">
         <div class="scenic-layer" aria-hidden="true">
             <picture>
                 <source media="(max-width: 800px) and (orientation: portrait)" srcset="/images/emerald-horizon-portrait.webp" />
@@ -22,7 +22,7 @@
                 </h1>
             </header>
             <div class="orbit-slot">
-                <GameplayCountdownOrbit :seconds="seconds" />
+                <GameplayCountdownOrbit :seconds="seconds" :light="light" />
                 <p class="sr-only" role="status" aria-atomic="true">
                     {{ seconds ? `${seconds} ${seconds === 1 ? "second" : "seconds"} until the round starts` : "" }}
                 </p>
@@ -43,7 +43,7 @@ const totals = useTotalResults();
 const round = computed(() => lobbySettings.value?.currentRound ?? 1);
 const roundCount = computed(() => lobbySettings.value?.conf.numRounds);
 const standings = computed(() => (round.value > 1 ? rankTotalResults(totals.value).slice(0, 3) : []));
-const seconds = useCountdown(() => props.remaining(), screen);
+const { seconds, light } = useCountdown(() => props.remaining(), screen);
 </script>
 
 <style scoped>
@@ -57,8 +57,8 @@ const seconds = useCountdown(() => props.remaining(), screen);
     position: fixed;
     z-index: 44;
     isolation: isolate;
-    inset: 0;
-    height: 100dvh;
+    inset: var(--gb-screen-top, 0px) 0 auto;
+    height: var(--gb-viewport-height);
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     gap: clamp(0.5rem, 2dvh, 1.25rem);
@@ -216,7 +216,10 @@ const seconds = useCountdown(() => props.remaining(), screen);
         transform: scale(calc(1.025 + var(--countdown-progress) * 0.027));
         transform-origin: var(--reveal-center);
     }
-    .round-reveal-leave-active::after {
+    .countdown-light .scenic-layer picture {
+        transform: none;
+    }
+    .round-reveal-leave-active:not(.countdown-light)::after {
         position: absolute;
         inset: 0;
         background: radial-gradient(ellipse at var(--reveal-center), #d4ffa54d, #9ff29d14 24%, transparent 52%);

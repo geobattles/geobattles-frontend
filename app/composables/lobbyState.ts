@@ -21,3 +21,6 @@ export const useLobbyState = () => ({
     // Older servers may still leave this incomplete after recovery.
     revealedAnswers: useState<Record<number, Coordinates>>("lobby:revealedAnswers", () => ({})),
 });
+
+// A navigation hint only. Admission still requires the same signed identity.
+export const useLobbyReturnState = () => useState<{ id: string; playerId: string } | null>("lobby:return", () => null);
