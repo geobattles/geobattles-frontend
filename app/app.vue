@@ -70,7 +70,6 @@ onMounted(() => {
     document.addEventListener("fullscreenchange", updateAlertTarget);
     updateAlertTarget();
     app.$gameRuntime.google.installLoader(config.public.GMAPS_API);
-    if (import.meta.dev && router.currentRoute.value.name === "dev-ui") return;
     void auth.initializeAuth().catch(() => console.warn("Authentication initialization failed."));
 });
 onBeforeUnmount(() => {

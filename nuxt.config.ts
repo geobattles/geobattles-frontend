@@ -1,6 +1,5 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { execSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
 
 // VERSION can be set by GHA or manually (if building locally)
 // If not set, it will try to get the git commit hash
@@ -59,16 +58,7 @@ export default defineNuxtConfig({
         },
     },
 
-    modules: [
-        "@nuxtjs/tailwindcss",
-        "@vite-pwa/nuxt",
-        (_options, nuxt) => {
-            if (!nuxt.options.dev) return;
-            nuxt.hook("pages:extend", (pages) => {
-                pages.push({ name: "dev-ui", path: "/dev/ui", file: fileURLToPath(new URL("./app/dev/ConnectionPreview.vue", import.meta.url)) });
-            });
-        },
-    ],
+    modules: ["@nuxtjs/tailwindcss", "@vite-pwa/nuxt"],
     css: ["~/assets/css/main.css"],
     postcss: {
         plugins: {
