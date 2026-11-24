@@ -46,10 +46,10 @@ const returnCode = computed(() => (verifiedLobby.value === savedLobby.value ? ve
 let stopReturnCheck: (() => void) | undefined;
 onMounted(() => {
     stopReturnCheck = watch(
-        savedLobby,
-        (hint, _, cleanup) => {
+        [savedLobby, () => auth.isAuthenticated],
+        ([hint, authenticated], _, cleanup) => {
             verifiedLobby.value = null;
-            if (!hint) return;
+            if (!hint || !authenticated) return;
 
             let request: AbortController | undefined;
             const check = async () => {
@@ -58,10 +58,15 @@ onMounted(() => {
                 request = controller;
                 const timeout = window.setTimeout(() => controller.abort(), 5000);
                 try {
-                    const lobbies = await lobbyService.fetchLobbyList({ cache: "no-store", signal: controller.signal });
-                    if (controller.signal.aborted || savedLobby.value !== hint || !lobbies || typeof lobbies !== "object" || Array.isArray(lobbies)) return;
-                    if (Object.hasOwn(lobbies, hint.id)) verifiedLobby.value = hint;
-                    else app.$gameRuntime.forgetReturnHint(hint);
+                    const token = await auth.getValidAccessToken();
+                    if (!token || controller.signal.aborted || savedLobby.value !== hint) return;
+                    const status = await lobbyService.admission(hint.id, token, controller.signal);
+                    if (controller.signal.aborted || savedLobby.value !== hint) return;
+                    if (status.retained === true) verifiedLobby.value = hint;
+                    else {
+                        verifiedLobby.value = null;
+                        if (["OK", "LOBBY_NOT_FOUND", "REJOIN_EXPIRED", "GAME_IN_PROGRESS", "LOBBY_FULL"].includes(status.code)) app.$gameRuntime.forgetReturnHint(hint);
+                    }
                 } catch {
                     // An unavailable server cannot confirm that the lobby closed.
                 } finally {

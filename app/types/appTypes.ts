@@ -12,6 +12,21 @@ export type User = {
 // ====================== Lobby data ======================
 export type LobbyPhase = "WAITING" | "PLAYING" | "MID-ROUND" | "FINISHED";
 
+export interface LobbySummary {
+    ID: string;
+    name: string;
+    hostName?: string;
+    phase: LobbyPhase;
+    currentRound: number;
+    numRounds: number;
+    connected: number;
+    occupied: number;
+    maxPlayers: number;
+    openToNew: boolean;
+    starting?: boolean;
+    retained?: boolean;
+}
+
 export type LobbyInfo = {
     ID: string;
     /** Stable for one successfully started match, including recovery/results. */

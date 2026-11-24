@@ -36,21 +36,24 @@
                 <li v-for="entry in pageEntries" :key="entry.ID" class="directory-row">
                     <div class="lobby-identity">
                         <div class="lobby-title">
-                            <strong>{{ entry.conf.name }}</strong
+                            <strong>{{ entry.name }}</strong
                             ><code>{{ entry.ID }}</code>
                         </div>
-                        <span v-if="entry.playerList?.[entry.admin]?.name" class="lobby-host">Host {{ entry.playerList[entry.admin]?.name }}</span>
+                        <span v-if="entry.hostName" class="lobby-host">Host {{ entry.hostName }}</span>
                     </div>
                     <div class="lobby-details">
-                        <span class="lobby-capacity" aria-label="Connected players"><UiIcon name="users" /> {{ connectedCount(entry) }} / {{ entry.conf.maxPlayers }}</span>
-                        <span>{{ entry.phase === "FINISHED" ? "Rematch" : isActive(entry) ? "Round " + entry.currentRound + " / " + entry.conf.numRounds : "Waiting" }}</span>
+                        <span class="lobby-capacity"
+                            ><UiIcon name="users" /><span class="sr-only">Connected players</span> {{ entry.connected }} / {{ entry.maxPlayers }}
+                            <span v-if="entry.occupied > entry.connected">· {{ entry.occupied - entry.connected }} reserved</span>
+                        </span>
+                        <span>{{ entry.phase === "FINISHED" ? "Rematch" : isActive(entry) ? "Round " + entry.currentRound + " / " + entry.numRounds : "Waiting" }}</span>
                     </div>
                     <button
                         class="directory-button lobby-join"
                         type="button"
                         :disabled="!joinable(entry) || !!working"
                         :aria-busy="working === entry.ID"
-                        :aria-label="joinLabel(entry) + ' ' + entry.conf.name"
+                        :aria-label="joinLabel(entry) + ' ' + entry.name"
                         @click="emit('join', entry.ID)"
                     >
                         <span v-if="working === entry.ID" class="spinner" aria-hidden="true" />{{ joinLabel(entry) }}
@@ -76,12 +79,13 @@
 </template>
 
 <script setup lang="ts">
-import type { LobbyInfo } from "~/types/appTypes";
+import type { LobbySummary } from "~/types/appTypes";
 
 const props = defineProps<{ active: boolean; working?: string; actionError?: string }>();
 const emit = defineEmits<{ join: [id: string]; create: [] }>();
 const lobby = useLobbyStore();
 const player = usePlayerInfo();
+const auth = useAuthStore();
 const search = ref("");
 const sort = ref("name");
 const page = ref(1);
@@ -89,18 +93,14 @@ const pageSize = ref(10);
 const loading = ref(false);
 const loaded = ref(false);
 const error = ref("");
-let disposed = false;
-const connectedCount = (entry: LobbyInfo) => Object.values(entry.playerList || {}).filter((person) => person.connected).length;
-const isActive = (entry: LobbyInfo) => entry.phase === "PLAYING" || entry.phase === "MID-ROUND";
-const member = (entry: LobbyInfo) => !!player.value.ID && !!entry.playerList?.[player.value.ID];
-const joinable = (entry: LobbyInfo) => member(entry) || (!isActive(entry) && Object.keys(entry.playerList || {}).length < entry.conf.maxPlayers);
-const joinLabel = (entry: LobbyInfo) => (joinable(entry) ? (member(entry) ? "Return" : "Join") : isActive(entry) ? "In progress" : "Full");
+let request: AbortController | undefined;
+const isActive = (entry: LobbySummary) => entry.phase === "PLAYING" || entry.phase === "MID-ROUND";
+const joinable = (entry: LobbySummary) => !entry.starting && (entry.retained || entry.openToNew);
+const joinLabel = (entry: LobbySummary) => (entry.starting ? "Starting" : entry.retained ? "Return" : entry.openToNew ? "Join" : isActive(entry) ? "In progress" : "Full");
 const filtered = computed(() =>
     Object.values(lobby.lobbyList)
-        .filter((entry) => (entry.conf.name + " " + entry.ID).toLowerCase().includes(search.value.toLowerCase().trim()))
-        .sort((a, b) =>
-            sort.value === "players" ? connectedCount(b) - connectedCount(a) : sort.value === "round" ? b.currentRound - a.currentRound : a.conf.name.localeCompare(b.conf.name)
-        )
+        .filter((entry) => (entry.name + " " + entry.ID).toLowerCase().includes(search.value.toLowerCase().trim()))
+        .sort((a, b) => (sort.value === "players" ? b.connected - a.connected : sort.value === "round" ? b.currentRound - a.currentRound : a.name.localeCompare(b.name)))
 );
 const pages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize.value)));
 const pageEntries = computed(() => filtered.value.slice((page.value - 1) * pageSize.value, page.value * pageSize.value));
@@ -113,35 +113,47 @@ watch(pages, (count) => {
 });
 
 async function refresh(background: boolean) {
-    if (disposed || loading.value || (background && (document.hidden || !navigator.onLine))) return;
+    if (!props.active || request || (background && (document.hidden || !navigator.onLine))) return;
+    const current = new AbortController();
+    request = current;
     loading.value = true;
     try {
-        await lobby.fetchLobbyList();
-        if (!disposed) {
+        await lobby.fetchLobbyList(current.signal);
+        if (!current.signal.aborted) {
             loaded.value = true;
             error.value = "";
         }
     } catch {
-        if (!disposed) error.value = "Couldn’t load lobbies. Refresh to try again.";
+        if (!current.signal.aborted) error.value = "Couldn’t load lobbies. Refresh to try again.";
     } finally {
-        if (!disposed) loading.value = false;
+        if (request === current) {
+            request = undefined;
+            loading.value = false;
+        }
     }
 }
 
 onMounted(() => {
     watch(
-        () => props.active,
-        (active, _previous, onCleanup) => {
+        [() => props.active, () => player.value.ID, () => auth.isAuthenticated],
+        ([active, id, authenticated], previous, onCleanup) => {
+            if (previous[0] === undefined || previous[1] !== id || previous[2] !== authenticated) {
+                lobby.lobbyList = {};
+                error.value = "";
+                loaded.value = false;
+            }
             if (!active) return;
             void refresh(false);
             const timer = setInterval(() => void refresh(true), 5000);
-            onCleanup(() => clearInterval(timer));
+            onCleanup(() => {
+                clearInterval(timer);
+                request?.abort();
+                request = undefined;
+                loading.value = false;
+            });
         },
         { immediate: true }
     );
-});
-onBeforeUnmount(() => {
-    disposed = true;
 });
 </script>
 

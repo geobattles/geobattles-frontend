@@ -19,7 +19,8 @@ export const useLobbyStore = () => {
     const selectedMode = useSelectedGameMode();
     const resultsStore = useResultsStore();
     const { rememberPlayers } = usePlayerLookup();
-    const { getValidAccessToken } = useAuthStore();
+    const auth = useAuthStore();
+    const { getValidAccessToken } = auth;
     const lobbyService = createLobbyService(useRuntimeConfig().public.BACKEND_HOST);
 
     // ================== Lobby creation and joining ==================
@@ -79,20 +80,19 @@ export const useLobbyStore = () => {
     /**
      * Fetch the current list of available lobbies from the server
      */
-    const fetchLobbyList = async () => {
-        try {
-            lobbyList.value = await lobbyService.fetchLobbyList();
-        } catch (error) {
-            throw error;
-        }
+    const fetchLobbyList = async (signal?: AbortSignal) => {
+        const identity = playerInfo.value.ID;
+        const token = auth.isAuthenticated ? await getValidAccessToken() : null;
+        if (signal?.aborted || identity !== playerInfo.value.ID) return;
+        const rows = await lobbyService.directory(token, signal);
+        if (!signal?.aborted && identity === playerInfo.value.ID) lobbyList.value = rows;
     };
 
     /**
      * Check if a lobby with the given ID exists
      */
     const checkIfLobby = async (lobbyId: string) => {
-        await fetchLobbyList();
-        if (!Object.keys(lobbyList.value).includes(lobbyId)) {
+        if (!(await lobbyService.find(lobbyId))) {
             throw new Error("Lobby does not exist");
         }
     };
