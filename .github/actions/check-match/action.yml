@@ -1,0 +1,19 @@
+name: Check a two-player match
+description: Run the local fixture against the two checked-out GeoBattles repositories
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@v5
+      with:
+        go-version-file: geo-backend/.go-version
+        cache-dependency-path: geo-backend/go.sum
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: geo-frontend/.nvmrc
+        cache: npm
+        cache-dependency-path: geo-frontend/package-lock.json
+    - run: npm install --global npm@11.19.1
+      shell: bash
+    - run: npm run test:e2e:match
+      shell: bash
+      working-directory: geo-frontend

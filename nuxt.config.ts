@@ -1,5 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { execSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 // VERSION can be set by GHA or manually (if building locally)
 // If not set, it will try to get the git commit hash
@@ -18,6 +19,10 @@ function getVersion() {
 }
 
 export default defineNuxtConfig({
+    alias: { "#maps-provider": fileURLToPath(new URL("./app/runtime/mapsLoader.ts", import.meta.url)) },
+    $env: {
+        matchfixture: { alias: { "#maps-provider": fileURLToPath(new URL("./e2e/match/localMaps.ts", import.meta.url)) } },
+    },
     devtools: { enabled: true },
     ssr: true,
 

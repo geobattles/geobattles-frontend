@@ -85,7 +85,7 @@ test("three independent guests: two real rounds, MID-ROUND reload, ungated Next 
         if (round === 1) {
             firstResult = results;
             for (const actor of actors) {
-                await expect(actor.page.getByRole("heading", { name: /^round 1 debrief$/i })).toBeVisible();
+                await expect(actor.page.getByRole("heading", { name: "Round 1 Results", exact: true })).toBeVisible();
                 await expect(readyButton(actor), "MID-ROUND must have no new ready acknowledgement").toHaveCount(0);
                 expect(actor.events.slice(marks[actors.indexOf(actor)]).some((event) => event.type === "GAME_END")).toBe(false);
             }
@@ -120,8 +120,8 @@ test("three independent guests: two real rounds, MID-ROUND reload, ungated Next 
             expect(peer.id).toBe(peerId);
             await connected(peer);
             // Recovery must restore the usable results screen, not just socket state.
-            await expect(peer.page.getByRole("heading", { name: /^round 1 debrief$/i })).toBeVisible();
-            await expect(peer.page.getByRole("region", { name: "Round debrief and player results", exact: true })).toBeVisible();
+            const recap = peer.page.getByRole("region", { name: "Round 1 Results", exact: true });
+            await expect(recap.getByRole("heading", { name: "Round 1 Results", exact: true })).toBeVisible();
             // Session retains the gameplay view with v-show to keep native Maps objects.
             await expect(peer.page.locator(".guess-button")).toBeHidden();
             await expect(peer.page.getByRole("dialog")).toHaveCount(0);
