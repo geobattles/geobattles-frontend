@@ -187,7 +187,7 @@ test("two guests finish a scored match and recover a retained seat in round two"
             const otherRoom = await createLobby(host);
             // Recreate a persisted hint from an older session whose four-character code is in use again.
             await guest.page.evaluate((hint) => localStorage.setItem("geobattles:return-lobby", JSON.stringify(hint)), { id: otherRoom, playerId: guestId });
-            const admissionURL = env.backend + "/lobby/admission?id=" + otherRoom;
+            const admissionURL = env.backend + "/lobby/admission?id=" + otherRoom + "&spectate=1";
             await guest.page.route(admissionURL, (route) => route.abort("timedout"), { times: 1 });
             const failure = guest.page.waitForEvent("requestfailed", (request) => request.url() === admissionURL);
             await guest.goto("/");
