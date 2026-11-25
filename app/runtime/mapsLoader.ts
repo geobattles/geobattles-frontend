@@ -1,6 +1,7 @@
 // Lazy, runtime-owned direct Google loader. No request before a view grant.
 // Failed scripts are removed so an explicit retry can issue a fresh request.
 const ignoreStaleMapsCallback = () => {};
+export const mapsConfigured = (key: string) => !!key.trim();
 const createCallbackRegistry = () => ({
     nextAttempt: 0,
     callbacks: new Proxy<Record<string, () => void>>(Object.create(null), {

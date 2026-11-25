@@ -17,12 +17,13 @@
                 <button type="button" class="btn btn-icon btn-quiet" aria-label="Dismiss error" @click="request.clearError()"><UiIcon name="close" /></button>
             </div>
         </Teleport>
-        <p v-if="!config.public.GMAPS_API.trim() && !isGameRoute" class="build-notice" role="status">
+        <p v-if="!mapsConfigured(config.public.GMAPS_API) && !isGameRoute" class="build-notice" role="status">
             Maps is not configured in this build. You can explore the interface and prepare a lobby; starting a game needs an operator-configured browser Maps key.
         </p>
     </div>
 </template>
 <script setup lang="ts">
+import { mapsConfigured } from "#maps-provider";
 const app = useNuxtApp();
 const config = useRuntimeConfig();
 const router = useRouter();

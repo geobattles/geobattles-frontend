@@ -2,9 +2,42 @@
 
 Routine `npm run check` runs formatting, typecheck and build without a backend or browser. Application unit tests and new test frameworks remain opt-in. The existing optional socket/browser suites use real HTTP, native WebSockets and rendered controls; do not manufacture provider responses, phases, scores or snapshots.
 
-## Isolation and prerequisites
+## Two-player match in CI
 
-Use the pinned Node/npm toolchain and installed Playwright 1.65.1. Install its browser binaries only as part of explicitly scoped tooling setup. Runtime suites do not start services: verify the backend uses an approved isolated development database and credentials before running. A loopback URL alone does not establish database isolation.
+From the frontend checkout on Linux or WSL, with the pinned Node/npm and Go
+toolchains and Docker available, run:
+
+```sh
+npm run test:e2e:match
+```
+
+The runner finds the sibling `../geo-backend` checkout. Set
+`GEOBATTLES_BACKEND_DIR` to choose a different checkout. It prints both Git
+revisions, stages the frontend sources in a temporary directory, and installs
+the locked dependencies and Chromium. A disposable PostgreSQL container hosts
+the fixture server and database. Only the API is published on a random loopback
+port. The runner stops its services and removes its temporary files on exit.
+
+Each repository's multiplayer PR check pins the sibling checkout by full
+commit SHA. Make the pinned commits available in the corresponding upstream
+repositories before enabling the checks. Update a pin in a reviewed change
+when adopting a new sibling revision.
+
+The Go `matchfixture` build supplies two fixed locations. The Nuxt
+`--envName matchfixture` build uses a local interactive atlas in place of the
+Google SDK. Two guest contexts use the real HTTP API, WebSockets, guess
+controls, clock and scoring. The guest closes the gameplay document, finds
+the retained seat in round two and returns. Both clients must display 10,000
+points for Atlas and 5,000 for Nova. The browser proxy allows only the two
+loopback origins. The Maps-backed suites below cover the real provider.
+
+To save player-visible screenshots, set `GEOBATTLES_MATCH_ARTIFACTS` to an
+absolute output directory before running the command. The fixture uses
+disposable guest identities and writes screenshots only when requested.
+
+## Isolation and prerequisites for the socket and provider suites
+
+Use the pinned Node/npm toolchain and installed Playwright 1.65.1. Install its browser binaries only as part of explicitly scoped tooling setup. These suites use existing services: verify the backend uses an approved isolated development database and credentials before running. A loopback URL alone does not establish database isolation.
 
 ```sh
 export GEOBATTLES_E2E_TARGET=isolated-local
