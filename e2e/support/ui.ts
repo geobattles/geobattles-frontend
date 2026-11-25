@@ -140,15 +140,10 @@ export async function changeSettings(actor: Actor, values: { name: string; round
 }
 
 export async function leave(actor: Actor) {
-    const accept = async (dialog: import("@playwright/test").Dialog) => {
-        if (dialog.type() === "confirm") await dialog.accept();
-        else await dialog.dismiss();
-    };
-    actor.page.on("dialog", accept);
     actor.navigating = true;
     try {
         await actor.page.getByRole("button", { name: /^(leave|leave lobby)$/i }).click();
-        const confirmation = actor.page.getByRole("dialog").getByRole("button", { name: /^(leave|leave lobby|confirm)$/i });
+        const confirmation = actor.page.getByRole("dialog", { name: "Leave lobby?", exact: true }).getByRole("button", { name: "Leave lobby", exact: true });
         await expect
             .poll(async () => new URL(actor.page.url()).pathname === "/" || (await confirmation.isVisible()), { message: "Leave must navigate or show a real confirmation" })
             .toBe(true);
@@ -156,7 +151,6 @@ export async function leave(actor: Actor) {
         await expect(actor.page).toHaveURL(`${env.frontend}/`);
     } finally {
         actor.navigating = false;
-        actor.page.off("dialog", accept);
     }
 }
 

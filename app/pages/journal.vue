@@ -1,17 +1,13 @@
 <template>
-    <div class="journal-page atlas-menu-shell">
-        <Header />
-        <main id="main-content" class="journal-main">
-            <header class="journal-heading">
+    <div class="scenic-page">
+        <Header navigation />
+        <main id="main-content" class="page-shell journal-main">
+            <header class="journal-heading scenic-page-hero">
                 <div>
-                    <p class="eyebrow">Match archive</p>
-                    <h1>Expedition <span>Journal.</span></h1>
+                    <h1>Expedition <em>Journal</em></h1>
                     <p class="journal-intro">A closer look at the places you guessed — and the answers you found.</p>
                 </div>
-                <NuxtLink to="/" class="back-link"
-                    ><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m14 6-6 6 6 6M8 12h12" stroke="currentColor" stroke-width="1.5" /></svg>Back to the
-                    world</NuxtLink
-                >
+                <NuxtLink to="/" class="scenic-button"><UiIcon name="home" />Back to the world</NuxtLink>
             </header>
             <section class="storage-notice" aria-label="Journal storage and privacy">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -76,11 +72,10 @@
                         <circle cx="106" cy="144" r="7" fill="var(--gb-coral)" />
                         <circle cx="221" cy="100" r="7" fill="var(--gb-accent)" />
                         <circle cx="221" cy="100" r="15" stroke="var(--gb-accent)" stroke-opacity=".5" />
-                        <path d="M37 125h12m222 0h12M160 2v12m0 222v12" stroke="var(--gb-muted)" /></svg
-                    ><span>NO EXPEDITIONS RECORDED</span>
+                        <path d="M37 125h12m222 0h12M160 2v12m0 222v12" stroke="var(--gb-muted)" />
+                    </svg>
                 </div>
                 <div class="empty-copy">
-                    <p class="eyebrow">First entry</p>
                     <h2 id="empty-title">No matches recorded yet.</h2>
                     <p v-if="mounted && identityId">
                         Finish a Battle Royale game to save the rounds, your guesses, the revealed answers and your scores here. Only complete results are recorded — no sample
@@ -90,25 +85,24 @@
                         Sign in or choose a guest identity, then finish a Battle Royale game. Your completed rounds and personal bests will stay here on this device, separate from
                         other identities.
                     </p>
-                    <NuxtLink to="/" class="primary-link"
-                        >{{ mounted && identityId ? "Find your next game" : "Choose how to play"
-                        }}<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" stroke="currentColor" stroke-width="1.5" /></svg
-                    ></NuxtLink>
+                    <NuxtLink to="/" class="scenic-button scenic-button-primary">
+                        {{ mounted && identityId ? "Find your next game" : "Choose how to play" }}<UiIcon name="arrow" />
+                    </NuxtLink>
                 </div>
             </section>
         </main>
-        <dialog ref="clearDialog" class="clear-dialog" aria-labelledby="clear-title" aria-describedby="clear-description" @close="clearTarget = null" @click="closeFromBackdrop">
-            <form @submit.prevent="confirmClear">
-                <p class="eyebrow">DEVICE STORAGE</p>
-                <h2 id="clear-title">Clear this journal?</h2>
-                <p id="clear-description">
-                    This permanently removes this identity's saved matches and personal bests from this browser. Other identities are not affected. It cannot be undone.
-                </p>
-                <div class="dialog-actions">
-                    <button type="button" autofocus @click="clearDialog?.close()">Keep my journal</button><button type="submit" class="confirm-clear">Clear local journal</button>
-                </div>
+        <UiDialog
+            class="clear-dialog"
+            :open="clearTarget !== null"
+            title="Clear this journal?"
+            description="This permanently removes this identity's saved matches and personal bests from this browser. Other identities are not affected. It cannot be undone."
+            @update:open="clearTarget = null"
+        >
+            <form class="dialog-actions" @submit.prevent="confirmClear">
+                <button type="button" class="scenic-button" autofocus @click="clearTarget = null">Keep my journal</button>
+                <button type="submit" class="scenic-button scenic-button-danger">Clear local journal</button>
             </form>
-        </dialog>
+        </UiDialog>
     </div>
 </template>
 
@@ -119,7 +113,7 @@ import MatchDebrief from "~/components/journal/MatchDebrief.vue";
 import { journalDistance, journalNumber } from "~/components/journal/format";
 
 useHead({
-    title: "Expedition Journal · GeoBattles",
+    title: "Expedition Journal",
     meta: [{ name: "description", content: "Review your completed GeoBattles expeditions, guesses and personal bests. Saved only on this device." }],
 });
 const player = usePlayerInfo();
@@ -133,14 +127,12 @@ const chooseMatch = (gameId: string, round = 1) => {
     navigationRevision.value++;
 };
 const selectedMatch = computed(() => matches.value.find((match) => match.gameId === selectedId.value) ?? matches.value[0] ?? null);
-const clearDialog = ref<HTMLDialogElement | null>(null);
 const clearTarget = ref<string | null>(null);
 const clearNote = ref<string | null>(null);
 // Stabilize only the public empty-state copy, not the immediate private identity gates.
 const mounted = ref(false);
 const openClear = () => {
     clearTarget.value = identityId.value;
-    clearDialog.value?.showModal();
 };
 const confirmClear = () => {
     if (identityId.value && clearTarget.value === identityId.value) {
@@ -149,13 +141,7 @@ const confirmClear = () => {
             : "This session's journal was cleared, but browser storage is blocked. Previously saved device data could not be confirmed removed; use your browser's site-data controls if needed.";
         selectedId.value = null;
     }
-    clearDialog.value?.close();
-};
-const closeFromBackdrop = (event: MouseEvent) => {
-    const dialog = clearDialog.value;
-    if (!dialog || event.target !== dialog) return;
-    const box = dialog.getBoundingClientRect();
-    if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) dialog.close();
+    clearTarget.value = null;
 };
 const storageChanged = (event: StorageEvent) => {
     if (event.key === null || event.key === `geobattles:journal:v1:${encodeURIComponent(identityId.value ?? "")}`) load();
@@ -165,7 +151,7 @@ watch(
     () => {
         selectedId.value = null;
         clearNote.value = null;
-        clearDialog.value?.close();
+        clearTarget.value = null;
         if (mounted.value) load();
     },
     { flush: "sync" }
@@ -178,88 +164,42 @@ onMounted(() => {
 onBeforeUnmount(() => {
     mounted.value = false;
     window.removeEventListener("storage", storageChanged);
-    clearDialog.value?.close();
 });
 </script>
 
 <style scoped>
-.journal-page {
-    min-height: 100dvh;
-    background-color: var(--gb-bg);
-    color: var(--gb-text);
-}
 .journal-main {
     max-width: 1280px;
-    margin: 0 auto;
-    padding: clamp(2rem, 5vw, 4.5rem) clamp(1rem, 4vw, 3rem) 1.5rem;
 }
 .journal-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
-    margin-bottom: 2rem;
+    margin-block-end: 1rem;
 }
-.eyebrow {
-    font-size: 0.66rem;
-    letter-spacing: 0.15em;
-    font-weight: 600;
-    color: var(--gb-muted);
-    margin: 0 0 0.8rem;
-}
-h1 {
-    font-size: clamp(2.3rem, 5vw, 3.8rem);
-    font-family: var(--gb-font-headline);
-    font-style: italic;
-    font-weight: 900;
-    letter-spacing: -0.055em;
-    line-height: 1.12;
-    margin: 0;
-}
-h1 span {
-    color: var(--gb-accent);
+.journal-heading .scenic-button {
+    flex: none;
 }
 .journal-intro {
-    color: var(--gb-muted);
-    line-height: 1.7;
-    font-size: 0.9rem;
-    margin: 0.9rem 0 0;
+    font-size: 0.95rem;
+    margin-block-start: 0.65rem;
     max-width: 34rem;
-}
-.back-link {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.8rem;
-    color: var(--gb-text);
-    text-decoration: none;
-    min-height: 44px;
-    white-space: nowrap;
-}
-.back-link svg,
-.primary-link svg {
-    width: 21px;
-    height: 21px;
-}
-a:focus-visible,
-button:focus-visible {
-    outline: 2px solid var(--gb-accent);
-    outline-offset: 5px;
-    border-radius: 4px;
 }
 .storage-notice {
     display: flex;
     align-items: center;
     gap: 0.9rem;
-    border-top: 1px solid var(--gb-line);
-    border-bottom: 1px solid var(--gb-line);
-    padding: 1rem 0;
+    border: 1px solid #87cba445;
+    border-radius: 0.85rem;
+    background: #0a3129;
+    padding: 0.75rem clamp(0.8rem, 2vw, 1.15rem);
 }
 .storage-notice > svg {
     width: 23px;
     height: 23px;
     flex-shrink: 0;
-    color: var(--gb-muted);
+    color: var(--gb-success);
 }
 .storage-notice p {
     color: var(--gb-muted);
@@ -302,16 +242,14 @@ button:focus-visible {
 }
 .personal-bests {
     display: grid;
-    grid-template-columns: 1.1fr repeat(3, 1fr);
-    gap: 1rem;
+    grid-template-columns: minmax(0, 1.1fr) repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
     align-items: center;
-    padding: 1.75rem 0;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid var(--gb-line);
+    padding: 1rem 0;
 }
 .bests-label h2 {
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 1.1rem;
+    font-weight: 800;
     margin: 0;
 }
 .bests-label p {
@@ -321,13 +259,14 @@ button:focus-visible {
 }
 .personal-bests button,
 .best-no-guess {
-    padding: 0.3rem 0.75rem;
+    padding: 0.65rem 0.75rem;
     display: flex;
     align-items: flex-start;
     flex-direction: column;
     gap: 0.45rem;
-    border: 0;
-    background: transparent;
+    border: 1px solid #87cba442;
+    border-radius: 0.85rem;
+    background: linear-gradient(145deg, #103c33, #092921);
     color: var(--gb-text);
     text-align: left;
     min-height: 95px;
@@ -341,7 +280,9 @@ button:focus-visible {
 }
 .personal-bests strong {
     font-size: clamp(1.25rem, 2.5vw, 1.9rem);
-    font-weight: 500;
+    font-weight: 800;
+    color: #e2ffa6;
+    overflow-wrap: anywhere;
     letter-spacing: -0.04em;
     font-variant-numeric: tabular-nums;
 }
@@ -359,7 +300,7 @@ button:focus-visible {
     grid-template-columns: minmax(220px, 290px) minmax(0, 1fr);
     gap: 1.75rem;
     align-items: start;
-    margin-top: 2rem;
+    margin-top: 0.45rem;
 }
 .list-heading {
     display: flex;
@@ -388,8 +329,14 @@ button:focus-visible {
     display: grid;
     grid-template-columns: 0.9fr 1.1fr;
     align-items: center;
-    gap: clamp(1.5rem, 5vw, 5rem);
-    padding: clamp(2.5rem, 6vw, 6rem) 2rem;
+    gap: clamp(1rem, 3.5vw, 3rem);
+    padding: clamp(1rem, 4vw, 3.25rem);
+    margin-block-start: 1rem;
+    border: 1px solid #87cba445;
+    border-radius: 1.1rem;
+    background:
+        linear-gradient(120deg, #0c382ce0, #082721e8),
+        url("/images/atlas-relief.svg") 40% 40% / cover #082a23;
 }
 .empty-orbit {
     max-width: 330px;
@@ -401,88 +348,43 @@ button:focus-visible {
     width: 100%;
     height: auto;
 }
-.empty-orbit > span {
-    display: block;
-    color: var(--gb-muted);
-    font-family: ui-monospace, monospace;
-    letter-spacing: 0.12em;
-    font-size: 0.58rem;
-    margin-top: 1rem;
-}
 .empty-copy h2 {
     font-size: clamp(1.65rem, 3vw, 2.5rem);
-    font-weight: 500;
+    font-weight: 800;
     line-height: 1.2;
     letter-spacing: -0.035em;
-    margin: 0 0 1rem;
+    margin: 0 0 0.6rem;
 }
-.empty-copy > p:not(.eyebrow) {
+.empty-copy > p {
     color: var(--gb-muted);
-    line-height: 1.8;
-    font-size: 0.85rem;
+    line-height: 1.6;
+    font-size: 0.9rem;
     max-width: 28rem;
 }
-.primary-link {
-    color: var(--gb-on-accent);
-    background: linear-gradient(115deg, var(--gb-accent), var(--gb-accent-end));
-    border: 1px solid var(--gb-accent);
-    border-radius: 8px;
-    padding: 0.9rem 1.1rem;
-    min-height: 48px;
-    display: inline-flex;
-    align-items: center;
-    gap: 1.5rem;
-    text-decoration: none;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin: 0.7rem 0;
+.empty-copy .scenic-button {
+    margin-block-start: 1rem;
 }
-.primary-link:hover {
-    filter: brightness(1.06);
-}
-.clear-dialog {
-    color: var(--gb-text);
-    background: var(--gb-surface);
-    border: 1px solid var(--gb-line);
-    border-radius: 14px;
-    width: min(480px, calc(100vw - 2rem));
-    padding: 1.75rem;
-    margin: auto;
+.clear-dialog[open] {
+    width: min(30rem, calc(100% - var(--dialog-left) - var(--dialog-right)));
+    border-color: #77bf9a8a;
+    border-radius: 1.15rem;
+    background: linear-gradient(140deg, #0d382e, #06251f);
+    box-shadow: 0 1.5rem 4rem #051a11a8;
 }
 .clear-dialog::backdrop {
-    background: color-mix(in srgb, var(--gb-bg) 80%, transparent);
+    background: #021714b8;
 }
-.clear-dialog h2 {
-    font-size: 1.65rem;
-    margin: 0;
-    font-weight: 600;
-    letter-spacing: -0.03em;
+.clear-dialog :deep(.ui-dialog-header button) {
+    border-radius: 50%;
 }
-.clear-dialog p:not(.eyebrow) {
-    color: var(--gb-muted);
-    line-height: 1.7;
-    font-size: 0.85rem;
-    margin: 1rem 0 1.5rem;
+.clear-dialog :deep(.ui-dialog-header h2) {
+    font: italic 900 1.65rem / 1.07 var(--gb-font-display);
 }
 .dialog-actions {
     display: flex;
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: 0.7rem;
-}
-.dialog-actions button {
-    border: 1px solid var(--gb-line);
-    border-radius: 7px;
-    background: var(--gb-raised);
-    color: var(--gb-text);
-    padding: 0.75rem 0.9rem;
-    min-height: 44px;
-    font-size: 0.8rem;
-}
-.dialog-actions .confirm-clear {
-    background: var(--gb-danger);
-    border-color: var(--gb-danger);
-    color: var(--gb-bg);
 }
 @media (min-width: 960px) {
     .match-sidebar {
@@ -503,15 +405,15 @@ button:focus-visible {
         flex-wrap: wrap;
     }
     .storage-notice p {
-        flex: 1;
-        min-width: 220px;
+        flex: 1 1 175px;
+        min-width: 0;
     }
     .clear-button {
         margin-left: 2rem;
         padding-left: 0;
     }
     .personal-bests {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 0.5rem;
     }
     .bests-label {
@@ -520,7 +422,7 @@ button:focus-visible {
     }
     .personal-bests button,
     .best-no-guess {
-        padding-left: 0;
+        padding-inline: 0.48rem;
     }
     .journal-workspace {
         grid-template-columns: 1fr;
@@ -542,26 +444,17 @@ button:focus-visible {
     .retention-note {
         margin-top: 0;
     }
+}
+@media (max-width: 530px) {
     .journal-empty {
-        padding: 1.25rem 0;
         grid-template-columns: 1fr;
-        gap: 1.25rem;
+        gap: 0.6rem;
     }
     .empty-orbit {
-        max-width: 160px;
-    }
-    .empty-orbit > span {
-        margin-top: 0.5rem;
+        max-width: 132px;
     }
     .empty-copy {
         max-width: 32rem;
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        scroll-behavior: auto !important;
     }
 }
 </style>

@@ -76,6 +76,20 @@
             <circle cx="12" cy="12" r="3" />
         </template>
         <template v-else-if="name === 'plus'"><path d="M12 4v16M4 12h16" /></template>
+        <template v-else-if="name === 'play'"><path fill="currentColor" stroke="none" d="M6 3.8a1 1 0 0 1 1.5-.86l13 8.2a1 1 0 0 1 0 1.72l-13 8.2A1 1 0 0 1 6 20.2Z" /></template>
+        <template v-else-if="name === 'key'">
+            <path d="M14.8 3.5a5.2 5.2 0 1 1-3.4 9.1L6 18v2H3v-3l5.8-5.8A5.2 5.2 0 0 1 14.8 3.5Z" />
+            <circle cx="15" cy="8.8" r="1.1" />
+        </template>
+        <template v-else-if="name === 'gamepad'">
+            <path d="M8 6h8a4 4 0 0 1 3.8 2.8l2 6.2a2.7 2.7 0 0 1-4.5 2.8L14.8 15H9.2l-2.5 2.8A2.7 2.7 0 0 1 2.2 15l2-6.2A4 4 0 0 1 8 6Z" />
+            <path d="M7.5 8.8v4.4m-2.2-2.2h4.4m5.8-.1h.1m3.1 1.6h.1" />
+        </template>
+        <template v-else-if="name === 'home'"><path d="m3 10 9-7 9 7M5 9v11h5v-6h4v6h5V9" /></template>
+        <template v-else-if="name === 'lock'">
+            <rect x="5" y="10" width="14" height="11" rx="2" />
+            <path d="M8 10V7a4 4 0 1 1 8 0v3m-4 4v3" />
+        </template>
         <template v-else-if="name === 'minus'"><path d="M5 12h14" /></template>
         <template v-else-if="name === 'shrink'"><path d="M9 3v6H3m12-6v6h6M3 15h6v6m12-6h-6v6" /></template>
         <template v-else-if="name === 'target'">

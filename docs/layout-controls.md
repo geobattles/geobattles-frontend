@@ -2,7 +2,9 @@
 
 ## Shared UI
 
-Night Atlas uses pine ink `#0c1916` for the field and `#162a23` for instruments. Primary actions shade from leaf `#b4e587` to fern `#82c879`; cool jade `#70d9af` marks confirmed state. Gold still identifies leaders and the trophy, while coral signals urgency or danger. Text and symbols carry the meaning without color. Home leads with **Join with code** and keeps **Create lobby** separate. Use local artwork, native controls, tabular score digits and short transitions that yield to reduced motion. Keep scenery and map attribution clear during play; reserve the larger artwork for menus and reveals.
+Night Atlas uses pine ink `#0c1916` for the field and `#162a23` for instruments. Primary actions shade from leaf `#b4e587` to fern `#82c879`; cool jade `#70d9af` marks confirmed state. Gold still identifies leaders and the trophy, while coral signals urgency or danger. Text and symbols carry the meaning without color. Use local artwork, native controls, tabular score digits and short transitions that yield to reduced motion. Keep scenery and map attribution clear during play; reserve the larger artwork for menus and reveals.
+
+Home pairs **Create Lobby** with an inline code field and a **Join Lobby** link. Entering a code or pasting an invite hands off to the existing join page for lookup and authentication. Desktop presents the actions and feature row below the left-aligned hero. Phone portrait stacks the actions below the route illustration, and short landscape places the new-game panel beside the brand. The entrance plays once when Home opens and the buttons are usable throughout.
 
 Controls need visible focus, meaningful accessible names and at least 44px hit targets; primary mobile gameplay actions use at least 52px. Inputs retain 16px text to avoid focus zoom. Reduce density through component spacing/type tokens, not root-font scaling, disabled zoom or text adjustment. Honor reduced motion and reader preferences.
 
@@ -23,6 +25,12 @@ In a development build, append `?viewport=1` and expand **Viewport** to see meas
 One labelled input displays the four code characters and supports ASCII capitalization, keyboard editing and valid code or same-origin invite paste. Completing a valid code checks the lobby and starts joining automatically. Editing the code cancels an in-progress lookup. Failed joins keep a retry action. Invite links and code entry resume the intended lobby join after authentication.
 
 The sign-in dialog shows one form at a time. Joining or creating a lobby opens guest entry. Explicit sign-in opens account entry. The code page focuses the code input when opening for entry or correction. The auth dialog tracks the visual viewport while open so its controls can be scrolled into view above the software keyboard.
+
+Navigation away from a live lobby opens the leave confirmation. **Stay in lobby**, Escape, or closing the prompt cancels navigation. **Leave lobby** commits the requested route and follows the existing lobby exit rules. During fullscreen play the dialog is inside the game’s fullscreen element.
+
+Lobby entry waits for the connected waiting-room snapshot before lighting **Lobby Found**. **Opening Room** and **Joining Players** are presentation stages of that same admission. The route, tracker and arrival pulse share a two-second clock, with a short finish if confirmation arrives late. Reduced motion reveals the confirmed room immediately. **Cancel** during entry returns directly to the prior join surface. Recovery and admission into a running match follow the existing socket and spectator routes.
+
+In a development build, open `/?lobbyJourney=1` to scrub the entry scene without joining a lobby.
 
 The waiting room uses the room name and a labelled **Leave** button instead of the site navbar. An actionable **Ready?** uses the original Night Atlas amber `#ffca62` to honey `#d69b40`, with dark text, an inset keyboard focus ring and a slow left-to-right fill (static under reduced motion). Replay uses the same treatment only after the winner ceremony closes. A server-confirmed ready state has its own label and a separate **Change** action in the waiting room. The host sees **Start game** only when everyone is ready; server eligibility and connection checks still apply. Portrait puts Ready and Invite ahead of the roster and settings; short landscape places them alongside one another. Keep the region and round values visible; the map, country list and rules are available on demand. Directory rows preserve search, sorting, capacity and phase eligibility.
 

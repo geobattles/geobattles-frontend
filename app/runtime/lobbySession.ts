@@ -106,7 +106,9 @@ export const createLobbySession = (
         lobbyState.isUpdatingSettings.value = false;
         lobbyState.modifySettingsModal.value = false;
         lobbyState.finalResultsReady.value = false;
+        lobbyState.finalResultsPlayerId.value = null;
         lobbyState.revealedAnswers.value = {};
+        lobbyState.closedLobbyId.value = null;
         results.resetResults();
         request.resetPending();
         if (failure) request.fail(failure);
@@ -170,6 +172,8 @@ export const createLobbySession = (
         });
     };
     const restoreCommittedLobby = (id: string) => {
+        // Changes to a closed room's query or hash can never restart its session.
+        if (lobbyState.closedLobbyId.value === id) return;
         if (restoration?.id === id && restoration.state !== "expired" && restoration.state !== "failed" && socket.getLobbyId() === id) {
             reconcileLobbyRoute();
             return;
@@ -206,12 +210,14 @@ export const createLobbySession = (
         const id = socket.getLobbyId();
         if (connected && id && playerId && lobbyState.lobbySettings.value?.ID === id) storeHint({ id, playerId });
     });
-    const stopClearingHint = watch(
-        () => socket.status.connectionError,
-        (error) => {
-            if (error?.code === "LOBBY_NOT_FOUND" && returnHint.value?.id === routeLobbyId(router.currentRoute.value)) storeHint(null);
-        }
-    );
+    const showClosedLobby = (id: string) => {
+        if (disposed || membershipId !== id || routeLobbyId(router.currentRoute.value) !== id) return false;
+        if (returnHint.value?.id === id) storeHint(null);
+        cancelLobbyIntent();
+        resetMembership();
+        lobbyState.closedLobbyId.value = id;
+        return true;
+    };
     const removeNavigationFence = router.beforeEach((to) => {
         if (!disposed) beginNavigation(to);
     });
@@ -223,6 +229,7 @@ export const createLobbySession = (
             return;
         }
         const target = routeLobbyId(to);
+        if (lobbyState.closedLobbyId.value !== target || (target !== null && intentTarget === target)) lobbyState.closedLobbyId.value = null;
         // These bindings belong to the committed gameplay page, not a socket.
         // Preserve them for retained same-ID views, but release them once a
         // successful route commit replaces that page (also after auth reset).
@@ -270,7 +277,6 @@ export const createLobbySession = (
         removeRouteCleanup();
         removeRouteError();
         stopRemembering();
-        stopClearingHint();
         leave();
     };
     const releaseSession = () => {
@@ -297,5 +303,6 @@ export const createLobbySession = (
         isNavigating: () => pendingNavigation !== null,
         dispose,
         releaseSession,
+        showClosedLobby,
     };
 };

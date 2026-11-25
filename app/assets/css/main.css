@@ -120,8 +120,74 @@ h3 {
     padding: clamp(1rem, 3vw, 2.25rem) max(var(--page-gutter), var(--gb-safe-right)) max(clamp(1rem, 3vw, 2.25rem), var(--gb-safe-bottom))
         max(var(--page-gutter), var(--gb-safe-left));
 }
-.page-narrow {
-    max-width: 760px;
+.scenic-page {
+    min-block-size: var(--gb-viewport-height);
+    background:
+        radial-gradient(ellipse at 70% 0%, #0f3c30 0%, transparent 55%),
+        linear-gradient(180deg, #071e1938, #071e19c9 78%),
+        url("/images/atlas-relief.svg") top center / 80rem auto no-repeat #071e19;
+}
+.scenic-page-hero {
+    overflow: hidden;
+    padding: clamp(1.2rem, 4vw, 3.25rem);
+    border: 1px solid #8ddbaf56;
+    border-radius: clamp(0.9rem, 2vw, 1.55rem);
+    background:
+        linear-gradient(90deg, #052522f7 6%, #062824eb 34%, #0a302ba8 63%, #05231d1c),
+        var(--scenic-hero-image, url("/images/emerald-horizon.webp")) center 41% / cover no-repeat #0a3028;
+    box-shadow: 0 0.75rem 2rem #04161055;
+}
+.scenic-page-hero h1 {
+    font: italic 900 clamp(2.45rem, 6vw, 4.6rem) / 1.02 var(--gb-font-display);
+    letter-spacing: -0.058em;
+}
+.scenic-page-hero h1 em {
+    color: #deff9f;
+}
+.scenic-page-hero p {
+    color: #e0f3e9;
+    line-height: 1.55;
+}
+.scenic-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    min-block-size: 44px;
+    padding: 0.55rem 1rem;
+    border: 1px solid #94daa486;
+    border-radius: 999px;
+    background: #092c24ea;
+    color: #effbf3;
+    font: 800 0.875rem / 1.2 var(--gb-font-display);
+    text-align: center;
+    text-decoration: none;
+}
+.scenic-button:hover {
+    background: #164435;
+}
+.scenic-button-primary {
+    border-color: var(--gb-scenic-action-border);
+    background: var(--gb-scenic-action-fill);
+    color: var(--gb-scenic-action-ink);
+    box-shadow: var(--gb-scenic-action-shadow);
+}
+.scenic-button-primary:hover {
+    background: var(--gb-scenic-action-fill);
+    box-shadow: var(--gb-scenic-action-hover-shadow);
+}
+.scenic-button-danger {
+    border-color: #ff998a90;
+    background: #592f27;
+    color: #ffe0d3;
+}
+.scenic-button-danger:hover {
+    background: #713c31;
+}
+@media (max-width: 550px) {
+    .scenic-page-hero {
+        background-image: linear-gradient(105deg, #042722f0 2%, #062722c9 63%, #07342d69), var(--scenic-hero-image, url("/images/emerald-horizon.webp"));
+    }
 }
 /* A quiet cartographic field, never painted over provider-owned map surfaces. */
 .game-shell {
@@ -448,8 +514,7 @@ input[type="range"] {
         inset 0 2px var(--gb-accent);
 }
 @media (prefers-reduced-motion: no-preference) {
-    .ui-dialog[open] .ui-dialog-inner,
-    .atlas-menu-shell > main {
+    .ui-dialog[open] .ui-dialog-inner {
         animation: atlas-arrive 210ms cubic-bezier(0.2, 0.75, 0.24, 1);
     }
 }
@@ -462,21 +527,6 @@ input[type="range"] {
         opacity: 1;
         translate: 0 0;
     }
-}
-.atlas-menu-shell {
-    min-height: var(--gb-viewport-height);
-    background-color: var(--gb-bg);
-    background-image: var(--gb-contours);
-    background-position: top right;
-    background-size: min(100%, 80rem) auto;
-    background-repeat: no-repeat;
-}
-.atlas-menu-shell .page-heading h1,
-.atlas-menu-shell .signup-intro h1 {
-    font-family: var(--gb-font-headline);
-    font-style: italic;
-    font-weight: 900;
-    letter-spacing: -0.045em;
 }
 .ui-dialog-inner {
     padding: clamp(1rem, 3vw, 1.5rem);

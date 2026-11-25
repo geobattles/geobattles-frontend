@@ -21,6 +21,7 @@ export const createSocketRuntime = (
         afterFrame: () => void;
         closeAttempt: () => void;
         invalidateViews: (preserveDraft?: boolean) => void;
+        showClosedLobby: (id: string) => boolean;
         releaseSession: () => void;
         requestError?: (error: RequestError) => boolean;
     }
@@ -151,6 +152,7 @@ export const createSocketRuntime = (
         // Retain the exact, curated cause after teardown rather than replacing
         // an admission/auth/protocol failure with an invented HTTP upgrade reason.
         settleReadiness(new Error(error.message));
+        if (error.code === "LOBBY_NOT_FOUND" && lobbyId && ports.showClosedLobby(lobbyId)) return;
         disconnect();
         connectionError.value = { command: error.command, code: error.code, message: error.message };
         request.fail(connectionError.value);

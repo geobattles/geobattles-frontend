@@ -3,7 +3,8 @@
         <VitePwaManifest />
         <NuxtLoadingIndicator color="var(--gb-accent)" />
         <a class="skip-link" href="#main-content">Skip to content</a>
-        <NuxtLayout><NuxtPage /></NuxtLayout>
+        <SocketLobbyClosedScreen v-if="closedLobby" :code="closedLobby" />
+        <NuxtLayout v-else><NuxtPage /></NuxtLayout>
         <UiToastViewport :target="alertTarget" />
         <PwaUpdateNotice :target="alertTarget" />
         <PwaInstallGuide />
@@ -17,7 +18,7 @@
                 <button type="button" class="btn btn-icon btn-quiet" aria-label="Dismiss error" @click="request.clearError()"><UiIcon name="close" /></button>
             </div>
         </Teleport>
-        <p v-if="!mapsConfigured(config.public.GMAPS_API) && !isGameRoute" class="build-notice" role="status">
+        <p v-if="!mapsConfigured(config.public.GMAPS_API) && !isGameRoute && !closedLobby" class="build-notice" role="status">
             Maps is not configured in this build. You can explore the interface and prepare a lobby; starting a game needs an operator-configured browser Maps key.
         </p>
     </div>
@@ -30,6 +31,8 @@ const router = useRouter();
 const auth = useAuthStore();
 const request = useRequestState();
 const { connectionError } = useSocketState();
+const { closedLobbyId } = useLobbyState();
+const closedLobby = computed(() => (routeLobbyId(router.currentRoute.value) === closedLobbyId.value ? closedLobbyId.value : null));
 const { currentState: battlePhase } = useBattleRoyaleState();
 // The connection surface owns its failure message, including the dismissed pill.
 // Other action/auth errors must still reach the global alert.

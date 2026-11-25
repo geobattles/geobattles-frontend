@@ -1,15 +1,18 @@
 <template>
     <div class="game-shell">
         <Login />
+        <LobbyLeaveConfirmation :prompt="leavePrompt" @decide="decideLeave" />
         <main id="main-content" class="scenic-lobby">
             <ClientOnly>
                 <SocketSessionFeedback
                     :retained="waitingView"
                     :cinematic-duration="route.query.resume === '1' ? undefined : minimumJoinDisplayMs"
+                    :entry-confirmed="isConnected && waitingSnapshot"
                     :cancel-label="entryPath === '/lobby/join' ? 'Change code' : entryPath === '/lobby/list' ? 'Back to lobbies' : undefined"
                     :banner-target="bannerTarget"
                     @leaveLobby="waitingView ? leave() : cancelEntry()"
                     @focusLobby="focusLobby"
+                    @arrived="joinDisplayComplete = true"
                 />
                 <div v-if="waitingView" class="lobby-frame">
                     <picture class="lobby-scenery" aria-hidden="true">
@@ -96,34 +99,25 @@ import CinematicTransition from "~/components/Transitions/CinematicTransition.vu
 definePageMeta({ key: (route) => `lobby-${String(route.params.id)}` });
 const lobby = useLobbyStore();
 
-const { connectionState, connectionError } = useSocketState();
+const { connectionState } = useSocketState();
 const isConnected = computed(() => connectionState.value === "connected");
 const route = useRoute();
 const router = useRouter();
 const lobbyId = computed(() => routeLobbyId(route));
 const minimumJoinDisplayMs = 2000;
 const joinDisplayComplete = ref(route.query.resume === "1");
-let joinDisplayTimer: ReturnType<typeof setTimeout> | undefined;
-const finishJoinDisplay = () => {
-    clearTimeout(joinDisplayTimer);
-    joinDisplayComplete.value = true;
-};
+const cancellingEntry = ref(false);
 const waitingSnapshot = computed(() => lobby.lobbySettings?.ID === lobbyId.value && lobby.lobbySettings?.phase === "WAITING");
 const hasRevealedLobby = ref(false);
 watch(
-    () => joinDisplayComplete.value && isConnected.value && waitingSnapshot.value,
+    () => joinDisplayComplete.value && isConnected.value && waitingSnapshot.value && !cancellingEntry.value,
     (ready) => {
         if (ready) hasRevealedLobby.value = true;
     },
     { flush: "sync" }
 );
 const waitingView = computed(() => hasRevealedLobby.value && waitingSnapshot.value);
-// This is only a presentation minimum. Admission runs in parallel; don't
-// hold a recovery notice or a terminal failure behind the animation.
-watch([connectionState, connectionError], ([state, error]) => {
-    if (state === "reconnecting" || (state === "disconnected" && error)) finishJoinDisplay();
-});
-const { goHome: leave } = useLobbyLeaveGuard();
+const { goHome: leave, leavePrompt, decideLeave } = useLobbyLeaveGuard(() => cancellingEntry.value || !waitingView.value);
 const bannerTarget = ref<HTMLElement | null>(null);
 const lobbyTitle = ref<HTMLElement | null>(null);
 const focusLobby = () => nextTick(() => lobbyTitle.value?.focus({ preventScroll: true }));
@@ -131,22 +125,23 @@ const entryPath = computed(() => {
     const previous = router.options.history.state.back;
     return typeof previous === "string" ? previous.split(/[?#]/, 1)[0] : null;
 });
-const cancelEntry = () => {
-    if (entryPath.value === "/lobby/join" && lobbyId.value) {
-        return router.replace({
-            path: "/lobby/join",
-            query: { id: lobbyId.value, edit: "1" },
-            state: { missingLobbyCode: connectionError.value?.code === "LOBBY_NOT_FOUND" ? lobbyId.value : null },
-        });
+const cancelEntry = async () => {
+    if (cancellingEntry.value) return;
+    cancellingEntry.value = true;
+    try {
+        if (entryPath.value === "/lobby/join" && lobbyId.value) {
+            await router.replace({ path: "/lobby/join", query: { id: lobbyId.value, edit: "1" } });
+        } else {
+            await router.replace(entryPath.value === "/lobby/list" ? "/lobby/list" : "/");
+        }
+    } finally {
+        cancellingEntry.value = false;
     }
-    return router.replace(entryPath.value === "/lobby/list" ? "/lobby/list" : "/");
 };
 const { fetchCountryList } = useCountryActions();
 onMounted(() => {
-    if (!joinDisplayComplete.value) joinDisplayTimer = setTimeout(finishJoinDisplay, minimumJoinDisplayMs);
     void fetchCountryList().catch(() => console.warn("Country list could not be loaded."));
 });
-onBeforeUnmount(() => clearTimeout(joinDisplayTimer));
 
 useHead({ title: "Lobby" });
 </script>

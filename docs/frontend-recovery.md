@@ -26,6 +26,11 @@ back to the public list for exact-room absence when the endpoint is missing.
 Transient token refresh errors leave the current credentials available for retry.
 A rejected refresh asks the player to sign in.
 
+When admission confirms that the current lobby no longer exists, the client clears
+that lobby’s saved return code and releases gameplay, timers and maps. The Lobby
+Closed screen stays on the current URL until the player chooses New Lobby or Home.
+Both actions keep the current account or guest session.
+
 The connection notice is shared by gameplay and settings. Two slow foreground
 heartbeat samples expose an amber early warning and two healthy samples clear it.
 The client uses the optional heartbeat acknowledgement for round-trip latency

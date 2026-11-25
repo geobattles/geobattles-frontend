@@ -3,16 +3,23 @@
     <Transition name="horizon" @before-leave="revealLobby">
         <CinematicTransition
             v-if="cinematicDuration !== undefined && !retained"
+            :key="String(route.query.reconnect ?? '')"
             :duration="cinematicDuration"
+            :confirmed="entryConfirmed"
             :title="inlineFailure ? failureTitle : 'Entering your lobby'"
             :subtitle="inlineFailure ? failureMessage : cinematicStatus"
             :failed="inlineFailure"
+            @arrived="emit('arrived')"
         >
             <template #cancel
-                ><button class="btn btn-secondary" type="button" @click="emit('leaveLobby')">{{ inlineFailure ? cancelLabel || "Cancel" : "Cancel" }}</button></template
+                ><button ref="cinematicCancel" class="btn btn-secondary" type="button" @click="emit('leaveLobby')">
+                    {{ inlineFailure ? cancelLabel || "Cancel" : "Cancel" }}
+                </button></template
             >
             <template v-if="inlineFailure" #default>
-                <button class="btn" type="button" :disabled="busy || !socket.isOnline" :aria-busy="busy" @click="recover()">{{ recoveryAction }}</button>
+                <button class="scenic-button scenic-button-primary" type="button" :disabled="busy || !socket.isOnline" :aria-busy="busy" @click="recover()">
+                    {{ recoveryAction }}
+                </button>
             </template>
         </CinematicTransition>
     </Transition>
@@ -49,8 +56,16 @@
 <script setup lang="ts">
 import CinematicTransition from "~/components/Transitions/CinematicTransition.vue";
 
-const props = defineProps<{ retained: boolean; gameplay?: boolean; roundRunning?: boolean; bannerTarget?: HTMLElement | null; cinematicDuration?: number; cancelLabel?: string }>();
-const emit = defineEmits<{ leaveLobby: []; focusLobby: [] }>();
+const props = defineProps<{
+    retained: boolean;
+    gameplay?: boolean;
+    roundRunning?: boolean;
+    bannerTarget?: HTMLElement | null;
+    cinematicDuration?: number;
+    entryConfirmed?: boolean;
+    cancelLabel?: string;
+}>();
+const emit = defineEmits<{ leaveLobby: []; focusLobby: []; arrived: [] }>();
 const socket = useWebSocketStore();
 const auth = useAuthStore();
 const notice = useConnectionNotice();
@@ -61,6 +76,7 @@ const lobby = useLobbyStore();
 const toast = useToast();
 const { captureNavigation } = useNuxtApp().$gameRuntime;
 const cancelJoin = ref<HTMLButtonElement | null>(null);
+const cinematicCancel = ref<HTMLButtonElement | null>(null);
 const failureHome = ref<HTMLButtonElement | null>(null);
 const failurePill = ref<HTMLButtonElement | null>(null);
 const busy = ref(false);
@@ -68,10 +84,8 @@ const dismissed = ref(false);
 const lobbyCode = computed(() => routeLobbyId(route));
 const failure = computed(() => (socket.connectionState === "disconnected" ? socket.connectionError : null));
 const inlineFailure = computed(() => !props.retained && !!failure.value);
-const missingLobby = computed(() => failure.value?.code === "LOBBY_NOT_FOUND");
 const needsSignIn = computed(() => failure.value?.code === "AUTHENTICATION_REQUIRED");
 const failureTitles: Record<string, string> = {
-    LOBBY_NOT_FOUND: "Lobby closed",
     LOBBY_FULL: "Lobby is full",
     SPECTATORS_FULL: "Spectator area is full",
     GAME_IN_PROGRESS: "Match in progress",
@@ -81,7 +95,7 @@ const failureTitles: Record<string, string> = {
 };
 const failureTitle = computed(() => failureTitles[failure.value?.code ?? ""] ?? "Connection lost");
 const failureMessage = computed(() => failure.value?.message || "We couldn’t reach the lobby.");
-const recoveryAction = computed(() => (missingLobby.value ? "New lobby" : needsSignIn.value ? "Sign in" : "Try again"));
+const recoveryAction = computed(() => (needsSignIn.value ? "Sign in" : "Try again"));
 const entryTitle = computed(() => (!socket.isOnline ? "Waiting for internet…" : props.gameplay || route.query.resume === "1" ? "Returning to lobby…" : "Joining lobby…"));
 const entryMessage = computed(() => {
     if (!socket.isOnline) return "We’ll try again when your connection returns.";
@@ -91,11 +105,14 @@ const entryMessage = computed(() => {
 const cinematicStatus = computed(() => {
     if (!socket.isOnline) return "Waiting for internet. We’ll reconnect when you’re back online.";
     if (socket.connectionState === "reconnecting") return "Reconnecting to the lobby…";
-    if (socket.isConnected) return "Lobby confirmed. Opening the room…";
+    if (props.entryConfirmed) return "Lobby confirmed. Opening the room…";
     return "Connecting to the game server…";
 });
 const revealLobby = (element: Element) => {
-    if (element.contains(document.activeElement)) emit("focusLobby");
+    if (element.contains(document.activeElement)) {
+        if (props.retained) emit("focusLobby");
+        else void nextTick(() => cinematicCancel.value?.focus({ preventScroll: true }));
+    }
     element.setAttribute("inert", "");
 };
 watch(failure, () => (dismissed.value = false));
@@ -111,7 +128,6 @@ const focusFailurePill = async () => {
 
 const recover = async (afterSignIn = false) => {
     const id = lobbyCode.value;
-    const create = missingLobby.value;
     if (!id || busy.value || !socket.isOnline) return;
     if (needsSignIn.value && !afterSignIn) {
         auth.openLoginDialog();
@@ -120,20 +136,14 @@ const recover = async (afterSignIn = false) => {
     busy.value = true;
     let ownsFeedback = captureNavigation();
     try {
-        if (create) {
-            if (await router.push("/")) return;
-            ownsFeedback = captureNavigation();
-            await lobby.createLobby();
-        } else {
-            // Deliberate same-lobby navigation requests a fresh attempt; the
-            // committed route remains the sole owner of admission.
-            if (await router.replace({ path: route.path, query: { ...route.query, reconnect: String(Date.now()) } })) return;
-            ownsFeedback = captureNavigation();
-            await recovery.restore(id);
-        }
+        // Deliberate same-lobby navigation requests a fresh attempt; the
+        // committed route remains the sole owner of admission.
+        if (await router.replace({ path: route.path, query: { ...route.query, reconnect: String(Date.now()) } })) return;
+        ownsFeedback = captureNavigation();
+        await recovery.restore(id);
     } catch {
         if (ownsFeedback() && !socket.connectionError) {
-            toast.add({ severity: "error", summary: create ? "Couldn’t create lobby" : "Couldn’t reconnect", detail: "Please try again." });
+            toast.add({ severity: "error", summary: "Couldn’t reconnect", detail: "Please try again." });
         }
     } finally {
         busy.value = false;
