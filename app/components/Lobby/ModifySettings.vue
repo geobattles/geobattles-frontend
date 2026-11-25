@@ -519,7 +519,7 @@ watch(
 .settings-form[data-edit-layout] :deep(.folio-index),
 .settings-form[data-edit-layout] :deep(.folio-page > .page-heading),
 .settings-form[data-edit-layout="field"] .chapter-controls > :not(:focus-within),
-.settings-form[data-edit-layout="field"] :deep(.timer-setting :is(.timer-presets, .timer-range-label, #round-timer)) {
+.settings-form[data-edit-layout="field"] :deep(.timer-setting .timer-presets) {
     display: none;
 }
 .settings-form[data-edit-layout] .settings-fields,

@@ -57,30 +57,25 @@ test("regions: presets, single-country map, Custom, adaptive scoring and compact
     await openSettingsSection(dialog, "Rounds");
     const timer = dialog.locator(".timer-setting");
     const seconds = timer.getByRole("spinbutton", { name: /^time in seconds$/i });
-    const adjustment = timer.getByRole("slider", { name: /^round timer adjustment$/i });
     const closeSettings = dialog.getByRole("button", { name: /^close dialog$/i });
     const timePresets = timer.getByRole("group", { name: /^round time presets$/i });
+    await expect(timer.getByRole("slider")).toHaveCount(0);
     await expect(seconds).toHaveValue(String(expectedRoundTime));
-    await expect(adjustment).toHaveValue(String(expectedRoundTime));
     for (const invalid of ["19", "201", "20.5", ""]) {
         await seconds.fill(invalid);
         expect(await seconds.evaluate((input: HTMLInputElement) => input.validity.valid)).toBe(false);
-        await expect(adjustment).toHaveValue(String(expectedRoundTime));
     }
     await seconds.blur();
     await expect(seconds).toHaveValue(String(expectedRoundTime));
 
-    await adjustment.press("Home");
-    await expect(seconds).toHaveValue("20");
+    await seconds.fill("20");
     await expect(timer.getByRole("button", { name: /^decrease time in seconds$/i })).toBeDisabled();
-    await adjustment.press("End");
-    await expect(seconds).toHaveValue("200");
+    await seconds.fill("200");
     await expect(timer.getByRole("button", { name: /^increase time in seconds$/i })).toBeDisabled();
     const timeMark = peer.mark();
     await timePresets.getByRole("button", { name: "90s", exact: true }).click();
     await timer.getByRole("button", { name: /^increase time in seconds$/i }).click();
     await expect(seconds).toHaveValue("91");
-    await expect(adjustment).toHaveValue("91");
     await Promise.all([peer.snapshot((lobby) => lobby.conf.roundTime === 91, timeMark), expect(dialog.getByText("Round time updated to 91 s", { exact: true })).toBeVisible()]);
     expectedRoundTime = 91;
     await seconds.press("Enter");

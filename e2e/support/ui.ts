@@ -118,8 +118,8 @@ export async function changeSettings(actor: Actor, values: { name: string; round
     if (values.attempts !== undefined) await dialog.getByRole("spinbutton", { name: /^(guesses per round|attempts)$/i }).fill(String(values.attempts));
     if (values.seconds !== undefined) {
         const timer = dialog.locator(".timer-setting");
+        await expect(timer.getByRole("slider")).toHaveCount(0);
         await timer.getByRole("spinbutton", { name: /^time in seconds$/i }).fill(String(values.seconds));
-        await expect(timer.getByRole("slider", { name: /^round timer adjustment$/i })).toHaveValue(String(values.seconds));
     }
     await dialog.getByRole("button", { name: /^close dialog$/i }).click();
     const snapshot = await actor.snapshot(
