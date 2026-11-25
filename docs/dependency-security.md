@@ -1,12 +1,16 @@
 # Dependency security
 
-## Documented assessment
+## Current lockfile
+
+The 2026-11-25 online npm lockfile audit, including development dependencies, reported zero findings. Scoped overrides pin Workbox's `glob` to 14.0.6 and the archive helper's `minimatch` to 11.0.8. Workbox uses `globSync` and the archive helper uses `Minimatch`. Remove each override once the upstream dependency range selects a patched version.
+
+## Previous assessment
 
 The 2026-11-15 online, development-inclusive npm audit reported **14 affected package records: 8 moderate and 6 low, with no high or critical findings**. These are propagated package records, not fourteen independent vulnerabilities. Three underlying advisories remain. Re-run the audit before release; this is not a live registry report or a zero-risk claim.
 
 The lockfile uses the compatible `@vercel/nft` 1.11.2 tracing branch with glob 14.0.6/minimatch 11.0.8. Its caller-declared changes remove that affected tracing branch without changing the direct pins. [package.json](../package.json) remains authoritative, including Nuxt 4.6.4 and PWA module 1.1.1.
 
-## Residual advisories
+## Advisories from the previous assessment
 
 | Advisory                                                                                                           | Remaining dependency path                                               | Constraint at assessment                                |
 | ------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- | ------------------------------------------------------- |
