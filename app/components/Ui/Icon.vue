@@ -60,6 +60,7 @@
         <template v-else-if="name === 'refresh'"><path d="M20 10a8 8 0 0 0-14-5L3 8m0-5v5h5m-4 6a8 8 0 0 0 14 5l3-3m0 5v-5h-5" /></template>
         <template v-else-if="name === 'fullscreen'"><path d="M9 3H3v6m12-6h6v6M3 15v6h6m12-6v6h-6" /></template>
         <template v-else-if="name === 'leave'"><path d="M10 4H4v16h6m3-12 4 4-4 4m-5-4h13" /></template>
+        <template v-else-if="name === 'flag'"><path d="M5 21V4m0 1c6-5 8 4 15 0v11c-7 4-9-5-15 0" /></template>
         <template v-else-if="name === 'clock'">
             <circle cx="12" cy="12" r="9" />
             <path d="M12 6v6l4 2" />

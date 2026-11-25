@@ -71,6 +71,7 @@ export const createSocketActions = () => {
                 return send({ command: "start" });
             },
             setReady: (ready: boolean) => send({ command: "setReady", ready }),
+            endGame: (gameId: string, round: number) => send({ command: "end_game", gameId, round }),
             submitLocation: (location: Coordinates) => send({ command: "submit_location", location }),
             updateSettings: (conf: LobbySettingsPatch) => send({ command: "update_lobby_settings", conf }),
         };

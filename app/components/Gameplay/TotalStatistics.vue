@@ -26,8 +26,11 @@
                 </th>
                 <td class="final-points">{{ row.score?.toLocaleString() ?? "—" }}</td>
                 <td class="final-readiness">
-                    <span v-if="row.member?.connected && row.member.ready" class="final-ready"><UiIcon name="check" />Ready</span>
-                    <span v-else>{{ row.member ? (row.member.connected ? "Waiting" : "Offline") : "Left lobby" }}</span>
+                    <template v-if="row.member?.ready">
+                        <span class="final-ready"><UiIcon name="check" />Ready</span>
+                        <div v-if="!row.member.connected">Offline</div>
+                    </template>
+                    <span v-else>{{ row.member ? (row.member.connected ? "Waiting" : row.member.away ? "Away" : "Offline") : "Left lobby" }}</span>
                 </td>
             </tr>
         </tbody>
@@ -48,7 +51,7 @@ const rows = computed(() => {
     return [
         ...props.ranked.map((row) => ({ ...row, member: members[row.id] })),
         ...Object.entries(members)
-            .filter(([id]) => !scoredPlayers.has(id))
+            .filter(([id, member]) => !scoredPlayers.has(id) && (member.connected || member.ready))
             .map(([id, member]) => ({ id, member, rank: undefined, score: undefined })),
     ];
 });

@@ -8,6 +8,7 @@ export type LobbyExit = "transport" | "leave" | "disconnect";
 const admissionFailures: Record<string, string> = {
     LOBBY_NOT_FOUND: "This lobby is no longer available.",
     LOBBY_FULL: "All seats are taken. Try again when a seat opens.",
+    SPECTATORS_FULL: "The spectator area is full. Try again when someone leaves.",
     GAME_IN_PROGRESS: "This match is underway and you don’t have a reserved seat. You can join after it ends.",
     ALREADY_CONNECTED: "This player is already connected. Close the other tab or app window, then try again.",
 };
@@ -355,7 +356,7 @@ export const createSocketRuntime = (
                 return;
             }
             identity = owner.identity = player.value.ID;
-            const url = `${endpoint.replace(/\/$/, "").replace(/^http(s)?:\/\//, "ws$1://")}/lobbySocket?id=${encodeURIComponent(id)}`;
+            const url = `${endpoint.replace(/\/$/, "").replace(/^http(s)?:\/\//, "ws$1://")}/lobbySocket?id=${encodeURIComponent(id)}&spectate=1`;
             const socket = new WebSocket(url, ["json", token]);
             owner.socket = socket;
             const receiving = () => current(owner) && !owner.availabilityCheck && withinBudget();
@@ -497,7 +498,7 @@ export const createSocketRuntime = (
                 try {
                     const base = endpoint.replace(/\/$/, "");
                     const options = { cache: "no-store", signal: check.signal } as const;
-                    const response = await fetch(`${base}/lobby/admission?id=${encodeURIComponent(id)}`, { ...options, headers: { Authorization: token } });
+                    const response = await fetch(`${base}/lobby/admission?id=${encodeURIComponent(id)}&spectate=1`, { ...options, headers: { Authorization: token } });
                     const valid = () => current(owner) && !check.signal.aborted && withinBudget();
                     if (response.status === 401 && valid()) {
                         failed(failure("AUTHENTICATION_REQUIRED", "Sign in to reconnect to this lobby.", true));

@@ -52,11 +52,15 @@ The lime pin marks the tentative guess. A server confirmation converts it into a
 
 ## Results
 
-Between rounds, portrait gives the answer map a compact band above the standings. Landscape puts the map and summary on the left and gives most of the width to the standings. The map caption sits below the interactive surface on compact screens. Expand map opens a viewport-sized dialog in either phone orientation. The same map host moves into the dialog, then returns to the recap with focus and standings scroll preserved on close. The summary shows official round points, the player's closest distance and overall rank.
+Between rounds, portrait gives the answer map a compact band above the standings. Landscape puts the map and summary on the left and gives most of the width to the standings. The map caption sits below the interactive surface on compact screens. Expand map opens a viewport-sized dialog in either phone orientation. The same map host moves into the dialog, then returns to the recap with focus and standings scroll preserved on close. The host's flag control opens the **End match early?** confirmation during play and between rounds.
 
-**Total Points** opens by default. **This Round** uses the final scored round rows, including bonuses and Duel transfers. In compact portrait, the standings show each player's closest distance. Compact landscape pairs total and round points on the Total Points tab. The column labels stay visible while the list scrolls, and switching back to a tab restores its scroll position. Powerups and Next Round or the waiting status stay below the mobile standings.
+**Total Points** opens after each round with the cumulative standings and the player's cumulative score. **This Round** switches both to the completed round. Scores appear as plain integers, and guess distances display to the nearest metre or kilometre. In the round view, phone rows show indicators for placement, Double Score and the net Duel adjustment. Multiple Duels share one indicator with a count, including when their adjustments cancel out. Tap a row to see the base score, adjustments and who challenged whom. The details open in a sheet in portrait and a dialog in landscape. Wider screens show the breakdown inline. After the final round, **Round N points** opens the same round standings when a modifier applied. Column labels stay visible while the list scrolls, and switching back to a tab restores its scroll position. Powerups and Next Round or the waiting status stay below the mobile standings.
 
-Powerups open a bottom sheet in phone portrait and a centered dialog elsewhere. The powerup cards and searchable Rival Picker share one native dialog. A choice stays pending until the server confirms it. Players can recover an uncertain request with the same request ID, and a rival who disconnects becomes unavailable. The host can queue Next Round while others choose. The Powerups bar and dialog both show the server choice countdown.
+**This Round** only shows players who took part in that round. Earlier points stay in **Total Points** and **Final Standings**, with presence shown as **Away**, **Offline** or **Left lobby**. When a returning player's Journal saves the match, it marks any rounds they missed and keeps the revealed answers for review.
+
+Player and spectator round standings break zero-point ties by closest valid guess. Equal distances share a place, and players who made no guess sort after those who guessed.
+
+Powerups open a bottom sheet in phone portrait and a centered dialog elsewhere. The powerup cards and searchable Rival Picker share one native dialog. A choice stays pending until the server confirms it. Players can recover an uncertain request with the same request ID, and a rival who disconnects becomes unavailable. The host can queue Next Round while others choose. The Powerups bar and dialog both show the server choice countdown. On phones the incoming Duel notice floats above the recap and Powerups dialog so the standings and action buttons keep their space.
 
 The answer uses a dark target marker with a light rim. Each player's closest valid guess and its line to the answer use their leaderboard color. The map fits the visible result markers across the date line and leaves room for the legend and attribution.
 
@@ -65,5 +69,20 @@ The Champion Reveal runs once for a newly completed match with confirmed standin
 Expedition Complete combines the podium, full final standings and live rematch readiness. Landscape places the podium below the champion trophy and gives the compact standings more room on the right. The standings column labels stay visible while the rows scroll, with the rematch actions below. A scored player who leaves keeps their place, and a newcomer can ready up without receiving a rank. The Journey Map uses the same map host to show finalized round locations and lets players review individual answers. It opens in a dialog on compact screens, falls back to the final answer when the archive is incomplete and uses scenic artwork when a map cannot be shown.
 
 Maps retain authoritative result bounds and refit after a visible layout change; gameplay pan/zoom has different ownership. See [runtime recovery](frontend-recovery.md#maps-only-recovery).
+
+## Spectating
+
+An in-progress room offers **Watch** in Open Lobbies. Invitation links also
+admit late arrivals as spectators. The spectator dashboard follows the same
+lobby connection and shows the server's round timer, settled standings and
+completed-round maps. The live panel uses local scenic artwork. Completed
+rounds use the bundled Natural Earth world map and require no Google Maps
+requests. The player and watcher counts use the server snapshot.
+
+Mobile portrait stacks the match panel and the scrollable standings. Landscape
+and desktop show them side by side. The match progress and rematch status stay
+in view. When a seat opens, the spectator gets the existing final standings and
+**Ready for Rematch** controls on the same connection. A full room keeps them
+watching until a seat opens.
 
 Verify narrow portrait, short landscape, coarse-pointer tablet, desktop and desktop→mobile→desktop transitions, including keyboard/focus/fullscreen and all player rows. Provider-free component previews prove DOM geometry only, not real Maps rendering, attribution placement, camera fitting or physical-device safe areas.

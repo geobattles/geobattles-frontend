@@ -129,6 +129,7 @@ export const decodeGameSocketEvent = ({ type, payload }: SocketEnvelope): GameSo
             break;
         case SocketType.GAME_END:
             checkRecords(body, ["results", "totalResults"]);
+            if (body.players !== undefined) needRecord(body.players);
             break;
         default:
             return type satisfies never;

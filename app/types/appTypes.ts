@@ -12,10 +12,30 @@ export type User = {
 // ====================== Lobby data ======================
 export type LobbyPhase = "WAITING" | "PLAYING" | "MID-ROUND" | "FINISHED";
 
+export interface LobbySummary {
+    ID: string;
+    name: string;
+    hostName?: string;
+    phase: LobbyPhase;
+    currentRound: number;
+    numRounds: number;
+    connected: number;
+    occupied: number;
+    maxPlayers: number;
+    openToNew: boolean;
+    openToSpectators?: boolean;
+    starting?: boolean;
+    retained?: boolean;
+    spectating?: boolean;
+}
+
 export type LobbyInfo = {
     ID: string;
     /** Stable for one successfully started match, including recovery/results. */
     gameId?: string;
+    spectating?: boolean;
+    spectatorCount?: number;
+    endedEarly?: boolean;
     admin: string;
     conf: LobbyConfig;
     currentRound: number;
@@ -32,6 +52,8 @@ export type LobbyInfo = {
     location?: Coordinates;
     numPlayers: number;
     playerList: playerListObject;
+    /** Match display names and colors, including players who left the lobby. */
+    matchRoster?: Record<string, Pick<Player, "name" | "color">>;
     results: {
         [round: number]: LiveResultsHashMap;
     };
@@ -65,6 +87,7 @@ export type Player = {
     powerups?: boolean[];
     connected: boolean;
     away?: boolean;
+    rematchSeat?: boolean;
     /** Optional for older servers; only explicit true counts as ready. */
     ready?: boolean;
 };

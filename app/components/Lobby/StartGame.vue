@@ -62,7 +62,7 @@ const player = usePlayerInfo();
 const request = useRequestState();
 const readyButton = ref<HTMLButtonElement | null>(null);
 const startButton = ref<HTMLButtonElement | null>(null);
-const members = computed(() => Object.values(lobby.lobbySettings?.playerList ?? {}).filter((member) => member.connected));
+const members = computed(() => Object.values(lobby.lobbySettings?.playerList ?? {}).filter((member) => member.connected || member.ready));
 const me = computed(() => (player.value.ID ? lobby.lobbySettings?.playerList[player.value.ID] : undefined));
 const canReady = computed(
     () => socket.isConnected && socket.isOnline && !!me.value?.connected && !lobby.modifySettingsModal && ["WAITING", "FINISHED"].includes(lobby.lobbySettings?.phase ?? "")
@@ -88,7 +88,7 @@ const feedback = computed(() => {
     if (request.isReadyPending) return "Updating readiness…";
     if (request.isStartPending) return "Finding your next location…";
     if (!socket.isConnected || !socket.isOnline) return "Reconnecting…";
-    if (!lobby.isPlayerReady) return "";
+    if (!lobby.isPlayerReady) return me.value?.rematchSeat ? "Your rematch seat is open." : "";
     if (!lobby.allPlayersReady) return "Waiting for players.";
     return lobby.isPlayerAdmin() ? blockedReason.value || "Everyone is ready." : "Waiting for the host.";
 });

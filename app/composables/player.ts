@@ -16,9 +16,8 @@ export const usePlayerLookup = () => {
     const retained = (id: string | number) => (playerPresentation.value.lobbyId === lobbySettings.value?.ID ? playerPresentation.value.players[id] : undefined);
     return {
         rememberPlayers,
-        // Fresh snapshots cannot recover departed names from the result DTO.
-        // Safe text identity/default color preserve every historical row/winner.
-        getPlayerColorByID: (id: string | number) => lobbySettings.value?.playerList[id]?.color || retained(id)?.color || "#64748b",
-        getPlayerNameFromID: (id: string | number) => lobbySettings.value?.playerList[id]?.name || retained(id)?.name || String(id),
+        getPlayerColorByID: (id: string | number) =>
+            lobbySettings.value?.playerList[id]?.color || lobbySettings.value?.matchRoster?.[id]?.color || retained(id)?.color || "#64748b",
+        getPlayerNameFromID: (id: string | number) => lobbySettings.value?.playerList[id]?.name || lobbySettings.value?.matchRoster?.[id]?.name || retained(id)?.name || String(id),
     };
 };

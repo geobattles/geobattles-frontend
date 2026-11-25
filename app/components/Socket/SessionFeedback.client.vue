@@ -73,6 +73,7 @@ const needsSignIn = computed(() => failure.value?.code === "AUTHENTICATION_REQUI
 const failureTitles: Record<string, string> = {
     LOBBY_NOT_FOUND: "Lobby closed",
     LOBBY_FULL: "Lobby is full",
+    SPECTATORS_FULL: "Spectator area is full",
     GAME_IN_PROGRESS: "Match in progress",
     ALREADY_CONNECTED: "Player already connected",
     AUTHENTICATION_REQUIRED: "Sign in to return",

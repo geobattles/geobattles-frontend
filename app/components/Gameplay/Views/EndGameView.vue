@@ -29,7 +29,8 @@
                 <header v-if="champion" class="finish-hero">
                     <div class="finish-identity">
                         <h1>Expedition <em>Complete</em></h1>
-                        <p class="finish-champion-label">{{ champion.solo ? "Solo expedition" : champion.leaders.length === 1 ? "Champion" : "Shared champions" }}</p>
+                        <p v-if="lobbySettings?.endedEarly" class="finish-champion-label">Match ended early</p>
+                        <p v-else class="finish-champion-label">{{ champion.solo ? "Solo expedition" : champion.leaders.length === 1 ? "Champion" : "Shared champions" }}</p>
                         <ul class="finish-champions" :tabindex="champion.leaders.length > 2 ? 0 : undefined" aria-label="Winning players">
                             <li v-for="leader in champion.leaders" :key="leader.id">{{ leader.name }}</li>
                         </ul>
@@ -76,6 +77,10 @@
                         <GameplayExpeditionPodium v-if="!champion.solo" :rankings="rankings" :revealed="!ceremony" :compact="landscape" />
                     </Teleport>
                     <GameplayTotalStatistics :ranked="rankings" />
+                    <details v-if="lastRoundHasModifiers" :key="finishedMatch" class="last-round-points">
+                        <summary>Round {{ lobbySettings?.currentRound }} points <UiIcon name="chevron-up" /></summary>
+                        <GameplayRoundStandings view="round" :overall="rankings" :round="lastRound" :guesses="lastRound" :compact="compactJourney" round-only />
+                    </details>
                     <PwaInstallBanner placement="results" :ready="resultsInstallReady" :match-key="finishedMatch" />
                 </div>
                 <footer v-if="finished" class="finish-rematch">
@@ -112,6 +117,8 @@
 </template>
 
 <script setup lang="ts">
+import { roundPowerupEffects } from "~/utils/roundPowerups";
+
 const emit = defineEmits<{ leaveLobby: []; connectionTarget: [element: HTMLElement | null] }>();
 const standingsId = useId();
 const lobby = useLobbyStore();
@@ -141,6 +148,17 @@ const ownResult = computed(() => rankings.value.find(({ id }) => id === player.v
 const finishedMatch = computed(() => {
     const snapshot = lobbySettings.value;
     return snapshot ? JSON.stringify([snapshot.ID, snapshot.gameId ?? finishedVisit.value]) : "";
+});
+const lastRound = computed(() => {
+    const snapshot = lobbySettings.value;
+    return snapshot?.endResults[snapshot.currentRound] ?? {};
+});
+const lastRoundHasModifiers = computed(() => {
+    const snapshot = lobbySettings.value;
+    return (
+        !!snapshot &&
+        (roundPowerupEffects(snapshot, snapshot.currentRound, "APPLIED").length > 0 || Object.values(lastRound.value).some((row) => row.placeScr || row.dblScr || row.duelScr))
+    );
 });
 const resultsInstallReady = computed(
     () =>
@@ -185,6 +203,27 @@ onBeforeUnmount(() => viewport?.removeEventListener("change", syncViewport));
 </script>
 
 <style scoped>
+.last-round-points {
+    --recap-accent: #d6fb9f;
+    --recap-muted: #b5cfc1;
+    margin-block: 0.55rem;
+}
+.last-round-points summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 44px;
+    padding-inline: 0.7rem;
+    border: 1px solid #8fc69b50;
+    border-radius: 0.6rem;
+    background: #103a2d;
+    color: var(--recap-accent);
+    cursor: pointer;
+    font-weight: 700;
+}
+.last-round-points:not([open]) summary .ui-icon {
+    rotate: 180deg;
+}
 .finish-screen {
     --finish-gold: #ffe4a0;
     --finish-line: #a3ddb263;

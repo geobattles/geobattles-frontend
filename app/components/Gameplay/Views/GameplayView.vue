@@ -109,6 +109,7 @@
         />
         <p v-if="google.mapStatus === 'ready' && google.panoramaStatus === 'ready'" data-testid="maps-ready" class="sr-only">Map initialized and landscape available</p>
         <Teleport :to="connectionTarget || 'body'" :disabled="!mapModal || !connectionTarget">
+            <GameplayDuelNotice class="live-duel-notice" :challengers="challengers" :round="round" />
             <GameplayMapRecovery class="gameplay-map-recovery" panorama :active="playing" />
         </Teleport>
     </div>
@@ -121,9 +122,12 @@ const game = useGameMode();
 const ui = useUIManagerStore();
 const google = useGoogleStore();
 const player = usePlayerInfo();
+const livePowerups = useLivePowerupIndicators();
+const { getPlayerNameFromID } = usePlayerLookup();
 const results = useResultsStore();
 const { lobbySettings, roundDeadline } = useLobbyState();
 const playing = computed(() => game.modeLogic.currentState === "PLAYING");
+const challengers = computed(() => (playing.value ? (livePowerups.value.get(player.value.ID ?? "")?.attackers.map(getPlayerNameFromID) ?? []) : []));
 const round = computed(() => lobbySettings.value?.currentRound ?? 0);
 const roundCount = computed(() => lobbySettings.value?.conf.numRounds ?? 0);
 const playerCount = computed(() => Object.keys(lobbySettings.value?.playerList ?? {}).length);
@@ -327,6 +331,26 @@ onBeforeUnmount(() => {
     z-index: 7;
     inset: 0;
     pointer-events: none;
+}
+.live-duel-notice {
+    position: absolute;
+    z-index: 7;
+    inset: var(--hud-panel-top) auto auto var(--hud-left);
+    max-inline-size: min(19rem, 32vw);
+}
+.is-compact-game .live-duel-notice {
+    inset: auto auto calc(var(--mobile-dock-height) + 0.35rem) var(--hud-left);
+    max-inline-size: min(24rem, calc(100% - var(--hud-left) - var(--hud-right)));
+}
+.is-landscape-game .live-duel-notice {
+    inset: var(--hud-panel-top) var(--hud-right) auto auto;
+    max-inline-size: min(18rem, 30vw);
+}
+.is-map-modal .live-duel-notice {
+    inset: auto auto calc(var(--gb-safe-bottom) + 6.8rem) var(--hud-left);
+}
+.is-landscape-map.is-map-modal .live-duel-notice {
+    inset-block-end: calc(var(--gb-safe-bottom) + 3.7rem);
 }
 .street-timer-slot {
     --street-center: calc(50% + (var(--gb-safe-left) - var(--gb-safe-right)) / 2);

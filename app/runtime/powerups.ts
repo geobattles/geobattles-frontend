@@ -6,6 +6,12 @@ import type { RequestError } from "~/composables/requestState";
 
 type Write = (message: SocketCommand, beforeWrite: () => void, unavailable: (error: RequestError) => void) => (() => boolean) | undefined;
 
+const choiceFeedback = (effect: PowerupEffect) => {
+    if (effect.status === "REFUNDED") return effect.reason === "TARGET_LEFT" ? "Duel refunded: the opponent left." : "Powerup refunded because a player missed the round.";
+    if (effect.status === "CANCELLED") return "Powerup cancelled.";
+    return `Confirmed for round ${effect.round}.`;
+};
+
 // One client owner: no socket/DOM handles or clock deadlines in Nuxt snapshots.
 export const createPowerupRuntime = (ports: { lobby: () => LobbyInfo | null | undefined; playerId: () => string | undefined; startPending: () => boolean }) => {
     const view = reactive({ remainingMs: 0, pending: null as PowerupPending | null, feedback: "" });
@@ -81,13 +87,7 @@ export const createPowerupRuntime = (ports: { lobby: () => LobbyInfo | null | un
         if (message.command === "use_powerup") {
             const effect = state.effects.find((effect) => matchesChoice(pending, effect));
             if (effect) {
-                settle(
-                    effect.status === "REFUNDED"
-                        ? "Duel refunded: the opponent left."
-                        : effect.status === "CANCELLED"
-                          ? "Powerup cancelled."
-                          : `Confirmed for round ${effect.round}.`
-                );
+                settle(choiceFeedback(effect));
                 return;
             }
         } else if (state.round === message.round && state.decisionReady[pending.playerId] === true) {
@@ -161,9 +161,7 @@ export const createPowerupRuntime = (ports: { lobby: () => LobbyInfo | null | un
         if (!pending || !owns(pending) || pending.message.gameId !== gameId || pending.message.requestId !== requestId) return;
         if (pending.message.command === "use_powerup") {
             if (!effect || !matchesChoice(pending, effect)) return;
-            settle(
-                effect.status === "REFUNDED" ? "Duel refunded: the opponent left." : effect.status === "CANCELLED" ? "Powerup cancelled." : `Confirmed for round ${effect.round}.`
-            );
+            settle(choiceFeedback(effect));
         } else if (!effect) settle("Choices locked.");
     };
     const reject = (error: RequestError) => {

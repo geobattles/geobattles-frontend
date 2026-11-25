@@ -60,6 +60,7 @@ test("independent guests: invite, settings, ready gate, reload, offline recovery
     expect(rejoin.payload?.lobby?.admin).toBe(originalHostId);
     await expect(peer.row()).toHaveAttribute("data-host", "false");
     await expect(host.row()).toHaveAttribute("data-host", "true");
+    await expect(host.row()).toHaveAttribute("data-ready", "true");
 
     const offlineMark = host.mark();
     const peerRecoveryMark = peer.mark();
@@ -69,6 +70,7 @@ test("independent guests: invite, settings, ready gate, reload, offline recovery
     expect(lost.admin).toBe(host.id);
     await expect(peer.page.getByTestId("connection-status")).toContainText(/offline|reconnect/i);
     await expect(host.row(peer.name)).toHaveAttribute("data-connected", "false");
+    await expect(host.row(peer.name)).toHaveAttribute("data-ready", "true");
     await peer.setOffline(false);
     const recovery = await peer.event("REJOIN_ROUND", () => true, peerRecoveryMark);
     expect(recovery.payload?.lobby?.admin).toBe(host.id); // This guest was never the creator.
@@ -77,12 +79,14 @@ test("independent guests: invite, settings, ready gate, reload, offline recovery
     await connected(peer);
     peer.offline = false;
     await expect(peer.row()).toHaveAttribute("data-host", "false");
+    await expect(peer.row()).toHaveAttribute("data-ready", "true");
 
     const leaveMark = host.mark();
     await leave(peer);
     const afterLeave = await host.snapshot((lobby) => lobby.playerList[peer.id]?.away === true, leaveMark);
     expect(afterLeave.numPlayers).toBe(2);
     await expect(host.row(peer.name)).toContainText("Away");
+    await expect(host.row(peer.name)).toHaveAttribute("data-ready", "false");
     const returnMark = peer.mark();
     await peer.page.getByRole("link", { name: /return to lobby/i }).click();
     await peer.event("REJOIN_ROUND", () => true, returnMark);

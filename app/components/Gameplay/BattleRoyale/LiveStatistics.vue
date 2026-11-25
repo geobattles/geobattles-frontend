@@ -23,7 +23,7 @@
                     :data-ready="String(lobby.lobbySettings?.playerList[id]?.ready === true)"
                     :data-host="String(lobby.lobbySettings?.admin === id)"
                     :data-guess-effect="effects.get(id)?.kind"
-                    :class="{ 'is-attacking-you': powerupIndicators.get(id)?.attackingYou, 'is-you': playerHooks && id === player.ID }"
+                    :class="{ 'is-attacking-you': powerupIndicators.get(id)?.targets.includes(player.ID ?? ''), 'is-you': playerHooks && id === player.ID }"
                 >
                     <td>
                         <span class="player-identity">
@@ -41,6 +41,9 @@
                                 ↑{{ effects.get(id)?.passed }}
                             </span>
                         </span>
+                        <small v-if="powerupIndicators.get(id)?.targets.length" class="live-matchup" aria-hidden="true">
+                            {{ getPlayerNameFromID(id) }} → {{ powerupIndicators.get(id)?.targets.map(getPlayerNameFromID).join(", ") }}
+                        </small>
                     </td>
                     <td class="numeric" :title="`${result.lives} guesses remaining`">
                         <span class="live-attempt"
@@ -117,6 +120,13 @@ if (props.playerHooks) {
 }
 </script>
 <style scoped>
+.live-matchup {
+    display: block;
+    color: #ffd1c9;
+    font-size: 0.72em;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
 .live-statistics {
     --score-surface: #101f19;
     --score-heading: #1c3229;

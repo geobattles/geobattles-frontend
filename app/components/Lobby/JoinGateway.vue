@@ -84,7 +84,7 @@ const route = useRoute();
 const router = useRouter();
 const auth = useAuthStore();
 const lobby = useLobbyStore();
-const { fetchLobbyList } = createLobbyService(useRuntimeConfig().public.BACKEND_HOST);
+const lobbyService = createLobbyService(useRuntimeConfig().public.BACKEND_HOST);
 const routeName = route.name;
 const mode = ref<JoinMode>(props.initialMode);
 const directoryVisited = ref(props.initialMode === "open");
@@ -174,10 +174,7 @@ async function checkAndJoinCode(target: string) {
     const timeout = setTimeout(() => controller.abort(), 3000);
     let missing = false;
     try {
-        const snapshot: unknown = await fetchLobbyList({ cache: "no-store", signal: controller.signal });
-        if (snapshot && typeof snapshot === "object" && !Array.isArray(snapshot)) {
-            missing = !Object.hasOwn(snapshot, target) && Object.entries(snapshot).every(([id, lobby]) => isLobbyCode(id) && lobby?.ID === id);
-        }
+        missing = (await lobbyService.find(target, controller.signal)) === null;
     } catch {
         // A failed directory request cannot establish absence. Admission can still proceed via the socket.
     } finally {
