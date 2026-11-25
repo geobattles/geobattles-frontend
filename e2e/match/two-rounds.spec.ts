@@ -50,7 +50,7 @@ async function capture(page: Page, name: string) {
 }
 
 async function configure(host: Actor) {
-    await changeSettings(host, { name: roomName, rounds: 2, attempts: 1, seconds: 90 });
+    await changeSettings(host, { name: roomName, rounds: 2, attempts: 2, seconds: 90 });
     await host.page.getByRole("button", { name: /^(modify|edit settings|settings)$/i }).click();
     const dialog = host.page.getByRole("dialog", { name: "Lobby settings", exact: true });
     await openSettingsSection(dialog, "Scoring & powerups");
@@ -99,11 +99,15 @@ test("two guests finish a scored match and recover a retained seat in round two"
         actors.push(guest);
         await test.step("Register two independent guests", () => Promise.all(actors.map(registerGuest)));
         const code = await test.step("Create the lobby", () => createLobby(host));
-        await test.step("Configure two one-guess rounds", () => configure(host));
+        await test.step("Configure two rounds", () => configure(host));
         const missing = code === "ZZZZ" ? "YYYY" : "ZZZZ";
         await guest.goto("/lobby/join?id=" + missing);
         await expect(guest.page.getByRole("alert").filter({ hasText: "Lobby not found." })).toBeVisible();
-        await guest.goto("/lobby/list");
+        await guest.goto("/");
+        await guest.page.getByRole("link", { name: "Join a Lobby", exact: true }).click();
+        await expect(guest.page).toHaveURL(env.frontend + "/lobby/list");
+        await expect(guest.page.getByRole("button", { name: "Open Lobbies", exact: true })).toHaveAttribute("aria-pressed", "true");
+        await expect(guest.page.getByRole("button", { name: "Game Code", exact: true })).toBeEnabled();
         await expect(guest.page.getByRole("button", { name: "Join " + roomName })).toBeEnabled();
         const publicRow = await fetch(env.backend + "/lobby/directory/" + code).then((response) => response.json());
         expect(Object.keys(publicRow).sort()).toEqual(["ID", "name", "hostName", "phase", "currentRound", "numRounds", "connected", "occupied", "maxPlayers", "openToNew"].sort());
@@ -114,16 +118,63 @@ test("two guests finish a scored match and recover a retained seat in round two"
         await joinInvite(guest, code);
         const guestId = guest.id;
         expect(guestId).not.toBe(host.id);
+        await guest.page.setViewportSize({ width: 390, height: 844 });
         await setReady(host, true);
         await setReady(guest, true);
+        await Promise.all(
+            actors.map(async ({ page }) => {
+                const joinScreen = '[data-testid="connection-joining"]';
+                await expect(page.locator(joinScreen)).toHaveCount(0);
+                await page.evaluate((selector) => {
+                    const observer = new MutationObserver((mutations) => {
+                        const joinedAgain = mutations.some(({ addedNodes }) =>
+                            Array.from(addedNodes).some((node) => node instanceof Element && (node.matches(selector) || node.querySelector(selector)))
+                        );
+                        if (!joinedAgain) return;
+                        document.documentElement.dataset.lobbyJoinFlash = "true";
+                        observer.disconnect();
+                    });
+                    observer.observe(document.body, { childList: true, subtree: true });
+                }, joinScreen);
+            })
+        );
         await host.page.getByRole("button", { name: "Start game", exact: true }).click();
         const start = await host.event("START_ROUND", (e) => e.payload?.round === 1);
         const gameId = start.payload!.gameId;
         expect(gameId).toMatch(/^[0-9a-f-]{36}$/);
         await guest.event("START_ROUND", (e) => e.payload?.round === 1 && e.payload.gameId === gameId);
-        await test.step("Round one: perfect host guess and distant guest guess", async () => {
+        for (const { page } of actors) {
+            await expect(page.locator("#gameplay_container:not([inert]) .round-label")).toBeVisible();
+            expect(await page.locator("html").getAttribute("data-lobby-join-flash")).toBeNull();
+        }
+        await test.step("Round one: the phone can reopen the map for the last guess", async () => {
+            await guess(host, -46, -165);
             await guess(host, 46, 15);
             await guess(guest, -46, -165);
+            const dock = guest.page.getByRole("region", { name: "Guess controls" });
+            await expect(dock.getByTestId("guesses-left")).toHaveText("1 guess left");
+            const map = dock.getByRole("button", { name: "Open map", exact: true });
+            await guest.page.evaluate(() => {
+                const viewport = window.visualViewport!;
+                Object.defineProperty(viewport, "height", { configurable: true, value: window.innerHeight - 140 });
+                viewport.dispatchEvent(new Event("resize"));
+            });
+            await expect
+                .poll(async () => {
+                    const box = await map.boundingBox();
+                    const bottom = await guest.page.evaluate(() => window.visualViewport!.offsetTop + window.visualViewport!.height);
+                    return !!box && box.y + box.height <= bottom + 1;
+                })
+                .toBe(true);
+            await map.click();
+            await expect(guest.page.getByRole("dialog", { name: "Choose your guess on the map" })).toBeVisible();
+            await guest.page.evaluate(() => {
+                const viewport = window.visualViewport!;
+                Reflect.deleteProperty(viewport, "height");
+                viewport.dispatchEvent(new Event("resize"));
+            });
+            await guess(guest, -45, -165);
+            await guest.page.setViewportSize({ width: 1440, height: 960 });
         });
         for (const actor of actors) {
             const round = (await actor.event("ROUND_RESULT")).payload!;
@@ -158,13 +209,15 @@ test("two guests finish a scored match and recover a retained seat in round two"
         const recovery = await guest.event("REJOIN_ROUND", (e) => e.payload?.round === 2 && e.payload.gameId === gameId, beforeLoss);
         expect(recovery.generation).toBeGreaterThan(second.generation);
         const state = recovery.payload!.lobby!;
-        expect(state).toMatchObject({ gameId, phase: "PLAYING", currentRound: 2, playerList: { [guestId]: { connected: true, lives: 1 } } });
+        expect(state).toMatchObject({ gameId, phase: "PLAYING", currentRound: 2, playerList: { [guestId]: { connected: true, lives: 2 } } });
         expect(ownServerScore(state.totalResults[host.id])).toBe(5000);
         expect(ownServerScore(state.totalResults[guestId])).toBe(0);
         const deadline = (e: Envelope) => receivedAt.get(e)! + e.payload!.timeRemaining!;
         expect(Math.abs(deadline(recovery) - deadline(second))).toBeLessThan(1500);
-        await guess(host, 52, 5);
-        await guess(guest, 52, 5);
+        for (const actor of actors) {
+            await guess(actor, -52, -175);
+            await guess(actor, 52, 5);
+        }
         for (const actor of actors) {
             const end = (await actor.event("GAME_END")).payload!;
             expect(end).toMatchObject({ gameId, phase: "FINISHED", round: 2 });

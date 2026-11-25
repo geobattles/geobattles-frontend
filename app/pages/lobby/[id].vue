@@ -5,16 +5,16 @@
         <main id="main-content" class="scenic-lobby">
             <ClientOnly>
                 <SocketSessionFeedback
-                    :retained="waitingView"
+                    :retained="roomView || openingGame"
                     :cinematic-duration="route.query.resume === '1' ? undefined : minimumJoinDisplayMs"
                     :entry-confirmed="isConnected && waitingSnapshot"
                     :cancel-label="entryPath === '/lobby/join' ? 'Change code' : entryPath === '/lobby/list' ? 'Back to lobbies' : undefined"
                     :banner-target="bannerTarget"
-                    @leaveLobby="waitingView ? leave() : cancelEntry()"
+                    @leaveLobby="roomView ? leave() : cancelEntry()"
                     @focusLobby="focusLobby"
                     @arrived="joinDisplayComplete = true"
                 />
-                <div v-if="waitingView" class="lobby-frame">
+                <div v-if="roomView" class="lobby-frame">
                     <picture class="lobby-scenery" aria-hidden="true">
                         <source media="(max-width: 760px) and (orientation: portrait)" srcset="/images/emerald-lake-portrait.webp" />
                         <img src="/images/emerald-lake.webp" alt="" width="1672" height="941" />
@@ -69,7 +69,7 @@
                                             type="button"
                                             class="btn btn-secondary edit-settings"
                                             aria-label="Edit settings"
-                                            :disabled="!isConnected"
+                                            :disabled="!isConnected || openingGame"
                                             @click="lobby.modifySettingsModal = true"
                                         >
                                             <UiIcon name="pencil" /> <span>Edit<span class="edit-suffix"> settings</span></span>
@@ -78,7 +78,8 @@
                                 </LobbyDisplaySettings>
                             </div>
                             <div class="lobby-actions">
-                                <LobbyStartGame />
+                                <LobbyStartGame v-if="waitingSnapshot" />
+                                <p v-else class="field-help" role="status">Opening game…</p>
                             </div>
                         </section>
                     </div>
@@ -107,7 +108,9 @@ const lobbyId = computed(() => routeLobbyId(route));
 const minimumJoinDisplayMs = 2000;
 const joinDisplayComplete = ref(route.query.resume === "1");
 const cancellingEntry = ref(false);
-const waitingSnapshot = computed(() => lobby.lobbySettings?.ID === lobbyId.value && lobby.lobbySettings?.phase === "WAITING");
+const roomSnapshot = computed(() => (lobby.lobbySettings?.ID === lobbyId.value ? lobby.lobbySettings : null));
+const waitingSnapshot = computed(() => roomSnapshot.value?.phase === "WAITING");
+const openingGame = computed(() => !!roomSnapshot.value && !waitingSnapshot.value);
 const hasRevealedLobby = ref(false);
 watch(
     () => joinDisplayComplete.value && isConnected.value && waitingSnapshot.value && !cancellingEntry.value,
@@ -116,8 +119,10 @@ watch(
     },
     { flush: "sync" }
 );
-const waitingView = computed(() => hasRevealedLobby.value && waitingSnapshot.value);
-const { goHome: leave, leavePrompt, decideLeave } = useLobbyLeaveGuard(() => cancellingEntry.value || !waitingView.value);
+// START updates the room phase before navigation commits. Keep the revealed
+// room mounted until the gameplay page takes over.
+const roomView = computed(() => hasRevealedLobby.value && !!roomSnapshot.value);
+const { goHome: leave, leavePrompt, decideLeave } = useLobbyLeaveGuard(() => cancellingEntry.value || !roomView.value);
 const bannerTarget = ref<HTMLElement | null>(null);
 const lobbyTitle = ref<HTMLElement | null>(null);
 const focusLobby = () => nextTick(() => lobbyTitle.value?.focus({ preventScroll: true }));

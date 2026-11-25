@@ -30,17 +30,15 @@
                 </div>
             </div>
             <div class="hero-actions">
-                <button class="hero-button start-button" type="button" :disabled="launchBusy" :aria-busy="creating" @click="create">
-                    <span v-if="creating" class="spinner" aria-hidden="true" />
-                    <UiIcon v-else name="play" />
-                    {{ creating ? "Creating lobby…" : "Start Game" }}
-                </button>
-                <NuxtLink class="hero-button join-button" to="/lobby/join">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" focusable="false">
-                        <path d="M7 3H5a2 2 0 0 0-2 2v2m14-4h2a2 2 0 0 1 2 2v2M3 17v2a2 2 0 0 0 2 2h2m10 0h2a2 2 0 0 0 2-2v-2M7 12h10" />
-                    </svg>
-                    Join with Code
+                <NuxtLink class="hero-button join-button" to="/lobby/list">
+                    <UiIcon name="users" />
+                    Join a Lobby
                 </NuxtLink>
+                <button class="hero-button create-button" type="button" :disabled="launchBusy" :aria-busy="creating" @click="create">
+                    <span v-if="creating" class="spinner" aria-hidden="true" />
+                    <UiIcon v-else name="plus" />
+                    {{ creating ? "Creating lobby…" : "Create Lobby" }}
+                </button>
             </div>
         </main>
     </div>
@@ -249,7 +247,7 @@ useHead({ title: "GeoBattles" });
     outline: 2px solid #f4ffc6;
     outline-offset: 4px;
 }
-.start-button {
+.join-button {
     min-height: clamp(3.3rem, 8vh, 5rem);
     border-color: #e1ffab;
     background: linear-gradient(157deg, #efff9c, #c9fc74 49%, #77e661);
@@ -260,22 +258,22 @@ useHead({ title: "GeoBattles" });
         inset 0 1px 2px #ffffffa8,
         0 0 1.2rem #a7fa5263;
 }
-.start-button:enabled:hover {
+.join-button:hover {
     box-shadow:
         inset 0 1px 2px #ffffffa8,
         0 0 1.5rem #a7fa5293;
 }
-.start-button:disabled {
-    cursor: wait;
-}
-.join-button {
+.create-button {
     min-height: clamp(2.9rem, 6.9vh, 4.2rem);
     background: #0b3429a8;
     color: #f8fdfb;
     animation-delay: 390ms;
 }
-.join-button:hover {
+.create-button:enabled:hover {
     background-color: #154b3a;
+}
+.create-button:disabled {
+    cursor: wait;
 }
 .return-lobby {
     gap: 0.4rem;
@@ -349,11 +347,11 @@ useHead({ title: "GeoBattles" });
     .hero-button {
         width: 100%;
     }
-    .start-button {
+    .join-button {
         min-height: clamp(3.25rem, 10.2vh, 6rem);
         font-size: clamp(1.32rem, min(6.9vw, 3.9vh), 2.3rem);
     }
-    .join-button {
+    .create-button {
         width: 93%;
         min-height: clamp(2.875rem, 7.9vh, 4.85rem);
         font-size: clamp(1.03rem, min(5.1vw, 3.2vh), 1.7rem);
