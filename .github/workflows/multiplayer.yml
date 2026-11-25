@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: geobattles/geobattles-backend
-          ref: 1fb2a57b377d730ba9a3a1232d95524636a95bf1
+          ref: 20c24859bbc4360ccec1659659836dfd05e5ff30
           path: geo-backend
           persist-credentials: false
       - uses: ./geo-frontend/.github/actions/check-match
