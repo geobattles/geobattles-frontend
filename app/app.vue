@@ -18,7 +18,7 @@
                 <button type="button" class="btn btn-icon btn-quiet" aria-label="Dismiss error" @click="request.clearError()"><UiIcon name="close" /></button>
             </div>
         </Teleport>
-        <p v-if="!mapsConfigured(config.public.GMAPS_API) && !isGameRoute && !closedLobby" class="build-notice" role="status">
+        <p v-if="!mapsConfigured(config.public.GMAPS_API) && router.currentRoute.value.path !== '/' && !isGameRoute && !closedLobby" class="build-notice" role="status">
             Maps is not configured in this build. You can explore the interface and prepare a lobby; starting a game needs an operator-configured browser Maps key.
         </p>
     </div>

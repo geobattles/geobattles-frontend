@@ -33,7 +33,7 @@ export async function registerGuest(actor: Actor) {
 
 export async function createLobby(actor: Actor): Promise<string> {
     const mark = actor.mark();
-    await actor.page.getByRole("button", { name: /^(start an expedition|play now|create lobby)$/i }).click();
+    await actor.page.getByRole("button", { name: /^(start game|start an expedition|play now|create lobby)$/i }).click();
     const lobby = await actor.snapshot((snapshot) => snapshot.phase === "WAITING" && Object.values(snapshot.playerList).some((player) => player.name === actor.name), mark);
     expect(lobby.ID).toMatch(/^[A-Z0-9]{4}$/);
     await expect(actor.page).toHaveURL(`${env.frontend}/lobby/${lobby.ID}`);

@@ -1,9 +1,7 @@
 import { test, expect } from "./support/fixtures";
 import { registerGuest } from "./support/ui";
 
-const preferenceKey = "geobattles-pwa-install-promo";
-
-test("native install is user-initiated, single-use and suppresses repeat suggestions", async ({ run }) => {
+test("the homepage install control is user-initiated and each native offer is single-use", async ({ run }) => {
     const actor = await run.actor("Install", true);
     const { page } = actor;
     await page.addInitScript(() => {
@@ -69,18 +67,12 @@ test("native install is user-initiated, single-use and suppresses repeat suggest
     await page.keyboard.press("Escape");
     await expect(manual).toBeFocused();
 
-    await page.evaluate((key) => {
-        const daysAgo = Date.now() - 15 * 24 * 60 * 60 * 1000;
-        localStorage.setItem(key, JSON.stringify({ visitedHome: true, shownAt: daysAgo, dismissedAt: daysAgo }));
-    }, preferenceKey);
     await actor.reload();
-    await expect(promotion).toHaveCount(1);
-    expect(await offer("accepted")).toBe(true);
-    const action = promotion.getByRole("button", { name: "Install", exact: true });
-    await expect(action).toBeVisible();
-    expect(await calls()).toBe(0);
-    await action.click();
     await expect(promotion).toHaveCount(0);
+    expect(await offer("accepted")).toBe(true);
+    await expect(native).toBeVisible();
+    expect(await calls()).toBe(0);
+    await native.click();
     expect(await calls()).toBe(1);
     await page.evaluate(() => window.dispatchEvent(new Event("appinstalled")));
     await expect(page.getByText("GeoBattles installed", { exact: true })).toBeVisible();
@@ -114,7 +106,7 @@ test("the signed-in install guide preserves the full invitation and session in a
     await actor.goto(invitation);
     const account = page.locator("details.account-menu");
     const summary = account.locator("summary");
-    await expect(summary).toContainText(actor.name);
+    await expect(summary).toHaveAccessibleName(`${actor.name}, guest account menu`);
     const requests = actor.authRequests;
     const url = page.url();
     await expect(page.locator(".install-promotion")).toHaveCount(0);
@@ -130,7 +122,7 @@ test("the signed-in install guide preserves the full invitation and session in a
     await expect(summary).toBeFocused();
     await expect(page).toHaveURL(url);
     await expect(page.getByRole("textbox", { name: "Game code" })).toHaveValue("A7FK");
-    await expect(summary).toContainText(actor.name);
+    await expect(summary).toHaveAccessibleName(`${actor.name}, guest account menu`);
     expect(actor.authRequests).toBe(requests);
     expect(run.sdkRequests).toBe(0);
 });

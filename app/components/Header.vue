@@ -1,7 +1,8 @@
 <template>
-    <header class="site-header" :class="{ 'has-navigation': navigation }">
+    <header class="site-header" :class="{ 'has-navigation': navigation, 'account-only': accountOnly }">
         <div class="header-inner">
-            <NuxtLink to="/" class="brand" aria-label="GeoBattles home">
+            <slot />
+            <NuxtLink v-if="!accountOnly" to="/" class="brand" aria-label="GeoBattles home">
                 <img src="/images/emerald-mark.svg" alt="" width="34" height="36" /><span>Geo<span class="brand-light">Battles</span></span>
             </NuxtLink>
             <button
@@ -67,7 +68,7 @@
     </header>
 </template>
 <script setup lang="ts">
-const props = defineProps<{ navigation?: boolean; installBlocked?: boolean }>();
+const props = defineProps<{ navigation?: boolean; accountOnly?: boolean; installBlocked?: boolean }>();
 const auth = useAuthStore();
 const player = usePlayerInfo();
 const route = useRoute();
@@ -141,6 +142,18 @@ onBeforeUnmount(() => {
     display: flex;
     align-items: center;
     gap: clamp(1rem, 3vw, 3rem);
+}
+.account-only {
+    position: absolute;
+    inset: 0 0 auto;
+    border: 0;
+    background: transparent;
+    backdrop-filter: none;
+}
+.account-only :is(.sign-in, .avatar, .account-placeholder, .guest-install) {
+    border-color: #b9eab158;
+    border-radius: 50%;
+    background: #092b225c;
 }
 .brand {
     display: inline-flex;
