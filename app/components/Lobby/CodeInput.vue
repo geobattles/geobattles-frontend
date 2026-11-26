@@ -9,9 +9,9 @@
                 :class="{ 'cell-current': caret === index - 1, 'cell-selected': index - 1 >= selection.start && index - 1 < selection.end }"
             >
                 <Transition name="code-character">
-                    <span v-if="code[index - 1]" :key="code[index - 1]" class="code-glyph">{{ code[index - 1] }}</span>
+                    <span v-if="visibleCode[index - 1]" :key="visibleCode[index - 1]" class="code-glyph">{{ visibleCode[index - 1] }}</span>
                 </Transition>
-                <span v-if="!code[index - 1]" class="code-caret" />
+                <span v-if="!visibleCode[index - 1]" class="code-caret" />
             </span>
         </div>
         <input
@@ -26,12 +26,14 @@
             autocorrect="off"
             spellcheck="false"
             maxlength="4"
-            :value="code"
+            :value="composingText ?? code"
             :readonly="readonly"
             :aria-invalid="invalid || undefined"
             :aria-describedby="describedby"
             @input="onInput"
-            @compositionend="onInput"
+            @compositionstart="previewComposition"
+            @compositionend="finishComposition"
+            @change="finishComposition"
             @paste.prevent="onPaste"
             @select="syncSelection"
             @focus="syncSelection"
@@ -46,11 +48,15 @@ import { isLobbyCode, isPartialLobbyCode, normalizeLobbyCode, parseLobbyCode } f
 
 const props = defineProps<{ readonly?: boolean; invalid?: boolean; describedby?: string }>();
 const code = defineModel<string>({ required: true });
-const emit = defineEmits<{ error: [message: string]; edit: [] }>();
+const emit = defineEmits<{ error: [message: string]; edit: []; composing: [] }>();
 const id = useId();
 const field = useTemplateRef("field");
 const selection = reactive({ start: 0, end: 0 });
-const complete = computed(() => isLobbyCode(code.value));
+// The keyboard owns the raw input during composition. Only the decorative cells uppercase its preview.
+const composingText = ref<string>();
+const visibleCode = computed(() => normalizeLobbyCode(composingText.value ?? code.value));
+const complete = computed(() => isLobbyCode(visibleCode.value));
+const canConfirmComposition = computed(() => composingText.value !== undefined && complete.value);
 const caret = computed(() => Math.min(selection.start, 3));
 
 function focus() {
@@ -61,7 +67,7 @@ function blur() {
     field.value?.blur();
 }
 
-defineExpose({ focus, blur });
+defineExpose({ focus, blur, canConfirmComposition, finishComposition });
 
 function syncSelection() {
     selection.start = field.value?.selectionStart ?? 0;
@@ -71,7 +77,7 @@ function syncSelection() {
 function placeCaret(event: MouseEvent) {
     const input = field.value;
     if (!input) return;
-    if (event.detail && !event.shiftKey && input.selectionStart === input.selectionEnd) {
+    if (composingText.value === undefined && event.detail && !event.shiftKey && input.selectionStart === input.selectionEnd) {
         const bounds = input.getBoundingClientRect();
         const position = Math.round((event.clientX - bounds.left) / (bounds.width / 4));
         const caret = Math.max(0, Math.min(position, code.value.length));
@@ -81,8 +87,27 @@ function placeCaret(event: MouseEvent) {
 }
 
 function onInput(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if ((event as InputEvent).isComposing) return;
+    if (composingText.value !== undefined || (event as InputEvent).isComposing) {
+        previewComposition(event);
+        return;
+    }
+    commitInput(event.target as HTMLInputElement);
+}
+
+function previewComposition(event: Event) {
+    if (composingText.value === undefined) emit("composing");
+    composingText.value = (event.target as HTMLInputElement).value;
+    syncSelection();
+}
+
+function finishComposition() {
+    if (composingText.value === undefined || !field.value) return false;
+    composingText.value = undefined;
+    commitInput(field.value, true);
+    return true;
+}
+
+function commitInput(input: HTMLInputElement, fromComposition = false) {
     const value = normalizeLobbyCode(input.value);
     const position = input.selectionStart ?? value.length;
     if (!isPartialLobbyCode(value)) {
@@ -95,8 +120,11 @@ function onInput(event: Event) {
         input.value = value;
         input.setSelectionRange(position, position);
     }
-    code.value = value;
-    emit("edit");
+    // Starting a composition cancels an outstanding lookup, even if the final code stays the same.
+    if (code.value !== value || (fromComposition && isLobbyCode(value))) {
+        code.value = value;
+        emit("edit");
+    }
     syncSelection();
 }
 
@@ -107,6 +135,7 @@ function onPaste(event: ClipboardEvent) {
         emit("error", result.error);
         return;
     }
+    composingText.value = undefined;
     code.value = result.code;
     if (field.value) {
         field.value.value = result.code;

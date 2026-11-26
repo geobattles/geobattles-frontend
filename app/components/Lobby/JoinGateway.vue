@@ -39,7 +39,7 @@
                             </button>
                         </div>
 
-                        <form v-show="mode === 'code'" :id="codePanelId" class="code-form" aria-label="Join with a game code" @submit.prevent="submitCode">
+                        <form v-show="mode === 'code'" :id="codePanelId" class="code-form" aria-label="Join with a game code" @submit.prevent="submitForm">
                             <LobbyCodeInput
                                 ref="codeInput"
                                 v-model="code"
@@ -47,6 +47,7 @@
                                 :invalid="!!codeError"
                                 :describedby="codeError ? errorId : helpId"
                                 @error="handleCodeError"
+                                @composing="cancelCodeCheck"
                                 @edit="handleCodeEdit"
                             />
                             <p v-if="!codeError" :id="helpId" class="code-help">Enter or paste the four-character code to join automatically.</p>
@@ -54,7 +55,8 @@
                             <div role="status" :class="{ 'sr-only': !busy }">
                                 <p v-if="busy" class="join-status"><span class="spinner" aria-hidden="true" />Joining…</p>
                             </div>
-                            <button v-if="joinError && canSubmit" class="retry-code" type="submit">Try again</button>
+                            <button v-if="codeInput?.canConfirmComposition" class="retry-code" type="submit">Join lobby</button>
+                            <button v-else-if="joinError && canSubmit" class="retry-code" type="submit">Try again</button>
                             <button class="browse-lobbies" type="button" :disabled="busy" @click="browseLobbies">Browse Open Lobbies <UiIcon name="arrow" /></button>
                         </form>
                         <div v-if="directoryVisited" v-show="mode === 'open'" :id="directoryPanelId" class="directory-panel">
@@ -118,6 +120,7 @@ const { field, visibleHeight, editingHeightLoss, landscape, finishEditing } = us
 const viewportStyle = useViewportFit(() => !!field.value);
 const compact = computed(() => editingHeightLoss.value >= 64 && visibleHeight.value < 360);
 let active = true;
+let joinedCode: string | undefined;
 
 function setMode(next: JoinMode) {
     if (busy.value) return;
@@ -157,6 +160,11 @@ function handleCodeError(message: string) {
 
 function submitCode() {
     if (canSubmit.value) void checkAndJoinCode(code.value);
+}
+
+function submitForm() {
+    if (codeInput.value?.finishComposition()) return;
+    if (!pending.value && code.value !== joinedCode) submitCode();
 }
 
 function cancelCodeCheck() {
@@ -206,7 +214,11 @@ async function perform(action: JoinAction) {
     working.value = action;
     try {
         if (action.target === "create") await lobby.createLobby();
-        else await lobby.joinLobby(action.target);
+        else {
+            await lobby.joinLobby(action.target);
+            // Enter can submit the form after the keyboard has already committed and joined.
+            if (action.mode === "code") joinedCode = action.target;
+        }
     } catch (cause) {
         if (active && route.name === routeName) {
             const message = cause instanceof Error ? cause.message : "Please try again.";
@@ -223,6 +235,7 @@ function applyInvite() {
     cancelCodeCheck();
     const next = readInvite();
     pending.value = undefined;
+    joinedCode = undefined;
     setMode("code");
     code.value = next.code;
     inputError.value = next.error;

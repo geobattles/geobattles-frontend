@@ -1,6 +1,32 @@
 import { test, expect } from "./support/fixtures";
 import { registerGuest, createLobby, joinInvite, setReady, changeSettings, connected, leave, reservedAfterLeave } from "./support/ui";
 
+test("mobile keyboard shows provisional lobby letters and commits them in uppercase", async ({ run, browserName }) => {
+    test.skip(browserName !== "chromium", "This test uses Chromium's native IME protocol.");
+    const actor = await run.actor("Mobile", true);
+    await actor.goto("/lobby/join");
+    const field = actor.page.getByRole("textbox", { name: "Game code" });
+    const cells = actor.page.locator(".code-glyph");
+    await expect(field).toBeFocused();
+    const keyboard = await actor.context.newCDPSession(actor.page);
+    try {
+        await keyboard.send("Input.imeSetComposition", { text: "fs", selectionStart: 2, selectionEnd: 2 });
+        await expect(cells).toHaveText(["F", "S"]);
+        await expect(field).toHaveValue("fs");
+        await keyboard.send("Input.insertText", { text: "fs" });
+        await expect(field).toHaveValue("FS");
+        await keyboard.send("Input.insertText", { text: "2" });
+        await keyboard.send("Input.imeSetComposition", { text: "k", selectionStart: 1, selectionEnd: 1 });
+        await expect(cells).toHaveText(["F", "S", "2", "K"]);
+        await expect(actor.page.getByRole("button", { name: "Join lobby", exact: true })).toBeVisible();
+        await keyboard.send("Input.imeSetComposition", { text: "", selectionStart: 0, selectionEnd: 0 });
+        await expect(cells).toHaveText(["F", "S", "2"]);
+        await expect(field).toHaveValue("FS2");
+    } finally {
+        await keyboard.detach();
+    }
+});
+
 test("independent guests: invite, settings, ready gate, reload, offline recovery and deliberate leave", async ({ run }) => {
     const host = await run.actor("Host");
     const peer = await run.actor("Mobile", true);
