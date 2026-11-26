@@ -4,7 +4,7 @@
             <source media="(max-width: 700px) and (orientation: portrait)" srcset="/images/emerald-lake-portrait.webp" />
             <img src="/images/emerald-lake.webp" alt="" width="1672" height="941" />
         </picture>
-        <Header scenic navigation />
+        <Header navigation />
         <main id="main-content" class="page-shell profile-page">
             <header class="profile-heading">
                 <h1>Profile</h1>

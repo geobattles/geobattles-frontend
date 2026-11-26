@@ -134,6 +134,8 @@ export type MsgCCData = SocketMessage<{
 }>;
 
 export type MsgGameEndData = SocketMessage<{
+    endedEarly?: boolean;
+    players?: playerListObject;
     powerupState?: PowerupState;
     results: Record<number, LiveResultsHashMap>;
     /** Detached scored history/answers; optional for older servers. */
@@ -153,6 +155,7 @@ export type LobbySettingsPatch = Partial<Omit<LobbyInfo["conf"], "scoreScaleKm" 
 export type SocketCommand =
     | PowerupCommand
     | { command: "start"; gameId?: string; round?: number }
+    | { command: "end_game"; gameId: string; round: number }
     | { command: "setReady"; ready: boolean }
     | { command: "submit_location"; location: Coordinates }
     | { command: "update_lobby_settings"; conf: LobbySettingsPatch };

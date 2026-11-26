@@ -33,7 +33,7 @@ export async function registerGuest(actor: Actor) {
 
 export async function createLobby(actor: Actor): Promise<string> {
     const mark = actor.mark();
-    await actor.page.getByRole("button", { name: /^(start an expedition|play now|create lobby)$/i }).click();
+    await actor.page.getByRole("button", { name: /^(start game|start an expedition|play now|create lobby)$/i }).click();
     const lobby = await actor.snapshot((snapshot) => snapshot.phase === "WAITING" && Object.values(snapshot.playerList).some((player) => player.name === actor.name), mark);
     expect(lobby.ID).toMatch(/^[A-Z0-9]{4}$/);
     await expect(actor.page).toHaveURL(`${env.frontend}/lobby/${lobby.ID}`);
@@ -118,8 +118,8 @@ export async function changeSettings(actor: Actor, values: { name: string; round
     if (values.attempts !== undefined) await dialog.getByRole("spinbutton", { name: /^(guesses per round|attempts)$/i }).fill(String(values.attempts));
     if (values.seconds !== undefined) {
         const timer = dialog.locator(".timer-setting");
+        await expect(timer.getByRole("slider")).toHaveCount(0);
         await timer.getByRole("spinbutton", { name: /^time in seconds$/i }).fill(String(values.seconds));
-        await expect(timer.getByRole("slider", { name: /^round timer adjustment$/i })).toHaveValue(String(values.seconds));
     }
     await dialog.getByRole("button", { name: /^close dialog$/i }).click();
     const snapshot = await actor.snapshot(
@@ -140,15 +140,10 @@ export async function changeSettings(actor: Actor, values: { name: string; round
 }
 
 export async function leave(actor: Actor) {
-    const accept = async (dialog: import("@playwright/test").Dialog) => {
-        if (dialog.type() === "confirm") await dialog.accept();
-        else await dialog.dismiss();
-    };
-    actor.page.on("dialog", accept);
     actor.navigating = true;
     try {
         await actor.page.getByRole("button", { name: /^(leave|leave lobby)$/i }).click();
-        const confirmation = actor.page.getByRole("dialog").getByRole("button", { name: /^(leave|leave lobby|confirm)$/i });
+        const confirmation = actor.page.getByRole("dialog", { name: "Leave lobby?", exact: true }).getByRole("button", { name: "Leave lobby", exact: true });
         await expect
             .poll(async () => new URL(actor.page.url()).pathname === "/" || (await confirmation.isVisible()), { message: "Leave must navigate or show a real confirmation" })
             .toBe(true);
@@ -156,7 +151,6 @@ export async function leave(actor: Actor) {
         await expect(actor.page).toHaveURL(`${env.frontend}/`);
     } finally {
         actor.navigating = false;
-        actor.page.off("dialog", accept);
     }
 }
 

@@ -34,7 +34,7 @@
                     </div>
                     <span class="badge" :class="member.connected ? (member.ready ? 'badge-success' : '') : 'badge-warn'"
                         ><UiIcon v-if="member.ready && member.connected" name="check" />{{
-                            !member.connected ? (member.away ? "Away" : "Reconnecting") : member.ready ? "Ready" : "Not ready"
+                            !member.connected ? (member.away ? "Away" : member.ready ? "Ready, reconnecting" : "Reconnecting") : member.ready ? "Ready" : "Not ready"
                         }}</span
                     >
                 </li>

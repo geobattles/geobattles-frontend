@@ -1,7 +1,7 @@
 const EXPIRY_PULSE_MS = 320;
 
 /** Sample the existing deadline for both the guess controls and the timer artwork. */
-export function useTimer(active: () => boolean, draw: (remainingMs: number, expiryProgress: number) => void) {
+export function useTimer(active: () => boolean, draw?: (remainingMs: number, expiryProgress: number) => void) {
     const { lobbySettings, roundDeadline } = useLobbyState();
     const fullRoundTime = computed(() => lobbySettings.value?.conf.roundTime ?? 0);
     const countdown = ref(0);
@@ -37,7 +37,7 @@ export function useTimer(active: () => boolean, draw: (remainingMs: number, expi
         const deadline = roundDeadline.value;
         if (!active() || deadline === null) {
             countdown.value = 0;
-            draw(0, 1);
+            draw?.(0, 1);
             return;
         }
 
@@ -48,14 +48,14 @@ export function useTimer(active: () => boolean, draw: (remainingMs: number, expi
         if (seconds !== previous) {
             countdown.value = seconds;
             const audibleThreshold = fullRoundTime.value <= 20 ? 10 : 15;
-            if (scheduled && previous === seconds + 1 && seconds > 0 && seconds <= audibleThreshold) playTickSound();
+            if (draw && scheduled && previous === seconds + 1 && seconds > 0 && seconds <= audibleThreshold) playTickSound();
         }
         const expiryProgress = Math.min(1, Math.max(0, -timeToDeadline / EXPIRY_PULSE_MS));
-        const animate = !motion?.matches;
+        const animate = !!draw && !motion?.matches;
         const now = performance.now();
         // CSS variables stay on the retained timer element. Vue updates at second boundaries.
         if (!scheduled || seconds !== previous || expiryProgress === 1 || now - lastPaint >= (seconds > 10 ? 32 : 15)) {
-            draw(remainingMs, expiryProgress);
+            draw?.(remainingMs, expiryProgress);
             lastPaint = now;
         }
 

@@ -1,6 +1,7 @@
 <template>
     <main id="main-content" ref="gameplayPageContainer" class="game-page">
         <Login />
+        <LobbyLeaveConfirmation :prompt="leavePrompt" @decide="decideLeave" />
         <ClientOnly>
             <GameplaySession :container="gameplayPageContainer" @leaveLobby="leave" />
             <template #fallback>
@@ -15,7 +16,7 @@
 </template>
 <script setup lang="ts">
 definePageMeta({ key: (route) => `gameplay-${String(route.params.id)}` });
-const { goHome: leave } = useLobbyLeaveGuard();
+const { goHome: leave, leavePrompt, decideLeave } = useLobbyLeaveGuard();
 const route = useRoute();
 const lobbyId = computed(() => routeLobbyId(route));
 const gameplayPageContainer = ref<HTMLElement | null>(null);

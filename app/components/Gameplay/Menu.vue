@@ -28,6 +28,7 @@
             >
                 <UiIcon name="fullscreen" />
             </button>
+            <GameplayEndMatchControl phase="PLAYING" />
             <button class="hud-button leave-control" type="button" aria-label="Leave lobby" title="Leave lobby" @click="emit('leaveLobbyClicked')">
                 <UiIcon name="leave" />
             </button>

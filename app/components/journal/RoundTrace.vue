@@ -38,7 +38,7 @@ const description = computed(() => {
     const answer = `Round ${props.round.round}, answer ${journalCoordinates(props.round.answer)}.`;
     return selected.value
         ? `${answer} Attempt ${selected.value.attempt}: ${journalCoordinates(selected.value.guess)}, ${journalDistance(selected.value.distanceMeters)} from the answer. Geographic overview, not a detailed street map.`
-        : `${answer} No guess was submitted. Geographic overview, not a detailed street map.`;
+        : `${answer} ${props.round.missed ? "You missed this round." : "No guess was submitted."} Geographic overview, not a detailed street map.`;
 });
 const routePath = computed(() => {
     if (!selected.value) return "";

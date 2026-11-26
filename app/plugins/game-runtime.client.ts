@@ -45,6 +45,7 @@ export default defineNuxtPlugin((nuxtApp) => {
         closeAttempt: commandPolicy.closeAttempt,
         requestError: commandPolicy.powerups.reject,
         invalidateViews: battleRoyale.clearMap,
+        showClosedLobby: (id) => session.showClosedLobby(id),
         releaseSession: () => session.releaseSession(),
     });
     const session = createLobbySession(useRouter(), socket, {
@@ -69,7 +70,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     };
     nuxtApp.vueApp.onUnmount(dispose);
     if (import.meta.hot) import.meta.hot.dispose(dispose);
-    const { dispose: _dispose, releaseSession: _release, ...membership } = session;
+    const { dispose: _dispose, releaseSession: _release, showClosedLobby: _showClosedLobby, ...membership } = session;
     return {
         provide: { gameRuntime: { google, battleRoyale, ui, socket: readonly(socket.status), socketActions: commandPolicy.bind(socket.writeCommand), ...membership } },
     };

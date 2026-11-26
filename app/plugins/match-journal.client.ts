@@ -38,7 +38,7 @@ export default defineNuxtPlugin((nuxtApp) => {
                 playerId,
                 mode: getGameModeFromSettings(completed.conf.mode),
                 phase: completed.phase,
-                roundCount: completed.conf.numRounds,
+                roundCount: completed.endedEarly ? completed.currentRound : completed.conf.numRounds,
                 round: completed.round,
                 results: completed.results,
                 totalResults: completed.totalResults,

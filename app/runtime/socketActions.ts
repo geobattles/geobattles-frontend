@@ -2,6 +2,7 @@ import type { Coordinates } from "~/types/appTypes";
 import type { LobbySettingsPatch, SocketCommand } from "~/types/socketTypes";
 import type { RequestError } from "~/composables/requestState";
 import { createPowerupRuntime } from "~/runtime/powerups";
+import { mapsConfigured } from "#maps-provider";
 
 type WriteSocketCommand = (command: SocketCommand, beforeWrite: () => void, unavailable: (error: RequestError) => void) => (() => boolean) | undefined;
 
@@ -12,7 +13,7 @@ export const createSocketActions = () => {
     const lobby = useLobbyStore();
     const player = usePlayerInfo();
     const powerups = createPowerupRuntime({ lobby: () => lobby.lobbySettings, playerId: () => player.value.ID, startPending: () => request.isStartPending });
-    const startUnavailableReason = useRuntimeConfig().public.GMAPS_API.trim()
+    const startUnavailableReason = mapsConfigured(useRuntimeConfig().public.GMAPS_API)
         ? ""
         : "Maps is not configured in this browser build. Ask the operator to configure the browser Maps key before starting a game.";
     let readyAckTimer: ReturnType<typeof setTimeout> | undefined;
@@ -71,6 +72,7 @@ export const createSocketActions = () => {
                 return send({ command: "start" });
             },
             setReady: (ready: boolean) => send({ command: "setReady", ready }),
+            endGame: (gameId: string, round: number) => send({ command: "end_game", gameId, round }),
             submitLocation: (location: Coordinates) => send({ command: "submit_location", location }),
             updateSettings: (conf: LobbySettingsPatch) => send({ command: "update_lobby_settings", conf }),
         };

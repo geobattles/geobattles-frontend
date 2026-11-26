@@ -1,5 +1,5 @@
 import type { Coordinates } from "~/types/appTypes";
-import { createMapsLoader } from "./mapsLoader";
+import { createMapsLoader } from "#maps-provider";
 import type { CountryViewport } from "~/utils/countryViewport";
 import { createGameplayFrame } from "~/utils/gameplayFrame";
 

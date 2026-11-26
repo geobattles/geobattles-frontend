@@ -13,7 +13,7 @@
             <span class="entry-icon"><UiIcon name="bolt" /></span>
             <span class="entry-copy">
                 <strong>Powerups</strong>
-                <small v-if="!compact || appliedSummary || incomingSummary">{{ appliedSummary || incomingSummary || "Use a powerup for the next round" }}</small>
+                <small v-if="!compact || appliedSummary">{{ appliedSummary || "Use a powerup for the next round" }}</small>
             </span>
             <span class="entry-details">
                 <span class="entry-state">{{ entryState }}</span>
@@ -21,7 +21,10 @@
             </span>
             <UiIcon name="arrow" />
         </button>
-        <p class="sr-only" role="status">{{ !opened ? notice || appliedSummary || incomingSummary : "" }}</p>
+        <p class="sr-only" role="status">{{ !opened ? notice || appliedSummary : "" }}</p>
+        <Teleport :to="noticeTarget || 'body'" :disabled="!compact && (!opened || !dialogNotice)">
+            <GameplayDuelNotice class="queued-duel" :challengers="challengers" :round="nextRound" :floating="compact" :layer="noticeTarget" queued />
+        </Teleport>
 
         <dialog
             :id="id"
@@ -48,6 +51,7 @@
                     <span v-if="windowOpen" class="choice-time"><UiIcon name="clock" /><span class="sr-only">Choice time left </span>{{ choiceSeconds }}s</span>
                     <button type="button" class="sheet-icon" autofocus aria-label="Close powerups" @click="closeSheet"><UiIcon name="close" /></button>
                 </header>
+                <div ref="dialogNotice" class="dialog-duel-slot" />
 
                 <form v-if="choosingRival" :id="`${id}-form`" class="rival-body" @submit.prevent="confirmRival">
                     <div class="rival-tools">
@@ -69,9 +73,9 @@
                             <span class="rival-identity">
                                 <strong>{{ rival.player.name }}</strong>
                                 <small v-if="!rival.player.connected">Disconnected</small>
-                                <small v-else-if="rival.standing">{{ rival.standing.score.toLocaleString() }} pts</small>
+                                <small v-else-if="rival.standing">{{ rival.standing.score }} pts</small>
                             </span>
-                            <span v-if="rival.standing" class="rival-rank" :data-rank="rival.standing.rank">#{{ rival.standing.rank }}</span>
+                            <span v-if="rival.standing" class="rival-rank" :data-rank="rival.standing.rank"><span class="sr-only">Rank </span>{{ rival.standing.rank }}</span>
                             <span class="rival-check" aria-hidden="true"><UiIcon v-if="target === rival.id" name="check" /></span>
                         </label>
                         <p v-if="!filteredRivals.length" class="sheet-empty">{{ search.trim() ? "No players match your search." : "No rivals available." }}</p>
@@ -98,9 +102,6 @@
                             </span>
                             <UiIcon v-if="canUse(item.type)" class="card-next" name="arrow" />
                         </button>
-                    </div>
-                    <div v-if="incoming.length" class="incoming-duels" aria-label="Incoming challenges">
-                        <p v-for="effect in incoming" :key="effect.id"><UiIcon name="bolt" />{{ rivalName(effect.source) }} challenged you. {{ duelRule }} No response needed.</p>
                     </div>
                 </div>
 
@@ -133,6 +134,7 @@ import PlayerAvatar from "~/components/Ui/PlayerAvatar.vue";
 import type { LobbyInfo } from "~/types/appTypes";
 import type { PowerupPending, PowerupType } from "~/types/powerups";
 import type { RankedResult } from "~/utils/resultUtils";
+import { duelStake, roundPowerupEffects } from "~/utils/roundPowerups";
 
 const props = defineProps<{
     snapshot: LobbyInfo;
@@ -152,9 +154,9 @@ const ownDecision = computed(() => state.value?.decisionReady[props.playerId]);
 const nextRound = computed(() => props.snapshot.currentRound + 1);
 const windowOpen = computed(() => Boolean(props.snapshot.phase === "MID-ROUND" && state.value?.status === "OPEN" && !state.value.starting && props.remainingMs > 0));
 const choiceSeconds = computed(() => Math.ceil(props.remainingMs / 1000));
-const duelRule = computed(() => (props.snapshot.conf.mode === 2 ? "Faster correct country wins 1,000 points." : "Closer guess wins 1,000 points."));
+const duelRule = computed(() => `${props.snapshot.conf.mode === 2 ? "Faster correct country" : "Closer guess"} wins ${duelStake} points.`);
 const items = computed(() => [
-    { type: 0 as const, name: "Double your score", description: "Earn 2× base points in the next round." },
+    { type: 0 as const, name: "Double your score", description: "Double your base points in the next round." },
     { type: 1 as const, name: "Challenge a rival", description: duelRule.value },
 ]);
 const standings = computed(() => new Map(props.standings.map((row) => [row.id, row])));
@@ -171,15 +173,8 @@ const rivals = computed(() =>
 );
 const rivalName = (id?: string) => (id ? props.snapshot.playerList[id]?.name : undefined) ?? "Another player";
 const hasRival = computed(() => rivals.value.some(({ player }) => player.connected));
-const nextEffects = computed(
-    () => state.value?.effects.filter((effect) => effect.gameId === props.snapshot.gameId && effect.round === nextRound.value && effect.status === "QUEUED") ?? []
-);
-const incoming = computed(() => nextEffects.value.filter((effect) => effect.type === 1 && effect.target === props.playerId));
-const incomingSummary = computed(() => {
-    const first = incoming.value[0];
-    if (!first) return "";
-    return incoming.value.length > 1 ? `${incoming.value.length} incoming challenges` : `${rivalName(first.source)} challenged you`;
-});
+const nextEffects = computed(() => roundPowerupEffects(props.snapshot, nextRound.value, "QUEUED"));
+const challengers = computed(() => nextEffects.value.filter((effect) => effect.type === 1 && effect.target === props.playerId).map((effect) => rivalName(effect.source)));
 const confirmed = computed(() => nextEffects.value.filter((effect) => effect.source === props.playerId));
 const effectFor = (type: PowerupType) => confirmed.value.find((effect) => effect.type === type);
 const appliedSummary = computed(() => {
@@ -230,8 +225,17 @@ const notice = computed(() => {
 const id = useId();
 const entry = useTemplateRef("entry");
 const dialog = useTemplateRef("dialog");
+const dialogNotice = useTemplateRef("dialogNotice");
 const heading = useTemplateRef("heading");
 const opened = ref(false);
+const fullscreenTarget = shallowRef<Element | null>(null);
+const noticeTarget = computed(() => (opened.value && dialogNotice.value ? dialogNotice.value : fullscreenTarget.value));
+const syncFullscreenTarget = () => (fullscreenTarget.value = document.fullscreenElement);
+onMounted(() => {
+    syncFullscreenTarget();
+    document.addEventListener("fullscreenchange", syncFullscreenTarget);
+});
+onBeforeUnmount(() => document.removeEventListener("fullscreenchange", syncFullscreenTarget));
 const choosingRival = ref(false);
 const search = ref("");
 const target = ref("");
@@ -619,18 +623,11 @@ onBeforeUnmount(closeSheet);
 .card-next {
     color: var(--card-accent);
 }
-.incoming-duels {
-    display: grid;
-    gap: 0.3rem;
-    margin-block-start: 0.55rem;
-    padding: 0.48rem;
-    border-radius: 0.6rem;
-    background: #55313e66;
-    color: #ffdee2;
-    font-size: 0.77rem;
+.powerup-choices > .queued-duel:not(:empty) {
+    margin-block-start: 0.32rem;
 }
-.incoming-duels .ui-icon {
-    margin-inline-end: 0.2rem;
+.dialog-duel-slot {
+    display: contents;
 }
 .rival-body {
     display: grid;

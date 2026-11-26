@@ -1,37 +1,49 @@
 <template>
     <div class="landing">
+        <TransitionsCinematicTransition v-if="showJourneyPreview" title="Entering your lobby" subtitle="Lobby confirmed. Opening the room…" confirmed preview>
+            <template #cancel><NuxtLink class="btn btn-secondary" to="/" replace>Close preview</NuxtLink></template>
+        </TransitionsCinematicTransition>
         <picture class="scenery" aria-hidden="true">
-            <source media="(max-width: 700px) and (orientation: portrait)" srcset="/images/emerald-lake-portrait.webp" />
-            <img src="/images/emerald-lake.webp" alt="" width="1672" height="941" fetchpriority="high" />
+            <source media="(orientation: portrait)" srcset="/images/emerald-home-portrait.webp" />
+            <img src="/images/emerald-horizon.webp" alt="" width="1672" height="941" fetchpriority="high" />
         </picture>
-        <Header scenic :install-blocked="creating || awaitingAuth" />
-        <main id="main-content" class="landing-main">
-            <section class="welcome" aria-labelledby="welcome-title">
-                <div class="hero-brand">
-                    <img src="/images/emerald-mark.svg" alt="" width="104" height="109" />
-                    <h1 id="welcome-title">Geo<span>Battles</span></h1>
-                </div>
+        <Header account-only :install-blocked="launchBusy">
+            <NuxtLink v-if="returnCode" class="btn btn-secondary return-lobby" :to="{ path: '/lobby/' + returnCode, query: { resume: '1' } }">
+                <UiIcon name="arrow" />Return to lobby · {{ returnCode }}
+            </NuxtLink>
+        </Header>
+        <main id="main-content" class="welcome" aria-labelledby="welcome-title">
+            <div class="hero-brand">
+                <img src="/images/emerald-mark.svg" alt="" width="104" height="109" />
+                <h1 id="welcome-title">Geo<span>Battles</span></h1>
+            </div>
+            <div class="hero-description">
                 <p>Multiplayer geography guessing game.</p>
-                <div class="hero-actions">
-                    <NuxtLink class="hero-button play-button" to="/lobby/join">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path fill="currentColor" d="M6 3.8a1 1 0 0 1 1.5-.86l13 8.2a1 1 0 0 1 0 1.72l-13 8.2A1 1 0 0 1 6 20.2Z" />
-                        </svg>
-                        Play Now
-                    </NuxtLink>
-                    <button class="hero-button create-button" type="button" :disabled="creating" :aria-busy="creating" @click="create">
-                        <span v-if="creating" class="spinner" aria-hidden="true" /><UiIcon v-else name="plus" />
-                        {{ creating ? "Creating lobby…" : "Create Lobby" }}
-                    </button>
+                <div class="geo-accent" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path
+                            fill="currentColor"
+                            fill-rule="evenodd"
+                            d="M12 1a8 8 0 0 0-8 8c0 4.7 6.2 12.2 7.4 13.7a.8.8 0 0 0 1.2 0C13.8 21.2 20 13.7 20 9a8 8 0 0 0-8-8Zm0 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"
+                        />
+                    </svg>
                 </div>
-                <NuxtLink v-if="returnCode" class="btn btn-secondary return-lobby" :to="{ path: '/lobby/' + returnCode, query: { resume: '1' } }">
-                    <UiIcon name="arrow" />Return to lobby · {{ returnCode }}
+            </div>
+            <div class="hero-actions">
+                <NuxtLink class="hero-button join-button" to="/lobby/list">
+                    <UiIcon name="users" />
+                    Join a Lobby
                 </NuxtLink>
-                <PwaInstallBanner class="landing-install" placement="home" :ready="!creating && !awaitingAuth" />
-            </section>
+                <button class="hero-button create-button" type="button" :disabled="launchBusy" :aria-busy="creating" @click="create">
+                    <span v-if="creating" class="spinner" aria-hidden="true" />
+                    <UiIcon v-else name="plus" />
+                    {{ creating ? "Creating lobby…" : "Create Lobby" }}
+                </button>
+            </div>
         </main>
     </div>
 </template>
+
 <script setup lang="ts">
 import { createLobbyService } from "~/services/lobbyService";
 
@@ -46,10 +58,10 @@ const returnCode = computed(() => (verifiedLobby.value === savedLobby.value ? ve
 let stopReturnCheck: (() => void) | undefined;
 onMounted(() => {
     stopReturnCheck = watch(
-        savedLobby,
-        (hint, _, cleanup) => {
+        [savedLobby, () => auth.isAuthenticated],
+        ([hint, authenticated], _, cleanup) => {
             verifiedLobby.value = null;
-            if (!hint) return;
+            if (!hint || !authenticated) return;
 
             let request: AbortController | undefined;
             const check = async () => {
@@ -58,10 +70,16 @@ onMounted(() => {
                 request = controller;
                 const timeout = window.setTimeout(() => controller.abort(), 5000);
                 try {
-                    const lobbies = await lobbyService.fetchLobbyList({ cache: "no-store", signal: controller.signal });
-                    if (controller.signal.aborted || savedLobby.value !== hint || !lobbies || typeof lobbies !== "object" || Array.isArray(lobbies)) return;
-                    if (Object.hasOwn(lobbies, hint.id)) verifiedLobby.value = hint;
-                    else app.$gameRuntime.forgetReturnHint(hint);
+                    const token = await auth.getValidAccessToken();
+                    if (!token || controller.signal.aborted || savedLobby.value !== hint) return;
+                    const status = await lobbyService.admission(hint.id, token, controller.signal);
+                    if (controller.signal.aborted || savedLobby.value !== hint) return;
+                    if (status.retained === true) verifiedLobby.value = hint;
+                    else {
+                        verifiedLobby.value = null;
+                        if (["OK", "LOBBY_NOT_FOUND", "REJOIN_EXPIRED", "GAME_IN_PROGRESS", "LOBBY_FULL", "SPECTATORS_FULL"].includes(status.code))
+                            app.$gameRuntime.forgetReturnHint(hint);
+                    }
                 } catch {
                     // An unavailable server cannot confirm that the lobby closed.
                 } finally {
@@ -85,278 +103,299 @@ onMounted(() => {
     );
 });
 onBeforeUnmount(() => stopReturnCheck?.());
-const { createLobby } = useLobbyStore();
-const toast = useToast();
-const creating = ref(false);
-const awaitingAuth = ref(false);
-let active = true;
-const create = async () => {
-    if (!active || creating.value) return;
-    if (!auth.isAuthenticated) {
-        awaitingAuth.value = true;
-        auth.openLoginDialog("guest");
-        return;
-    }
-    awaitingAuth.value = false;
-    creating.value = true;
-    try {
-        await createLobby();
-    } catch (cause) {
-        if (active) toast.add({ severity: "error", summary: "Could not create a lobby", detail: cause instanceof Error ? cause.message : "Please try again." });
-    } finally {
-        if (active) creating.value = false;
-    }
-};
-watch(
-    () => auth.isAuthenticated,
-    (signedIn) => {
-        if (signedIn && awaitingAuth.value) void create();
-    }
-);
-watch(
-    () => auth.isLoginDialog,
-    (open) => {
-        if (!open && !auth.isAuthenticated) awaitingAuth.value = false;
-    }
-);
-onBeforeUnmount(() => {
-    active = false;
-    awaitingAuth.value = false;
-});
+const { create, creating, awaitingAuth } = useLobbyCreation();
+const route = useRoute();
+const showJourneyPreview = computed(() => import.meta.dev && route.query.lobbyJourney === "1");
+const launchBusy = computed(() => creating.value || awaitingAuth.value);
+
 useHead({ title: "GeoBattles" });
 </script>
 <style scoped>
 .landing {
-    --emerald-forest: #052e24;
-    --emerald-lime: var(--gb-scenic-lime);
-    --emerald-white: #f8fafc;
-    --scenic-side: clamp(1rem, 4vw, 4rem);
+    --lime: #a9f15b;
+    --forest: #092b22;
     position: relative;
     isolation: isolate;
-    display: flex;
-    min-height: var(--gb-viewport-height);
-    flex-direction: column;
+    block-size: var(--gb-viewport-height);
     overflow: clip;
-    border: 1px solid #8ce2a54d;
-    border-radius: clamp(0.75rem, 1.5vw, 1.4rem);
-    background: var(--emerald-forest);
-    color: var(--emerald-white);
-}
-.return-lobby {
-    min-height: 44px;
-    margin-top: 0.7rem;
+    background: var(--forest);
+    color: #f8fdfb;
+    font-family: var(--gb-font-display);
 }
 .scenery,
-.scenery::after {
+.scenery::after,
+.landing::after {
     position: absolute;
     inset: 0;
     pointer-events: none;
 }
 .scenery {
-    z-index: -1;
+    z-index: -2;
+    overflow: hidden;
 }
 .scenery img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 61% 56%;
+    object-position: center 52%;
+    animation: scenery-in 430ms ease-out both;
 }
 .scenery::after {
     content: "";
-    background:
-        radial-gradient(ellipse at 36% 55%, #011810d9, #011c1580 31%, transparent 65%), linear-gradient(180deg, #001c2a33, transparent 32%, #001e1570),
-        radial-gradient(ellipse at bottom left, #10b98170, transparent 42%);
+    background: linear-gradient(90deg, #062920e6, #082b22b3 30%, transparent 66%), linear-gradient(0deg, #092b2290, transparent 40%);
 }
-.landing-main {
-    display: grid;
-    width: min(76%, 82rem);
-    flex: 1;
-    place-items: center;
-    min-width: 0;
-    padding: clamp(1.5rem, 5dvh, 4.25rem) max(var(--scenic-side), env(safe-area-inset-right)) max(clamp(1rem, 4dvh, 3rem), env(safe-area-inset-bottom))
-        max(var(--scenic-side), env(safe-area-inset-left));
+.landing::after {
+    content: "";
+    z-index: -1;
+    background: url("/images/atlas-relief.svg") left bottom / 47rem auto no-repeat;
+    mask-image: radial-gradient(ellipse at left bottom, #000 4%, transparent 60%);
+    opacity: 0.72;
 }
 .welcome {
-    width: min(100%, 40rem);
-    text-align: center;
-    text-shadow: 0 2px 10px #00140ebf;
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: clamp(1.1rem, 3vh, 2rem);
+    height: 100%;
+    padding-inline: max(var(--gb-safe-left), clamp(1.75rem, 10vw, 12rem)) max(var(--gb-safe-right), 1.75rem);
+    padding-block: max(3.5rem, var(--gb-safe-top)) max(1rem, var(--gb-safe-bottom));
 }
 .hero-brand {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: clamp(0.45rem, 1.4vw, 1.1rem);
+    gap: 0.25em;
+    font-size: clamp(2.65rem, 5.5vw, 5.1rem);
+    animation: content-in 330ms 100ms ease-out both;
 }
 .hero-brand img {
-    width: clamp(3.5rem, 8vw, 6.5rem);
-    height: auto;
-    flex: none;
-    filter: drop-shadow(0 3px 5px #001b14bb);
+    inline-size: 1.38em;
+    block-size: auto;
 }
-h1 {
-    color: var(--emerald-white);
-    font: italic 950 clamp(2.7rem, 5.25vw, 5.4rem) / 0.99 var(--gb-font-display);
-    letter-spacing: -0.06em;
-    text-wrap: initial;
+.hero-brand h1 {
+    font: italic 900 1em / 1 var(--gb-font-display);
+    letter-spacing: -0.048em;
+    text-shadow: 0 2px 14px #051b16a8;
 }
-h1 span {
-    color: var(--emerald-lime);
+.hero-brand span {
+    color: var(--lime);
 }
-.welcome > p {
-    margin-top: clamp(0.65rem, 1.5dvh, 1.1rem);
-    font-size: clamp(1rem, 2vw, 1.38rem);
-    font-weight: 600;
-    line-height: 1.35;
+.hero-description {
+    animation: content-in 350ms 220ms ease-out both;
 }
-.landing-install {
-    width: min(100%, 32rem);
-    margin: clamp(0.7rem, 2.4dvh, 1.25rem) auto 0;
+.hero-description p {
+    max-width: 22ch;
+    font: italic 700 clamp(1.2rem, 2.4vw, 2.05rem) / 1.16 var(--gb-font-display);
+    text-wrap: balance;
+    text-shadow: 0 2px 14px #051b16da;
+}
+.geo-accent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+    width: min(100%, 13rem);
+    margin-block-start: clamp(0.55rem, 2vh, 1rem);
+    color: var(--lime);
+}
+.geo-accent::before,
+.geo-accent::after {
+    content: "";
+    flex: 1;
+    height: 1.5px;
+    border-radius: 1em;
+    background: linear-gradient(90deg, transparent, currentColor);
+}
+.geo-accent::after {
+    background: linear-gradient(270deg, transparent, currentColor);
+}
+.geo-accent svg {
+    width: clamp(1.1rem, 3.2vh, 1.8rem);
 }
 .hero-actions {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: clamp(0.65rem, 2vw, 1.5rem);
-    width: min(100%, 36rem);
-    margin: clamp(1.25rem, 4.5dvh, 2.15rem) auto 0;
+    display: flex;
+    align-items: center;
+    gap: clamp(0.6rem, 2vw, 1.3rem);
 }
 .hero-button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.55em;
-    min-height: 56px;
-    padding: 0.55rem 0.8rem;
-    border: 1px solid transparent;
-    border-radius: 999px;
-    font-size: clamp(0.96rem, 1.7vw, 1.22rem);
-    font-weight: 800;
-    line-height: 1.2;
+    gap: 0.65em;
+    min-height: 46px;
+    padding: 0.4em 1.15em;
+    border: 1.5px solid #a6c6a9;
+    border-radius: 100vmax;
+    font: 750 clamp(1rem, 2vw, 1.5rem) / 1.1 var(--gb-font-display);
+    white-space: nowrap;
     text-decoration: none;
-    text-shadow: none;
     transition:
+        transform 140ms ease,
         background-color 160ms ease,
-        border-color 160ms ease,
-        box-shadow 160ms ease,
-        transform 160ms ease;
+        box-shadow 160ms ease;
+    animation: content-in 340ms 310ms ease-out backwards;
 }
-.hero-button svg {
-    width: 1.2em;
-    height: 1.2em;
+.hero-button :is(svg, .spinner) {
     flex: none;
-}
-.play-button {
-    border-color: var(--gb-scenic-action-border);
-    background: var(--gb-scenic-action-fill);
-    color: var(--gb-scenic-action-ink);
-    box-shadow: var(--gb-scenic-action-shadow);
-}
-.play-button:hover {
-    box-shadow: var(--gb-scenic-action-hover-shadow);
-}
-.create-button {
-    border-color: #ccf2d4b3;
-    color: var(--emerald-white);
-    background: #05261fb8;
-    backdrop-filter: blur(6px);
-}
-.create-button:not(:disabled):hover {
-    border-color: var(--emerald-lime);
-    background: #0d4233e6;
-}
-.create-button:disabled {
-    opacity: 0.72;
+    width: 1.15em;
+    height: 1.15em;
 }
 .hero-button:not(:disabled):active {
-    transform: translateY(1px);
+    transform: scale(0.975);
 }
 .hero-button:focus-visible {
-    outline-color: var(--emerald-white);
+    outline: 2px solid #f4ffc6;
+    outline-offset: 4px;
 }
-@media (max-width: 700px) and (orientation: portrait) {
+.join-button {
+    min-height: clamp(3.3rem, 8vh, 5rem);
+    border-color: #e1ffab;
+    background: linear-gradient(157deg, #efff9c, #c9fc74 49%, #77e661);
+    color: #092c1b;
+    font-size: clamp(1.28rem, 2.55vw, 2rem);
+    font-weight: 900;
+    box-shadow:
+        inset 0 1px 2px #ffffffa8,
+        0 0 1.2rem #a7fa5263;
+}
+.join-button:hover {
+    box-shadow:
+        inset 0 1px 2px #ffffffa8,
+        0 0 1.5rem #a7fa5293;
+}
+.create-button {
+    min-height: clamp(2.9rem, 6.9vh, 4.2rem);
+    background: #0b3429a8;
+    color: #f8fdfb;
+    animation-delay: 390ms;
+}
+.create-button:enabled:hover {
+    background-color: #154b3a;
+}
+.create-button:disabled {
+    cursor: wait;
+}
+.return-lobby {
+    gap: 0.4rem;
+    padding-inline: 0.6rem;
+    background: #0b3429da;
+    font-size: 0.76rem;
+}
+@keyframes scenery-in {
+    from {
+        opacity: 0.25;
+        transform: scale(1.02);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+@keyframes content-in {
+    from {
+        opacity: 0;
+        transform: translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+@media (orientation: portrait) {
     .scenery img {
-        object-position: 53% center;
+        object-position: center;
     }
     .scenery::after {
+        background: linear-gradient(180deg, #06271e38, transparent 38%, #082e202e 43%, #092b2280 54%, #092b223c 63%, #092b220a 82%);
+    }
+    .landing::after {
         background:
-            radial-gradient(ellipse at 50% 47%, #001c14bd, #001b1473 40%, transparent 76%), linear-gradient(180deg, #001c2633, transparent 23%, #001a17ad 93%),
-            radial-gradient(ellipse at bottom left, #10b98175, transparent 38%);
+            url("/images/atlas-relief.svg") right -3rem top -1rem / 24rem auto no-repeat,
+            url("/images/atlas-relief.svg") left -9rem bottom 1rem / 29rem auto no-repeat;
+        mask-image: radial-gradient(ellipse 52% 20% at 100% 0, #000, transparent), radial-gradient(ellipse 60% 27% at 0 94%, #000, transparent);
     }
-    .landing-main {
-        width: 100%;
-        padding-block: clamp(1.25rem, 4dvh, 2.25rem) max(clamp(3.25rem, 17dvh, 10rem), env(safe-area-inset-bottom));
-    }
-    .landing-main:has(.landing-install) {
-        padding-block-end: max(clamp(1.25rem, 5dvh, 3.25rem), var(--gb-safe-bottom));
+    .welcome {
+        grid-template-rows: minmax(0, 45%) auto auto 1fr;
+        align-content: initial;
+        justify-items: center;
+        gap: 0;
+        padding-inline: var(--gb-safe-left) var(--gb-safe-right);
+        padding-block: 0 var(--gb-safe-bottom);
+        text-align: center;
     }
     .hero-brand {
-        flex-direction: column;
-        gap: 0.45rem;
+        align-self: start;
+        margin-top: max(calc(var(--gb-viewport-height) * 0.103), calc(var(--gb-safe-top) + 2.75rem));
+        font-size: clamp(1.78rem, 7.45vw, 3.8rem);
     }
-    .hero-brand img {
-        width: clamp(3.6rem, 12dvh, 5.4rem);
-    }
-    h1 {
-        font-size: clamp(2.25rem, 11.7vw, 4rem);
-    }
-    .welcome > p {
+    .hero-description p {
         max-width: 23ch;
-        margin: clamp(0.7rem, 2.7dvh, 1.35rem) auto 0;
-        font-size: clamp(1.04rem, 4.6vw, 1.3rem);
+        padding-inline: 0.65rem;
+        font-size: clamp(1.18rem, min(5.55vw, 3vh), 2.05rem);
+    }
+    .geo-accent {
+        width: min(76%, 15rem);
+        margin-inline: auto;
+        margin-block-start: clamp(0.45rem, 1.75vh, 0.9rem);
     }
     .hero-actions {
-        grid-template-columns: minmax(0, 1fr);
-        width: min(100%, 17.5rem);
-        gap: clamp(0.65rem, 1.8dvh, 1.1rem);
-        margin-top: clamp(1rem, 5dvh, 2.3rem);
+        width: min(83%, 30rem);
+        flex-direction: column;
+        gap: clamp(0.55rem, 2.8vh, 1.55rem);
+        margin-block-start: clamp(0.75rem, 3.85vh, 2.25rem);
     }
     .hero-button {
-        min-height: 54px;
-        font-size: 1.1rem;
+        width: 100%;
+    }
+    .join-button {
+        min-height: clamp(3.25rem, 10.2vh, 6rem);
+        font-size: clamp(1.32rem, min(6.9vw, 3.9vh), 2.3rem);
+    }
+    .create-button {
+        width: 93%;
+        min-height: clamp(2.875rem, 7.9vh, 4.85rem);
+        font-size: clamp(1.03rem, min(5.1vw, 3.2vh), 1.7rem);
     }
 }
-@media (max-width: 700px) and (orientation: portrait) and (max-height: 540px) {
-    .landing-main {
-        padding-block: 0.8rem max(1rem, env(safe-area-inset-bottom));
+@media (orientation: landscape) and (max-height: 540px) {
+    .scenery::after {
+        background: linear-gradient(90deg, #072920ba, #08282035 54%, #08282083), linear-gradient(0deg, #08292075, transparent 65%);
     }
-}
-@media (orientation: landscape) and (max-height: 480px) {
-    .scenery img {
-        object-position: 70% 61%;
+    .welcome {
+        grid-template-areas: "brand actions" "description actions";
+        grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+        align-items: center;
+        column-gap: clamp(1rem, 8vw, 5rem);
+        row-gap: 0.65rem;
+        padding-inline: max(var(--gb-safe-left), 6vw) max(var(--gb-safe-right), 6vw);
     }
-    .landing-main {
-        --scenic-side: clamp(0.75rem, 3vw, 2rem);
-        width: min(76%, 42rem);
-        padding-block: 0.7rem max(0.85rem, env(safe-area-inset-bottom));
+    .hero-brand {
+        grid-area: brand;
+        font-size: clamp(1.75rem, 4.65vw, 3.5rem);
     }
-    .hero-brand img {
-        width: clamp(2.7rem, 9vw, 4.5rem);
+    .hero-description {
+        grid-area: description;
     }
-    h1 {
-        font-size: clamp(1.85rem, 5.6vw, 3.25rem);
-    }
-    .welcome > p {
-        margin-top: 0.35rem;
-        font-size: 1rem;
+    .hero-description p {
+        font-size: clamp(1rem, 2.9vw, 1.65rem);
     }
     .hero-actions {
-        width: min(100%, 25rem);
-        margin-top: clamp(0.75rem, 5dvh, 1.25rem);
-        gap: 0.6rem;
+        grid-area: actions;
+        width: 100%;
+        flex-direction: column;
+        gap: 0.7rem;
     }
     .hero-button {
-        min-height: 46px;
-    }
-}
-@media (max-width: 440px) and (orientation: landscape) {
-    .landing-main {
         width: 100%;
     }
 }
-@media (display-mode: standalone) {
-    .landing {
-        border-radius: 0;
-        border-color: transparent;
+@media (prefers-reduced-motion: reduce) {
+    .scenery img,
+    .hero-brand,
+    .hero-description,
+    .hero-button {
+        animation: none;
+        transition: none;
     }
 }
 </style>

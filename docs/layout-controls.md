@@ -2,7 +2,9 @@
 
 ## Shared UI
 
-Night Atlas uses pine ink `#0c1916` for the field and `#162a23` for instruments. Primary actions shade from leaf `#b4e587` to fern `#82c879`; cool jade `#70d9af` marks confirmed state. Gold still identifies leaders and the trophy, while coral signals urgency or danger. Text and symbols carry the meaning without color. Home leads with **Join with code** and keeps **Create lobby** separate. Use local artwork, native controls, tabular score digits and short transitions that yield to reduced motion. Keep scenery and map attribution clear during play; reserve the larger artwork for menus and reveals.
+Night Atlas uses pine ink `#0c1916` for the field and `#162a23` for instruments. Primary actions shade from leaf `#b4e587` to fern `#82c879`; cool jade `#70d9af` marks confirmed state. Gold still identifies leaders and the trophy, while coral signals urgency or danger. Text and symbols carry the meaning without color. Use local artwork, native controls, tabular score digits and short transitions that yield to reduced motion. Keep scenery and map attribution clear during play; reserve the larger artwork for menus and reveals.
+
+Home uses full-viewport alpine scenery. The primary **Join a Lobby** action opens **Open Lobbies**, with a **Game Code** tab for entering a code or pasting an invite. The secondary **Create Lobby** action creates a lobby through the existing guest/account flow. Portrait centers the brand above the lake and stacks both actions below the subtitle. Short landscape puts the actions beside the brand, while desktop groups them on the left. The compact account control and a verified Return link sit outside the main composition. The entrance plays once and honors reduced motion.
 
 Controls need visible focus, meaningful accessible names and at least 44px hit targets; primary mobile gameplay actions use at least 52px. Inputs retain 16px text to avoid focus zoom. Reduce density through component spacing/type tokens, not root-font scaling, disabled zoom or text adjustment. Honor reduced motion and reader preferences.
 
@@ -24,13 +26,19 @@ One labelled input displays the four code characters and supports ASCII capitali
 
 The sign-in dialog shows one form at a time. Joining or creating a lobby opens guest entry. Explicit sign-in opens account entry. The code page focuses the code input when opening for entry or correction. The auth dialog tracks the visual viewport while open so its controls can be scrolled into view above the software keyboard.
 
+Navigation away from a live lobby opens the leave confirmation. **Stay in lobby**, Escape, or closing the prompt cancels navigation. **Leave lobby** commits the requested route and follows the existing lobby exit rules. During fullscreen play the dialog is inside the game’s fullscreen element.
+
+Lobby entry waits for the connected waiting-room snapshot before lighting **Lobby Found**. **Opening Room** and **Joining Players** are presentation stages of that same admission. The route, tracker and arrival pulse share a two-second clock, with a short finish if confirmation arrives late. Reduced motion reveals the confirmed room immediately. **Cancel** during entry returns directly to the prior join surface. Recovery and admission into a running match follow the existing socket and spectator routes.
+
+In a development build, open `/?lobbyJourney=1` to scrub the entry scene without joining a lobby.
+
 The waiting room uses the room name and a labelled **Leave** button instead of the site navbar. An actionable **Ready?** uses the original Night Atlas amber `#ffca62` to honey `#d69b40`, with dark text, an inset keyboard focus ring and a slow left-to-right fill (static under reduced motion). Replay uses the same treatment only after the winner ceremony closes. A server-confirmed ready state has its own label and a separate **Change** action in the waiting room. The host sees **Start game** only when everyone is ready; server eligibility and connection checks still apply. Portrait puts Ready and Invite ahead of the roster and settings; short landscape places them alongside one another. Keep the region and round values visible; the map, country list and rules are available on demand. Directory rows preserve search, sorting, capacity and phase eligibility.
 
 Keep region selection concise: mode buttons, one selected-region line, the map and a searchable flag list. Avoid repeated instructions, numbered steps and duplicate selection cards. Retain accessible search labels, selection/result announcements and map keyboard guidance even when their visible counterparts are unnecessary. Scoring details belong in Scoring & powerups. Mobile controls use compact padding without shrinking touch targets below 44px.
 
 In both the waiting lobby and replay, the settings field index groups the draft into Lobby, Rounds, Map, and Scoring & powerups. Narrow phones open on four rows summarizing the current draft. Selecting one opens a single editor; All settings returns to that row. Wide screens and short landscape keep a compact index beside one editor. The shared footer stays outside the scrolling section. Keep visited controls mounted while switching chapters or rotating: changing sections is not Save, must not discard a pending time edit, and must not reset map search or camera. Move focus into the chosen chapter rather than summoning a text keyboard; under reduced motion switch without sliding. The lobby name is editable in place; tapping its right-hand pencil focuses the same labeled native input. Settings use a local draft with explicit Save/Cancel. Escape/close/unmount never saves. Live membership/host/readiness updates continue while editing; loss of authority invalidates the editor. Backend broadcasts commit settings and ordinary settings changes preserve Ready values. [Regions](region-settings.md) covers geographic selection and scoring.
 
-Choose a round time with the presets, numeric stepper or range. Valid settings autosave after a short pause. The footer briefly shows the new round time after the server confirms it. Done waits for pending changes to save. The dialog keeps unsaved edits available until they save or the host chooses Discard. An invalid time entry returns to the last valid value when it loses focus. On phones, the settings dialog fills the viewport in both orientations. Rounds, guesses and capacity use bounded native number fields with 44px step buttons; narrow layouts stack the controls to keep the input targets usable.
+Choose a round time with a preset or the numeric stepper. Valid settings autosave after a short pause. The footer briefly shows the new round time after the server confirms it. Done waits for pending changes to save. The dialog keeps unsaved edits available until they save or the host chooses Discard. An invalid time entry returns to the last valid value when it loses focus. On phones, the settings dialog fills the viewport in both orientations. Rounds, guesses and capacity use bounded native number fields with 44px step buttons; narrow layouts stack the controls to keep the input targets usable.
 
 Recovery uses an inline connection notice for slow, offline and reconnecting states. Terminal panels pair the cause with an action such as New lobby, Try again or Sign in. Delay the initial-admission modal so normal connection startup is not presented as a loss. Suppress only the exact duplicate connection alert, not unrelated action errors. Keep offline guards and the dismissed-dialog reopening control.
 
@@ -52,11 +60,15 @@ The lime pin marks the tentative guess. A server confirmation converts it into a
 
 ## Results
 
-Between rounds, portrait gives the answer map a compact band above the standings. Landscape puts the map and summary on the left and gives most of the width to the standings. The map caption sits below the interactive surface on compact screens. Expand map opens a viewport-sized dialog in either phone orientation. The same map host moves into the dialog, then returns to the recap with focus and standings scroll preserved on close. The summary shows official round points, the player's closest distance and overall rank.
+Between rounds, portrait gives the answer map a compact band above the standings. Landscape puts the map and summary on the left and gives most of the width to the standings. The map caption sits below the interactive surface on compact screens. Expand map opens a viewport-sized dialog in either phone orientation. The same map host moves into the dialog, then returns to the recap with focus and standings scroll preserved on close. The host's flag control opens the **End match early?** confirmation during play and between rounds.
 
-**Total Points** opens by default. **This Round** uses the final scored round rows, including bonuses and Duel transfers. In compact portrait, the standings show each player's closest distance. Compact landscape pairs total and round points on the Total Points tab. The column labels stay visible while the list scrolls, and switching back to a tab restores its scroll position. Powerups and Next Round or the waiting status stay below the mobile standings.
+**Total Points** opens after each round with the cumulative standings and the player's cumulative score. **This Round** switches both to the completed round. Scores appear as plain integers, and guess distances display to the nearest metre or kilometre. In the round view, phone rows show indicators for placement, Double Score and the net Duel adjustment. Multiple Duels share one indicator with a count, including when their adjustments cancel out. Tap a row to see the base score, adjustments and who challenged whom. The details open in a sheet in portrait and a dialog in landscape. Wider screens show the breakdown inline. After the final round, **Round N points** opens the same round standings when a modifier applied. Column labels stay visible while the list scrolls, and switching back to a tab restores its scroll position. Powerups and Next Round or the waiting status stay below the mobile standings.
 
-Powerups open a bottom sheet in phone portrait and a centered dialog elsewhere. The powerup cards and searchable Rival Picker share one native dialog. A choice stays pending until the server confirms it. Players can recover an uncertain request with the same request ID, and a rival who disconnects becomes unavailable. The host can queue Next Round while others choose. The Powerups bar and dialog both show the server choice countdown.
+**This Round** only shows players who took part in that round. Earlier points stay in **Total Points** and **Final Standings**, with presence shown as **Away**, **Offline** or **Left lobby**. When a returning player's Journal saves the match, it marks any rounds they missed and keeps the revealed answers for review.
+
+Player and spectator round standings break zero-point ties by closest valid guess. Equal distances share a place, and players who made no guess sort after those who guessed.
+
+Powerups open a bottom sheet in phone portrait and a centered dialog elsewhere. The powerup cards and searchable Rival Picker share one native dialog. A choice stays pending until the server confirms it. Players can recover an uncertain request with the same request ID, and a rival who disconnects becomes unavailable. The host can queue Next Round while others choose. The Powerups bar and dialog both show the server choice countdown. On phones the incoming Duel notice floats above the recap and Powerups dialog so the standings and action buttons keep their space.
 
 The answer uses a dark target marker with a light rim. Each player's closest valid guess and its line to the answer use their leaderboard color. The map fits the visible result markers across the date line and leaves room for the legend and attribution.
 
@@ -65,5 +77,20 @@ The Champion Reveal runs once for a newly completed match with confirmed standin
 Expedition Complete combines the podium, full final standings and live rematch readiness. Landscape places the podium below the champion trophy and gives the compact standings more room on the right. The standings column labels stay visible while the rows scroll, with the rematch actions below. A scored player who leaves keeps their place, and a newcomer can ready up without receiving a rank. The Journey Map uses the same map host to show finalized round locations and lets players review individual answers. It opens in a dialog on compact screens, falls back to the final answer when the archive is incomplete and uses scenic artwork when a map cannot be shown.
 
 Maps retain authoritative result bounds and refit after a visible layout change; gameplay pan/zoom has different ownership. See [runtime recovery](frontend-recovery.md#maps-only-recovery).
+
+## Spectating
+
+An in-progress room offers **Watch** in Open Lobbies. Invitation links also
+admit late arrivals as spectators. The spectator dashboard follows the same
+lobby connection and shows the server's round timer, settled standings and
+completed-round maps. The live panel uses local scenic artwork. Completed
+rounds use the bundled Natural Earth world map and require no Google Maps
+requests. The player and watcher counts use the server snapshot.
+
+Mobile portrait stacks the match panel and the scrollable standings. Landscape
+and desktop show them side by side. The match progress and rematch status stay
+in view. When a seat opens, the spectator gets the existing final standings and
+**Ready for Rematch** controls on the same connection. A full room keeps them
+watching until a seat opens.
 
 Verify narrow portrait, short landscape, coarse-pointer tablet, desktop and desktop→mobile→desktop transitions, including keyboard/focus/fullscreen and all player rows. Provider-free component previews prove DOM geometry only, not real Maps rendering, attribution placement, camera fitting or physical-device safe areas.

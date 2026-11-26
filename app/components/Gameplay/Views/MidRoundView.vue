@@ -22,6 +22,7 @@
                     >
                         <UiIcon :name="ui.isFullscreen ? 'shrink' : 'fullscreen'" />
                     </button>
+                    <GameplayEndMatchControl phase="MID-ROUND" />
                     <button class="recap-control recap-leave" type="button" aria-label="Leave lobby" @click="emit('leaveLobby')"><UiIcon name="leave" /></button>
                 </div>
             </div>
@@ -41,27 +42,27 @@
                     <h1 :id="titleId">Round {{ round }} <em>Results</em></h1>
                     <dl class="round-metrics" aria-label="Your round results">
                         <div class="earned-points">
-                            <dt aria-label="Round points"><UiIcon name="star" />{{ compactLandscape ? "Points" : "Round points" }}</dt>
-                            <dd>{{ roundPoints }}</dd>
+                            <dt><UiIcon name="star" />{{ standingsView === "overall" ? "Total points" : "Round points" }}</dt>
+                            <dd>{{ points }}</dd>
                         </div>
                         <div>
                             <dt><UiIcon name="pin" />Best distance</dt>
-                            <dd>{{ distance || (ownResult ? "No guess" : "—") }}</dd>
+                            <dd>{{ distance || (ownResult ? "No guess" : "Missed round") }}</dd>
                         </div>
                         <div>
                             <dt><UiIcon name="trophy" />{{ compactLandscape ? "Rank" : "Overall rank" }}</dt>
-                            <dd>{{ ownStanding ? "#" + ownStanding.rank : "—" }}</dd>
+                            <dd>{{ ownStanding?.rank ?? "—" }}</dd>
                         </div>
                     </dl>
                 </div>
                 <GameplayRoundStandings
                     :key="'standings-' + roundKey"
+                    v-model:view="standingsView"
                     class="recap-standings"
                     :overall="overall"
                     :round="scoredRound"
                     :guesses="results.bestResults"
                     :compact="compact"
-                    :landscape="compactLandscape"
                 />
                 <GameplayPowerupChoices
                     v-if="active && snapshot && player.ID && round < roundCount"
@@ -109,7 +110,7 @@
 
 <script setup lang="ts">
 import type { Results } from "~/types/appTypes";
-import { formatGuessDistance, hasGuess, rankTotalResults, roundResultPoints } from "~/utils/resultUtils";
+import { formatGuessDistance, hasGuess, rankTotalResults, roundResultPoints, type StandingsView } from "~/utils/resultUtils";
 
 const emit = defineEmits<{ leaveLobby: []; connectionTarget: [element: HTMLElement | null] }>();
 const titleId = useId();
@@ -136,12 +137,17 @@ const active = computed(() => game.modeLogic.currentState === "MID-ROUND" && sna
 const round = computed(() => snapshot.value?.currentRound ?? 0);
 const roundCount = computed(() => snapshot.value?.conf.numRounds ?? 0);
 const roundKey = computed(() => JSON.stringify([snapshot.value?.ID, snapshot.value?.gameId, round.value]));
+const standingsView = ref<StandingsView>("overall");
+watch(roundKey, () => (standingsView.value = "overall"));
 const answer = computed(() => (active.value ? revealedAnswers.value[round.value] : undefined));
 const scoredRound = computed(() => snapshot.value?.endResults[round.value] ?? emptyResults);
 const overall = computed(() => rankTotalResults(totals.value));
 const ownResult = computed(() => scoredRound.value[player.value.ID ?? ""]);
 const ownStanding = computed(() => overall.value.find((row) => row.id === player.value.ID));
-const roundPoints = computed(() => (ownResult.value ? roundResultPoints(ownResult.value).toLocaleString() : "—"));
+const points = computed(() => {
+    if (standingsView.value === "overall") return ownStanding.value?.score ?? "—";
+    return ownResult.value ? roundResultPoints(ownResult.value) : "—";
+});
 const distance = computed(() => {
     const best = results.bestResults[player.value.ID ?? ""];
     return best && hasGuess(best) ? formatGuessDistance(best) : "";

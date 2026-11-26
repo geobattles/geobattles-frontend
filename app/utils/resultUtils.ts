@@ -1,24 +1,37 @@
 import type { Coordinates, ResultData, Results, TotalResults, playerListObject } from "~/types/appTypes";
 
 export type RankedResult = { id: string; score: number; rank: number };
+export type StandingsView = "overall" | "round";
 
-const rankScores = (rows: { id: string; score: number }[]): RankedResult[] => {
+type ScoreRow = { id: string; score: number; distance?: number };
+
+const rankScores = (rows: ScoreRow[]): RankedResult[] => {
+    const compare = (a: ScoreRow, b: ScoreRow) => {
+        if (a.score !== b.score) return b.score - a.score;
+        const firstDistance = a.distance ?? Infinity;
+        const secondDistance = b.distance ?? Infinity;
+        return firstDistance === secondDistance ? 0 : firstDistance - secondDistance;
+    };
     let rank = 0;
-    let previousScore: number | undefined;
-    return rows
-        .sort((a, b) => b.score - a.score)
-        .map(({ id, score }, index) => {
-            if (score !== previousScore) rank = index + 1;
-            previousScore = score;
-            return { id, score, rank };
-        });
+    let previous: ScoreRow | undefined;
+    return rows.sort(compare).map((row, index) => {
+        if (!previous || compare(previous, row) !== 0) rank = index + 1;
+        previous = row;
+        return { id: row.id, score: row.score, rank };
+    });
 };
 
 export const rankTotalResults = (totals: TotalResults) => rankScores(Object.entries(totals).map(([id, result]) => ({ id, score: result.total ?? 0 })));
 
 export const roundResultPoints = (result: ResultData): number => result.total ?? result.baseScr + (result.placeScr ?? 0) + (result.dblScr ?? 0) + (result.duelScr ?? 0);
 
-export const rankRoundResults = (results: Results) => rankScores(Object.entries(results).map(([id, result]) => ({ id, score: roundResultPoints(result) })));
+export const rankRoundResults = (results: Results) =>
+    rankScores(
+        Object.entries(results).map(([id, result]) => {
+            const score = roundResultPoints(result);
+            return { id, score, distance: score === 0 ? guessDistance(result) : undefined };
+        })
+    );
 
 export type ExpeditionStop = { round: number; position: Coordinates };
 
@@ -124,6 +137,6 @@ export const describeLiveGuess = (rows: Results, playerId: string, latest: Resul
 
 export const formatGuessDistance = (result: ResultData): string => {
     if (!hasGuess(result)) return "--";
-    const meters = result.distance < 1000;
-    return `${Math.round((meters ? result.distance : result.distance / 1000) * 10) / 10} ${meters ? "m" : "km"}`;
+    const meters = Math.round(result.distance);
+    return meters < 1000 ? `${meters} m` : `${Math.round(result.distance / 1000)} km`;
 };

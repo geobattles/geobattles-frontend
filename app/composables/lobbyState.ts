@@ -1,7 +1,8 @@
-import type { Coordinates, LobbyInfo, Player } from "~/types/appTypes";
+import type { Coordinates, LobbyInfo, LobbySummary, Player } from "~/types/appTypes";
 
 // Data-only dependencies keep lobby, player lookup and mode initialization acyclic.
 export const useLobbyState = () => ({
+    closedLobbyId: useState<string | null>("lobby:closedId", () => null),
     lobbySettings: useState<LobbyInfo | null>("lobby:settings", () => null),
     lobbySettingsOriginal: useState<LobbyInfo | null>("lobby:originalSettings", () => null),
     playerPresentation: useState<{ lobbyId: string | null; players: Record<string, Pick<Player, "name" | "color">> }>("lobby:playerPresentation", () => ({
@@ -9,7 +10,7 @@ export const useLobbyState = () => ({
         players: {},
     })),
     isUpdatingSettings: useState("lobby:updatingSettings", () => false),
-    lobbyList: useState<Record<string, LobbyInfo>>("lobby:list", () => ({})),
+    lobbyList: useState<Record<string, LobbySummary>>("lobby:list", () => ({})),
     modifySettingsModal: useState("lobby:modifySettingsModal", () => false),
     rejoinTimer: useState<number | null>("lobby:rejoinSeconds", () => null),
     roundDeadline: useState<number | null>("lobby:roundDeadline", () => null),

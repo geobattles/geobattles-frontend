@@ -18,6 +18,7 @@
         "typecheck": "nuxt typecheck",
         "check": "npm run format:check && npm run typecheck && npm run build",
         "test:socket": "node tools/socket-smoke.mjs",
+        "test:e2e:match": "bash tools/check-match.sh",
         "test:e2e": "playwright test",
         "test:e2e:keyless": "GEOBATTLES_E2E_MAPS=0 GEOBATTLES_E2E_MAPS_SCOPE=all playwright test",
         "test:e2e:maps:recovery": "GEOBATTLES_E2E_MAPS=1 GEOBATTLES_E2E_MAPS_SCOPE=recovery playwright test --project=maps",
@@ -38,5 +39,13 @@
     },
     "dependencies": {
         "canvas-confetti": "1.9.3"
+    },
+    "overrides": {
+        "readdir-glob@3.0.0": {
+            "minimatch": "11.0.8"
+        },
+        "workbox-build@7.4.1": {
+            "glob": "14.0.6"
+        }
     }
 }

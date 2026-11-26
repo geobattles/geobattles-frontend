@@ -4,6 +4,7 @@
         ref="gameplayRoot"
         class="gameplay-container"
         :class="{ 'is-compact-game': compactViewport, 'is-landscape-game': landscapeLayout, 'has-full-map': mapModal }"
+        :style="viewportStyle"
     >
         <GameplayGooglePanorama class="google-panorama" :inert="mapModal" />
         <div class="gameplay-chrome" :inert="mapModal">
@@ -109,6 +110,7 @@
         />
         <p v-if="google.mapStatus === 'ready' && google.panoramaStatus === 'ready'" data-testid="maps-ready" class="sr-only">Map initialized and landscape available</p>
         <Teleport :to="connectionTarget || 'body'" :disabled="!mapModal || !connectionTarget">
+            <GameplayDuelNotice class="live-duel-notice" :challengers="challengers" :round="round" />
             <GameplayMapRecovery class="gameplay-map-recovery" panorama :active="playing" />
         </Teleport>
     </div>
@@ -121,9 +123,12 @@ const game = useGameMode();
 const ui = useUIManagerStore();
 const google = useGoogleStore();
 const player = usePlayerInfo();
+const livePowerups = useLivePowerupIndicators();
+const { getPlayerNameFromID } = usePlayerLookup();
 const results = useResultsStore();
 const { lobbySettings, roundDeadline } = useLobbyState();
 const playing = computed(() => game.modeLogic.currentState === "PLAYING");
+const challengers = computed(() => (playing.value ? (livePowerups.value.get(player.value.ID ?? "")?.attackers.map(getPlayerNameFromID) ?? []) : []));
 const round = computed(() => lobbySettings.value?.currentRound ?? 0);
 const roundCount = computed(() => lobbySettings.value?.conf.numRounds ?? 0);
 const playerCount = computed(() => Object.keys(lobbySettings.value?.playerList ?? {}).length);
@@ -132,6 +137,7 @@ const lives = computed(() => ("getUserLives" in game.modeLogic ? game.modeLogic.
 
 const compactViewport = ref(false);
 const landscapeLayout = computed(() => compactViewport.value && !ui.isVertical);
+const viewportStyle = useViewportFit(() => compactViewport.value && !landscapeLayout.value);
 let viewportQuery: MediaQueryList | undefined;
 const updateViewport = () => (compactViewport.value = viewportQuery?.matches ?? false);
 const guessMap = useTemplateRef<{
@@ -310,10 +316,11 @@ onBeforeUnmount(() => {
     --hud-border: #b6efa371;
     --hud-shadow: 0 8px 24px #00161175, inset 0 1px #dff9cf28;
     --timer-diameter: clamp(5.25rem, 6.35vw, 6.75rem);
+    --gameplay-height: min(var(--gb-viewport-height), var(--visible-height, var(--gb-viewport-height)));
     position: relative;
     isolation: isolate;
     inline-size: 100%;
-    block-size: var(--gb-viewport-height);
+    block-size: var(--gameplay-height);
     overflow: clip;
     background: #092b25;
     color: #f5fbf2;
@@ -327,6 +334,26 @@ onBeforeUnmount(() => {
     z-index: 7;
     inset: 0;
     pointer-events: none;
+}
+.live-duel-notice {
+    position: absolute;
+    z-index: 7;
+    inset: var(--hud-panel-top) auto auto var(--hud-left);
+    max-inline-size: min(19rem, 32vw);
+}
+.is-compact-game .live-duel-notice {
+    inset: auto auto calc(var(--mobile-dock-height) + 0.35rem) var(--hud-left);
+    max-inline-size: min(24rem, calc(100% - var(--hud-left) - var(--hud-right)));
+}
+.is-landscape-game .live-duel-notice {
+    inset: var(--hud-panel-top) var(--hud-right) auto auto;
+    max-inline-size: min(18rem, 30vw);
+}
+.is-map-modal .live-duel-notice {
+    inset: auto auto calc(var(--gb-safe-bottom) + 6.8rem) var(--hud-left);
+}
+.is-landscape-map.is-map-modal .live-duel-notice {
+    inset-block-end: calc(var(--gb-safe-bottom) + 3.7rem);
 }
 .street-timer-slot {
     --street-center: calc(50% + (var(--gb-safe-left) - var(--gb-safe-right)) / 2);
@@ -608,7 +635,7 @@ onBeforeUnmount(() => {
     inset-block-end: var(--mobile-notice-bottom);
 }
 .is-compact-game:not(.has-full-map) .gameplay-map-recovery {
-    max-block-size: calc(var(--gb-viewport-height) - var(--mobile-notice-bottom) - var(--hud-panel-top));
+    max-block-size: calc(var(--gameplay-height) - var(--mobile-notice-bottom) - var(--hud-panel-top));
 }
 @media (max-width: 345px) {
     .is-compact-game .expedition-brand > span {

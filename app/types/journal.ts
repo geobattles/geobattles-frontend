@@ -25,6 +25,8 @@ export interface JournalRound {
     round: number;
     answer: Coordinates;
     attempts: JournalAttempt[];
+    /** The player never entered this round. */
+    missed?: true;
     /** Null is no guess; distance 0 and coordinates {0, 0} are legitimate guesses. */
     bestAttempt: number | null;
     distanceMeters: number | null;

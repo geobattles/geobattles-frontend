@@ -34,6 +34,7 @@
                 <path d="M0 48H640" stroke="var(--gb-line)" stroke-width="1" />
                 <g v-for="(round, index) in match.rounds" :key="round.round">
                     <rect
+                        v-if="!round.missed"
                         :x="index * chartStep + chartStep * 0.2"
                         :y="round.score >= 0 ? 48 - barHeight(round.score) : 48"
                         :width="chartStep * 0.6"
@@ -59,7 +60,7 @@
                 @click="selectRound(round.round)"
             >
                 <span>Round {{ String(round.round).padStart(2, "0") }}</span
-                ><small>{{ journalDistance(round.distanceMeters) }}</small>
+                ><small>{{ round.missed ? "Missed round" : journalDistance(round.distanceMeters) }}</small>
             </button>
         </div>
         <section v-if="activeRound" id="round-debrief" class="round-detail" aria-labelledby="round-title">
@@ -69,8 +70,8 @@
                     <h3 id="round-title">Round {{ String(activeRound.round).padStart(2, "0") }}</h3>
                 </div>
                 <div class="round-distance">
-                    <strong>{{ journalDistance(activeRound.distanceMeters) }}</strong
-                    ><span>{{
+                    <strong>{{ activeRound.missed ? "Missed round" : journalDistance(activeRound.distanceMeters) }}</strong
+                    ><span v-if="!activeRound.missed">{{
                         activeRound.bestAttempt === null ? "Round ended without a guess" : `Closest: attempt ${activeRound.bestAttempt} of ${activeRound.attempts.length}`
                     }}</span>
                 </div>
@@ -106,10 +107,10 @@
                     </tbody>
                 </table>
             </div>
-            <p v-else class="no-guess-note">
+            <p v-else-if="!activeRound.missed" class="no-guess-note">
                 No guess was submitted in this round. A zero-attempt result is not counted as a perfect guess or included in closest-distance records.
             </p>
-            <dl class="round-score">
+            <dl v-if="!activeRound.missed" class="round-score">
                 <div>
                     <dt>Base score</dt>
                     <dd>{{ journalNumber(activeRound.baseScore) }}</dd>
@@ -145,7 +146,7 @@ const chartStep = computed(() => 640 / props.match.rounds.length);
 const scoreScale = computed(() => Math.max(1, ...props.match.rounds.map((round) => Math.abs(round.score))));
 const barHeight = (score: number) => (Math.abs(score) / scoreScale.value) * 32;
 const scoreDescription = computed(
-    () => `Round scores: ${props.match.rounds.map((round) => `${round.round}: ${round.score} points`).join("; ")}. The baseline is zero; penalties extend below it.`
+    () => `${props.match.rounds.map((round) => `Round ${round.round}, ${round.missed ? "missed" : `${round.score} points`}.`).join(" ")} Penalties extend below zero.`
 );
 const selectRound = (round: number) => {
     selectedRound.value = round;

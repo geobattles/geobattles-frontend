@@ -1,4 +1,6 @@
 export default defineNuxtRouteMiddleware(async (to) => {
+    // Let Nuxt render its 404 before deciding whether a known page requires sign-in.
+    if (!to.matched.length) return;
     const app = useNuxtApp();
     const isCurrent = import.meta.client ? app.$gameRuntime.beginNavigation(to) : () => true;
     // Lobby auth belongs to the socket's absolute readiness budget, including

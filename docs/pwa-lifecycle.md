@@ -10,7 +10,7 @@ The generated manifest and worker use root identity, start URL and scope `/`, st
 
 The manual guide uses Safari’s Share and Add to Home Screen controls on iPhone and iPad. Other browsers get guidance for their available menu options. Embedded browsers can use **Copy link** to move the current page, including an invitation query and fragment, to Safari or another regular browser. Native prompting depends on browser support and a trustworthy HTTPS or loopback origin.
 
-Mobile suggestions appear on a return to the homepage or after a player's result is confirmed and the champion reveal has closed. The results card sits after the standings so it leaves room for rematch controls. Authentication, lobby admission, settings and game actions take priority. An impression or dismissal pauses automatic suggestions for 14 days. The account entry remains available during that time. The preference stores a visit flag and timestamps on this device.
+Mobile suggestions can appear after a player's result is confirmed and the champion reveal has closed. The results card sits after the standings so it leaves room for rematch controls. Authentication, lobby admission, settings and game actions take priority. An impression or dismissal pauses automatic suggestions for 14 days. The install control remains available from the homepage account area during that time.
 
 ### Viewport and cache
 

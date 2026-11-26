@@ -70,16 +70,39 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
         )
             throw new Error("Missing recovery state.");
         const playerId = player.value.ID;
-        if (!playerId || snapshot.playerList[playerId]?.connected !== true) throw new Error("Missing connected membership.");
-        if (snapshot.phase !== "WAITING" && (!snapshot.location || snapshot.currentRound < 1)) throw new Error("Missing round solution.");
-        const location = snapshot.location === undefined ? undefined : decodeSocketCoordinates(snapshot.location);
-        const endResults = decodeRoundArchive(snapshot.endResults, snapshot.currentRound, decodeScoredRound);
-        if (!endResults) throw new Error("Missing scored round archive.");
+        if (!playerId || (!snapshot.spectating && snapshot.playerList[playerId]?.connected !== true)) throw new Error("Missing connected membership.");
+        if (snapshot.phase !== "WAITING" && (snapshot.currentRound < 1 || (!snapshot.spectating && !snapshot.location))) throw new Error("Missing round state.");
         const lastRevealedRound = snapshot.phase === "WAITING" ? 0 : snapshot.currentRound - (snapshot.phase === "PLAYING" ? 1 : 0);
+        const endResults = decodeRoundArchive(snapshot.endResults, snapshot.spectating ? lastRevealedRound : snapshot.currentRound, decodeScoredRound);
+        if (!endResults) throw new Error("Missing scored round archive.");
         const answers = decodeRoundArchive(snapshot.revealedAnswers, lastRevealedRound, decodeSocketCoordinates);
+        if (snapshot.spectating) {
+            if (
+                snapshot.location ||
+                snapshot.powerupState ||
+                Object.keys(snapshot.results).length ||
+                Object.keys(snapshot.fullroundRes).length ||
+                Object.keys(snapshot.roundRes).length
+            )
+                throw new Error("Invalid spectator state.");
+            lobby.fetchLobbySettings({ ...snapshot, endResults, revealedAnswers: answers });
+            if (snapshot.phase === "PLAYING") {
+                clock.apply({ lobbyId: snapshot.ID, playerId, gameId: snapshot.gameId, round: snapshot.currentRound }, snapshot.timeRemaining);
+            } else {
+                clock.reset();
+            }
+            reconcileLobbyRoute();
+            return;
+        }
+        const location = snapshot.location === undefined ? undefined : decodeSocketCoordinates(snapshot.location);
         const previous = lobby.lobbySettings;
         const changed =
-            !previous || previous.ID !== snapshot.ID || previous.gameId !== snapshot.gameId || previous.phase !== snapshot.phase || previous.currentRound !== snapshot.currentRound;
+            !previous ||
+            previous.spectating ||
+            previous.ID !== snapshot.ID ||
+            previous.gameId !== snapshot.gameId ||
+            previous.phase !== snapshot.phase ||
+            previous.currentRound !== snapshot.currentRound;
         const sameGame = previous?.ID === snapshot.ID && previous.gameId === snapshot.gameId;
         const capturedAnswers = Object.fromEntries(Object.entries(sameGame ? revealedAnswers.value : {}).map(([round, answer]) => [round, { ...answer }]));
         const nextAnswers: Record<number, Coordinates> = { ...capturedAnswers, ...answers };
@@ -157,6 +180,7 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
             const member = previous?.playerList[user];
             const reclaimed = !!previous?.admin && previous.admin !== user && snapshot.admin === user;
             applySnapshot(snapshot, user === player.value.ID);
+            if (snapshot.spectating) return;
             if (reclaimed && user === player.value.ID) showPlayerPresence("You’re hosting again");
             else if (member && !member.connected) {
                 const name = snapshot.playerList[user]?.name ?? member.name;
@@ -220,6 +244,8 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
                 previous.endResults = {};
                 delete previous.revealedAnswers;
                 previous.totalResults = {};
+                delete previous.matchRoster;
+                delete previous.endedEarly;
             }
             results.restoreRound(data.players, {}, {});
             previous.gameId = data.gameId ?? (round === 1 ? undefined : previous.gameId);
@@ -309,6 +335,8 @@ export const createSocketHandlers = ({ clock, reconcileLobbyRoute, render, showP
             if (data.gameId !== undefined) snapshot.gameId = data.gameId;
             snapshot.results = Object.fromEntries(Object.entries(data.results).map(([round, raw]) => [round, normalizeRawResults(raw)]));
             snapshot.powerupState = data.powerupState;
+            snapshot.endedEarly = data.endedEarly;
+            if (data.players) lobby.updateLobbySetting("playerList", data.players);
             // On legacy servers, only prior finalized answers prove which
             // locally retained score rounds finished. A live best row alone
             // must not become a scored archive when ROUND_RESULT was missed.

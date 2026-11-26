@@ -53,6 +53,8 @@ const readRound = (value: unknown, expectedRound: number): JournalRound | null =
     const answer = coordinates(value.answer);
     if (!answer || !integer(value.baseScore, 0, 5000) || !integer(value.bonusScore) || !integer(value.score)) return null;
     if (value.score !== value.baseScore + value.bonusScore) return null;
+    const missed = value.missed;
+    if (missed !== undefined && (missed !== true || value.bestAttempt !== null || value.bonusScore !== 0)) return null;
     const attempts: JournalAttempt[] = [];
     for (const [index, raw] of value.attempts.entries()) {
         if (!object(raw) || raw.attempt !== index + 1 || !distance(raw.distanceMeters) || !integer(raw.baseScore, 0, 5000)) return null;
@@ -62,7 +64,17 @@ const readRound = (value: unknown, expectedRound: number): JournalRound | null =
     }
     if (value.bestAttempt === null) {
         if (attempts.length || value.distanceMeters !== null || value.baseScore !== 0) return null;
-        return { round: expectedRound, answer, attempts, bestAttempt: null, distanceMeters: null, baseScore: 0, bonusScore: value.bonusScore, score: value.score };
+        return {
+            round: expectedRound,
+            answer,
+            attempts,
+            bestAttempt: null,
+            distanceMeters: null,
+            baseScore: 0,
+            bonusScore: value.bonusScore,
+            score: value.score,
+            ...(missed && { missed }),
+        };
     }
     if (!integer(value.bestAttempt, 1, attempts.length) || !distance(value.distanceMeters)) return null;
     const best = attempts[value.bestAttempt - 1];
@@ -91,7 +103,7 @@ const readMatch = (value: unknown, ownerId: string): JournalMatch | null => {
         if (!round) return null;
         rounds.push(round);
     }
-    if (rounds.reduce((sum, round) => sum + round.score, 0) !== value.totalScore) return null;
+    if (rounds.every((round) => round.missed) || rounds.reduce((sum, round) => sum + round.score, 0) !== value.totalScore) return null;
     return {
         gameId: value.gameId,
         lobbyId: value.lobbyId,
@@ -146,11 +158,16 @@ const buildMatch = (input: CompletedGameInput, ownerId: string): JournalMatch | 
         const rawRound = input.results[round];
         const scoredRound = input.endResults[round];
         const answer = coordinates(input.answers[round]);
-        if (!object(rawRound) || !object(scoredRound) || !answer || !Object.hasOwn(scoredRound, ownerId)) return null;
-        const scored = scoredRound[ownerId];
-        if (!object(scored) || !integer(scored.attempt, 0, MAX_ATTEMPTS) || !integer(scored.baseScr, 0, 5000)) return null;
+        if (!object(rawRound) || !object(scoredRound) || !answer) return null;
         const rawAttempts: unknown = rawRound[ownerId] ?? [];
         if (!Array.isArray(rawAttempts) || rawAttempts.length > MAX_ATTEMPTS) return null;
+        if (!Object.hasOwn(scoredRound, ownerId)) {
+            if (rawAttempts.length) return null;
+            rounds.push({ round, answer, attempts: [], bestAttempt: null, distanceMeters: null, baseScore: 0, bonusScore: 0, score: 0, missed: true });
+            continue;
+        }
+        const scored = scoredRound[ownerId];
+        if (!object(scored) || !integer(scored.attempt, 0, MAX_ATTEMPTS) || !integer(scored.baseScr, 0, 5000)) return null;
         const attempts: JournalAttempt[] = [];
         for (const raw of rawAttempts) {
             if (!object(raw) || !integer(raw.attempt, 0, MAX_ATTEMPTS)) return null;
@@ -282,6 +299,7 @@ export const useMatchJournal = () => {
         for (const match of matches.value) {
             if (!bests.highestScore || match.totalScore > bests.highestScore.score) bests.highestScore = { score: match.totalScore, gameId: match.gameId };
             for (const round of match.rounds) {
+                if (round.missed) continue;
                 bests.totalRounds++;
                 bests.totalAttempts += round.attempts.length;
                 if (!bests.highestRound || round.score > bests.highestRound.score) bests.highestRound = { score: round.score, gameId: match.gameId, round: round.round };

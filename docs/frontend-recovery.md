@@ -26,6 +26,11 @@ back to the public list for exact-room absence when the endpoint is missing.
 Transient token refresh errors leave the current credentials available for retry.
 A rejected refresh asks the player to sign in.
 
+When admission confirms that the current lobby no longer exists, the client clears
+that lobby’s saved return code and releases gameplay, timers and maps. The Lobby
+Closed screen stays on the current URL until the player chooses New Lobby or Home.
+Both actions keep the current account or guest session.
+
 The connection notice is shared by gameplay and settings. Two slow foreground
 heartbeat samples expose an amber early warning and two healthy samples clear it.
 The client uses the optional heartbeat acknowledgement for round-trip latency
@@ -38,9 +43,13 @@ reduced motion.
 Leaving for Home sends resumable `leave` on a live socket and stops automatic
 retries. The home screen can show a saved lobby code for the same identity.
 Home checks the saved code on entry, on return to the foreground, and
-periodically while visible. A successful lobby listing that omits the code
-clears the saved hint. An unavailable listing keeps the hint for a later check.
-The server decides whether the seat still exists. Direct lobby switches and logout send permanent `disconnect`.
+periodically while visible. Home calls the authenticated, single-room admission
+endpoint and shows Return when the caller has a retained seat. A missing room,
+an expired seat or a room available only for fresh admission clears the hint.
+Temporary network failures preserve the hint for a later check. The directory
+uses the caller's retained flags from one summary request. Join-by-code looks
+up a single public summary and continues to socket admission on a transient
+lookup failure. Direct lobby switches and logout send permanent `disconnect`.
 The creator reclaims admin on admission. Overlapping route changes and old
 socket callbacks are fenced by their existing generation checks.
 

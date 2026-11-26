@@ -5,7 +5,7 @@
             <img src="/images/emerald-lake.webp" alt="" width="1672" height="941" fetchpriority="high" />
         </picture>
         <div class="gateway-frame">
-            <Header scenic navigation :install-blocked="busy || !!pending" />
+            <Header navigation :install-blocked="busy || !!pending" />
             <main id="main-content" class="gateway-main">
                 <section class="gateway-stack" :class="{ 'directory-mode': mode === 'open' }" aria-labelledby="join-title">
                     <div class="gateway-heading">
@@ -81,10 +81,9 @@ type JoinMode = "code" | "open";
 type JoinAction = { target: string; mode: JoinMode };
 const props = defineProps<{ initialMode: JoinMode }>();
 const route = useRoute();
-const router = useRouter();
 const auth = useAuthStore();
 const lobby = useLobbyStore();
-const { fetchLobbyList } = createLobbyService(useRuntimeConfig().public.BACKEND_HOST);
+const lobbyService = createLobbyService(useRuntimeConfig().public.BACKEND_HOST);
 const routeName = route.name;
 const mode = ref<JoinMode>(props.initialMode);
 const directoryVisited = ref(props.initialMode === "open");
@@ -174,10 +173,7 @@ async function checkAndJoinCode(target: string) {
     const timeout = setTimeout(() => controller.abort(), 3000);
     let missing = false;
     try {
-        const snapshot: unknown = await fetchLobbyList({ cache: "no-store", signal: controller.signal });
-        if (snapshot && typeof snapshot === "object" && !Array.isArray(snapshot)) {
-            missing = !Object.hasOwn(snapshot, target) && Object.entries(snapshot).every(([id, lobby]) => isLobbyCode(id) && lobby?.ID === id);
-        }
+        missing = (await lobbyService.find(target, controller.signal)) === null;
     } catch {
         // A failed directory request cannot establish absence. Admission can still proceed via the socket.
     } finally {
@@ -231,7 +227,7 @@ function applyInvite() {
     code.value = next.code;
     inputError.value = next.error;
     const editing = route.query.edit === "1";
-    joinError.value = editing && next.code && router.options.history.state.missingLobbyCode === next.code ? "Lobby not found." : "";
+    joinError.value = "";
     if (next.code && !editing) void checkAndJoinCode(next.code);
     else void focusCode();
 }

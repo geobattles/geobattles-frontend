@@ -12,8 +12,6 @@
         <div class="timer-presets" role="group" aria-label="Round time presets">
             <button v-for="seconds in presets" :key="seconds" type="button" :aria-pressed="draft === seconds" @click="setTime(seconds)">{{ seconds }}s</button>
         </div>
-        <label class="timer-range-label" for="round-timer">Round timer adjustment</label>
-        <input id="round-timer" :value="model" type="range" :min="minimum" :max="maximum" step="1" @input="setTime(($event.target as HTMLInputElement).valueAsNumber)" />
         <p v-if="!validDraft" class="field-help">Choose a whole number from {{ minimum }} to {{ maximum }} seconds.</p>
     </div>
 </template>
@@ -75,15 +73,6 @@ function preventInputSubmit(event: KeyboardEvent) {
 .timer-setting :is(button, input):focus-visible {
     outline: 2px solid var(--gb-accent);
     outline-offset: 2px;
-}
-.timer-range-label {
-    color: var(--gb-muted);
-    font-size: 0.75rem;
-}
-.timer-setting input[type="range"] {
-    min-height: 44px;
-    margin: 0;
-    cursor: pointer;
 }
 @container timer-editor (max-width: 200px) {
     .timer-presets {
