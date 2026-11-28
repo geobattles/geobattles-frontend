@@ -9,14 +9,13 @@
             <div v-if="replay && $slots.tools" class="rematch-tools"><slot name="tools" /></div>
         </div>
 
-        <div class="ready-actions">
-            <span v-if="!replay && lobby.isPlayerReady" class="ready-confirmation"><span class="status-dot" aria-hidden="true" />{{ showStart ? "Ready" : "You’re ready" }}</span>
+        <div class="ready-actions" :class="{ 'has-start': showStart }">
             <button
                 ref="readyButton"
                 class="btn btn-command"
                 :class="{
                     'btn-secondary': replay || !lobby.isPlayerReady,
-                    'btn-quiet undo-ready': !replay && lobby.isPlayerReady,
+                    'undo-ready': !replay && lobby.isPlayerReady,
                     'ready-prompt': !replay && !lobby.isPlayerReady,
                     'ready-fluid': showReadyLiquid,
                     'is-ready': replay && lobby.isPlayerReady,
@@ -35,22 +34,32 @@
                         <path d="M0 0H227L193 64H0Z" />
                     </svg>
                 </span>
-                <span v-if="request.isReadyPending" class="spinner" /><UiIcon v-else-if="replay" :name="lobby.isPlayerReady ? 'check' : 'user'" />{{ readyLabel }}
+                <span v-if="request.isReadyPending" class="spinner" />
+                <template v-else-if="!replay && lobby.isPlayerReady">
+                    <UiIcon name="check" class="undo-check" />
+                    <span class="undo-label">{{ showStart ? "Ready" : "You’re ready" }}</span>
+                    <span class="undo-badge" aria-hidden="true"><UiIcon name="close" /></span>
+                </template>
+                <template v-else> <UiIcon v-if="replay" :name="lobby.isPlayerReady ? 'check' : 'user'" />{{ readyLabel }} </template>
             </button>
-            <button
-                v-if="showStart"
-                ref="startButton"
-                class="btn btn-command"
-                type="button"
-                :disabled="!!blockedReason || request.isStartPending || request.isReadyPending"
-                :aria-busy="request.isStartPending"
-                :title="blockedReason || undefined"
-                @click="start"
-            >
-                <span v-if="request.isStartPending" class="spinner" /><UiIcon v-else name="arrow" />{{ replay ? "Start New Game" : "Start game" }}
-            </button>
+            <Transition name="start-reveal">
+                <button
+                    v-if="showStart"
+                    ref="startButton"
+                    class="btn btn-command start-game-btn"
+                    type="button"
+                    :disabled="!!blockedReason || request.isStartPending || request.isReadyPending"
+                    :aria-busy="request.isStartPending"
+                    :title="blockedReason || undefined"
+                    @click="start"
+                >
+                    <span v-if="request.isStartPending" class="spinner" /><UiIcon v-else name="arrow" />{{ replay ? "Start New Game" : "Start game" }}
+                </button>
+            </Transition>
         </div>
-        <p class="field-help ready-feedback" role="status">{{ feedback }}</p>
+        <Transition name="feedback-fade" mode="out-in">
+            <p v-if="feedback" :key="feedback" class="field-help ready-feedback" role="status">{{ feedback }}</p>
+        </Transition>
     </section>
 </template>
 <script setup lang="ts">
@@ -160,23 +169,117 @@ const start = () => {
 }
 .waiting-ready .ready-actions {
     margin-top: 0.4rem;
-    align-items: center;
+    align-items: stretch;
+    flex-wrap: nowrap;
 }
-.ready-confirmation {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    color: var(--gb-success);
-    font-weight: 700;
-    font-size: 0.8rem;
+.waiting-ready .ready-actions > button {
+    white-space: nowrap;
+    border-radius: 999px;
+    transition:
+        background 220ms ease,
+        border-color 220ms ease,
+        color 200ms ease,
+        box-shadow 220ms ease,
+        transform 140ms ease;
 }
 .waiting-ready .ready-actions > .undo-ready {
-    flex: 0 1 auto;
+    flex: 1 1 auto;
     min-height: 44px;
+    gap: 0.42rem;
+    padding: 0.25rem 0.52rem 0.25rem 0.8rem;
+    border: 1px solid #70d9af66;
+    border-radius: 999px;
+    background: linear-gradient(145deg, #134436e8, #082921f0);
+    box-shadow:
+        inset 0 1px #c8ffe422,
+        0 4px 14px #00140f40;
+    color: #bdf8da;
+    font-size: 0.82rem;
+    font-weight: 760;
     letter-spacing: normal;
-    font-weight: 600;
-    text-decoration: underline;
-    text-underline-offset: 0.2em;
+}
+.waiting-ready .ready-actions.has-start > .undo-ready {
+    flex: 0 0 auto;
+}
+.waiting-ready .ready-actions > .undo-ready:enabled:hover {
+    border-color: #a4f5cf99;
+    background: linear-gradient(145deg, #1b5645f2, #0d362cf5);
+    color: #e6fff2;
+}
+.waiting-ready .ready-actions > .undo-ready:enabled:active {
+    transform: scale(0.975);
+}
+.undo-check {
+    width: 0.95rem;
+    height: 0.95rem;
+    color: #70e5a8;
+    flex: none;
+}
+.undo-badge {
+    display: inline-grid;
+    place-items: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-inline-start: 0.1rem;
+    border-radius: 50%;
+    background: #ffffff14;
+    color: #a8d8c5;
+    transition:
+        background-color 140ms ease,
+        color 140ms ease;
+}
+.undo-badge .ui-icon {
+    width: 0.72rem;
+    height: 0.72rem;
+}
+.undo-ready:enabled:hover .undo-badge {
+    background: #ff998930;
+    color: #ffd0ad;
+}
+.start-reveal-enter-active,
+.start-reveal-leave-active {
+    overflow: hidden;
+    transition:
+        max-width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+        opacity 220ms ease,
+        transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+        padding 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.start-reveal-enter-from,
+.start-reveal-leave-to {
+    max-width: 0;
+    opacity: 0;
+    padding-inline: 0;
+    transform: translateX(10px) scale(0.96);
+}
+.start-reveal-enter-to,
+.start-reveal-leave-from {
+    max-width: 28rem;
+    opacity: 1;
+    transform: translateX(0) scale(1);
+}
+.feedback-fade-enter-active,
+.feedback-fade-leave-active {
+    transition:
+        opacity 180ms ease,
+        transform 180ms ease;
+}
+.feedback-fade-enter-from {
+    opacity: 0;
+    transform: translateY(3px);
+}
+.feedback-fade-leave-to {
+    opacity: 0;
+    transform: translateY(-2px);
+}
+@media (prefers-reduced-motion: reduce) {
+    .start-reveal-enter-active,
+    .start-reveal-leave-active,
+    .feedback-fade-enter-active,
+    .feedback-fade-leave-active,
+    .waiting-ready .ready-actions > button {
+        transition: none;
+    }
 }
 .ready-prompt {
     border-color: var(--gb-line);
@@ -258,17 +361,23 @@ const start = () => {
     font-size: clamp(0.85rem, 2.1vw, 1.1rem);
 }
 .rematch-ready .ready-actions {
+    flex-wrap: nowrap;
     gap: 0.35rem;
     margin-top: 0.35rem;
 }
 .rematch-ready .ready-actions > button {
+    flex: 1 1 auto;
     min-height: 44px;
     min-width: 0;
-    padding: 0.32rem 0.58rem;
+    padding: 0.3rem 0.62rem;
     border-radius: 999px;
-    font-size: clamp(0.72rem, 1.7vw, 0.93rem);
+    font-size: clamp(0.72rem, 1.6vw, 0.88rem);
     letter-spacing: normal;
-    line-height: 1.2;
+    line-height: 1.15;
+    white-space: nowrap;
+}
+.rematch-ready .ready-actions > button:last-child:not(:first-child) {
+    flex: 1 1 auto;
 }
 .rematch-ready .ready-actions > button:enabled:not(.is-ready) {
     border-color: var(--gb-scenic-action-border);
@@ -280,9 +389,16 @@ const start = () => {
     font-size: 0.72rem;
     line-height: 1.25;
 }
+@media (max-width: 400px) {
+    .rematch-ready .ready-actions > button {
+        padding-inline: 0.48rem;
+        font-size: clamp(0.68rem, 3.1vw, 0.78rem);
+    }
+}
 @media (orientation: landscape) and (max-height: 420px) {
     .rematch-ready .ready-actions > button {
-        font-size: 0.75rem;
+        padding-inline: 0.5rem;
+        font-size: 0.74rem;
     }
 }
 </style>

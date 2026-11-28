@@ -8,8 +8,13 @@
             <img src="/images/emerald-horizon.webp" alt="" width="1672" height="941" fetchpriority="high" />
         </picture>
         <Header account-only :install-blocked="launchBusy">
-            <NuxtLink v-if="returnCode" class="btn btn-secondary return-lobby" :to="{ path: '/lobby/' + returnCode, query: { resume: '1' } }">
-                <UiIcon name="arrow" />Return to lobby · {{ returnCode }}
+            <NuxtLink
+                v-if="returnCode"
+                class="btn btn-secondary return-lobby"
+                :aria-label="`Return to lobby · ${returnCode}`"
+                :to="{ path: '/lobby/' + returnCode, query: { resume: '1' } }"
+            >
+                <UiIcon name="arrow" class="return-icon" /><span>Return to lobby</span><span class="return-code">{{ returnCode }}</span>
             </NuxtLink>
         </Header>
         <main id="main-content" class="welcome" aria-labelledby="welcome-title">
@@ -276,10 +281,51 @@ useHead({ title: "GeoBattles" });
     cursor: wait;
 }
 .return-lobby {
-    gap: 0.4rem;
-    padding-inline: 0.6rem;
-    background: #0b3429da;
+    gap: 0.44rem;
+    min-height: 36px;
+    padding: 0.22rem 0.34rem 0.22rem 0.72rem;
+    border: 1px solid #ffffff5c;
+    border-radius: 999px;
+    background: linear-gradient(155deg, #ffffff2e, #ffffff14);
+    box-shadow:
+        0 6px 20px #00000036,
+        inset 0 1px #ffffff54;
+    backdrop-filter: blur(14px) saturate(135%);
+    -webkit-backdrop-filter: blur(14px) saturate(135%);
+    color: #ffffff;
     font-size: 0.76rem;
+    font-weight: 740;
+    text-shadow: 0 1px 6px #00000045;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease,
+        box-shadow 150ms ease,
+        transform 140ms ease;
+}
+.return-lobby:hover {
+    border-color: #ffffff8c;
+    background: linear-gradient(155deg, #ffffff42, #ffffff22);
+    box-shadow:
+        0 8px 24px #00000044,
+        inset 0 1px #ffffff72;
+    color: #ffffff;
+}
+.return-lobby:active {
+    transform: scale(0.98);
+}
+.return-icon {
+    width: 0.92rem;
+    height: 0.92rem;
+    color: #ffffffeb;
+}
+.return-code {
+    padding: 0.14rem 0.48rem;
+    border: 1px solid #ffffff42;
+    border-radius: 999px;
+    background: #ffffff26;
+    color: #ffffff;
+    font: 760 0.69rem / 1.2 var(--gb-font-mono);
+    letter-spacing: 0.06em;
 }
 @keyframes scenery-in {
     from {

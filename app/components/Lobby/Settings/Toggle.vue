@@ -17,12 +17,18 @@ const model = defineModel<boolean>({ required: true });
     position: relative;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    min-height: 44px;
-    padding: 0.3rem 0;
+    gap: 0.65rem;
+    min-height: 42px;
+    padding: 0.42rem 0.65rem;
     justify-content: space-between;
-    border-bottom: 1px solid var(--gb-line);
+    border: 1px solid #9be0a52b;
+    border-radius: 0.78rem;
+    background: #06241ecc;
     cursor: pointer;
+    transition: border-color 140ms ease;
+}
+.toggle-setting:has(input:checked) {
+    border-color: #70d9af66;
 }
 .toggle-setting > input {
     position: absolute;
@@ -34,27 +40,33 @@ const model = defineModel<boolean>({ required: true });
     order: 1;
     display: flex;
     align-items: center;
-    flex: 0 0 40px;
-    height: 24px;
-    padding: 3px;
-    border: 1px solid var(--gb-line);
+    flex: 0 0 38px;
+    height: 22px;
+    padding: 2px;
+    border: 1px solid #8ddbaf44;
     border-radius: 999px;
-    background: var(--gb-surface);
+    background: #041c18;
+    transition:
+        background-color 150ms ease,
+        border-color 150ms ease;
 }
 .toggle-track > span {
     width: 16px;
     height: 16px;
     border-radius: 50%;
-    background: var(--gb-muted);
+    background: #8aa89a;
+    transition:
+        transform 150ms ease,
+        background-color 150ms ease;
 }
 input:checked + .toggle-track {
     order: 1;
-    border-color: var(--gb-accent-end);
-    background: var(--gb-success);
+    border-color: #b7f986;
+    background: #70d9af;
 }
 input:checked + .toggle-track > span {
     transform: translateX(16px);
-    background: var(--gb-on-accent);
+    background: #05221a;
 }
 .toggle-setting:has(input:focus-visible) {
     outline: 2px solid var(--gb-accent);
@@ -70,10 +82,12 @@ input:disabled ~ span {
     min-width: 0;
 }
 .toggle-label {
-    font-weight: 700;
+    font-size: 0.8rem;
+    font-weight: 740;
+    color: #eef9ef;
 }
 small {
     display: block;
-    margin-top: 0.15rem;
+    margin-top: 0.1rem;
 }
 </style>

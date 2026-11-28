@@ -43,59 +43,75 @@ function step(direction: number) {
     flex-flow: row wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.2rem 0.75rem;
-    padding-block: 0.15rem;
-    border-bottom: 1px solid var(--gb-line);
+    gap: 0.3rem 0.65rem;
+    padding: 0.42rem 0.65rem;
+    border: 1px solid #9be0a52e;
+    border-radius: 0.78rem;
+    background: #06241ecc;
 }
 .number-heading {
     display: flex;
-    align-items: baseline;
-    flex: 1 1 8rem;
+    align-items: center;
+    flex: 1 1 7rem;
     flex-wrap: wrap;
-    gap: 0.15rem 0.5rem;
+    gap: 0.22rem 0.45rem;
 }
 .number-heading label {
-    font-weight: 700;
+    font-size: 0.8rem;
+    font-weight: 740;
+    color: #eef9ef;
 }
 .number-bounds {
-    color: var(--gb-muted);
-    font-size: 0.7rem;
+    padding: 0.06rem 0.4rem;
+    border-radius: 999px;
+    background: #b6efa314;
+    color: #aac9ba;
+    font-size: 0.64rem;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
 .number-stepper {
     display: grid;
-    grid-template-columns: 44px minmax(44px, 1fr) 44px;
-    width: 9rem;
+    grid-template-columns: 34px minmax(42px, 1fr) 34px;
+    align-items: center;
+    width: 7.4rem;
     max-width: 100%;
+    padding: 0.14rem;
+    border: 1px solid #8ddbaf44;
+    border-radius: 999px;
+    background: #041d19d9;
 }
 .number-stepper button {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 34px;
+    min-height: 34px;
     border: 0;
-    background: transparent;
-    color: var(--gb-accent);
-    font-size: 1.25rem;
-    font-weight: 700;
+    border-radius: 50%;
+    background: #a4ecd316;
+    color: #c8f994;
+    font-size: 1.05rem;
+    font-weight: 800;
+    line-height: 1;
     cursor: pointer;
 }
 .number-stepper button:hover:not(:disabled) {
-    background: var(--gb-raised);
+    background: #a4ecd32e;
 }
 .number-stepper button:disabled {
-    opacity: 0.4;
+    opacity: 0.35;
     cursor: not-allowed;
 }
 .number-stepper > input.number-input {
     min-width: 0;
-    min-height: 44px;
-    padding: 0.4rem 0.15rem;
+    min-height: 34px;
+    padding: 0.1rem 0.15rem;
     border: 0;
     border-radius: 0;
     background: transparent;
-    box-shadow: inset 0 -1px var(--gb-success);
+    box-shadow: none;
     text-align: center;
-    font-size: 1rem;
-    font-weight: 700;
+    color: #f4fbf3;
+    font-size: 0.92rem;
+    font-weight: 800;
     font-variant-numeric: tabular-nums;
     appearance: textfield;
     -moz-appearance: textfield;

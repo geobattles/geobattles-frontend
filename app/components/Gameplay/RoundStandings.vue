@@ -1,7 +1,9 @@
 <template>
     <section class="round-standings" :class="{ 'compact-standings': compact, 'compact-round': compactRound, 'round-only': roundOnly }" aria-label="Leaderboard">
         <div v-if="!roundOnly" class="standings-header">
-            <h2><UiIcon name="trophy" /><span>Leaderboard</span></h2>
+            <h2>
+                <span class="standings-emblem" aria-hidden="true"><UiIcon name="trophy" /></span><span>Leaderboard</span>
+            </h2>
             <div class="score-views" role="group" aria-label="Leaderboard view">
                 <button type="button" :aria-pressed="view === 'overall'" :aria-controls="listId" @click="changeView('overall')">Total Points</button>
                 <button type="button" :aria-pressed="view === 'round'" :aria-controls="listId" @click="changeView('round')">This Round</button>
@@ -16,7 +18,13 @@
                     <span class="standing-points">{{ view === "overall" ? "Total" : "Round pts" }}</span>
                 </div>
                 <ol class="standings-list" role="list">
-                    <li v-for="row in rows" :key="row.id" class="standing" :class="{ 'is-own': row.id === player.ID }" :data-rank="row.rank">
+                    <li
+                        v-for="row in rows"
+                        :key="row.id"
+                        class="standing"
+                        :class="{ 'is-own': row.id === player.ID, 'is-expanded': compactRound && selectedId === row.id }"
+                        :data-rank="row.rank"
+                    >
                         <span class="standing-rank" :data-rank="row.rank"><span class="sr-only">Rank </span>{{ row.rank }}</span>
                         <span class="standing-player">
                             <PlayerAvatar :color="getPlayerColorByID(row.id)" />
@@ -31,10 +39,10 @@
                             v-if="compactRound && row.modifiers"
                             class="round-score-trigger"
                             type="button"
-                            aria-haspopup="dialog"
+                            :aria-expanded="selectedId === row.id"
                             :aria-label="`Round score details for ${row.name} with ${row.score} points`"
                             :aria-describedby="row.modifiers.hasDuels || row.modifiers.doubleUsed || row.result?.placeScr ? listId + '-effects-' + row.id : undefined"
-                            @click="selectedId = row.id"
+                            @click="selectedId = selectedId === row.id ? null : row.id"
                         >
                             <span :id="listId + '-effects-' + row.id" class="round-badges">
                                 <span v-if="row.result?.placeScr" class="round-badge gain"
@@ -49,33 +57,26 @@
                                 </span>
                             </span>
                             <span class="standing-points">{{ row.score }}</span
-                            ><UiIcon class="details-chevron" name="chevron-up" />
+                            ><UiIcon class="details-chevron" :class="{ 'is-open': selectedId === row.id }" name="chevron-up" />
                         </button>
                         <span v-else class="standing-points">
                             <span class="sr-only">{{ view === "overall" ? "Total points " : "Round points " }}</span
                             >{{ row.score }}
                         </span>
                         <GameplayRoundScoreBreakdown
-                            v-if="!compact && row.result && row.modifiers"
+                            v-if="row.result && row.modifiers && (!compact || (compactRound && selectedId === row.id))"
                             class="standing-breakdown"
+                            :class="{ 'compact-breakdown': compact }"
                             :player-id="row.id"
                             :result="row.result"
                             :modifiers="row.modifiers"
+                            :detailed="compact"
                         />
                     </li>
                 </ol>
             </template>
             <p v-else class="standings-empty" role="status">Waiting for scores…</p>
         </div>
-        <UiDialog
-            v-if="selectedRow?.result && selectedRow.modifiers"
-            :open="true"
-            class="round-score-dialog"
-            :title="`Round ${lobbySettings?.currentRound} for ${selectedRow.name}`"
-            @update:open="selectedId = null"
-        >
-            <GameplayRoundScoreBreakdown :player-id="selectedRow.id" :result="selectedRow.result" :modifiers="selectedRow.modifiers" detailed />
-        </UiDialog>
     </section>
 </template>
 
@@ -126,7 +127,6 @@ const rows = computed(() =>
         };
     })
 );
-const selectedRow = computed(() => (compactRound.value && selectedId.value ? rows.value.find((row) => row.id === selectedId.value) : undefined));
 watch([compactRound, () => lobbySettings.value?.gameId, () => lobbySettings.value?.currentRound], () => (selectedId.value = null));
 const changeView = async (next: StandingsView) => {
     if (next === view.value) return;
@@ -180,8 +180,20 @@ const changeView = async (next: StandingsView) => {
     font-weight: 800;
     white-space: nowrap;
 }
+.standings-header h2 .standings-emblem {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    inline-size: 1.55em;
+    block-size: 1.55em;
+    border: 1px solid #ffca6242;
+    border-radius: 50%;
+    background: #ffca621a;
+    color: #ffe28f;
+}
 .standings-header h2 .ui-icon {
-    color: #e4ee94;
+    inline-size: 0.92em;
+    block-size: 0.92em;
 }
 .score-views {
     display: flex;
@@ -299,10 +311,10 @@ const changeView = async (next: StandingsView) => {
     font-size: 0.84rem;
 }
 .compact-standings {
-    --standing-columns: 1.55rem minmax(0, 1fr) max(5.65rem, 24%) max(3.4rem, 17%);
-    --standing-gap: clamp(0.28rem, 0.95vw, 0.62rem);
-    --standing-pad: clamp(0.32rem, 1.25vw, 0.74rem);
-    --list-pad: 0.3rem;
+    --standing-columns: max-content minmax(0, 1fr) max-content max-content;
+    --standing-gap: clamp(0.24rem, 0.8vw, 0.5rem);
+    --standing-pad: clamp(0.28rem, 1vw, 0.52rem);
+    --list-pad: 0.24rem;
     container-type: inline-size;
     border-color: #90cfa376;
     border-radius: 0.9rem;
@@ -310,49 +322,63 @@ const changeView = async (next: StandingsView) => {
     box-shadow: inset 0 1px #d9ffce1f;
 }
 .compact-standings .standings-header {
-    gap: 0.3rem;
-    padding-inline: clamp(0.37rem, 1.15vw, 0.75rem);
-    background: url("/images/atlas-relief.svg") right center / 30rem auto no-repeat;
+    gap: 0.45rem;
+    padding: 0.34rem 0.52rem;
+    background: url("/images/atlas-relief.svg") right center / 28rem auto no-repeat;
 }
 .compact-standings .standings-header h2 {
     min-width: 0;
-    font: italic 850 clamp(0.9rem, 4.55cqi, 1.38rem) / 1.08 var(--gb-font-display);
-    letter-spacing: -0.03em;
+    gap: 0.42rem;
+    font: italic 850 clamp(0.84rem, 3.6cqi, 1.06rem) / 1.1 var(--gb-font-display);
+    letter-spacing: -0.025em;
 }
-.compact-standings .standings-header h2 .ui-icon {
-    flex: none;
-}
-.compact-standings .standings-header h2 > span {
+.compact-standings .standings-header h2 > span:not(.standings-emblem) {
     overflow: hidden;
     text-overflow: ellipsis;
 }
 .compact-standings .score-views {
     flex: none;
     align-items: center;
-    padding: 1px;
-    border: 1px solid #a1df9e53;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid #9be0a54a;
     border-radius: 999px;
-    background: #092c24;
+    background: #05201ae6;
+    box-shadow: inset 0 1px 3px #00140f80;
 }
 .compact-standings .score-views button {
-    padding-inline: clamp(0.36rem, 1.4vw, 0.72rem);
+    min-height: 30px;
+    padding: 0.18rem clamp(0.5rem, 1.8vw, 0.78rem);
     border-radius: 999px;
-    font-size: clamp(0.72rem, 3.35cqi, 0.82rem);
+    color: #bad8c9;
+    font-size: clamp(0.66rem, 2.7cqi, 0.76rem);
+    font-weight: 760;
+    line-height: 1.1;
+    transition:
+        background-color 140ms ease,
+        color 140ms ease,
+        box-shadow 140ms ease;
+}
+.compact-standings .score-views button:hover:not([aria-pressed="true"]) {
+    background: #ffffff12;
+    color: #edf9f1;
 }
 .compact-standings .score-views [aria-pressed="true"] {
-    background: linear-gradient(135deg, #e6ffc0, #bbef86);
-    box-shadow: inset 0 1px #f6ffe1;
+    background: linear-gradient(145deg, #ddffa6, #9be95f 78%);
+    box-shadow:
+        inset 0 1px #f8ffe6b8,
+        0 2px 8px #7fe6553b;
     color: var(--gb-scenic-action-ink);
 }
 .standings-columns {
     position: sticky;
     inset-block-start: 0;
     z-index: 1;
-    padding: 0.32rem calc(var(--list-pad) + var(--standing-pad) + 1px);
+    padding: 0.24rem calc(var(--list-pad) + var(--standing-pad) + 1px);
     border-bottom: 1px solid #b7e6b62b;
     background: #123c33;
     color: #c2ded1;
-    font-size: clamp(0.59rem, 1.78vw, 0.73rem);
+    font-size: clamp(0.57rem, 1.65vw, 0.68rem);
     font-weight: 720;
     line-height: 1.16;
 }
@@ -360,16 +386,34 @@ const changeView = async (next: StandingsView) => {
     color: inherit;
     font: inherit;
 }
+.compact-standings .standings-scroll {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+    align-content: start;
+    column-gap: clamp(0.28rem, 1vw, 0.5rem);
+    padding-inline: 0.28rem;
+}
+.compact-standings :is(.standings-columns, .standings-list, .standing) {
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    column-gap: inherit;
+}
+.compact-standings .standings-columns {
+    margin-inline: -0.28rem;
+    padding: 0.24rem calc(0.28rem + var(--standing-pad));
+}
 .compact-standings .standings-list {
-    gap: 0.22rem;
+    gap: 0.16rem;
+    padding: 0.22rem 0;
 }
 .compact-standings .standing {
-    --player-avatar-size: clamp(1.22rem, 3.3vw, 1.66rem);
-    min-height: clamp(1.98rem, 4.25dvh, 2.7rem);
+    --player-avatar-size: clamp(1rem, 2.8vw, 1.32rem);
+    min-height: clamp(1.72rem, 3.4dvh, 2.15rem);
+    padding: 0.12rem var(--standing-pad);
     border-color: #a9e0b02c;
-    border-radius: 0.56rem;
+    border-radius: 0.48rem;
     background: #082921;
-    font-size: clamp(0.79rem, 2.2vw, 1.01rem);
+    font-size: clamp(0.71rem, 2.75cqi, 0.85rem);
 }
 .compact-standings .standing[data-rank="1"]:not(.is-own) {
     border-color: #ecc16e72;
@@ -381,41 +425,25 @@ const changeView = async (next: StandingsView) => {
     background: linear-gradient(95deg, #315d39, #193c2d 82%);
 }
 .compact-standings .standing-name {
-    font-weight: 760;
+    font-weight: 740;
 }
 .standing .standing-distance {
     color: #d2e8dc;
-    font: 650 clamp(0.69rem, 3.6cqi, 0.91rem) / 1 var(--gb-font-display);
+    font: 650 clamp(0.65rem, 2.55cqi, 0.78rem) / 1 var(--gb-font-display);
     font-variant-numeric: tabular-nums;
 }
 /* Size each numeric column once across the list. Long player names take the remaining space. */
-.compact-round .standings-scroll {
-    display: grid;
-    grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
-    align-content: start;
-    column-gap: 0.33rem;
-}
-.compact-round :is(.standings-columns, .standings-list, .standing) {
-    grid-column: 1 / -1;
-    grid-template-columns: subgrid;
-    column-gap: inherit;
-}
 .compact-round .standing {
-    --player-avatar-size: 1.16rem;
-    --standing-pad: 0.32rem;
     position: relative;
-    min-height: 2.375rem;
-    font-size: clamp(0.75rem, 3.4cqi, 0.87rem);
-}
-.compact-round .standings-columns {
-    --standing-pad: 0.32rem;
+    min-height: 2.05rem;
+    font-size: clamp(0.7rem, 2.7cqi, 0.82rem);
 }
 .compact-round .standing-player,
 .compact-round .standing-identity {
-    gap: 0.23rem;
+    gap: 0.22rem;
 }
 .compact-round .standing-distance {
-    font-size: clamp(0.69rem, 3.1cqi, 0.81rem);
+    font-size: clamp(0.64rem, 2.45cqi, 0.76rem);
 }
 .round-score-trigger,
 .round-badges,
@@ -474,27 +502,36 @@ const changeView = async (next: StandingsView) => {
     height: 0.68rem;
     transform: rotate(90deg);
     color: #bad5c4;
+    transition: transform 160ms ease;
 }
-.round-score-dialog[open] {
-    width: min(25rem, calc(100% - var(--dialog-left) - var(--dialog-right)));
-    border-radius: 0.8rem;
-    background: #10372d;
+.details-chevron.is-open {
+    transform: rotate(180deg);
+    color: var(--recap-accent);
 }
-.round-score-dialog :deep(.ui-dialog-header) {
-    align-items: center;
-    margin-bottom: 0.55rem;
+.compact-round .standing.is-expanded {
+    border-color: #b6efa370;
+    padding-block: 0.24rem 0.34rem;
 }
-.round-score-dialog :deep(.ui-dialog-header h2) {
-    overflow-wrap: anywhere;
+.compact-breakdown {
+    grid-column: 1 / -1;
+    margin-block: 0.22rem 0.04rem;
+    font-size: 0.74rem;
 }
-@media (orientation: portrait) and (max-width: 850px) {
-    .round-score-dialog[open] {
-        inset: auto 0 var(--visible-bottom, 0px);
-        width: 100%;
-        margin: 0 auto;
-        padding-bottom: var(--gb-safe-bottom);
-        border-radius: 0.9rem 0.9rem 0 0;
-    }
+.compact-breakdown :deep(.score-parts),
+.compact-breakdown :deep(.duel-group ul) {
+    border-radius: 0.55rem;
+    background: #051d18cc;
+}
+.compact-breakdown :deep(.score-parts > div),
+.compact-breakdown :deep(.duel-group li) {
+    padding: 0.28rem 0.52rem;
+}
+.compact-breakdown :deep(.score-total) {
+    display: none;
+}
+.compact-breakdown :deep(.duel-group h3) {
+    font-size: 0.7rem;
+    margin-bottom: 0.2rem;
 }
 @container (max-width: 325px) {
     .compact-round .standing-player :deep(.player-avatar) {
@@ -502,11 +539,8 @@ const changeView = async (next: StandingsView) => {
     }
 }
 @container (max-width: 355px) {
-    .compact-standings .standings-header h2 .ui-icon {
-        @apply sr-only;
-    }
     .compact-standings .score-views button {
-        padding-inline: 0.3rem;
+        padding-inline: 0.36rem;
     }
 }
 @container (max-width: 320px) {

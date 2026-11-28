@@ -333,6 +333,13 @@ watch(
     }
 );
 watch(
+    [() => google.isPanoramaInitialized, compactViewport],
+    ([initialized, compact]) => {
+        if (initialized) google.setPanoramaControlsLeft(compact);
+    },
+    { immediate: true, flush: "post" }
+);
+watch(
     () => google.isMapInitialized,
     (initialized) => {
         if (initialized) ui.mountingProcess();

@@ -1,5 +1,5 @@
 <template>
-    <section class="mobile-guess-dock" :class="{ 'is-landscape': landscape }" aria-label="Guess controls">
+    <section class="mobile-guess-dock" :class="{ 'is-landscape': landscape }" aria-label="Guess controls" @click.stop @pointerdown.stop>
         <div class="dock-status-pill">
             <p class="guess-stock">
                 <span :id="countId" class="sr-only" data-testid="guesses-left">{{ lives }} {{ lives === 1 ? "guess left" : "guesses left" }}</span>
@@ -82,12 +82,15 @@ watch(confirmVisible, (visible) => {
 <style scoped>
 .mobile-guess-dock {
     position: absolute;
-    inset: auto var(--hud-right) max(0.32rem, env(safe-area-inset-bottom)) var(--hud-left);
+    inset: auto 0 0 auto;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    pointer-events: none;
+    justify-content: flex-end;
+    gap: 0.52rem;
+    padding: 0.55rem var(--hud-right) max(0.65rem, env(safe-area-inset-bottom)) 0.75rem;
+    border-top-left-radius: 1.35rem;
+    background: radial-gradient(ellipse at 100% 100%, #041b16b8 0%, #041b1666 58%, transparent 100%);
+    pointer-events: auto;
 }
 .dock-status-pill {
     display: inline-flex;
@@ -174,13 +177,13 @@ watch(confirmVisible, (visible) => {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.42rem;
-    min-inline-size: 46px;
-    min-block-size: 48px;
-    padding: 0.42rem 1.05rem;
+    gap: 0.48rem;
+    min-inline-size: 52px;
+    min-block-size: 54px;
+    padding: 0.5rem 1.35rem;
     border: 1px solid #b6efa368;
     border-radius: 999px;
-    font-size: 0.92rem;
+    font-size: 1rem;
     font-weight: 850;
     line-height: 1.1;
     white-space: nowrap;
@@ -216,14 +219,17 @@ watch(confirmVisible, (visible) => {
 .dock-action:enabled:active {
     transform: translateY(1px);
 }
+.mobile-guess-dock.is-landscape {
+    padding-block: 0.45rem max(0.55rem, env(safe-area-inset-bottom));
+}
 .mobile-guess-dock.is-landscape .dock-status-pill {
-    min-block-size: 42px;
-    padding: 0.16rem 0.28rem 0.16rem 0.65rem;
+    min-block-size: 44px;
+    padding: 0.18rem 0.3rem 0.18rem 0.68rem;
 }
 .mobile-guess-dock.is-landscape .dock-action {
-    min-block-size: 44px;
-    padding-inline: 0.95rem;
-    font-size: 0.86rem;
+    min-block-size: 48px;
+    padding: 0.44rem 1.25rem;
+    font-size: 0.95rem;
 }
 @media (prefers-reduced-motion: no-preference) {
     .dock-action,

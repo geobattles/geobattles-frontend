@@ -58,7 +58,18 @@
                         <label class="rival-search" data-viewport-field>
                             <UiIcon name="search" />
                             <span class="sr-only">Search players</span>
-                            <input v-model="search" type="search" placeholder="Search players…" autocomplete="off" enterkeyhint="search" @keydown.enter.prevent="finishEditing" />
+                            <input
+                                :value="search"
+                                type="search"
+                                placeholder="Search players…"
+                                autocomplete="off"
+                                autocorrect="off"
+                                autocapitalize="off"
+                                spellcheck="false"
+                                enterkeyhint="search"
+                                @input="search = ($event.target as HTMLInputElement).value"
+                                @keydown.enter.prevent="finishEditing"
+                            />
                         </label>
                         <UiKeyboardDone v-if="compactSearch" @click="finishEditing" />
                         <span v-if="compactSearch && windowOpen" class="choice-time"
