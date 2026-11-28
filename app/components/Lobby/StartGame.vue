@@ -14,9 +14,9 @@
                 ref="readyButton"
                 class="btn btn-command"
                 :class="{
-                    'btn-secondary': replay || !lobby.isPlayerReady,
-                    'undo-ready': !replay && lobby.isPlayerReady,
-                    'ready-prompt': !replay && !lobby.isPlayerReady,
+                    'btn-secondary': !lobby.isPlayerReady,
+                    'undo-ready': lobby.isPlayerReady,
+                    'ready-prompt': !lobby.isPlayerReady,
                     'ready-fluid': showReadyLiquid,
                     'is-ready': replay && lobby.isPlayerReady,
                 }"
@@ -35,12 +35,12 @@
                     </svg>
                 </span>
                 <span v-if="request.isReadyPending" class="spinner" />
-                <template v-else-if="!replay && lobby.isPlayerReady">
+                <template v-else-if="lobby.isPlayerReady">
                     <UiIcon name="check" class="undo-check" />
                     <span class="undo-label">{{ showStart ? "Ready" : "You’re ready" }}</span>
                     <span class="undo-badge" aria-hidden="true"><UiIcon name="close" /></span>
                 </template>
-                <template v-else> <UiIcon v-if="replay" :name="lobby.isPlayerReady ? 'check' : 'user'" />{{ readyLabel }} </template>
+                <template v-else>{{ readyLabel }}</template>
             </button>
             <Transition name="start-reveal">
                 <button
@@ -76,15 +76,15 @@ const me = computed(() => (player.value.ID ? lobby.lobbySettings?.playerList[pla
 const canReady = computed(
     () => socket.isConnected && socket.isOnline && !!me.value?.connected && !lobby.modifySettingsModal && ["WAITING", "FINISHED"].includes(lobby.lobbySettings?.phase ?? "")
 );
-const showReadyLiquid = computed(() => !props.replay && !lobby.isPlayerReady && canReady.value && !request.isReadyPending && !request.isStartPending);
+const showReadyLiquid = computed(() => !lobby.isPlayerReady && canReady.value && !request.isReadyPending && !request.isStartPending);
 const blockedReason = computed(() => {
     if (!socket.isConnected || !socket.isOnline) return "Reconnect before starting.";
     if (!lobby.allPlayersReady) return "Waiting for every explorer to mark ready.";
     if (lobby.modifySettingsModal) return "Finish reviewing the settings first.";
     return actions.startUnavailableReason;
 });
-const showStart = computed(() => lobby.isPlayerAdmin() && (props.replay || lobby.allPlayersReady || request.isStartPending));
-const readyLabel = computed(() => (lobby.isPlayerReady ? (props.replay ? "Ready · Undo" : "Change") : props.replay ? "Ready for Rematch" : "Ready to Play"));
+const showStart = computed(() => lobby.isPlayerAdmin() && (lobby.allPlayersReady || request.isStartPending));
+const readyLabel = computed(() => (props.replay ? "Ready for Rematch" : "Ready to Play"));
 const feedback = computed(() => {
     if (!props.replay) {
         if (request.isReadyPending) return "Updating readiness…";
@@ -142,39 +142,18 @@ const start = () => {
 }
 .ready-actions {
     display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-top: 0.75rem;
-}
-.ready-actions > button {
-    flex: 1;
-    min-height: 52px;
-    font-weight: 800;
-}
-.ready-actions > button:last-child:not(:first-child) {
-    flex: 1.3;
-}
-.is-ready {
-    border-color: var(--gb-accent-end);
-    color: var(--gb-accent);
-    background: var(--gb-bg);
-    box-shadow: inset 0 -2px var(--gb-accent-end);
-}
-.ready-check > .field-help {
-    font-size: 0.75rem;
-    line-height: 1.4;
-}
-.ready-feedback:not(:empty) {
-    margin-top: 0.5rem;
-}
-.waiting-ready .ready-actions {
-    margin-top: 0.4rem;
+    gap: 0.42rem;
     align-items: stretch;
     flex-wrap: nowrap;
+    margin-top: 0.4rem;
 }
-.waiting-ready .ready-actions > button {
-    white-space: nowrap;
+.ready-actions > button {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 48px;
     border-radius: 999px;
+    font-weight: 800;
+    white-space: nowrap;
     transition:
         background 220ms ease,
         border-color 220ms ease,
@@ -182,7 +161,7 @@ const start = () => {
         box-shadow 220ms ease,
         transform 140ms ease;
 }
-.waiting-ready .ready-actions > .undo-ready {
+.ready-actions > .undo-ready {
     flex: 1 1 auto;
     min-height: 44px;
     gap: 0.42rem;
@@ -198,16 +177,23 @@ const start = () => {
     font-weight: 760;
     letter-spacing: normal;
 }
-.waiting-ready .ready-actions.has-start > .undo-ready {
+.ready-actions.has-start > .undo-ready {
     flex: 0 0 auto;
 }
-.waiting-ready .ready-actions > .undo-ready:enabled:hover {
+.ready-actions > .undo-ready:enabled:hover {
     border-color: #a4f5cf99;
     background: linear-gradient(145deg, #1b5645f2, #0d362cf5);
     color: #e6fff2;
 }
-.waiting-ready .ready-actions > .undo-ready:enabled:active {
+.ready-actions > .undo-ready:enabled:active {
     transform: scale(0.975);
+}
+.ready-check > .field-help {
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+.ready-feedback:not(:empty) {
+    margin-top: 0.45rem;
 }
 .undo-check {
     width: 0.95rem;
@@ -277,7 +263,7 @@ const start = () => {
     .start-reveal-leave-active,
     .feedback-fade-enter-active,
     .feedback-fade-leave-active,
-    .waiting-ready .ready-actions > button {
+    .ready-actions > button {
         transition: none;
     }
 }
@@ -362,27 +348,41 @@ const start = () => {
 }
 .rematch-ready .ready-actions {
     flex-wrap: nowrap;
-    gap: 0.35rem;
+    gap: 0.38rem;
     margin-top: 0.35rem;
 }
 .rematch-ready .ready-actions > button {
-    flex: 1 1 auto;
     min-height: 44px;
     min-width: 0;
-    padding: 0.3rem 0.62rem;
+    padding: 0.3rem 0.65rem;
     border-radius: 999px;
-    font-size: clamp(0.72rem, 1.6vw, 0.88rem);
+    font-size: clamp(0.74rem, 1.6vw, 0.88rem);
     letter-spacing: normal;
     line-height: 1.15;
-    white-space: nowrap;
 }
-.rematch-ready .ready-actions > button:last-child:not(:first-child) {
-    flex: 1 1 auto;
+.rematch-ready .ready-actions > .undo-ready {
+    padding: 0.25rem 0.5rem 0.25rem 0.78rem;
 }
-.rematch-ready .ready-actions > button:enabled:not(.is-ready) {
+.rematch-ready .ready-actions > .ready-prompt:not(:has(.spinner))::before {
+    content: "";
+    width: 0;
+    height: 0;
+    margin-inline-end: 0.12rem;
+    border-block: 0.36rem solid transparent;
+    border-inline-start: 0.56rem solid currentColor;
+}
+.rematch-ready .ready-actions > .ready-fluid,
+.rematch-ready .ready-actions > .start-game-btn:enabled {
     border-color: var(--gb-scenic-action-border);
     background: var(--gb-scenic-action-fill);
     color: var(--gb-scenic-action-ink);
+    box-shadow: var(--gb-scenic-action-shadow);
+}
+.rematch-ready .ready-actions > .ready-fluid:enabled:hover,
+.rematch-ready .ready-actions > .start-game-btn:enabled:hover {
+    background: var(--gb-scenic-action-fill);
+    color: var(--gb-scenic-action-ink);
+    box-shadow: var(--gb-scenic-action-hover-shadow);
 }
 .rematch-ready .ready-feedback:not(:empty) {
     margin-top: 0.32rem;
@@ -391,14 +391,20 @@ const start = () => {
 }
 @media (max-width: 400px) {
     .rematch-ready .ready-actions > button {
-        padding-inline: 0.48rem;
-        font-size: clamp(0.68rem, 3.1vw, 0.78rem);
+        padding-inline: 0.52rem;
+        font-size: clamp(0.7rem, 3.1vw, 0.8rem);
+    }
+    .rematch-ready .ready-actions > .undo-ready {
+        padding-inline: 0.68rem 0.45rem;
     }
 }
 @media (orientation: landscape) and (max-height: 420px) {
     .rematch-ready .ready-actions > button {
-        padding-inline: 0.5rem;
-        font-size: 0.74rem;
+        padding-inline: 0.52rem;
+        font-size: 0.75rem;
+    }
+    .rematch-ready .ready-actions > .undo-ready {
+        padding-inline: 0.65rem 0.44rem;
     }
 }
 </style>

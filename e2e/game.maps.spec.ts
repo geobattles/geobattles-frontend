@@ -179,12 +179,13 @@ test("real Maps round: map-only retry, recovery clock, ordered results, ready-ga
     run.assertHealthy();
 
     const rematch = host.page.getByRole("button", { name: "Start New Game" });
-    await expect(rematch).toBeDisabled();
+    await expect(rematch).toHaveCount(0);
     const secondMarks = [host.mark(), peer.mark()];
     await run.probeReadinessRejection(host);
     await setReady(host, true);
-    await expect(rematch).toBeDisabled();
+    await expect(rematch).toHaveCount(0);
     await setReady(peer, true);
+    await expect(rematch).toBeVisible();
     await expect(rematch).toBeEnabled();
     await run.permitStart(host);
     await rematch.click();

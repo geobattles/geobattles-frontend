@@ -645,7 +645,10 @@ onBeforeUnmount(() => viewport?.removeEventListener("change", syncViewport));
     .finish-rematch :deep(.ready-actions > button) {
         min-height: 42px;
         border-radius: 999px;
-        font-size: clamp(0.72rem, 3.2vw, 0.82rem);
+        font-size: clamp(0.74rem, 3.3vw, 0.84rem);
+    }
+    .finish-rematch :deep(.ready-actions > .undo-ready) {
+        font-size: 0.76rem;
     }
 }
 @media (orientation: landscape) and (max-height: 540px) {
@@ -738,9 +741,13 @@ onBeforeUnmount(() => viewport?.removeEventListener("change", syncViewport));
     }
     .finish-rematch :deep(.ready-actions > button) {
         min-height: 38px;
-        padding: 0.24rem 0.54rem;
+        padding: 0.24rem 0.58rem;
         border-radius: 999px;
-        font-size: 0.75rem;
+        font-size: 0.78rem;
+    }
+    .finish-rematch :deep(.ready-actions > .undo-ready) {
+        padding: 0.22rem 0.46rem 0.22rem 0.68rem;
+        font-size: 0.74rem;
     }
     .finish-rematch :deep(.ready-feedback) {
         margin-top: 0.2rem;
