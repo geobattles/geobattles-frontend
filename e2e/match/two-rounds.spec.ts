@@ -144,7 +144,7 @@ test("two guests finish a scored match and recover a retained seat in round two"
         expect(gameId).toMatch(/^[0-9a-f-]{36}$/);
         await guest.event("START_ROUND", (e) => e.payload?.round === 1 && e.payload.gameId === gameId);
         for (const { page } of actors) {
-            await expect(page.locator("#gameplay_container:not([inert]) .round-label")).toBeVisible();
+            await expect(page.locator("#gameplay_container:not([inert]) :is(.round-label, .compact-round-badge)")).toBeVisible();
             expect(await page.locator("html").getAttribute("data-lobby-join-flash")).toBeNull();
         }
         await test.step("Round one: the phone can reopen the map for the last guess", async () => {
@@ -187,7 +187,7 @@ test("two guests finish a scored match and recover a retained seat in round two"
         await host.page.getByRole("button", { name: "Next Round", exact: true }).click();
         const second = await guest.event("START_ROUND", (e) => e.payload?.round === 2 && e.payload.gameId === gameId);
         // The live HUD appears after the countdown, so a reset to the full duration is observable.
-        await expect(guest.page.locator("#gameplay_container:not([inert]) .round-label")).toBeVisible();
+        await expect(guest.page.locator("#gameplay_container:not([inert]) :is(.round-label, .compact-round-badge)")).toBeVisible();
         const mark = host.mark();
         const beforeLoss = guest.mark();
         // A hard navigation closes the real socket. The returning tab keeps its guest credentials.
