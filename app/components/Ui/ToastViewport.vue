@@ -1,25 +1,29 @@
 <template>
     <Teleport v-if="target" :to="target">
-        <div class="toast-viewport" aria-label="Notifications">
+        <TransitionGroup name="toast" tag="div" class="toast-viewport" aria-label="Notifications">
             <div
                 v-for="message in toast.messages.value"
                 :key="message.id"
                 :role="message.severity === 'error' ? 'alert' : 'status'"
                 class="toast-message"
-                :class="`toast-${message.severity}`"
+                :class="[`toast-${message.severity}`, { 'has-detail': !!message.detail }]"
                 @mouseenter="pause(message.id)"
                 @mouseleave="resume(message.id)"
                 @focusin="pause(message.id)"
                 @focusout="focusLeft($event, message.id)"
             >
-                <UiIcon :name="message.severity === 'success' ? 'check' : 'info'" />
-                <div>
-                    <p class="font-semibold">{{ message.summary }}</p>
-                    <p v-if="message.detail" class="text-sm muted mt-1">{{ message.detail }}</p>
+                <span class="toast-icon" aria-hidden="true">
+                    <UiIcon :name="message.severity === 'success' ? 'check' : 'info'" />
+                </span>
+                <div class="toast-copy">
+                    <p class="toast-summary">{{ message.summary }}</p>
+                    <p v-if="message.detail" class="toast-detail">{{ message.detail }}</p>
                 </div>
-                <button type="button" class="btn btn-icon btn-quiet" aria-label="Dismiss notification" @click="toast.remove(message.id)"><UiIcon name="close" /></button>
+                <button type="button" class="toast-dismiss" aria-label="Dismiss notification" @click="toast.remove(message.id)">
+                    <UiIcon name="close" />
+                </button>
             </div>
-        </div>
+        </TransitionGroup>
     </Teleport>
 </template>
 <script setup lang="ts">

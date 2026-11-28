@@ -39,13 +39,17 @@
 
         <div v-if="browseAll" class="map-catalog-tools">
             <input
-                v-model="presetQuery"
+                :value="presetQuery"
                 type="search"
                 class="input"
                 aria-label="Search maps or regions"
                 placeholder="Search maps or regions…"
                 autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
                 enterkeyhint="search"
+                @input="presetQuery = ($event.target as HTMLInputElement).value"
                 @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
             />
             <select v-model="presetSort" class="input" aria-label="Sort maps">
@@ -290,35 +294,38 @@ watch(
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
     width: 100%;
-    gap: 0.35rem;
+    gap: 0.2rem;
+    padding: 0.16rem;
+    border: 1px solid #9be0a533;
+    border-radius: 0.8rem;
+    background: #041d19cc;
 }
 .region-modes button {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
+    gap: 0.32rem;
     min-width: 0;
-    min-height: 44px;
-    padding: 0.35rem 0.25rem;
-    border: 1px solid #a6eedb38;
-    border-radius: 9px;
-    background: linear-gradient(145deg, #397c6a28, #062c2794);
-    color: #e3faf2;
-    font-size: 0.8rem;
-    font-weight: 600;
+    min-height: 36px;
+    padding: 0.22rem 0.3rem;
+    border: 1px solid transparent;
+    border-radius: 0.62rem;
+    background: transparent;
+    color: #cbe6db;
+    font-size: 0.74rem;
+    font-weight: 720;
+    white-space: nowrap;
 }
 
 .region-modes button[aria-pressed="true"] {
-    border-color: #cafd90;
-    box-shadow:
-        inset 0 0 16px #99ef6554,
-        0 0 12px #99ef6530;
-    background: linear-gradient(145deg, #306b4c, #0a3f30);
+    border-color: #b7f98699;
+    box-shadow: inset 0 0 14px #99ef6538;
+    background: linear-gradient(145deg, #2e6445, #123e30);
     color: #eaffc4;
 }
 .region-modes button > svg {
-    width: 1rem;
-    height: 1rem;
+    width: 0.88rem;
+    height: 0.88rem;
     flex: none;
 }
 .region-modes button:not([aria-pressed="true"]):enabled:hover,
@@ -382,12 +389,19 @@ watch(
 }
 .map-catalog-tools {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(6.5rem, 10rem);
-    gap: 0.45rem;
+    grid-template-columns: minmax(0, 1fr) minmax(6.2rem, 8.8rem);
+    gap: 0.34rem;
 }
 .map-catalog-tools > * {
     min-width: 0;
-    font-size: 1rem;
+    height: 34px;
+    min-height: 34px;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid #9be0a538;
+    border-radius: 0.62rem;
+    background: #051f1c;
+    color: #eefbf4;
+    font-size: 0.78rem;
 }
 .preset-empty {
     grid-column: 1 / -1;
@@ -537,23 +551,24 @@ watch(
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.3rem;
-    min-width: 44px;
-    min-height: 44px;
-    padding: 0.2rem 0.5rem;
-    border: 1px solid #a2dfc841;
-    border-radius: 0.65rem;
-    background: #143a31;
+    gap: 0.28rem;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0.16rem 0.58rem;
+    border: 1px solid #9be0a53d;
+    border-radius: 999px;
+    background: #10372e;
     color: #e9faf4;
-    font-size: 0.75rem;
-    font-weight: 700;
+    font-size: 0.72rem;
+    font-weight: 740;
 }
 .map-toggle:enabled:hover {
     border-color: #bee8a382;
-    background: #23523f;
+    background: #1f4f3d;
 }
 .map-toggle .ui-icon {
-    width: 1.05rem;
+    width: 0.88rem;
+    height: 0.88rem;
 }
 .has-chooser .region-map-panel :deep(.region-map) {
     display: flex;
@@ -606,34 +621,65 @@ watch(
     .region-modes button {
         flex-direction: column;
         gap: 0.1rem;
-        padding-inline: 0;
-        font-size: 0.72rem;
-        overflow-wrap: anywhere;
+        min-height: 38px;
+        padding: 0.18rem 0.1rem;
+        font-size: 0.64rem;
+    }
+    .region-modes button > svg {
+        width: 0.82rem;
+        height: 0.82rem;
     }
     .map-catalog-tools {
-        grid-template-columns: minmax(0, 1fr) 6.75rem;
+        grid-template-columns: minmax(0, 1fr) 6.2rem;
     }
 }
 @media (max-width: 760px) and (orientation: portrait) {
+    .region-picker {
+        gap: 0.4rem;
+    }
+    .region-selection {
+        min-height: 38px;
+        padding: 0.26rem 0.5rem;
+        border-radius: 0.72rem;
+    }
+    .region-selection img {
+        width: 1.85rem;
+    }
+    .region-selection strong {
+        font-size: 0.82rem;
+    }
+    .region-selection > span {
+        font-size: 0.68rem;
+    }
     .continent-options {
         grid-template-columns: minmax(0, 1fr);
+        gap: 0.28rem;
     }
     .continent-options button {
-        min-height: 58px;
+        min-height: 46px;
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
-        gap: 0.35rem;
-        padding: 0.25rem 1.65rem 0.25rem 0.3rem;
+        gap: 0.42rem;
+        padding: 0.22rem 1.65rem 0.22rem 0.28rem;
+        border-radius: 0.72rem;
+        font-size: 0.78rem;
     }
     .continent-art {
-        width: 4.4rem;
-        height: 2.75rem;
+        width: 3.5rem;
+        height: 2.2rem;
         flex: none;
-        border-radius: 6px;
+        border-radius: 0.45rem;
     }
     .preset-emblem img {
-        width: 2.45rem;
+        width: 1.9rem;
+    }
+    .continent-info {
+        gap: 0.08rem;
+        padding: 0.12rem 0.2rem;
+    }
+    .continent-count {
+        font-size: 0.65rem;
     }
     .continent-check {
         top: 50%;
@@ -642,28 +688,57 @@ watch(
 }
 @media (max-height: 540px) and (orientation: landscape) {
     .region-picker {
-        gap: 0.35rem;
+        gap: 0.3rem;
+    }
+    .region-modes button {
+        min-height: 30px;
+        padding: 0.14rem 0.24rem;
+        font-size: 0.71rem;
+    }
+    .region-modes button > svg {
+        width: 0.82rem;
+        height: 0.82rem;
+    }
+    .region-selection {
+        min-height: 34px;
+        padding: 0.2rem 0.48rem;
+        border-radius: 0.68rem;
     }
     .region-selection img {
-        width: 2.1rem;
+        width: 1.75rem;
+    }
+    .region-selection strong {
+        font-size: 0.8rem;
+    }
+    .region-selection > span {
+        font-size: 0.66rem;
     }
     .continent-options {
         grid-template-columns: none;
         grid-auto-flow: column;
-        grid-auto-columns: clamp(7rem, 24%, 10rem);
+        grid-auto-columns: clamp(6.5rem, 23%, 9rem);
         overflow-x: auto;
-        padding: 2px 1px 0.3rem;
+        padding: 2px 1px 0.25rem;
         scroll-snap-type: x proximity;
         scrollbar-width: thin;
     }
     .continent-options button {
         scroll-snap-align: start;
+        border-radius: 0.7rem;
+        font-size: 0.75rem;
     }
     .continent-art {
-        height: clamp(2.25rem, 13dvh, 4.5rem);
+        height: clamp(2rem, 11dvh, 3.4rem);
     }
     .preset-emblem img {
-        width: 2.25rem;
+        width: 1.85rem;
+    }
+    .continent-info {
+        gap: 0.06rem;
+        padding: 0.26rem 0.4rem;
+    }
+    .continent-count {
+        font-size: 0.64rem;
     }
     .preset-empty {
         grid-column: auto;
@@ -681,13 +756,13 @@ watch(
     .has-country-picker .region-selection {
         grid-area: 1 / 2;
         flex-wrap: nowrap;
-        padding: 0.25rem 0.4rem;
+        padding: 0.2rem 0.4rem;
     }
     .has-country-picker .region-selection .selection-label > span {
         display: none;
     }
     .has-country-picker .region-selection strong {
-        font-size: 0.78rem;
+        font-size: 0.75rem;
     }
     .has-country-picker:has(.region-selection) .region-modes {
         grid-area: 1 / 1;
@@ -713,6 +788,6 @@ watch(
     grid-template-columns: minmax(0, 1fr);
 }
 .map-catalog-tools input {
-    font-size: max(16px, 1rem);
+    font-size: 0.8rem;
 }
 </style>

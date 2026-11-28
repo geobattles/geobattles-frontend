@@ -125,17 +125,18 @@ const adjustments = { Won: duelStake, Lost: -duelStake, Draw: 0, Unknown: "—" 
     overflow-wrap: anywhere;
 }
 .detailed {
-    gap: 0.95rem;
-    font-size: 0.9rem;
+    gap: 0.78rem;
+    font-size: 0.86rem;
     color: #e6f4e9;
 }
 .detailed .score-parts,
 .duel-group ul {
     display: grid;
     gap: 0;
-    border: 1px solid #98cfa341;
-    border-radius: 0.6rem;
-    background: #082e26;
+    overflow: hidden;
+    border: 1px solid #9be0a53d;
+    border-radius: 0.9rem;
+    background: #06241ecc;
 }
 .detailed .score-parts > div,
 .duel-group li {
@@ -143,7 +144,7 @@ const adjustments = { Won: duelStake, Lost: -duelStake, Draw: 0, Unknown: "—" 
     justify-content: space-between;
     align-items: center;
     gap: 0.55rem;
-    padding: 0.38rem 0.62rem;
+    padding: 0.46rem 0.75rem;
     border-radius: 0;
     background: transparent;
 }
@@ -155,9 +156,10 @@ const adjustments = { Won: duelStake, Lost: -duelStake, Draw: 0, Unknown: "—" 
     border-top: 1px solid #91c89924;
 }
 .score-total {
+    background: #b6efa318 !important;
     color: #e2ffab;
-    font-size: 1.05rem;
-    font-weight: 750;
+    font-size: 0.98rem;
+    font-weight: 800;
 }
 .duel-group h3 {
     margin: 0 0 0.32rem;

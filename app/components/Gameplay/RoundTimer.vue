@@ -1,6 +1,23 @@
 <template>
-    <div ref="dial" class="round-timer" :class="{ 'wide-reading': (seconds ?? 0) >= 100, 'last-beat': seconds === 1 }" :data-urgency="urgency" data-testid="round-timer">
-        <div class="timer-face" role="timer" :aria-label="seconds === null ? 'Round time unavailable' : `Time remaining, ${seconds} seconds`">
+    <div
+        ref="dial"
+        class="round-timer"
+        :class="{ 'is-compact': compact, 'wide-reading': (seconds ?? 0) >= 100, 'last-beat': seconds === 1 }"
+        :data-urgency="urgency"
+        data-testid="round-timer"
+    >
+        <div v-if="compact" class="timer-pill" role="timer" :aria-label="seconds === null ? 'Round time unavailable' : `Time remaining, ${seconds} seconds`">
+            <svg class="timer-pill-ring" viewBox="0 0 36 36" fill="none" aria-hidden="true" focusable="false">
+                <circle class="pill-ring-track" cx="18" cy="18" r="14.5" stroke="currentColor" />
+                <circle class="pill-ring-progress" cx="18" cy="18" r="14.5" pathLength="100" transform="rotate(-90 18 18)" stroke="currentColor" stroke-linecap="round" />
+            </svg>
+            <div class="timer-pill-digits" aria-hidden="true">
+                <strong>{{ seconds ?? "—" }}</strong
+                ><span v-if="seconds !== null">s</span>
+            </div>
+            <span class="timer-pill-bar" aria-hidden="true"><i /></span>
+        </div>
+        <div v-else class="timer-face" role="timer" :aria-label="seconds === null ? 'Round time unavailable' : `Time remaining, ${seconds} seconds`">
             <div class="timer-halo" aria-hidden="true" />
             <div class="timer-globe" aria-hidden="true" />
             <svg class="timer-dial-art" viewBox="0 0 120 120" fill="none" aria-hidden="true" focusable="false">
@@ -45,7 +62,7 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ seconds: number | null; duration: number }>();
+const props = defineProps<{ seconds: number | null; duration: number; compact?: boolean }>();
 const dial = useTemplateRef("dial");
 const id = useId();
 
@@ -279,6 +296,93 @@ defineExpose({ draw });
     font-size: 0.69rem;
     font-weight: 700;
     white-space: nowrap;
+}
+.round-timer.is-compact {
+    inline-size: auto;
+    flex: none;
+}
+.round-timer.is-compact .timer-pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.34rem;
+    min-block-size: 36px;
+    padding: 0.16rem 0.62rem 0.22rem 0.3rem;
+    overflow: hidden;
+    border: 1px solid color-mix(in srgb, var(--timer-accent) 55%, transparent);
+    border-radius: 999px;
+    background: linear-gradient(145deg, color-mix(in srgb, var(--timer-glass) 92%, #072821), #041c17eb);
+    box-shadow:
+        0 4px 14px #0015107a,
+        inset 0 1px #e5ffcf22,
+        0 0 12px color-mix(in srgb, var(--timer-shadow) calc(var(--timer-light) * 58%), transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.timer-pill-ring {
+    inline-size: 1.55rem;
+    block-size: 1.55rem;
+    flex: none;
+    color: var(--timer-accent);
+}
+.pill-ring-track {
+    opacity: 0.24;
+    stroke-width: 3.2;
+}
+.pill-ring-progress {
+    stroke-width: 3.6;
+    stroke-dasharray: 100 100;
+    stroke-dashoffset: calc(100 * (1 - var(--timer-progress, 0)));
+}
+.round-timer.is-compact:is([data-urgency="expired"], [data-urgency="waiting"]) .pill-ring-progress {
+    visibility: hidden;
+}
+.timer-pill-digits {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.06em;
+    color: #f8fff0;
+    font: italic 900 1.05rem / 1 var(--gb-font-display);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.03em;
+    text-shadow: 0 1px 4px #001410;
+}
+.round-timer.is-compact:is([data-urgency="critical"], [data-urgency="final"], [data-urgency="expired"]) .timer-pill-digits {
+    color: var(--timer-accent);
+}
+.timer-pill-digits strong {
+    font-weight: inherit;
+}
+.timer-pill-digits span {
+    font-size: 0.68em;
+    font-weight: 760;
+    opacity: 0.9;
+}
+.timer-pill-bar {
+    position: absolute;
+    inset: auto 0.55rem 0;
+    block-size: 2px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--timer-accent) 20%, transparent);
+    overflow: hidden;
+}
+.timer-pill-bar i {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    transform-origin: left center;
+    transform: scaleX(var(--timer-progress, 0));
+    background: var(--timer-accent);
+}
+.round-timer.is-compact .timer-waiting {
+    inset-block-start: calc(100% + 0.3rem);
+    inset-inline-start: 0;
+    translate: 0 0;
+}
+@media (prefers-reduced-motion: no-preference) {
+    .round-timer.is-compact:is([data-urgency="critical"], [data-urgency="final"]) .timer-pill {
+        transform: scale(calc(1 + 0.04 * var(--timer-beat-light)));
+    }
 }
 @media (prefers-reduced-motion: no-preference) {
     .round-timer {

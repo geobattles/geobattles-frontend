@@ -63,7 +63,9 @@
 
             <section v-if="champion" class="finish-results" aria-labelledby="standingsId">
                 <div class="finish-results-header">
-                    <h2 :id="standingsId">Final Standings</h2>
+                    <h2 :id="standingsId">
+                        <span class="standings-emblem" aria-hidden="true"><UiIcon name="trophy" /></span><span>Final Standings</span>
+                    </h2>
                     <p v-if="ownResult" class="personal-place">
                         <span>{{ champion.solo ? "Your score" : "Your result" }}</span>
                         <strong v-if="!champion.solo"
@@ -83,12 +85,15 @@
                     </details>
                     <PwaInstallBanner placement="results" :ready="resultsInstallReady" :match-key="finishedMatch" />
                 </div>
-                <footer v-if="finished" class="finish-rematch">
-                    <LobbyStartGame replay>
-                        <template #tools>
+            </section>
+
+            <aside v-if="finished && champion" class="finish-staging" aria-label="Next match settings and rematch">
+                <div class="finish-next-settings">
+                    <LobbyDisplaySettings compact>
+                        <template #edit>
                             <button
                                 v-if="lobby.isPlayerAdmin()"
-                                class="finish-control"
+                                class="finish-control settings-pill-btn"
                                 type="button"
                                 aria-label="Rematch settings"
                                 title="Rematch settings"
@@ -96,12 +101,19 @@
                                 @click="lobby.modifySettingsModal = true"
                             >
                                 <UiIcon name="settings" />
+                                <span class="settings-pill-label">Edit</span>
                             </button>
+                        </template>
+                    </LobbyDisplaySettings>
+                </div>
+                <footer class="finish-rematch">
+                    <LobbyStartGame replay>
+                        <template #tools>
                             <LobbyInviteLink class="finish-invite" />
                         </template>
                     </LobbyStartGame>
                 </footer>
-            </section>
+            </aside>
         </div>
 
         <div v-if="!champion" class="finish-pending" role="status">
@@ -317,11 +329,16 @@ onBeforeUnmount(() => viewport?.removeEventListener("change", syncViewport));
 .finish-layout {
     display: grid;
     grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
-    gap: clamp(0.4rem, 1.4vw, 1.3rem);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "overview standings"
+        "overview staging";
+    gap: clamp(0.4rem, 1.4vw, 1.15rem);
     min-height: 0;
     padding-block: var(--finish-space) max(var(--finish-space), env(safe-area-inset-bottom));
 }
 .finish-overview {
+    grid-area: overview;
     display: grid;
     grid-template-rows: auto minmax(0, 1fr);
     gap: clamp(0.45rem, 1.5dvh, 0.95rem);
@@ -417,12 +434,20 @@ onBeforeUnmount(() => viewport?.removeEventListener("change", syncViewport));
 .journey-button {
     grid-column: 1 / -1;
     justify-self: start;
-    padding-inline: 0.82rem;
-    background: #092d24c9;
+    min-height: 38px;
+    padding: 0.25rem 0.85rem;
+    border-radius: 999px;
+    border-color: #b6efa366;
+    background: #082d24e0;
+    box-shadow: 0 4px 14px #00140f66;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 0.78rem;
 }
 .finish-results {
+    grid-area: standings;
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
     min-width: 0;
     min-height: 0;
     overflow: hidden;
@@ -432,6 +457,32 @@ onBeforeUnmount(() => viewport?.removeEventListener("change", syncViewport));
     box-shadow:
         inset 0 1px #e1f7cf2d,
         0 0.4rem 1.45rem #04181173;
+}
+.finish-staging {
+    grid-area: staging;
+    display: grid;
+    grid-template-rows: auto auto;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--finish-line);
+    border-radius: 1.1rem;
+    background: var(--finish-card);
+    box-shadow:
+        inset 0 1px #e1f7cf2d,
+        0 0.4rem 1.45rem #04181173;
+}
+.finish-next-settings {
+    padding: clamp(0.42rem, 1.2vw, 0.78rem);
+    background:
+        url("/images/atlas-relief.svg") right bottom / 24rem auto no-repeat,
+        linear-gradient(145deg, #103b2ef2, #072620f5);
+}
+.settings-pill-btn {
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0.2rem 0.56rem;
+    border-radius: 999px;
+    font-size: 0.73rem;
 }
 .finish-results-header {
     display: flex;
@@ -444,7 +495,25 @@ onBeforeUnmount(() => viewport?.removeEventListener("change", syncViewport));
     background: url("/images/atlas-relief.svg") 112% 46% / 28rem auto no-repeat;
 }
 .finish-results-header h2 {
-    font: italic 850 clamp(1.02rem, 2.27vw, 1.7rem) / 1.1 var(--gb-font-display);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.42rem;
+    font: italic 850 clamp(0.95rem, 2.2vw, 1.55rem) / 1.1 var(--gb-font-display);
+}
+.finish-results-header .standings-emblem {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    inline-size: 1.5em;
+    block-size: 1.5em;
+    border: 1px solid #ffca6242;
+    border-radius: 50%;
+    background: #ffca621a;
+    color: #ffe28f;
+}
+.finish-results-header .standings-emblem .ui-icon {
+    inline-size: 0.9em;
+    block-size: 0.9em;
 }
 .personal-place {
     display: flex;
@@ -511,45 +580,178 @@ onBeforeUnmount(() => viewport?.removeEventListener("change", syncViewport));
 }
 @media (orientation: portrait) {
     .finish-screen {
+        --finish-space: 0.4rem;
         background-image: linear-gradient(180deg, #05251fdc, #04211a65 50%, #061f19ef), url("/images/emerald-horizon-portrait.webp");
     }
+    .finish-topbar-inner {
+        min-height: 2.75rem;
+    }
+    .finish-control,
+    .finish-invite :deep(.btn) {
+        min-width: 38px;
+        min-height: 38px;
+        border-radius: 999px;
+    }
     .finish-layout {
-        grid-template-rows: auto minmax(0, 1fr);
         grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            "overview"
+            "standings"
+            "staging";
+        gap: 0.4rem;
     }
     .finish-overview {
         grid-template-rows: auto;
     }
     .finish-hero {
-        grid-template-columns: minmax(0, 1fr) minmax(4.2rem, 0.34fr);
-        gap: 0.28rem 0.55rem;
+        grid-template-columns: minmax(0, 1fr) minmax(3.4rem, 0.26fr);
+        gap: 0.22rem 0.5rem;
+        padding: 0.55rem 0.72rem;
+        border-radius: 0.95rem;
+    }
+    .finish-identity h1 {
+        font-size: clamp(1.15rem, 4.8vw, 1.6rem);
     }
     .finish-champion-label {
-        margin-top: 0.46rem;
+        margin-top: 0.24rem;
+    }
+    .finish-champions {
+        font-size: clamp(1.1rem, 4.6vw, 1.5rem);
+    }
+    .finish-champion-points {
+        margin-top: 0.18rem;
+        font-size: 0.78rem;
+    }
+    .finish-trophy {
+        width: min(100%, 4.2rem);
+    }
+    .finish-results,
+    .finish-staging {
+        border-radius: 0.95rem;
+    }
+    .finish-results-header {
+        padding: 0.38rem 0.58rem;
+    }
+    .finish-next-settings {
+        padding: 0.42rem 0.56rem;
+    }
+    .finish-rematch {
+        padding: 0.4rem 0.56rem;
+    }
+    .finish-rematch :deep(.ready-actions) {
+        margin-top: 0.38rem;
+    }
+    .finish-rematch :deep(.ready-actions > button) {
+        min-height: 42px;
+        border-radius: 999px;
+        font-size: clamp(0.74rem, 3.3vw, 0.84rem);
+    }
+    .finish-rematch :deep(.ready-actions > .undo-ready) {
+        font-size: 0.76rem;
     }
 }
 @media (orientation: landscape) and (max-height: 540px) {
     .finish-screen {
-        --finish-space: 0.4rem;
+        --finish-space: 0.36rem;
     }
     .finish-topbar-inner {
-        min-height: 3rem;
+        min-height: 2.6rem;
+    }
+    .finish-control,
+    .finish-invite :deep(.btn) {
+        min-width: 36px;
+        min-height: 36px;
+        border-radius: 999px;
+    }
+    .finish-layout {
+        grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        grid-template-areas:
+            "overview staging"
+            "standings staging";
+        gap: 0.36rem;
     }
     .finish-overview {
-        grid-template-rows: minmax(0, 1fr);
+        grid-template-rows: auto;
+        gap: 0.3rem;
+    }
+    .finish-overview-podium:has(.journey-button) {
+        grid-template-rows: auto auto;
     }
     .finish-hero {
-        grid-template-columns: minmax(0, 1fr) minmax(3.45rem, 0.66fr);
-        padding: 0.55rem;
+        grid-template-columns: minmax(0, 1fr) auto;
+        padding: 0.45rem 0.6rem;
+        gap: 0.25rem 0.55rem;
+        border-radius: 0.9rem;
+    }
+    .finish-hero:has(.journey-button) {
+        grid-template-rows: auto auto;
     }
     .finish-identity h1 {
-        font-size: clamp(1.16rem, 3.24vw, 2rem);
+        font-size: clamp(1rem, 2.3vw, 1.38rem);
+    }
+    .finish-champion-label {
+        margin-top: 0.18rem;
+    }
+    .finish-champions {
+        font-size: clamp(1rem, 2.3vw, 1.35rem);
+    }
+    .finish-champion-points {
+        margin-top: 0.14rem;
+        font-size: 0.74rem;
+    }
+    .finish-trophy {
+        width: clamp(3rem, 11dvh, 4.4rem);
+    }
+    .journey-button {
+        min-height: 32px;
+        padding: 0.16rem 0.65rem;
+        font-size: 0.72rem;
+    }
+    .finish-results,
+    .finish-staging {
+        border-radius: 0.9rem;
     }
     .finish-results-header {
-        padding: 0.37rem 0.5rem;
+        padding: 0.32rem 0.5rem;
+    }
+    .finish-standings {
+        padding: 0.24rem 0.4rem;
+    }
+    .finish-staging {
+        grid-template-rows: minmax(0, 1fr) auto;
+    }
+    .finish-next-settings {
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding: 0.48rem 0.58rem;
+        overflow-y: auto;
     }
     .finish-rematch {
-        padding: 0.34rem;
+        padding: 0.36rem 0.48rem;
+    }
+    .finish-rematch :deep(.ready-heading h2) {
+        font-size: 0.86rem;
+    }
+    .finish-rematch :deep(.ready-actions) {
+        margin-top: 0.35rem;
+        gap: 0.36rem;
+    }
+    .finish-rematch :deep(.ready-actions > button) {
+        min-height: 38px;
+        padding: 0.24rem 0.58rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+    }
+    .finish-rematch :deep(.ready-actions > .undo-ready) {
+        padding: 0.22rem 0.46rem 0.22rem 0.68rem;
+        font-size: 0.74rem;
+    }
+    .finish-rematch :deep(.ready-feedback) {
+        margin-top: 0.2rem;
+        font-size: 0.68rem;
     }
 }
 @media (max-width: 475px) {

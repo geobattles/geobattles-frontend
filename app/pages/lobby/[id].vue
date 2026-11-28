@@ -24,19 +24,19 @@
                             <img src="/images/emerald-mark.svg" alt="" width="35" height="37" />
                             <span>Geo<b>Battles</b></span>
                         </div>
-                        <details class="room-profile">
+                        <details ref="profileMenu" class="room-profile">
                             <summary aria-label="Account menu">
                                 <span class="profile-icon" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="currentColor" focusable="false">
-                                        <circle cx="12" cy="7.8" r="3.8" />
-                                        <path d="M4.6 19.2c0-3.6 3.3-6 7.4-6s7.4 2.4 7.4 6c0 1.1-3.3 2.1-7.4 2.1s-7.4-1-7.4-2.1Z" />
-                                    </svg>
+                                    <UiIcon name="user" />
                                 </span>
                                 <svg class="profile-chevron" viewBox="0 0 16 16" fill="none" aria-hidden="true" focusable="false">
                                     <path d="m4 6 4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </summary>
-                            <div><NuxtLink to="/profile">Profile</NuxtLink><NuxtLink to="/journal">Expedition journal</NuxtLink></div>
+                            <div class="room-profile-popover">
+                                <NuxtLink to="/profile"><UiIcon name="user" />Profile</NuxtLink>
+                                <NuxtLink to="/journal"><UiIcon name="journal" />Expedition journal</NuxtLink>
+                            </div>
                         </details>
                         <svg class="room-crest" viewBox="0 0 62 38" aria-hidden="true">
                             <path fill="#66ad73" d="M26 38 46 10l16 28Z" />
@@ -125,7 +125,11 @@ const roomView = computed(() => hasRevealedLobby.value && !!roomSnapshot.value);
 const { goHome: leave, leavePrompt, decideLeave } = useLobbyLeaveGuard(() => cancellingEntry.value || !roomView.value);
 const bannerTarget = ref<HTMLElement | null>(null);
 const lobbyTitle = ref<HTMLElement | null>(null);
+const profileMenu = ref<HTMLDetailsElement | null>(null);
 const focusLobby = () => nextTick(() => lobbyTitle.value?.focus({ preventScroll: true }));
+const closeProfileMenu = (event: MouseEvent) => {
+    if (profileMenu.value?.open && !profileMenu.value.contains(event.target as Node)) profileMenu.value.open = false;
+};
 const entryPath = computed(() => {
     const previous = router.options.history.state.back;
     return typeof previous === "string" ? previous.split(/[?#]/, 1)[0] : null;
@@ -145,7 +149,11 @@ const cancelEntry = async () => {
 };
 const { fetchCountryList } = useCountryActions();
 onMounted(() => {
+    document.addEventListener("click", closeProfileMenu);
     void fetchCountryList().catch(() => console.warn("Country list could not be loaded."));
+});
+onBeforeUnmount(() => {
+    document.removeEventListener("click", closeProfileMenu);
 });
 
 useHead({ title: "Lobby" });
@@ -286,24 +294,46 @@ useHead({ title: "Lobby" });
 .room-profile summary::-webkit-details-marker {
     display: none;
 }
-.room-profile > div {
+.room-profile > .room-profile-popover {
     position: absolute;
+    z-index: 40;
     right: 0;
-    min-width: 10rem;
-    padding: 0.3rem;
-    border: 1px solid #70cda675;
-    border-radius: 8px;
-    background: #052e24;
+    top: calc(100% + 0.38rem);
+    min-width: 12rem;
+    padding: 0.36rem;
+    border: 1px solid #8ddbaf55;
+    border-radius: 0.9rem;
+    background: linear-gradient(155deg, #0b332af5, #05201bf8);
+    box-shadow:
+        0 14px 36px #00130fc4,
+        inset 0 1px #e2ffd020;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    display: grid;
+    gap: 0.14rem;
+    text-shadow: none;
 }
-.room-profile a {
+.room-profile-popover a {
     display: flex;
-    min-height: 44px;
     align-items: center;
-    padding-inline: 0.45rem;
+    gap: 0.5rem;
+    min-height: 36px;
+    padding: 0.36rem 0.56rem;
+    border-radius: 0.55rem;
+    color: #e8f8ec;
+    font-size: 0.79rem;
+    font-weight: 680;
     text-decoration: none;
+    white-space: nowrap;
 }
-.room-profile a:hover {
-    background: #135040;
+.room-profile-popover a .ui-icon {
+    width: 1rem;
+    height: 1rem;
+    color: #9de8bd;
+}
+.room-profile-popover a:hover {
+    background: #a4ecd31c;
+    color: #ffffff;
 }
 .room-tools,
 .room-access {
@@ -426,7 +456,7 @@ useHead({ title: "Lobby" });
     gap: 0.35rem;
     margin-top: 0;
 }
-.lobby-actions :deep(.ready-actions > button:not(.undo-ready)) {
+.lobby-actions :deep(.ready-actions > button) {
     min-height: 48px;
     border-radius: 999px;
 }
@@ -497,73 +527,135 @@ useHead({ title: "Lobby" });
 }
 @media (max-width: 760px) and (orientation: portrait) {
     .scenic-lobby {
+        --edge: 0.48rem;
         --lobby-image: url("/images/emerald-lake-portrait.webp");
     }
     .lobby-frame {
-        padding-top: max(0.55rem, env(safe-area-inset-top));
-        padding-bottom: max(0.55rem, env(safe-area-inset-bottom));
+        padding-top: max(0.42rem, env(safe-area-inset-top));
+        padding-bottom: max(0.45rem, env(safe-area-inset-bottom));
     }
     .room-header {
         grid-template-areas:
             "brand brand profile"
             "crest title title"
             "access access tools";
-        gap: 0.3rem;
+        gap: 0.28rem 0.42rem;
     }
     .room-brand {
         margin: 0;
+        font-size: 1.05rem;
+        gap: 0.38rem;
     }
     .room-brand img {
-        width: 25px;
+        width: 22px;
         height: auto;
     }
-    .room-header h1 {
-        font-size: clamp(1.25rem, 5.5vw, 1.75rem);
+    .room-crest {
+        width: 1.55rem;
     }
-    .room-title p {
+    .room-header h1 {
+        font: italic 900 clamp(1.1rem, 4.6vw, 1.45rem) / 1.1 var(--gb-font-display);
+        letter-spacing: -0.03em;
+    }
+    .room-title p,
+    .profile-chevron,
+    .edit-suffix {
         display: none;
     }
     .room-profile summary {
-        min-width: 44px;
+        min-width: 36px;
+        min-height: 36px;
+        width: 36px;
+        height: 36px;
+        padding: 0;
+    }
+    .profile-icon {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        background: transparent;
+        box-shadow: none;
+    }
+    .profile-icon .ui-icon {
+        width: 18px;
+        height: 18px;
+    }
+    .room-access,
+    .room-tools {
+        gap: 0.26rem;
+        flex-wrap: nowrap;
+    }
+    .room-access :deep(.code-label) {
+        display: none;
+    }
+    .room-connection {
+        padding: 0.22rem 0.5rem;
+        font-size: 0.68rem;
+    }
+    .room-tools :deep(.btn),
+    .room-access :deep(.code-button) {
+        min-height: 32px;
+        min-width: 32px;
+        padding: 0.18rem 0.54rem;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 740;
+        gap: 0.28rem;
+    }
+    .room-tools :deep(.btn .ui-icon),
+    .room-access :deep(.code-button .ui-icon) {
+        width: 0.85rem;
+        height: 0.85rem;
+    }
+    .room-tools :deep(.btn-danger) {
+        border-color: #ff998952;
+        background: #3a1d1cc8;
+        color: #ffd0ad;
     }
     .lobby-content {
         max-height: none;
         grid-template-columns: minmax(0, 1fr);
         grid-template-rows: minmax(0, 1fr) minmax(0, auto);
-        margin-top: 0.45rem;
+        gap: 0.42rem;
+        margin-top: 0.4rem;
     }
     .match-panel {
-        max-height: 57dvh;
+        gap: 0.45rem;
+        max-height: 55dvh;
     }
     .lobby-panel {
-        border-radius: 10px;
+        padding: 0.5rem 0.56rem;
+        border-radius: 0.95rem;
     }
     .roster-panel {
         background: linear-gradient(160deg, #0b3739ed, #032523ab 85%);
     }
-    .room-access,
-    .room-tools {
-        gap: 0.25rem;
+    .lobby-actions :deep(.ready-actions > button) {
+        min-height: 42px;
+        font-size: 0.84rem;
     }
-    .room-access :deep(.code-label) {
-        display: none;
+    .lobby-actions :deep(.ready-actions > .undo-ready) {
+        font-size: 0.78rem;
     }
 }
 @media (orientation: landscape) and (max-height: 540px) {
+    .scenic-lobby {
+        --edge: 0.45rem;
+    }
     .lobby-frame {
-        padding-top: max(0.35rem, env(safe-area-inset-top));
-        padding-bottom: max(0.45rem, env(safe-area-inset-bottom));
+        padding-top: max(0.3rem, env(safe-area-inset-top));
+        padding-bottom: max(0.36rem, env(safe-area-inset-bottom));
     }
     .room-header {
         grid-template-columns: auto minmax(0, 1fr) auto auto;
         grid-template-areas: "brand title access tools";
-        gap: 0.4rem;
+        gap: 0.35rem;
     }
     .room-brand {
         margin: 0;
     }
     .room-brand img {
-        width: 1.45rem;
+        width: 1.35rem;
         height: auto;
     }
     .room-brand span,
@@ -574,19 +666,64 @@ useHead({ title: "Lobby" });
         display: none;
     }
     .room-header h1 {
-        font-size: clamp(1.05rem, 3vw, 1.65rem);
+        font: italic 900 clamp(1.02rem, 2.5vw, 1.35rem) / 1.1 var(--gb-font-display);
+        letter-spacing: -0.025em;
+    }
+    .room-access,
+    .room-tools {
+        gap: 0.25rem;
+        flex-wrap: nowrap;
+    }
+    .room-access :deep(.code-label) {
+        display: none;
+    }
+    .room-connection {
+        padding: 0.2rem 0.48rem;
+        font-size: 0.68rem;
+    }
+    .room-tools :deep(.btn),
+    .room-access :deep(.code-button) {
+        min-height: 32px;
+        min-width: 32px;
+        padding: 0.16rem 0.52rem;
+        border-radius: 999px;
+        font-size: 0.71rem;
+        font-weight: 740;
+        gap: 0.26rem;
+    }
+    .room-tools :deep(.btn .ui-icon),
+    .room-access :deep(.code-button .ui-icon) {
+        width: 0.84rem;
+        height: 0.84rem;
+    }
+    .room-tools :deep(.btn-danger) {
+        border-color: #ff998952;
+        background: #3a1d1cc8;
+        color: #ffd0ad;
     }
     .lobby-content {
-        grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-        margin-top: 0.4rem;
+        grid-template-columns: minmax(0, 0.94fr) minmax(0, 1.06fr);
+        gap: 0.42rem;
+        margin-top: 0.34rem;
         max-height: none;
     }
     .lobby-panel {
-        padding: 0.5rem;
-        border-radius: 9px;
+        padding: 0.46rem 0.54rem;
+        border-radius: 0.9rem;
     }
-    .lobby-actions :deep(.ready-actions > button:not(.undo-ready)) {
-        min-height: 44px;
+    .match-panel {
+        gap: 0.4rem;
+    }
+    .match-summary {
+        display: flex;
+        flex-direction: column;
+    }
+    .lobby-actions :deep(.ready-actions > button) {
+        min-height: 38px;
+        font-size: 0.8rem;
+    }
+    .lobby-actions :deep(.ready-actions > .undo-ready) {
+        font-size: 0.74rem;
     }
     .lobby-feedback :deep(.connection-strip > div) {
         display: flex;
@@ -596,14 +733,15 @@ useHead({ title: "Lobby" });
 }
 @media (max-width: 370px), (orientation: landscape) and (max-width: 600px) {
     .room-connection {
-        gap: 0.24rem;
-        padding-inline: 0.24rem;
-        font-size: 0.69rem;
+        gap: 0.22rem;
+        padding-inline: 0.36rem;
+        font-size: 0.64rem;
     }
     .lobby-frame :deep(.room-tools .btn),
     .lobby-frame :deep(.code-button) {
-        gap: 0.24rem;
-        padding-inline: 0.36rem;
+        gap: 0.2rem;
+        padding-inline: 0.4rem;
+        font-size: 0.68rem;
     }
 }
 </style>

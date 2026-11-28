@@ -2,15 +2,21 @@
     <div
         ref="notice"
         class="duel-notice"
-        :class="{ 'is-live': !queued, 'duel-toast': floating }"
+        :class="{ 'is-live': !queued, 'is-compact': compact, 'duel-toast': floating }"
         :popover="floating && topLayer ? 'manual' : undefined"
         role="status"
         aria-atomic="true"
     >
         <div v-if="challengers.length" class="duel-message">
-            <UiIcon name="target" />
-            <span :class="{ 'many-challengers': challengers.length > 2 }" :tabindex="challengers.length > 2 ? 0 : undefined">
-                <strong>{{ queued ? "Incoming Duel" : "Under attack" }}</strong>
+            <span class="duel-badge-icon" aria-hidden="true"><UiIcon name="target" /></span>
+            <span v-if="compact && !queued" class="duel-inline-copy">
+                <strong>Duel</strong>
+                <span class="duel-dot" aria-hidden="true">·</span>
+                <span class="duel-names">{{ compactNames }}</span>
+                <span class="sr-only"> — {{ names }} challenged you.</span>
+            </span>
+            <span v-else :class="{ 'many-challengers': challengers.length > 2 }" :tabindex="challengers.length > 2 ? 0 : undefined">
+                <strong>{{ queued ? "Incoming Duel" : "Duel Active" }}</strong>
                 <span>{{ names }} challenged you{{ queued ? " for round " + round : "" }}.</span>
             </span>
         </div>
@@ -18,8 +24,12 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps<{ challengers: string[]; round: number; queued?: boolean; floating?: boolean; layer?: Element | null }>();
+const props = defineProps<{ challengers: string[]; round: number; queued?: boolean; floating?: boolean; compact?: boolean; layer?: Element | null }>();
 const names = computed(() => new Intl.ListFormat("en", { style: "long", type: "conjunction" }).format(props.challengers));
+const compactNames = computed(() => {
+    if (props.challengers.length <= 2) return props.challengers.join(" & ");
+    return `${props.challengers[0]} +${props.challengers.length - 1}`;
+});
 const notice = useTemplateRef("notice");
 const topLayer = ref(false);
 onMounted(() => {
@@ -48,44 +58,53 @@ watch(
 .duel-message {
     display: flex;
     align-items: center;
-    gap: 0.6rem;
-    padding: 0.5rem 0.72rem;
-    border: 1px solid #cb827273;
-    border-inline-start: 3px solid #ffa18b;
-    border-radius: 0.65rem;
-    background: linear-gradient(110deg, #422c27, #212a24);
-    color: #ffe6dc;
-    line-height: 1.3;
+    gap: 0.52rem;
+    padding: 0.42rem 0.72rem 0.42rem 0.5rem;
+    border: 1px solid #ff998966;
+    border-radius: 0.95rem;
+    background: linear-gradient(135deg, #3b1e1fe8, #142622f0);
+    box-shadow:
+        0 6px 20px #00140f8c,
+        inset 0 1px #ffd4ca22;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #ffeae4;
+    line-height: 1.25;
 }
-.duel-message > .ui-icon {
+.duel-badge-icon {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 1.65rem;
+    block-size: 1.65rem;
     flex: none;
-    width: 1.25rem;
-    height: 1.25rem;
-    color: #ffae95;
+    border-radius: 50%;
+    background: #ff8e7c28;
+    color: #ffab9a;
 }
-.duel-message > span {
+.duel-badge-icon > .ui-icon {
+    width: 1rem;
+    height: 1rem;
+}
+.duel-message > span:not(.duel-badge-icon) {
     min-width: 0;
     max-block-size: 4.5em;
     overflow: auto;
     overflow-wrap: anywhere;
     scrollbar-width: thin;
 }
-.duel-message strong,
-.duel-message span span {
+.duel-message:not(.is-compact) strong,
+.duel-message:not(.is-compact) span > span:not(.duel-dot):not(.duel-names) {
     display: block;
 }
 .duel-message strong {
-    color: #ffb49f;
-    font: 800 0.74rem / 1.3 var(--gb-font-display);
+    color: #ffb8a5;
+    font: 800 0.72rem / 1.2 var(--gb-font-display);
     letter-spacing: 0.045em;
     text-transform: uppercase;
 }
-.duel-message span span {
-    font-size: 0.875rem;
-    font-weight: 620;
-}
-.is-live .duel-message {
-    box-shadow: 0 3px 12px #171c1966;
+.duel-message span > span {
+    font-size: 0.82rem;
+    font-weight: 640;
 }
 .is-live {
     pointer-events: none;
@@ -93,11 +112,43 @@ watch(
 .is-live .many-challengers {
     pointer-events: auto;
 }
-.is-live .duel-message strong {
-    font-size: 1rem;
-    font-style: italic;
-    letter-spacing: 0;
-    text-transform: none;
+.is-live.is-compact .duel-message {
+    gap: 0.38rem;
+    padding: 0.24rem 0.65rem 0.24rem 0.34rem;
+    border-radius: 999px;
+}
+.is-live.is-compact .duel-badge-icon {
+    inline-size: 1.4rem;
+    block-size: 1.4rem;
+}
+.is-live.is-compact .duel-badge-icon > .ui-icon {
+    width: 0.85rem;
+    height: 0.85rem;
+}
+.duel-inline-copy {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.3rem;
+    min-inline-size: 0;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.is-live.is-compact .duel-inline-copy strong {
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    flex: none;
+}
+.duel-dot {
+    color: #ff998996;
+    font-weight: 800;
+    flex: none;
+}
+.duel-names {
+    font-size: 0.76rem !important;
+    font-weight: 760 !important;
+    color: #fff2ee;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .duel-toast {
     position: fixed;
@@ -114,23 +165,24 @@ watch(
     pointer-events: none;
 }
 .duel-toast .duel-message {
-    box-shadow: 0 0.35rem 1.5rem #11080495;
+    box-shadow: 0 8px 24px #11080495;
 }
 .duel-toast .many-challengers {
     pointer-events: auto;
 }
 @media (prefers-reduced-motion: no-preference) {
-    .duel-toast .duel-message {
-        animation: duel-toast-in 180ms ease-out;
+    .duel-toast .duel-message,
+    .is-live .duel-message {
+        animation: duel-toast-in 200ms cubic-bezier(0.22, 1, 0.36, 1);
     }
     @keyframes duel-toast-in {
         from {
             opacity: 0;
-            transform: translateY(-0.35rem);
+            transform: translateY(-0.35rem) scale(0.96);
         }
         to {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
         }
     }
 }

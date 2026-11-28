@@ -142,8 +142,12 @@ const rows = computed(() => {
 .final-ready {
     display: inline-flex;
     align-items: center;
-    gap: 0.25em;
+    gap: 0.22em;
+    padding: 0.1rem 0.4rem;
+    border-radius: 999px;
+    background: #70d9af1f;
     color: #c5f39f;
+    font-weight: 700;
 }
 .own-row > :is(th, td) {
     background: #abf47e1b;
@@ -152,11 +156,27 @@ const rows = computed(() => {
     box-shadow: inset 2px 0 #c5f394;
 }
 @media (max-width: 540px), (orientation: landscape) and (max-height: 520px) {
+    .total-table {
+        font-size: 0.74rem;
+    }
+    .total-table :is(th, td) {
+        padding: 0.28rem 0.26rem;
+    }
+    .total-table thead th {
+        font-size: 0.64rem;
+    }
+    .final-player {
+        --player-avatar-size: 1.08rem;
+        gap: 0.28rem;
+    }
     .place-col {
-        width: 2.34rem;
+        width: 2.1rem;
     }
     .score-col {
-        width: 4.05rem;
+        width: 3.7rem;
+    }
+    .ready-col {
+        width: 4.1rem;
     }
     .ready-col {
         width: 3.75rem;

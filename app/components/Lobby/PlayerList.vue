@@ -287,16 +287,39 @@ const entries = computed(() => {
     .roster-title span {
         display: none;
     }
-    .staging .crew-row {
+    .staging .roster-heading {
         gap: 0.4rem;
+        margin-bottom: 0.36rem;
+    }
+    .staging .roster-title {
+        gap: 0.36rem;
+        font: italic 850 0.9rem / 1.1 var(--gb-font-display);
+    }
+    .staging .roster-title svg {
+        width: 0.95rem;
+        height: 0.95rem;
+    }
+    .roster-ready,
+    .roster-count {
+        font-size: 0.69rem;
+    }
+    .staging .crew-row {
+        gap: 0.42rem;
         min-height: 34px;
-        padding: 0.2rem 0.35rem;
+        padding: 0.24rem 0.44rem;
     }
     .staging .crew-avatar {
         --player-avatar-size: 24px;
     }
+    .crew-name {
+        font-size: 0.78rem;
+    }
+    .crew-name small {
+        font-size: 0.58rem;
+    }
     .staging .crew-row > .badge {
-        padding: 0.13rem 0.35rem;
+        padding: 0.12rem 0.42rem;
+        font-size: 0.66rem;
     }
 }
 </style>

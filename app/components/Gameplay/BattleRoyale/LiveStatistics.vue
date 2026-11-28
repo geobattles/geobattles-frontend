@@ -1,10 +1,10 @@
 <template>
-    <div class="live-statistics table-scroll" :class="{ 'is-compact': compact, 'is-hud': playerHooks }">
+    <div class="live-statistics table-scroll" :class="{ 'is-compact': compact, 'is-hud': playerHooks, 'is-peek': peek }">
         <table class="data-table live-table">
             <caption class="sr-only">
                 This round’s live results
             </caption>
-            <thead>
+            <thead v-if="!peek">
                 <tr>
                     <th scope="col">{{ playerHooks || compact ? "Player" : "Explorer" }}</th>
                     <th scope="col" class="numeric">Left</th>
@@ -14,47 +14,93 @@
             </thead>
             <TransitionGroup tag="tbody" :move-class="effects.size ? 'live-rank-move' : 'live-rank-still'">
                 <tr
-                    v-for="[id, result] in entries"
-                    :key="id"
-                    :id="playerHooks ? `live-player-${id}` : undefined"
+                    v-for="row in topRows"
+                    :key="row.id"
+                    :id="playerHooks ? `live-player-${row.id}` : undefined"
                     :data-testid="activeHooks ? 'player-row' : undefined"
-                    :data-player-name="lobby.lobbySettings?.playerList[id]?.name"
-                    :data-connected="String(lobby.lobbySettings?.playerList[id]?.connected === true)"
-                    :data-ready="String(lobby.lobbySettings?.playerList[id]?.ready === true)"
-                    :data-host="String(lobby.lobbySettings?.admin === id)"
-                    :data-guess-effect="effects.get(id)?.kind"
-                    :class="{ 'is-attacking-you': powerupIndicators.get(id)?.targets.includes(player.ID ?? ''), 'is-you': playerHooks && id === player.ID }"
+                    :data-player-name="lobby.lobbySettings?.playerList[row.id]?.name"
+                    :data-connected="String(lobby.lobbySettings?.playerList[row.id]?.connected === true)"
+                    :data-ready="String(lobby.lobbySettings?.playerList[row.id]?.ready === true)"
+                    :data-host="String(lobby.lobbySettings?.admin === row.id)"
+                    :data-guess-effect="effects.get(row.id)?.kind"
+                    :class="{ 'is-attacking-you': powerupIndicators.get(row.id)?.targets.includes(player.ID ?? ''), 'is-you': playerHooks && row.id === player.ID }"
                 >
                     <td>
                         <span class="player-identity">
-                            <PlayerAvatar :color="getPlayerColorByID(id)" />
-                            <span class="live-player-name" :title="getPlayerNameFromID(id)">{{ getPlayerNameFromID(id) }}</span>
-                            <span v-if="playerHooks && id === player.ID" :class="compact ? 'sr-only' : 'your-row'">You</span>
-                            <small v-if="lobby.lobbySettings?.playerList[id]?.connected === false" class="player-connection">{{
-                                lobby.lobbySettings.playerList[id]?.away ? "Away" : "Offline"
+                            <span v-if="compact && playerHooks" class="live-rank-num" :data-rank="row.rank ?? undefined">{{ row.rank ? `#${row.rank}` : "–" }}</span>
+                            <PlayerAvatar :color="getPlayerColorByID(row.id)" />
+                            <span class="live-player-name" :title="getPlayerNameFromID(row.id)">{{ getPlayerNameFromID(row.id) }}</span>
+                            <span v-if="playerHooks && row.id === player.ID" :class="compact ? 'sr-only' : 'your-row'">You</span>
+                            <small v-if="lobby.lobbySettings?.playerList[row.id]?.connected === false" class="player-connection">{{
+                                lobby.lobbySettings.playerList[row.id]?.away ? "Away" : "Offline"
                             }}</small>
-                            <GameplayPlayerPowerupIndicators :indicator="powerupIndicators.get(id)" />
-                            <span v-if="effects.get(id)?.kind === 'lead'" :key="`lead-${effects.get(id)?.attempt}`" class="rank-cue rank-cue-lead" title="Takes the lead">
+                            <GameplayPlayerPowerupIndicators :indicator="powerupIndicators.get(row.id)" :player-id="row.id" />
+                            <span v-if="effects.get(row.id)?.kind === 'lead'" :key="`lead-${effects.get(row.id)?.attempt}`" class="rank-cue rank-cue-lead" title="Takes the lead">
                                 <UiIcon name="crown" /><span>Lead</span>
                             </span>
-                            <span v-else-if="effects.get(id)?.kind === 'climb'" :key="`climb-${effects.get(id)?.attempt}`" class="rank-cue rank-cue-climb" title="Moved up">
-                                ↑{{ effects.get(id)?.passed }}
+                            <span v-else-if="effects.get(row.id)?.kind === 'climb'" :key="`climb-${effects.get(row.id)?.attempt}`" class="rank-cue rank-cue-climb" title="Moved up">
+                                ↑{{ effects.get(row.id)?.passed }}
                             </span>
                         </span>
-                        <small v-if="powerupIndicators.get(id)?.targets.length" class="live-matchup" aria-hidden="true">
-                            {{ getPlayerNameFromID(id) }} → {{ powerupIndicators.get(id)?.targets.map(getPlayerNameFromID).join(", ") }}
-                        </small>
                     </td>
-                    <td class="numeric" :title="`${result.lives} guesses remaining`">
+                    <td class="numeric" :title="`${row.result.lives} guesses remaining`">
                         <span class="live-attempt"
-                            ><span v-if="effects.has(id)" :key="effects.get(id)?.attempt" class="guess-pin" title="Guess placed"><UiIcon name="pin" /></span
-                            >{{ result.lives }}</span
+                            ><span v-if="effects.has(row.id)" :key="effects.get(row.id)?.attempt" class="guess-pin" title="Guess placed"><UiIcon name="pin" /></span
+                            >{{ row.result.lives }}</span
                         >
                     </td>
                     <td class="numeric live-distance">
-                        <span class="distance-reading">{{ formatGuessDistance(result) }}</span>
+                        <span class="distance-reading">{{ formatGuessDistance(row.result) }}</span>
                     </td>
-                    <td class="numeric live-points">{{ result.baseScr || 0 }}</td>
+                    <td class="numeric live-points">{{ row.result.baseScr || 0 }}</td>
+                </tr>
+                <tr v-if="hiddenBetween > 0" key="__gap-between__" class="peek-gap-row">
+                    <td colspan="4">
+                        <span class="peek-gap-pill">··· {{ hiddenBetween }} {{ hiddenBetween === 1 ? "player" : "players" }} in between ···</span>
+                    </td>
+                </tr>
+                <tr
+                    v-if="pinnedOwnRow"
+                    :key="pinnedOwnRow.id"
+                    :id="playerHooks ? `live-player-${pinnedOwnRow.id}` : undefined"
+                    :data-testid="activeHooks ? 'player-row' : undefined"
+                    :data-player-name="lobby.lobbySettings?.playerList[pinnedOwnRow.id]?.name"
+                    :data-connected="String(lobby.lobbySettings?.playerList[pinnedOwnRow.id]?.connected === true)"
+                    :data-ready="String(lobby.lobbySettings?.playerList[pinnedOwnRow.id]?.ready === true)"
+                    :data-host="String(lobby.lobbySettings?.admin === pinnedOwnRow.id)"
+                    :data-guess-effect="effects.get(pinnedOwnRow.id)?.kind"
+                    :class="{
+                        'is-attacking-you': powerupIndicators.get(pinnedOwnRow.id)?.targets.includes(player.ID ?? ''),
+                        'is-you': true,
+                    }"
+                >
+                    <td>
+                        <span class="player-identity">
+                            <span v-if="compact && playerHooks" class="live-rank-num" :data-rank="pinnedOwnRow.rank ?? undefined">{{
+                                pinnedOwnRow.rank ? `#${pinnedOwnRow.rank}` : "–"
+                            }}</span>
+                            <PlayerAvatar :color="getPlayerColorByID(pinnedOwnRow.id)" />
+                            <span class="live-player-name" :title="getPlayerNameFromID(pinnedOwnRow.id)">{{ getPlayerNameFromID(pinnedOwnRow.id) }}</span>
+                            <span class="sr-only">You</span>
+                            <GameplayPlayerPowerupIndicators :indicator="powerupIndicators.get(pinnedOwnRow.id)" :player-id="pinnedOwnRow.id" />
+                        </span>
+                    </td>
+                    <td class="numeric" :title="`${pinnedOwnRow.result.lives} guesses remaining`">
+                        <span class="live-attempt"
+                            ><span v-if="effects.has(pinnedOwnRow.id)" :key="effects.get(pinnedOwnRow.id)?.attempt" class="guess-pin" title="Guess placed"
+                                ><UiIcon name="pin" /></span
+                            >{{ pinnedOwnRow.result.lives }}</span
+                        >
+                    </td>
+                    <td class="numeric live-distance">
+                        <span class="distance-reading">{{ formatGuessDistance(pinnedOwnRow.result) }}</span>
+                    </td>
+                    <td class="numeric live-points">{{ pinnedOwnRow.result.baseScr || 0 }}</td>
+                </tr>
+                <tr v-if="hiddenBelow > 0" key="__gap-below__" class="peek-gap-row">
+                    <td colspan="4">
+                        <span class="peek-gap-pill">+{{ hiddenBelow }} more · tap to view all</span>
+                    </td>
                 </tr>
             </TransitionGroup>
         </table>
@@ -64,9 +110,9 @@
 </template>
 <script setup lang="ts">
 import PlayerAvatar from "~/components/Ui/PlayerAvatar.vue";
-import type { LiveGuessFeedback } from "~/utils/resultUtils";
+import { guessDistance, hasGuess, type LiveGuessFeedback } from "~/utils/resultUtils";
 
-const props = defineProps<{ playerHooks?: boolean; compact?: boolean }>();
+const props = defineProps<{ playerHooks?: boolean; compact?: boolean; peek?: boolean }>();
 const game = useGameMode();
 const activeHooks = computed(() => props.playerHooks && ["PLAYING", "STARTING"].includes(game.modeLogic.currentState));
 const results = useResultsStore();
@@ -75,6 +121,37 @@ const lobby = useLobbyStore();
 const powerupIndicators = useLivePowerupIndicators();
 const { getPlayerColorByID, getPlayerNameFromID } = usePlayerLookup();
 const entries = computed(() => Object.entries(results.liveResults).filter(([id]) => !!lobby.lobbySettings?.playerList[id]));
+const rankedEntries = computed(() => {
+    const list = entries.value;
+    return list.map(([id, result]) => {
+        if (!hasGuess(result)) return { id, result, rank: null as number | null };
+        const dist = guessDistance(result);
+        const rank = 1 + list.filter(([, other]) => hasGuess(other) && guessDistance(other) < dist).length;
+        return { id, result, rank };
+    });
+});
+const peekLimit = 5;
+const peekLayout = computed(() => {
+    const all = rankedEntries.value;
+    if (!props.peek || all.length <= peekLimit) {
+        return { top: all, pinnedOwn: null as (typeof all)[number] | null, hiddenBetween: 0, hiddenBelow: 0 };
+    }
+    const ownId = player.value.ID;
+    const ownIndex = ownId ? all.findIndex((row) => row.id === ownId) : -1;
+    if (ownIndex < 0 || ownIndex < peekLimit) {
+        return { top: all.slice(0, peekLimit), pinnedOwn: null, hiddenBetween: 0, hiddenBelow: all.length - peekLimit };
+    }
+    return {
+        top: all.slice(0, peekLimit - 1),
+        pinnedOwn: all[ownIndex]!,
+        hiddenBetween: ownIndex - (peekLimit - 1),
+        hiddenBelow: all.length - 1 - ownIndex,
+    };
+});
+const topRows = computed(() => peekLayout.value.top);
+const pinnedOwnRow = computed(() => peekLayout.value.pinnedOwn);
+const hiddenBetween = computed(() => peekLayout.value.hiddenBetween);
+const hiddenBelow = computed(() => peekLayout.value.hiddenBelow);
 const effects = reactive(new Map<string, LiveGuessFeedback>());
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 const announcement = ref("");
@@ -242,23 +319,15 @@ if (props.playerHooks) {
     box-shadow: inset 2px 0 var(--guess-tint);
 }
 .live-table tr.is-attacking-you > td {
-    background: #392929;
-    box-shadow:
-        inset 0 1px #d77a7059,
-        inset 0 -1px #d77a7059;
+    background: #ff7e6b24;
+    box-shadow: none;
     animation: none;
 }
 .live-table tr.is-attacking-you > td:first-child {
-    box-shadow:
-        inset 2px 0 #d77a70a6,
-        inset 0 1px #d77a7059,
-        inset 0 -1px #d77a7059;
+    box-shadow: inset 2.5px 0 #ff9989;
 }
 .live-table tr.is-attacking-you > td:last-child {
-    box-shadow:
-        inset -1px 0 #d77a7059,
-        inset 0 1px #d77a7059,
-        inset 0 -1px #d77a7059;
+    box-shadow: none;
 }
 @media (prefers-reduced-motion: no-preference) {
     .live-rank-move {
@@ -333,9 +402,9 @@ if (props.playerHooks) {
 }
 .is-compact .player-identity {
     --player-avatar-size: 8px;
-    gap: 2px;
-    --powerup-badge-size: 0.72rem;
-    --powerup-badge-gap: 2px;
+    gap: 4px;
+    --powerup-badge-size: 0.96rem;
+    --powerup-badge-gap: 3px;
 }
 .is-compact .rank-cue-lead > span {
     display: none;
@@ -433,6 +502,61 @@ if (props.playerHooks) {
 .is-hud.is-compact .player-identity {
     --player-avatar-size: 0.92rem;
     gap: 0.22rem;
+}
+.live-statistics.is-hud.is-compact.is-peek {
+    padding: 0.08rem 0.28rem;
+}
+.is-hud.is-compact.is-peek .live-table {
+    table-layout: auto;
+    inline-size: 100%;
+    border-spacing: 0 0.08rem;
+    font-size: 0.72rem;
+}
+.is-hud.is-compact.is-peek .live-table td {
+    padding: 0.16rem 0.26rem;
+    border-bottom: 0;
+}
+.is-hud.is-compact.is-peek .live-table td:first-child {
+    padding-inline-end: 0.55rem;
+}
+.is-hud.is-compact.is-peek .live-table td:nth-child(2),
+.is-hud.is-compact.is-peek .live-table td:nth-child(3),
+.is-hud.is-compact.is-peek .live-table td:nth-child(4) {
+    width: 1%;
+    white-space: nowrap;
+}
+.is-hud.is-compact.is-peek .live-player-name {
+    max-inline-size: min(9.5rem, 36vw);
+}
+.live-rank-num {
+    flex: none;
+    min-inline-size: 1.25rem;
+    color: #9dc0ae;
+    font: 800 0.65rem / 1 var(--gb-font-mono);
+    font-variant-numeric: tabular-nums;
+}
+.live-rank-num[data-rank="1"] {
+    color: #ffca62;
+}
+.live-rank-num[data-rank="2"] {
+    color: #dbe9ed;
+}
+.live-rank-num[data-rank="3"] {
+    color: #f6b68d;
+}
+.peek-gap-row td {
+    padding: 0.1rem 0.2rem !important;
+    border-bottom: 0 !important;
+    text-align: center;
+}
+.peek-gap-pill {
+    display: inline-block;
+    padding: 0.06rem 0.45rem;
+    border-radius: 999px;
+    background: #b6efa318;
+    color: #b7d8c5;
+    font: 700 0.62rem / 1.25 var(--gb-font-display);
+    letter-spacing: 0.02em;
 }
 .player-connection {
     flex: none;

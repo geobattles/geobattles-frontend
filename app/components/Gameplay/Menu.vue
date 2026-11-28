@@ -1,12 +1,11 @@
 <template>
     <header class="expedition-topbar" :class="{ 'is-compact': compact }">
-        <span class="expedition-brand"
+        <span v-if="!compact" class="expedition-brand"
             ><img src="/images/emerald-mark.svg" width="30" height="32" alt="GeoBattles" /><span aria-hidden="true">Geo<b>Battles</b></span></span
         >
         <slot />
-        <div class="expedition-actions" aria-label="Game controls">
+        <div v-if="!compact" class="expedition-actions" aria-label="Game controls">
             <button
-                v-if="!compact"
                 ref="scoresToggle"
                 class="hud-button scores-toggle"
                 type="button"
@@ -33,14 +32,111 @@
                 <UiIcon name="leave" />
             </button>
         </div>
+        <div v-else ref="overflowRoot" class="compact-overflow" aria-label="Game controls">
+            <button
+                ref="overflowTrigger"
+                class="hud-button compact-menu-trigger"
+                type="button"
+                aria-label="Game menu"
+                title="Game menu"
+                aria-haspopup="menu"
+                :aria-expanded="menuOpen"
+                :aria-controls="menuId"
+                @click="menuOpen = !menuOpen"
+            >
+                <UiIcon :name="menuOpen ? 'close' : 'menu'" />
+            </button>
+            <div v-show="menuOpen" :id="menuId" class="compact-menu-popover" role="menu" aria-label="Game options">
+                <button v-if="ui.fullscreenAvailable" class="compact-menu-item" type="button" role="menuitem" @click="toggleFullscreen">
+                    <UiIcon :name="ui.isFullscreen ? 'shrink' : 'fullscreen'" />
+                    <span>{{ ui.isFullscreen ? "Exit fullscreen" : "Fullscreen" }}</span>
+                </button>
+                <button v-if="canReturnToStart" class="compact-menu-item" type="button" role="menuitem" @click="returnToStart">
+                    <UiIcon name="refresh" />
+                    <span>Return to start</span>
+                </button>
+                <button
+                    v-if="endMatch?.available"
+                    class="compact-menu-item compact-menu-end"
+                    type="button"
+                    role="menuitem"
+                    aria-haspopup="dialog"
+                    aria-label="End match early"
+                    :disabled="endMatch.disabled"
+                    @click="openEndMatch"
+                >
+                    <UiIcon name="flag" />
+                    <span>End match early</span>
+                </button>
+                <button class="compact-menu-item compact-menu-leave" type="button" role="menuitem" aria-label="Leave lobby" @click="leaveLobby">
+                    <UiIcon name="leave" />
+                    <span>Leave lobby</span>
+                </button>
+            </div>
+            <GameplayEndMatchControl ref="endMatch" phase="PLAYING" headless />
+        </div>
     </header>
 </template>
 <script setup lang="ts">
-defineProps<{ players: number; scoresOpen: boolean; scoreboardId: string; compact: boolean }>();
-const emit = defineEmits<{ leaveLobbyClicked: []; toggleScores: [] }>();
+const props = defineProps<{ players: number; scoresOpen: boolean; scoreboardId: string; compact: boolean; canReturnToStart?: boolean }>();
+const emit = defineEmits<{ leaveLobbyClicked: []; toggleScores: []; returnToStart: [] }>();
 const ui = useUIManagerStore();
 const scoresToggle = useTemplateRef("scoresToggle");
-defineExpose({ focusScores: () => scoresToggle.value?.focus({ preventScroll: true }) });
+const overflowRoot = useTemplateRef("overflowRoot");
+const overflowTrigger = useTemplateRef("overflowTrigger");
+const endMatch = useTemplateRef<{ open: () => void; available: boolean; disabled: boolean }>("endMatch");
+const menuId = useId();
+const menuOpen = ref(false);
+
+const closeMenu = (restoreFocus = false) => {
+    if (!menuOpen.value) return;
+    menuOpen.value = false;
+    if (restoreFocus) overflowTrigger.value?.focus({ preventScroll: true });
+};
+const toggleFullscreen = () => {
+    closeMenu();
+    void ui.toggleFullscreen();
+};
+const returnToStart = () => {
+    closeMenu();
+    emit("returnToStart");
+};
+const openEndMatch = () => {
+    closeMenu();
+    endMatch.value?.open();
+};
+const leaveLobby = () => {
+    closeMenu();
+    emit("leaveLobbyClicked");
+};
+
+const onOutsidePointer = (event: PointerEvent) => {
+    if (!menuOpen.value) return;
+    const target = event.target;
+    if (target instanceof Node && !overflowRoot.value?.contains(target)) closeMenu();
+};
+const onMenuKeydown = (event: KeyboardEvent) => {
+    if (menuOpen.value && event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        closeMenu(true);
+    }
+};
+watch(
+    () => props.compact,
+    (compact) => {
+        if (!compact) menuOpen.value = false;
+    }
+);
+onMounted(() => {
+    document.addEventListener("pointerdown", onOutsidePointer, true);
+    document.addEventListener("keydown", onMenuKeydown, true);
+});
+onBeforeUnmount(() => {
+    document.removeEventListener("pointerdown", onOutsidePointer, true);
+    document.removeEventListener("keydown", onMenuKeydown, true);
+});
+defineExpose({ focusScores: () => scoresToggle.value?.focus({ preventScroll: true }), closeMenu });
 </script>
 <style scoped>
 .expedition-topbar {
@@ -98,10 +194,93 @@ defineExpose({ focusScores: () => scoresToggle.value?.focus({ preventScroll: tru
 .leave-control {
     color: #ffd4ca;
 }
-.is-compact {
-    gap: clamp(0.3rem, 1.4vw, 1.2rem);
+.expedition-topbar.is-compact {
+    block-size: auto;
+    min-block-size: var(--hud-header);
+    align-items: center;
+    gap: 0.4rem;
+    padding: max(0.45rem, env(safe-area-inset-top)) var(--hud-right) 0.2rem var(--hud-left);
+    border-block-end: 0;
+    background: none;
+    box-shadow: none;
+    pointer-events: none;
 }
-.is-compact .expedition-brand {
-    font-size: clamp(1rem, 2.8vw, 1.18rem);
+.compact-overflow {
+    position: relative;
+    flex: none;
+    pointer-events: auto;
+}
+.compact-menu-trigger {
+    border-radius: 999px !important;
+    min-inline-size: 42px;
+    min-block-size: 42px;
+    border-color: #b6efa35a !important;
+    background: linear-gradient(140deg, #09322ae0, #051f1be8) !important;
+    box-shadow:
+        0 5px 16px #0016117a,
+        inset 0 1px #dff9cf24;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.compact-menu-trigger[aria-expanded="true"] {
+    border-color: #d5fa86aa !important;
+    color: var(--round-accent);
+}
+.compact-menu-popover {
+    position: absolute;
+    z-index: 30;
+    inset-block-start: calc(100% + 0.42rem);
+    inset-inline-end: 0;
+    min-inline-size: 11.75rem;
+    display: grid;
+    gap: 0.16rem;
+    padding: 0.34rem;
+    border: 1px solid #b6efa368;
+    border-radius: 1rem;
+    background: linear-gradient(155deg, #0a342bf2, #051e1af7);
+    box-shadow:
+        0 12px 30px #00140fa6,
+        inset 0 1px #e2ffd02a;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+.compact-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    inline-size: 100%;
+    min-block-size: 42px;
+    padding: 0.45rem 0.7rem;
+    border: 0;
+    border-radius: 0.7rem;
+    background: transparent;
+    color: #edf9ef;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-align: start;
+    white-space: nowrap;
+}
+.compact-menu-item:hover {
+    background: #ffffff14;
+}
+.compact-menu-end {
+    color: #ffdd9e;
+}
+.compact-menu-end:enabled:hover {
+    background: #ffca6224;
+}
+.compact-menu-end:disabled {
+    opacity: 0.5;
+}
+.compact-menu-leave {
+    margin-block-start: 0.14rem;
+    padding-block-start: 0.52rem;
+    border-block-start: 1px solid #b6efa32b;
+    border-start-start-radius: 0;
+    border-start-end-radius: 0;
+    color: #ffbeb3;
+}
+.compact-menu-leave:hover {
+    background: #ff998924;
 }
 </style>

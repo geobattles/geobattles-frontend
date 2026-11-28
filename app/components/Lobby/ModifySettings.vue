@@ -324,29 +324,44 @@ watch(
 }
 .chapter-controls {
     display: grid;
-    gap: 0.38rem;
+    gap: 0.45rem;
     align-content: start;
     min-width: 0;
 }
 .boost-controls {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8rem), 1fr));
-    gap: 0.35rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+    gap: 0.4rem;
 }
 .boost-controls legend {
-    margin: 0.25rem 0 0;
+    margin: 0.15rem 0 0.2rem;
+    color: #b5d2c2;
+    font-size: 0.72rem;
+    font-weight: 720;
 }
 .settings-form :deep(.field-help) {
-    font-size: 0.76rem;
+    font-size: 0.72rem;
+    color: #a9c7b7;
+}
+.score-preview {
+    border: 1px solid #9be0a52b;
+    border-radius: 0.78rem;
+    background: #06241ecc;
+    overflow: hidden;
 }
 .score-preview summary {
     display: flex;
     align-items: center;
-    min-height: 44px;
+    min-height: 38px;
+    padding: 0.3rem 0.68rem;
     cursor: pointer;
-    font-weight: 700;
-    color: var(--gb-accent);
-    font-size: 0.8rem;
+    font-weight: 740;
+    color: #d8fda8;
+    font-size: 0.78rem;
+    list-style: none;
+}
+.score-preview summary::-webkit-details-marker {
+    display: none;
 }
 .score-preview summary::after {
     content: "+";
@@ -359,25 +374,32 @@ watch(
 .settings-footer {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.45rem;
     justify-content: space-between;
     min-width: 0;
-    min-height: 3rem;
-    padding: 0.1rem 0.65rem max(0.1rem, env(safe-area-inset-bottom));
-    background: var(--gb-surface);
+    min-height: 3.1rem;
+    padding: 0.38rem 0.85rem max(0.38rem, env(safe-area-inset-bottom));
+    border-top: 1px solid #9be0a52e;
+    background: linear-gradient(128deg, #0e3328, #06211c);
 }
 .settings-retry {
     margin-left: auto;
 }
 .settings-done {
     min-width: 5.5rem;
-    min-height: 44px;
+    min-height: 38px;
+    padding: 0.25rem 1.05rem;
     flex: none;
     margin-inline-start: auto;
-    border-color: #c9fa95;
-    border-radius: 9px;
-    background: linear-gradient(150deg, #dbffa2, #7ae764);
-    color: #06291d;
+    border-color: var(--gb-scenic-action-border);
+    border-radius: 999px;
+    background: var(--gb-scenic-action-fill);
+    color: var(--gb-scenic-action-ink);
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+.settings-done:hover {
+    box-shadow: var(--gb-scenic-action-shadow);
 }
 .settings-saved {
     display: inline-flex;
@@ -431,36 +453,36 @@ watch(
     }
     .chapter-controls,
     .boost-controls {
-        gap: 0.15rem;
+        gap: 0.34rem;
     }
     .settings-form :deep(.field-label),
     .settings-form :deep(.region-modes button),
     .settings-form :deep(.continent-options button),
     .score-preview summary,
     .draft-link {
-        font-size: 0.75rem;
+        font-size: 0.74rem;
     }
     .settings-form :deep(.field-help) {
-        font-size: 0.7rem;
-    }
-    .settings-form :deep(.number-setting),
-    .settings-form :deep(.timer-setting),
-    .settings-form :deep(.check-row) {
-        padding-block: 0;
+        font-size: 0.68rem;
     }
     .settings-form :deep(.number-input),
     .settings-form :deep(.timer-value),
     .settings-form :deep(.name-setting input) {
-        font-size: 1rem;
+        font-size: 0.88rem;
     }
     .settings-footer {
         min-height: 44px;
-        padding-block: 0 env(safe-area-inset-bottom);
+        padding: 0.28rem 0.72rem max(0.28rem, env(safe-area-inset-bottom));
+    }
+    .settings-done {
+        min-height: 34px;
+        padding: 0.2rem 0.95rem;
+        font-size: 0.78rem;
     }
 }
 @media (min-width: 560px) and (orientation: landscape) and (max-height: 540px) {
     .settings-form :deep(.name-setting) {
-        grid-template-columns: auto minmax(0, 1fr) 44px;
+        grid-template-columns: auto minmax(0, 1fr) 32px;
         column-gap: 0.65rem;
     }
     .settings-form :deep(.name-setting input) {
@@ -486,7 +508,7 @@ watch(
     .settings-footer {
         flex: none;
         min-height: 44px;
-        border-top: 1px solid var(--gb-line);
+        border-top: 1px solid #9be0a52e;
     }
 }
 .settings-form[data-edit-layout] {

@@ -4,12 +4,16 @@
             <label class="directory-search" data-viewport-field>
                 <span class="sr-only">Find a lobby</span>
                 <input
-                    v-model="search"
+                    :value="search"
                     type="search"
                     class="input"
                     placeholder="Search name or code"
                     autocomplete="off"
+                    autocorrect="off"
+                    autocapitalize="off"
+                    spellcheck="false"
                     enterkeyhint="search"
+                    @input="search = ($event.target as HTMLInputElement).value"
                     @keydown.enter.prevent="($event.target as HTMLInputElement).blur()"
                 />
             </label>
@@ -165,6 +169,7 @@ onMounted(() => {
 <style scoped>
 .open-lobbies {
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     gap: 0.55rem;
     max-height: 100%;
@@ -222,7 +227,10 @@ onMounted(() => {
     opacity: 0.55;
 }
 .directory-results {
-    min-height: 44px;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 5.5rem;
     overflow: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
@@ -232,10 +240,16 @@ onMounted(() => {
 }
 .directory-error,
 .directory-empty {
-    padding: 0.65rem;
+    padding: 0.75rem;
     margin: 0;
-    color: #cae5dc;
-    font-size: 0.85rem;
+    color: #b7d5ca;
+    font-size: 0.82rem;
+}
+.directory-empty {
+    display: grid;
+    flex: 1 1 auto;
+    place-items: center;
+    text-align: center;
 }
 .directory-error {
     color: #ffd3ce;
@@ -272,8 +286,12 @@ onMounted(() => {
     font-size: 0.9rem;
 }
 .lobby-title code {
+    padding: 0.04rem 0.34rem;
+    border-radius: 999px;
+    background: #b8efa018;
     color: #b8efa0;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
+    font-weight: 700;
 }
 .lobby-host,
 .lobby-details,
@@ -337,6 +355,92 @@ onMounted(() => {
         @apply sr-only;
     }
 }
+@media (max-width: 760px), (orientation: landscape) and (max-height: 540px) {
+    .open-lobbies {
+        gap: 0.42rem;
+    }
+    .directory-tools {
+        gap: 0.28rem;
+    }
+    .directory-tools .input {
+        height: 36px;
+        min-height: 36px;
+        padding: 0.22rem 0.52rem;
+        border-radius: 0.58rem;
+        font-size: 0.8rem;
+    }
+    .directory-button {
+        min-width: 36px;
+        min-height: 36px;
+        gap: 0.3rem;
+        padding: 0.2rem 0.56rem;
+        border-radius: 0.58rem;
+        font-size: 0.74rem;
+    }
+    .directory-button .ui-icon,
+    .lobby-capacity .ui-icon {
+        width: 0.86rem;
+        height: 0.86rem;
+    }
+    .directory-results {
+        border-radius: 0.68rem;
+    }
+    .directory-error,
+    .directory-empty {
+        padding: 0.52rem;
+        font-size: 0.76rem;
+    }
+    .lobby-list {
+        gap: 0.22rem;
+        padding: 0.22rem;
+    }
+    .directory-row {
+        gap: 0.14rem 0.42rem;
+        padding: 0.36rem 0.44rem;
+        border-radius: 0.56rem;
+    }
+    .lobby-identity {
+        padding-inline-start: 0.12rem;
+    }
+    .lobby-title {
+        gap: 0.12rem 0.34rem;
+    }
+    .lobby-title strong {
+        font-size: 0.8rem;
+        font-weight: 760;
+    }
+    .lobby-title code {
+        font-size: 0.64rem;
+    }
+    .lobby-host,
+    .lobby-details,
+    .directory-footer {
+        font-size: 0.69rem;
+    }
+    .lobby-join {
+        min-width: 0;
+        min-height: 32px;
+        padding: 0.18rem 0.72rem;
+        border-radius: 999px;
+        font-size: 0.73rem;
+    }
+    .directory-pagination {
+        gap: 0.3rem;
+    }
+    .directory-pagination .input {
+        height: 32px;
+        min-height: 32px;
+        padding: 0.14rem 0.38rem;
+        border-radius: 0.52rem;
+        font-size: 0.74rem;
+    }
+    .directory-pagination .directory-button {
+        min-width: 32px;
+        min-height: 32px;
+        padding: 0;
+        border-radius: 999px;
+    }
+}
 @media (max-width: 550px) and (orientation: portrait) {
     .directory-tools {
         grid-template-columns: minmax(0, 1fr) auto auto;
@@ -345,18 +449,18 @@ onMounted(() => {
         grid-column: 1 / -1;
     }
     .directory-sort select {
-        padding-inline: 0.35rem;
+        padding-inline: 0.38rem;
     }
     .directory-row {
         grid-template-columns: minmax(0, 1fr) auto;
-        gap: 0.15rem 0.4rem;
+        gap: 0.14rem 0.42rem;
     }
     .lobby-details {
         grid-row: 2;
         display: flex;
         flex-wrap: wrap;
-        gap: 0.15rem 0.45rem;
-        padding-inline-start: 0.25rem;
+        gap: 0.12rem 0.42rem;
+        padding-inline-start: 0.12rem;
     }
     .lobby-join {
         grid-area: 1 / 2 / span 2;

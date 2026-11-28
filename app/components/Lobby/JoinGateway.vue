@@ -408,6 +408,8 @@ h1 {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     flex: none;
+    width: min(100%, 24rem);
+    margin-inline: auto;
     gap: 0.2rem;
     padding: 0.16rem;
     border: 1px solid #aff2a156;
@@ -521,6 +523,7 @@ h1 {
 }
 .directory-panel {
     display: flex;
+    flex: 1 1 auto;
     flex-direction: column;
     min-height: 0;
 }
@@ -556,6 +559,9 @@ h1 {
 .join-editing :deep(.directory-search) {
     grid-column: auto;
 }
+.join-editing :deep(.directory-results) {
+    min-height: 2.75rem;
+}
 .join-editing .code-help {
     @apply sr-only;
 }
@@ -582,53 +588,132 @@ h1 {
     @apply sr-only;
 }
 @media (max-width: 760px) and (orientation: portrait) {
+    .join-gateway {
+        --join-edge: 0.55rem;
+    }
     .gateway-scenery img {
         object-position: center 47%;
     }
     .gateway-main {
-        padding-bottom: max(clamp(0.75rem, 6dvh, 3rem), env(safe-area-inset-bottom));
+        padding-block: 0.45rem max(0.75rem, env(safe-area-inset-bottom));
     }
-    .gateway-card {
-        --code-height: clamp(3.15rem, 8dvh, 3.85rem);
-        border-radius: 1.2rem;
-    }
-}
-@media (orientation: landscape) and (max-height: 520px) {
     .gateway-stack {
-        grid-template-columns: minmax(8.3rem, 0.53fr) minmax(0, 1fr);
-        grid-template-rows: minmax(0, 1fr);
-        align-items: center;
-        width: min(100%, 51rem);
-    }
-    .gateway-stack.directory-mode {
-        grid-template-columns: minmax(0, 1fr);
-    }
-    .gateway-card {
-        --code-height: 48px;
-        gap: 0.55rem;
-        padding: 0.55rem 0.65rem;
-    }
-    .gateway-main {
-        padding-block: 0.35rem max(0.35rem, env(safe-area-inset-bottom));
+        gap: 0.48rem;
     }
     .gateway-heading {
-        padding-top: 2.35rem;
+        padding-top: 1.55rem;
     }
     .gateway-orbit {
-        width: 6.6rem;
-        height: 3.5rem;
+        width: 5.8rem;
+        height: 2.95rem;
     }
     h1 {
-        font-size: clamp(1.48rem, 4.6vw, 2.5rem);
+        font-size: clamp(1.6rem, 6.4vw, 2.25rem);
+    }
+    .gateway-card {
+        --code-height: clamp(2.85rem, 7dvh, 3.4rem);
+        gap: 0.55rem;
+        padding: 0.7rem 0.75rem;
+        border-radius: 1.15rem;
+    }
+    .directory-mode .gateway-card {
+        padding: 0.58rem;
+    }
+    .join-modes {
+        padding: 0.14rem;
+    }
+    .join-modes button {
+        min-height: 34px;
+        gap: 0.34rem;
+        padding: 0.2rem 0.35rem;
+        font-size: 0.76rem;
+    }
+    .join-modes svg {
+        width: 0.86rem;
+        height: 0.86rem;
     }
     .code-form {
-        gap: 0.38rem;
+        gap: 0.5rem;
+    }
+    .code-help,
+    .code-error {
+        font-size: 0.73rem;
+    }
+    .browse-lobbies,
+    .retry-code {
+        min-height: 38px;
+        font-size: 0.78rem;
+    }
+}
+@media (orientation: landscape) and (max-height: 540px) {
+    .join-gateway {
+        --join-edge: 0.55rem;
+    }
+    .gateway-stack {
+        grid-template-columns: minmax(8.5rem, 0.36fr) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr);
+        align-items: center;
+        gap: 0.75rem;
+        width: min(100%, 54rem);
+    }
+    .gateway-stack.directory-mode {
+        grid-template-columns: minmax(8.2rem, 0.3fr) minmax(0, 1fr);
+        align-items: stretch;
+        height: 100%;
+    }
+    .gateway-stack.directory-mode .gateway-heading {
+        align-self: center;
+    }
+    .gateway-card {
+        --code-height: 44px;
+        gap: 0.45rem;
+        padding: 0.55rem 0.65rem;
+        border-radius: 1.05rem;
+    }
+    .directory-mode .gateway-card {
+        height: 100%;
+        padding: 0.5rem 0.62rem;
+    }
+    .join-modes {
+        width: min(100%, 21rem);
+    }
+    .join-modes button {
+        min-height: 32px;
+        gap: 0.32rem;
+        font-size: 0.74rem;
+    }
+    .join-modes svg {
+        width: 0.84rem;
+        height: 0.84rem;
+    }
+    .gateway-main {
+        padding-block: 0.38rem max(0.38rem, env(safe-area-inset-bottom));
+    }
+    .gateway-heading {
+        padding-top: 2rem;
+    }
+    .gateway-orbit {
+        width: 5.8rem;
+        height: 3rem;
+    }
+    h1 {
+        font-size: clamp(1.38rem, 3.6vw, 2.05rem);
+    }
+    .code-form {
+        gap: 0.35rem;
     }
     .code-help {
         @apply sr-only;
     }
-    .directory-mode .gateway-heading,
     .browse-lobbies {
+        display: none;
+    }
+}
+@media (orientation: landscape) and (max-height: 540px) and (max-width: 680px) {
+    .gateway-stack.directory-mode {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .gateway-stack.directory-mode .gateway-heading {
         display: none;
     }
 }

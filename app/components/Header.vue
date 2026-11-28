@@ -1,5 +1,5 @@
 <template>
-    <header class="site-header" :class="{ 'has-navigation': navigation, 'account-only': accountOnly }">
+    <header ref="siteHeader" class="site-header" :class="{ 'has-navigation': navigation, 'account-only': accountOnly }">
         <div class="header-inner">
             <slot />
             <NuxtLink v-if="!accountOnly" to="/" class="brand" aria-label="GeoBattles home">
@@ -13,14 +13,16 @@
                 :aria-expanded="navOpen"
                 aria-controls="main-nav"
                 aria-label="Toggle navigation"
-                @click="navOpen = !navOpen"
+                @click="toggleNav"
             >
                 <UiIcon :name="navOpen ? 'close' : 'menu'" />
             </button>
             <nav v-if="navigation" id="main-nav" class="header-links" :class="{ 'is-open': navOpen }" aria-label="Main navigation">
-                <NuxtLink to="/lobby/list" :aria-current="route.path.startsWith('/lobby') ? 'page' : undefined">Find a lobby</NuxtLink>
-                <NuxtLink to="/journal" :aria-current="route.path === '/journal' ? 'page' : undefined">Expedition journal</NuxtLink>
-                <NuxtLink to="/about" :aria-current="route.path === '/about' ? 'page' : undefined">About</NuxtLink>
+                <NuxtLink to="/lobby/list" :aria-current="route.path.startsWith('/lobby') ? 'page' : undefined"
+                    ><UiIcon name="compass" class="nav-link-icon" />Find a lobby</NuxtLink
+                >
+                <NuxtLink to="/journal" :aria-current="route.path === '/journal' ? 'page' : undefined"><UiIcon name="journal" class="nav-link-icon" />Expedition journal</NuxtLink>
+                <NuxtLink to="/about" :aria-current="route.path === '/about' ? 'page' : undefined"><UiIcon name="info" class="nav-link-icon" />About</NuxtLink>
             </nav>
             <div class="header-account">
                 <span v-if="!accountMounted" class="account-placeholder"><UiIcon name="user" /></span>
@@ -40,13 +42,17 @@
                         </button>
                         <button class="btn btn-secondary sign-in" type="button" @click="auth.openLoginDialog()"><span class="sr-only">Sign in</span><UiIcon name="user" /></button>
                     </div>
-                    <details v-else ref="accountMenu" class="account-menu">
+                    <details v-else ref="accountMenu" class="account-menu" @toggle="onAccountToggle">
                         <summary class="account-summary" :aria-label="`${player.displayName || 'Explorer'}, ${player.guest ? 'guest account' : 'account'} menu`">
                             <span class="avatar" aria-hidden="true"><UiIcon name="user" /></span>
                         </summary>
                         <div class="account-popover">
-                            <NuxtLink to="/profile">Profile</NuxtLink>
-                            <NuxtLink to="/journal">Expedition journal</NuxtLink>
+                            <div class="account-popover-head">
+                                <strong class="account-popover-name">{{ player.displayName || "Explorer" }}</strong>
+                                <span v-if="player.guest" class="account-guest-pill">Guest</span>
+                            </div>
+                            <NuxtLink to="/profile"><UiIcon name="user" />Profile</NuxtLink>
+                            <NuxtLink to="/journal"><UiIcon name="journal" />Expedition journal</NuxtLink>
                             <button
                                 v-if="showInstall"
                                 class="account-install"
@@ -57,7 +63,8 @@
                             >
                                 <UiIcon name="install" />{{ installMenuLabel }}
                             </button>
-                            <button v-if="!inLobby" type="button" @click="logout">Sign out</button>
+                            <div class="account-popover-divider" role="separator" />
+                            <button v-if="!inLobby" class="account-signout" type="button" @click="logout"><UiIcon name="leave" />Sign out</button>
                             <p v-else class="field-help">Leave the lobby before signing out.</p>
                         </div>
                     </details>
@@ -74,12 +81,20 @@ const player = usePlayerInfo();
 const route = useRoute();
 const navOpen = ref(false);
 const accountMounted = ref(false);
+const siteHeader = ref<HTMLElement | null>(null);
 const navToggle = ref<HTMLButtonElement | null>(null);
 const accountMenu = ref<HTMLDetailsElement | null>(null);
 const inLobby = computed(() => !!routeLobbyId(route));
 const { available, canPrompt, pending: installPending, requestInstall } = usePwaInstall();
 const showInstall = computed(() => available.value && !props.installBlocked);
 const installMenuLabel = computed(() => (canPrompt.value ? "Install GeoBattles" : "How to install GeoBattles"));
+function toggleNav() {
+    navOpen.value = !navOpen.value;
+    if (navOpen.value && accountMenu.value?.open) accountMenu.value.open = false;
+}
+function onAccountToggle() {
+    if (accountMenu.value?.open) navOpen.value = false;
+}
 function installFromMenu() {
     if (accountMenu.value?.open) {
         accountMenu.value.open = false;
@@ -100,7 +115,9 @@ const logout = async () => {
     await auth.logout();
 };
 const closeMenu = (event: MouseEvent) => {
-    if (accountMenu.value && !accountMenu.value.contains(event.target as Node)) accountMenu.value.open = false;
+    const target = event.target as Node;
+    if (accountMenu.value && !accountMenu.value.contains(target)) accountMenu.value.open = false;
+    if (navOpen.value && siteHeader.value && !siteHeader.value.contains(target)) navOpen.value = false;
 };
 const escape = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
@@ -175,23 +192,30 @@ onBeforeUnmount(() => {
 }
 
 .header-links {
-    font-family: var(--gb-font-mono);
     display: flex;
     align-items: center;
-    gap: clamp(1rem, 2.5vw, 2rem);
+    gap: clamp(0.85rem, 2.2vw, 1.75rem);
     margin-left: auto;
 }
 .header-links > a {
     position: relative;
     min-height: 44px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    font-size: 0.78rem;
+    gap: 0.45rem;
+    font-size: 0.82rem;
     font-weight: 700;
-    letter-spacing: 0.025em;
+    letter-spacing: 0.01em;
     text-decoration: none;
     color: #d8ebe1;
     white-space: nowrap;
+}
+.nav-link-icon {
+    display: none;
+    width: 1rem;
+    height: 1rem;
+    color: #9de8bd;
+    flex: none;
 }
 .header-links > a:hover,
 .header-links > a[aria-current] {
@@ -204,9 +228,12 @@ onBeforeUnmount(() => {
     left: 0;
     width: 100%;
     height: 2px;
+    border-radius: 999px;
     background: var(--gb-accent);
 }
 .header-account {
+    position: relative;
+    z-index: 35;
     margin-left: auto;
 }
 .guest-account {
@@ -265,48 +292,107 @@ onBeforeUnmount(() => {
 }
 .account-popover {
     position: absolute;
+    z-index: 50;
     right: 0;
-    top: calc(100% + 0.55rem);
-    min-width: 220px;
-    padding: 0.6rem;
-    background: #0a2d25;
-    border: 1px solid #8bcea983;
-    border-radius: 0.85rem;
-    box-shadow: 0 12px 40px #0008;
+    top: calc(100% + 0.45rem);
+    min-width: min(14.5rem, calc(100vw - 1.5rem));
+    padding: 0.38rem;
+    border: 1px solid #8ddbaf55;
+    border-radius: 0.95rem;
+    background: linear-gradient(155deg, #0b332af5, #05201bf8);
+    box-shadow:
+        0 14px 36px #00130fc4,
+        inset 0 1px #e2ffd020;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     display: grid;
+    gap: 0.14rem;
+}
+.account-popover-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.34rem 0.58rem 0.46rem;
+    margin-bottom: 0.12rem;
+    border-bottom: 1px solid #9be0a524;
+}
+.account-popover-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #f4fbf3;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+.account-guest-pill {
+    flex: none;
+    padding: 0.08rem 0.42rem;
+    border: 1px solid #9be0a538;
+    border-radius: 999px;
+    background: #b6efa318;
+    color: #cde8d5;
+    font-size: 0.64rem;
+    font-weight: 740;
+    line-height: 1.3;
 }
 .account-popover > a,
 .account-popover > button {
     display: flex;
     align-items: center;
-    min-height: 44px;
-    padding: 0.65rem;
+    gap: 0.52rem;
+    min-height: 36px;
+    padding: 0.38rem 0.58rem;
     border: 0;
     background: transparent;
+    color: #e8f8ec;
     text-align: left;
-    border-radius: 0.55rem;
+    border-radius: 0.58rem;
     text-decoration: none;
-    font-size: 0.85rem;
+    font-size: 0.79rem;
+    font-weight: 680;
+    white-space: nowrap;
+}
+.account-popover > a .ui-icon,
+.account-popover > button .ui-icon {
+    width: 1rem;
+    height: 1rem;
+    color: #9de8bd;
+    flex: none;
 }
 .account-popover > a:hover,
 .account-popover > button:hover {
-    background: var(--gb-raised);
+    background: #a4ecd31c;
+    color: #ffffff;
 }
 .account-popover p {
-    padding: 0.6rem;
+    margin: 0;
+    padding: 0.35rem 0.58rem;
+    font-size: 0.72rem;
+    line-height: 1.35;
 }
-.account-install {
-    gap: 0.48rem;
+.account-popover-divider {
+    height: 1px;
+    margin: 0.14rem 0.35rem;
+    background: #9be0a524;
 }
-.account-install .ui-icon {
-    color: var(--gb-accent);
+.account-popover > .account-install .ui-icon {
+    color: #b8f695;
+}
+.account-popover > .account-signout {
+    color: #ffd0ad;
+}
+.account-popover > .account-signout .ui-icon {
+    color: #ffd0ad;
+}
+.account-popover > .account-signout:hover {
+    background: #ff998924;
+    color: #ffe3cc;
 }
 @media (max-width: 850px), (max-width: 1100px) and (max-height: 540px) and (orientation: landscape) {
     .header-inner {
-        gap: 0.75rem;
-    }
-    .has-navigation .header-inner {
-        flex-wrap: wrap;
+        position: relative;
+        gap: 0.6rem;
     }
     .mobile-toggle {
         display: inline-flex;
@@ -314,14 +400,89 @@ onBeforeUnmount(() => {
     }
     .header-links {
         display: none;
-        order: 4;
-        flex-basis: 100%;
-        padding-top: 0.5rem;
-        border-top: 1px solid var(--gb-line);
+        position: absolute;
+        z-index: 45;
+        top: calc(100% + 0.35rem);
+        right: max(0.75rem, var(--gb-safe-right));
+        min-width: min(13.5rem, calc(100vw - 1.5rem));
+        margin-left: 0;
+        padding: 0.38rem;
+        border: 1px solid #8ddbaf55;
+        border-radius: 0.95rem;
+        background: linear-gradient(155deg, #0b332af5, #05201bf8);
+        box-shadow:
+            0 14px 36px #00130fc4,
+            inset 0 1px #e2ffd020;
+        backdrop-filter: blur(14px);
+        -webkit-backdrop-filter: blur(14px);
+        gap: 0.14rem;
     }
     .header-links.is-open {
-        display: flex;
-        flex-wrap: wrap;
+        display: grid;
+    }
+    .header-links > a {
+        min-height: 36px;
+        padding: 0.38rem 0.6rem;
+        border: 1px solid transparent;
+        border-radius: 0.58rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #e8f8ec;
+    }
+    .header-links > a:hover {
+        background: #a4ecd31c;
+        color: #ffffff;
+    }
+    .header-links > a[aria-current] {
+        border-color: #b6efa340;
+        background: #b6efa31e;
+        color: #dcf7aa;
+    }
+    .header-links > a[aria-current]::after {
+        display: none;
+    }
+    .nav-link-icon {
+        display: inline-block;
+    }
+    .header-links > a[aria-current] .nav-link-icon {
+        color: #c8f994;
+    }
+}
+@media (max-width: 760px), (orientation: landscape) and (max-height: 540px) {
+    .header-inner {
+        padding: max(0.3rem, var(--header-safe-top)) max(0.75rem, var(--gb-safe-right)) 0.3rem max(0.75rem, var(--gb-safe-left));
+        gap: 0.5rem;
+    }
+    .brand {
+        min-height: 36px;
+        gap: 0.42rem;
+        font-size: 1.06rem;
+    }
+    .brand img {
+        height: 1.62rem;
+    }
+    .account-summary {
+        min-height: 36px;
+    }
+    .sign-in,
+    .avatar,
+    .account-placeholder,
+    .mobile-toggle,
+    .guest-install {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        min-height: 36px;
+    }
+    .site-header .ui-icon {
+        width: 18px;
+        height: 18px;
+    }
+    .account-popover > a .ui-icon,
+    .account-popover > button .ui-icon,
+    .nav-link-icon {
+        width: 1rem;
+        height: 1rem;
     }
 }
 @media (max-width: 380px) {
@@ -329,7 +490,7 @@ onBeforeUnmount(() => {
         gap: 0.375rem;
     }
     .brand {
-        gap: 0.4rem;
+        gap: 0.38rem;
     }
 }
 @media (orientation: landscape) and (max-height: 480px) {
@@ -338,7 +499,7 @@ onBeforeUnmount(() => {
         padding-bottom: 0.2rem;
     }
     .brand img {
-        height: 1.65rem;
+        height: 1.5rem;
     }
 }
 </style>

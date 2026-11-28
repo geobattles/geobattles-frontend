@@ -12,11 +12,12 @@
                 <button v-if="fullscreen" ref="closeMap" type="button" class="hud-button close-map" aria-label="Close map" title="Close map" @click="emit('close')">
                     <UiIcon name="close" />
                 </button>
-                <h2 class="guess-map-title"><UiIcon name="map" />{{ fullscreen ? "Map" : "Guess" }}</h2>
-                <span class="guess-count" :data-testid="mode === 'closed' ? undefined : 'guesses-left'">
+                <h2 v-if="!fullscreen" class="guess-map-title"><UiIcon name="map" />Guess</h2>
+                <div v-if="fullscreen" ref="mobileTimerHost" class="map-floating-timer" />
+                <div v-if="fullscreen" ref="scoresHost" class="guess-map-scores" />
+                <span v-if="!fullscreen" class="guess-count" :data-testid="mode === 'closed' ? undefined : 'guesses-left'">
                     <UiIcon name="pin" />
-                    <span :class="{ 'sr-only': landscape }">{{ lives }} {{ lives === 1 ? "guess left" : "guesses left" }}</span>
-                    <span v-if="landscape" aria-hidden="true">{{ lives }} left</span>
+                    <span>{{ lives }} {{ lives === 1 ? "guess left" : "guesses left" }}</span>
                 </span>
                 <div v-if="!compact" class="guess-panel-actions">
                     <button
@@ -33,11 +34,10 @@
                     <button ref="hideMap" type="button" class="hud-button" aria-label="Hide map" title="Hide map" @click="emit('close')"><UiIcon name="minus" /></button>
                 </div>
             </header>
-            <div v-show="fullscreen" ref="scoresHost" class="guess-map-scores" />
             <div class="guess-map-workspace">
                 <div id="gameplay-map-slot" class="guess-map-slot"><GameplayGoogleMap /></div>
-                <div v-show="mode === 'expanded'" ref="timerHost" class="guess-map-timer-host" />
-                <div class="guess-map-controls" aria-label="Map camera">
+                <div v-if="!compact" v-show="mode === 'expanded'" ref="desktopTimerHost" class="guess-map-timer-host" />
+                <div class="guess-map-controls" aria-label="Map camera" @click.stop @pointerdown.stop>
                     <div class="map-zoom">
                         <button type="button" class="hud-button" aria-label="Zoom map in" title="Zoom in" :disabled="!mapReady" @click="zoom(1)"><UiIcon name="plus" /></button>
                         <button type="button" class="hud-button" aria-label="Zoom map out" title="Zoom out" :disabled="!mapReady" @click="zoom(-1)"><UiIcon name="minus" /></button>
@@ -54,30 +54,59 @@
                     </button>
                 </div>
             </div>
-            <footer class="guess-map-actions">
-                <p :id="hintId" class="guess-hint" :class="{ 'pin-ready': hasDraft || mapConfirmed, 'inline-guess-error': fullscreen && error }" aria-live="polite">
+            <footer class="guess-map-actions" @click.stop @pointerdown.stop>
+                <p
+                    v-if="!fullscreen || error || mapConfirmed"
+                    :id="hintId"
+                    class="guess-hint"
+                    :class="{ 'pin-ready': hasDraft || mapConfirmed, 'inline-guess-error': fullscreen && error }"
+                    aria-live="polite"
+                >
                     {{ fullscreen && error ? error : hint }}
                 </p>
-                <button type="button" class="confirm-guess" :disabled="submitDisabled" :aria-busy="isGuessPending" :aria-describedby="hintId" @click="game.submitGuess()">
-                    <span v-if="isGuessPending" class="spinner" aria-hidden="true" /><UiIcon v-else name="pin" />
-                    {{ isGuessPending ? "Sending…" : "Confirm Guess" }}
-                    <UiIcon v-if="!isGuessPending" class="confirm-arrow" name="arrow" />
-                </button>
+                <div class="map-action-row">
+                    <span v-if="fullscreen" class="map-guesses-pill" :data-testid="mode === 'closed' ? undefined : 'guesses-left'">
+                        <span v-if="dotCount > 0 && dotCount <= 5" class="map-guess-dots" aria-hidden="true">
+                            <i v-for="dot in dotCount" :key="dot" :class="{ 'has-guess': dot <= lives }" />
+                        </span>
+                        <span class="sr-only">{{ lives }} {{ lives === 1 ? "guess left" : "guesses left" }}</span>
+                        <span aria-hidden="true"
+                            ><strong>{{ lives }}</strong
+                            ><span v-if="attempts > 0">/{{ attempts }}</span></span
+                        >
+                    </span>
+                    <button
+                        type="button"
+                        class="confirm-guess"
+                        :disabled="submitDisabled"
+                        :aria-busy="isGuessPending"
+                        :aria-label="isGuessPending ? 'Confirming guess' : 'Confirm Guess'"
+                        :aria-describedby="!fullscreen || error || mapConfirmed ? hintId : undefined"
+                        @click="game.submitGuess()"
+                    >
+                        <span v-if="isGuessPending" class="spinner" aria-hidden="true" />
+                        <UiIcon v-else-if="!submitDisabled" name="check" />
+                        <span>{{ fullscreen && submitDisabled && !isGuessPending ? hint : isGuessPending ? "Sending…" : "Confirm Guess" }}</span>
+                        <UiIcon v-if="!isGuessPending && !fullscreen" class="confirm-arrow" name="arrow" />
+                    </button>
+                </div>
             </footer>
         </div>
         <GameplayMobileGuessDock
             v-if="compact && mode === 'closed'"
             ref="mobileDock"
             :landscape="landscape"
+            :playing="playing"
             :lives="lives"
-            :attempts="lobbySettings?.conf.numAttempt ?? lives"
-            :pin="hasDraft ? currentMapPin : bestGuess?.location"
+            :attempts="attempts"
             :has-draft="hasDraft"
             :pending="isGuessPending"
             :place-disabled="!playing || !seconds || !lives || isGuessPending"
             :submit-disabled="submitDisabled"
+            :can-return-to-start="canReturnToStart"
             @open="emit('open')"
             @confirm="game.submitGuess()"
+            @return-to-start="emit('returnToStart')"
         />
         <button
             v-else-if="mode === 'closed'"
@@ -106,7 +135,6 @@
 
 <script setup lang="ts">
 import { getCountryViewport } from "~/utils/countryViewport";
-import { hasGuess } from "~/utils/resultUtils";
 
 const props = defineProps<{
     mode: "closed" | "compact" | "expanded";
@@ -117,22 +145,23 @@ const props = defineProps<{
     seconds: number;
     lives: number;
     confirmed: boolean;
+    canReturnToStart?: boolean;
 }>();
-const emit = defineEmits<{ open: []; close: []; expand: [] }>();
+const emit = defineEmits<{ open: []; close: []; expand: []; returnToStart: [] }>();
 const game = useGameMode();
 const google = useGoogleStore();
 const socket = useWebSocketStore();
 const request = useRequestState();
-const player = usePlayerInfo();
-const liveResults = useLiveResults();
 const { lobbySettings } = useLobbyState();
-const { currentMapPin, isGuessPending } = useBattleRoyaleState();
+const { isGuessPending } = useBattleRoyaleState();
 const owner = useNuxtApp().$gameRuntime.battleRoyale;
 const hintId = useId();
 const launcherCountId = useId();
 const surface = useTemplateRef("surface");
 const scoresHost = useTemplateRef("scoresHost");
-const timerHost = useTemplateRef("timerHost");
+const desktopTimerHost = useTemplateRef("desktopTimerHost");
+const mobileTimerHost = useTemplateRef("mobileTimerHost");
+const timerHost = computed(() => (props.fullscreen ? mobileTimerHost.value : desktopTimerHost.value));
 const mapLauncher = useTemplateRef("mapLauncher");
 const mobileDock = useTemplateRef<{ focusMap: () => void }>("mobileDock");
 const closeMap = useTemplateRef("closeMap");
@@ -150,10 +179,8 @@ defineExpose({
 const mapReady = computed(() => google.isMapInitialized && google.mapStatus === "ready");
 const connected = computed(() => socket.isConnected && socket.isOnline);
 const hasDraft = computed(() => !!owner.draftMarker.value);
-const bestGuess = computed(() => {
-    const result = liveResults.value[player.value.ID ?? ""];
-    return result && hasGuess(result) ? result : undefined;
-});
+const attempts = computed(() => lobbySettings.value?.conf.numAttempt ?? props.lives);
+const dotCount = computed(() => Math.max(props.lives, attempts.value));
 const error = computed(() => (props.playing && request.requestError?.command === "submit_location" ? request.requestError.message : ""));
 const submitDisabled = computed(() => !props.playing || !mapReady.value || !props.seconds || !connected.value || game.modeLogic.isSubmitDisabled || isGuessPending.value);
 const mapConfirmed = computed(() => props.fullscreen && props.confirmed && !hasDraft.value);
@@ -164,7 +191,7 @@ const hint = computed(() => {
     if (isGuessPending.value) return "Waiting for confirmation";
     if (mapConfirmed.value) return "Guess confirmed";
     if (!props.lives) return "No guesses left";
-    return hasDraft.value ? "Pin selected" : "Choose a spot on the map";
+    return hasDraft.value ? "Pin selected" : props.fullscreen ? "Tap map to place pin" : "Choose a spot on the map";
 });
 const zoom = (direction: number) => {
     if (mapReady.value) google.setMapZoom((google.getMap.getZoom() ?? 2) + direction);
@@ -281,38 +308,6 @@ const resetMap = () => {
     max-inline-size: 65%;
     aspect-ratio: 1;
 }
-.is-map-modal:not(.is-landscape-map) .guess-map-workspace {
-    --map-controls-bottom: 1.75rem;
-}
-.is-map-modal:not(.is-landscape-map) .guess-map-timer-host {
-    --map-timer-clearance: calc(var(--map-controls-bottom) + 3 * 44px + 1.25rem);
-    inset-inline: auto 0.5rem;
-    inline-size: calc(var(--timer-diameter) * 1.53);
-}
-.is-map-modal:not(.is-landscape-map).map-scores-open .guess-map-timer-host {
-    max-inline-size: calc(100% - var(--hud-left) + env(safe-area-inset-left) - var(--mobile-roster-width) - 1rem);
-}
-.is-map-modal:not(.is-landscape-map) .guess-map-timer-host :deep(.timer-waiting) {
-    inline-size: max-content;
-    max-inline-size: calc(100% + 1rem);
-    text-align: center;
-    white-space: normal;
-}
-.is-landscape-map .guess-map-timer-host {
-    --map-timer-clearance: 6rem;
-}
-@container (max-width: 40rem) {
-    .is-landscape-map.map-scores-open .guess-map-timer-host {
-        inset-inline-start: calc(var(--hud-left) - env(safe-area-inset-left) + var(--mobile-roster-width) + 0.5rem);
-        inset-inline-end: 9.4rem;
-    }
-}
-@container (max-width: 31rem) {
-    .is-landscape-map.map-scores-open .guess-map-timer-host {
-        --map-timer-inset: 3.75rem;
-        inset-inline-end: 0.75rem;
-    }
-}
 .guess-map-slot :deep(.game-map-host) {
     inline-size: 100%;
     block-size: 100%;
@@ -321,7 +316,7 @@ const resetMap = () => {
 }
 .guess-map-controls {
     position: absolute;
-    z-index: 1;
+    z-index: 2;
     inset-block-start: 0.5rem;
     inset-inline-end: 0.5rem;
     display: flex;
@@ -330,12 +325,11 @@ const resetMap = () => {
     gap: 0.38rem;
     pointer-events: auto;
 }
-.is-map-modal:not(.is-landscape-map) .guess-map-controls {
-    inset-block: auto var(--map-controls-bottom);
-}
 .guess-map-controls .hud-button {
-    background-color: #062923f2;
-    box-shadow: 0 3px 9px #001f1966;
+    background-color: #062923e8;
+    box-shadow: 0 3px 12px #001f1975;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 .map-zoom {
     display: flex;
@@ -354,6 +348,11 @@ const resetMap = () => {
     display: grid;
     gap: 0.36rem;
 }
+.map-action-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
 .guess-hint {
     padding-inline: 0.2rem;
     color: #cae5d5;
@@ -368,18 +367,19 @@ const resetMap = () => {
 }
 .confirm-guess {
     display: flex;
+    flex: 1;
     align-items: center;
     justify-content: center;
-    gap: 0.58rem;
+    gap: 0.52rem;
     min-inline-size: 0;
     min-block-size: 3rem;
-    padding: 0.5rem 0.72rem;
+    padding: 0.5rem 0.9rem;
     border: 1px solid var(--gb-scenic-action-border);
     border-radius: 0.83rem;
     background: var(--gb-scenic-action-fill);
     box-shadow: var(--gb-scenic-action-shadow);
     color: var(--gb-scenic-action-ink);
-    font: 850 clamp(0.9rem, 1.35vw, 1.15rem) / 1.15 var(--gb-font-display);
+    font: 850 clamp(0.88rem, 1.35vw, 1.1rem) / 1.15 var(--gb-font-display);
     white-space: nowrap;
 }
 .confirm-guess:disabled {
@@ -476,13 +476,14 @@ const resetMap = () => {
     max-inline-size: 100%;
     padding: 0.42rem 0.62rem;
     border: 1px solid #abde8f80;
-    border-radius: 0.65rem;
-    background: #092f25f5;
-    box-shadow: 0 3px 10px #001a1466;
+    border-radius: 999px;
+    background: #092f25f2;
+    box-shadow: 0 4px 14px #001a1475;
     color: #dfffb1;
     font-size: 0.78rem;
     font-weight: 700;
     line-height: 1.25;
+    backdrop-filter: blur(10px);
 }
 .guess-feedback .guess-error {
     border-color: #eb977d8c;
@@ -492,8 +493,9 @@ const resetMap = () => {
 .is-map-modal :deep(.connection-failure-pill) {
     pointer-events: auto;
 }
+
+/* ==================== FULL-BLEED MOBILE MAP MODAL ==================== */
 .guess-map-panel.is-compact-map {
-    --map-header-height: calc(3.25rem + env(safe-area-inset-top));
     inset: 0;
     inline-size: 100%;
     block-size: 100%;
@@ -501,137 +503,184 @@ const resetMap = () => {
 .is-compact-map .guess-map-frame {
     position: absolute;
     inset: 0;
+    display: block;
     inline-size: 100%;
     block-size: 100%;
     border: 0;
     border-radius: 0;
     background: #062722;
     padding: 0;
-    gap: 0;
     transition-property: none;
-    grid-template:
-        "header" var(--map-header-height)
-        "scores" auto
-        "map" minmax(0, 1fr)
-        "actions" auto / minmax(0, 1fr);
-}
-.is-compact-map .guess-map-header {
-    grid-area: header;
-    padding: env(safe-area-inset-top) var(--hud-right) 0 var(--hud-left);
-    background: linear-gradient(100deg, #0b3529, #05241f);
-    border-block-end: 1px solid #99d8a94d;
-}
-.is-compact-map .close-map {
-    visibility: visible;
-    transition-property: none;
-}
-.is-compact-map .guess-map-title {
-    border: 0;
-    padding: 0;
-    background: none;
-    font-size: 1rem;
-}
-.is-compact-map .guess-map-title .ui-icon,
-.is-compact-map .guess-count .ui-icon {
-    display: none;
-}
-.guess-map-scores {
-    position: relative;
-    z-index: 2;
-    grid-area: scores;
-    block-size: var(--mobile-score-height);
 }
 .is-compact-map .guess-map-workspace {
-    grid-area: map;
-    margin-inline: env(safe-area-inset-left) env(safe-area-inset-right);
+    position: absolute;
+    inset: 0;
     min-block-size: 0;
     border: 0;
     border-radius: 0;
 }
+.is-compact-map .guess-map-header {
+    position: absolute;
+    z-index: 6;
+    inset: max(0.45rem, env(safe-area-inset-top)) var(--hud-right) auto var(--hud-left);
+    display: flex;
+    align-items: center;
+    gap: 0.38rem;
+    pointer-events: none;
+}
+.is-compact-map .close-map {
+    visibility: visible;
+    pointer-events: auto;
+    min-inline-size: 42px;
+    min-block-size: 42px;
+    border-radius: 999px !important;
+    border-color: #b6efa35a !important;
+    background: linear-gradient(140deg, #09322ae0, #051f1be8) !important;
+    box-shadow:
+        0 5px 16px #0016117a,
+        inset 0 1px #dff9cf24;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition-property: none;
+}
+.map-floating-timer {
+    flex: none;
+    pointer-events: auto;
+}
+.guess-map-scores {
+    position: static;
+    flex: 1;
+    min-inline-size: 0;
+    pointer-events: none;
+}
+.is-compact-map .guess-map-controls {
+    inset: auto calc(var(--hud-right) - 0.35rem) calc(max(0.5rem, env(safe-area-inset-bottom)) + 4.2rem) auto;
+    padding: 0.35rem;
+    z-index: 5;
+}
 .is-compact-map .guess-map-actions {
-    grid-area: actions;
-    padding: 0.48rem var(--hud-right) max(0.5rem, env(safe-area-inset-bottom)) var(--hud-left);
-    border-block-start: 1px solid #a5daa245;
-    background: linear-gradient(130deg, #0d382d, #072923);
+    position: absolute;
+    z-index: 6;
+    inset: auto 0 0;
+    display: grid;
+    gap: 0.34rem;
+    padding: 0.65rem var(--hud-right) max(0.5rem, env(safe-area-inset-bottom)) var(--hud-left);
+    background: linear-gradient(0deg, #041b16cc 0%, #041b1670 68%, transparent 100%);
+    pointer-events: auto;
+}
+.is-compact-map .guess-hint {
+    justify-self: center;
+    padding: 0.32rem 0.72rem;
+    border: 1px solid #b6efa35a;
+    border-radius: 999px;
+    background: #082d25eb;
+    box-shadow: 0 4px 14px #0015107a;
+    backdrop-filter: blur(10px);
+    font-weight: 700;
+    pointer-events: auto;
+}
+.is-compact-map .guess-hint.inline-guess-error {
+    border-color: #ff99897a;
+    background: #3a2320f0;
+}
+.is-compact-map .map-action-row {
+    justify-content: space-between;
+    gap: 0.48rem;
+}
+.map-guesses-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-block-size: 46px;
+    padding: 0.25rem 0.78rem;
+    border: 1px solid #b6efa35a;
+    border-radius: 999px;
+    background: linear-gradient(140deg, #09322ae0, #051f1be8);
+    box-shadow:
+        0 6px 20px #0016117a,
+        inset 0 1px #dff9cf24;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #e8f7e3;
+    font-size: 0.78rem;
+    font-weight: 760;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    pointer-events: auto;
+}
+.map-guesses-pill strong {
+    color: #f6fff0;
+    font-weight: 850;
+}
+.map-guesses-pill span > span {
+    color: #a9cbb9;
+    font-weight: 650;
+}
+.map-guess-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.22rem;
+}
+.map-guess-dots i {
+    inline-size: 0.45rem;
+    block-size: 0.45rem;
+    border-radius: 50%;
+    border: 1px solid #b6efa350;
+    background: #88be7e38;
+}
+.map-guess-dots .has-guess {
+    border-color: #f3ffd6;
+    background: #d5fa86;
+    box-shadow: 0 0 6px #cbfd7388;
 }
 .is-compact-map .confirm-guess {
-    min-block-size: 3.25rem;
+    max-inline-size: 16.5rem;
+    min-block-size: 48px;
+    border-radius: 999px;
+    pointer-events: auto;
+}
+.is-compact-map .confirm-guess:disabled {
+    border-color: #b6efa352;
+    background: linear-gradient(140deg, #0a312ae0, #051e1ae8);
+    box-shadow: 0 6px 18px #00161170;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: #cde3d5;
+    font-size: 0.84rem;
+    font-weight: 740;
 }
 .is-compact-map.map-closed .guess-feedback {
-    inset: auto var(--hud-right) var(--mobile-notice-bottom) var(--hud-left);
+    inset: auto var(--hud-right) calc(max(0.32rem, env(safe-area-inset-bottom)) + 3.6rem) var(--hud-left);
+    justify-items: center;
 }
 .is-compact-map.is-map-modal {
     z-index: 25;
 }
-.is-landscape-map.is-map-modal .guess-map-frame {
-    grid-template:
-        "header scores" var(--hud-header)
-        "map map" minmax(0, 1fr)
-        "actions actions" auto / auto minmax(0, 1fr);
+.is-landscape-map .guess-map-controls {
+    inset-block-end: calc(max(0.5rem, env(safe-area-inset-bottom)) + 4rem);
+    flex-direction: row;
+    align-items: center;
 }
-.is-landscape-map .guess-map-header {
-    position: relative;
-    gap: clamp(0.26rem, 1vw, 0.6rem);
-    padding-inline-end: 0.45rem;
+.is-landscape-map .map-zoom {
+    flex-direction: row;
 }
-.is-landscape-map .guess-map-header .guess-count {
-    margin-inline-start: 0;
+.is-landscape-map .map-zoom > :first-child {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+    border-end-start-radius: 0.72rem;
 }
-.is-landscape-map .guess-map-scores {
-    position: static;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    block-size: auto;
-    padding: env(safe-area-inset-top) var(--hud-right) 0 0;
-    border-block-end: 1px solid #99d8a94d;
-    background: #05241f;
+.is-landscape-map .map-zoom > :last-child {
+    margin: 0 0 0 -1px;
+    border-start-end-radius: 0.72rem;
+    border-end-start-radius: 0;
 }
-@media (max-width: 620px) {
-    .is-landscape-map .guess-map-title {
-        display: none;
-    }
+.is-landscape-map .map-guesses-pill {
+    min-block-size: 44px;
 }
-@media (orientation: landscape) {
-    .is-compact-map .guess-map-workspace {
-        margin-block-end: env(safe-area-inset-bottom);
-    }
-    .is-compact-map .guess-map-actions {
-        position: absolute;
-        grid-area: auto;
-        inset: auto var(--hud-right) max(1.96rem, calc(env(safe-area-inset-bottom) + 1.55rem)) auto;
-        z-index: 1;
-        display: flex;
-        align-items: center;
-        justify-content: end;
-        gap: 0.58rem;
-        max-inline-size: calc(100% - var(--hud-left) - var(--hud-right));
-        padding: 0.28rem;
-        border: 1px solid var(--hud-border);
-        border-radius: 0.92rem;
-        box-shadow: var(--hud-shadow);
-    }
-    .is-compact-map .guess-hint {
-        padding-inline: 0.48rem;
-    }
-    .is-compact-map .map-zoom {
-        flex-direction: row;
-    }
-    .is-compact-map .map-zoom > :first-child {
-        border-start-end-radius: 0;
-        border-end-end-radius: 0;
-        border-end-start-radius: 0.7rem;
-    }
-    .is-compact-map .map-zoom > :last-child {
-        margin: 0 0 0 -1px;
-        border-start-end-radius: 0.7rem;
-        border-end-start-radius: 0;
-    }
-    .is-compact-map .guess-map-controls {
-        inset-inline-end: 0.5rem;
-        flex-direction: row;
-    }
+.is-landscape-map .confirm-guess {
+    min-block-size: 44px;
 }
+
 .guess-map-slot :deep(.gameplay-guess-pin) {
     --pin-fill: var(--player-pin-color, #96ad9b);
     position: relative;

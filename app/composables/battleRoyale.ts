@@ -324,6 +324,16 @@ export const useBattleRoyaleStore = () => {
         currentMapPin.value = {} as Coordinates;
     };
 
+    const returnToStart = () => {
+        if (currentState.value !== GameState.PLAYING || !googleStore().isPanoramaInitialized) return;
+        const coords = searchedLocationCoords.value;
+        if (!validPin(coords)) return;
+        const panorama = googleStore().getPanorama;
+        panorama.setPosition(coords);
+        panorama.setPov({ heading: 270, pitch: 0 });
+        panorama.setZoom(0);
+    };
+
     const isSubmitDisabled = computed(() => {
         const owner = resources();
         if (currentState.value !== GameState.PLAYING || isGuessPending.value || owner.isRestoring.value) return true;
@@ -404,5 +414,6 @@ export const useBattleRoyaleStore = () => {
         processMapPin,
         submitGuess,
         acceptGuess,
+        returnToStart,
     });
 };

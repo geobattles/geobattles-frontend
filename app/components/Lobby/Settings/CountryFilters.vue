@@ -134,52 +134,58 @@ watch(
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    min-height: 44px;
-    min-width: 44px;
-    padding: 0.25rem 0.6rem;
+    gap: 0.28rem;
+    min-height: 34px;
+    min-width: 34px;
+    padding: 0.16rem 0.58rem;
     border: 1px solid var(--picker-line);
-    border-radius: 0.65rem;
-    background: linear-gradient(145deg, #92e6c41a, #082e2a);
+    border-radius: 999px;
+    background: #10372e;
     color: #e9faf4;
-    font-weight: 700;
-    font-size: 0.78rem;
+    font-weight: 740;
+    font-size: 0.72rem;
+    white-space: nowrap;
 }
 .picker-tool:enabled:hover,
 .filter-view button:enabled:hover,
 .filter-view button[aria-pressed="true"] {
-    border-color: #bcea946b;
-    background: #23523f;
+    border-color: #bcea9485;
+    background: #1f4f3d;
     color: #e6ffc9;
 }
 .picker-tool .ui-icon {
-    width: 1.05rem;
+    width: 0.88rem;
+    height: 0.88rem;
     flex: none;
 }
 .filter-trigger b {
-    min-width: 1.1rem;
-    padding: 0.04rem 0.2rem;
+    min-width: 1rem;
+    padding: 0.02rem 0.22rem;
     border-radius: 1rem;
     background: #c7f78d;
     color: #103424;
-    font: 750 0.68rem/1.4 var(--gb-font-display);
+    font: 760 0.65rem/1.3 var(--gb-font-display);
 }
 .filter-popover {
     position: fixed;
     inset: auto;
     margin: 0;
-    padding: 0.55rem;
+    padding: 0.5rem;
     overflow: auto;
     overscroll-behavior: contain;
-    border: 1px solid #81bca684;
-    border-radius: 0.85rem;
-    background: linear-gradient(145deg, #16423a, #092823 78%);
+    border: 1px solid #8ddbaf55;
+    border-radius: 0.95rem;
+    background: linear-gradient(155deg, #0b332af5, #05201bf8);
     color: #effbf7;
-    box-shadow: 0 12px 32px #0008;
+    box-shadow:
+        0 14px 36px #00130fc4,
+        inset 0 1px #e2ffd020;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
 }
 .filter-popover:popover-open {
     display: grid;
-    gap: 0.5rem;
+    gap: 0.42rem;
     animation: filter-in 150ms ease-out;
 }
 .filter-heading {
@@ -187,30 +193,42 @@ watch(
     align-items: center;
     justify-content: space-between;
     gap: 0.4rem;
-    padding-inline-start: 0.25rem;
+    padding-inline-start: 0.2rem;
+    font-size: 0.82rem;
 }
 .filter-heading .picker-tool {
+    min-width: 30px;
+    min-height: 30px;
+    width: 30px;
+    height: 30px;
     padding: 0;
+    border-radius: 50%;
 }
 .filter-view {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.3rem;
+    gap: 0.26rem;
+}
+.filter-view button {
+    min-height: 32px;
+    font-size: 0.71rem;
 }
 .filter-sort {
     display: grid;
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
-    gap: 0.6rem;
-    padding-inline-start: 0.25rem;
+    gap: 0.5rem;
+    padding-inline-start: 0.15rem;
     color: #c7ddd5;
-    font-size: 0.8rem;
+    font-size: 0.74rem;
 }
 .filter-sort select {
     width: 100%;
-    min-height: 44px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0.15rem 0.45rem;
     border-radius: 0.55rem;
-    font-size: 16px;
+    font-size: 0.78rem;
 }
 @keyframes filter-in {
     from {

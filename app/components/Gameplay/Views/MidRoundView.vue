@@ -424,25 +424,34 @@ const start = () => {
     color: var(--recap-muted);
 }
 .compact-recap {
-    --recap-gutter: clamp(0.38rem, 1.35vw, 0.8rem);
+    --recap-gutter: clamp(0.32rem, 1.15vw, 0.65rem);
 }
 .compact-recap .recap-header-inner {
-    min-height: 3.1rem;
-    gap: clamp(0.4rem, 1.65vw, 0.9rem);
+    min-height: 2.75rem;
+    gap: clamp(0.32rem, 1.3vw, 0.72rem);
 }
 .compact-recap .recap-brand {
-    font-size: clamp(0.96rem, 3.1vw, 1.28rem);
+    font-size: clamp(0.9rem, 2.7vw, 1.16rem);
+}
+.compact-recap .recap-control {
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+}
+.compact-recap .recap-controls :deep(.end-match-control) {
+    inline-size: 38px;
+    block-size: 38px;
+    border-radius: 999px;
 }
 .compact-recap .recap-layout {
-    grid-template-columns: minmax(0, 0.44fr) minmax(0, 0.56fr);
-    grid-template-rows: auto clamp(6.6rem, 27dvh, 16rem) auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 0.46fr) minmax(0, 0.54fr);
+    grid-template-rows: clamp(7rem, 29dvh, 16rem) auto minmax(0, 1fr) auto;
     grid-template-areas:
-        "title title"
         "map map"
         "metrics metrics"
         "standings standings"
         "powerups advance";
-    gap: clamp(0.32rem, 0.95dvh, 0.57rem);
+    gap: clamp(0.28rem, 0.8dvh, 0.48rem);
     background:
         linear-gradient(178deg, #052a22eb, #061e19fa),
         url("/images/atlas-relief.svg") center bottom / 42rem auto no-repeat;
@@ -455,36 +464,36 @@ const start = () => {
     grid-area: map;
 }
 .compact-recap .recap-overview h1 {
-    grid-area: title;
-    min-height: clamp(1.85rem, 4dvh, 2.55rem);
-    padding-inline: 0.65rem;
-    font-size: clamp(1.14rem, 3.9vw, 1.7rem);
+    @apply sr-only;
 }
 .compact-recap .round-metrics {
     grid-area: metrics;
-    padding: 0.28rem 0.12rem;
+    padding: 0.24rem 0.1rem;
+    border-radius: 0.72rem;
     background: linear-gradient(112deg, #164637, #082923 85%);
 }
 .compact-recap .round-metrics > div {
-    padding-inline: clamp(0.33rem, 1.45vw, 0.8rem);
+    padding-inline: clamp(0.3rem, 1.25vw, 0.68rem);
 }
 .compact-recap .round-metrics dt {
-    font-size: clamp(0.59rem, 1.75vw, 0.75rem);
+    font-size: clamp(0.56rem, 1.65vw, 0.7rem);
+    white-space: nowrap;
 }
 .compact-recap .round-metrics dd {
-    font-size: clamp(0.88rem, 3.05vw, 1.28rem);
+    font-size: clamp(0.84rem, 2.8vw, 1.15rem);
+    line-height: 1.15;
 }
 .compact-recap .recap-standings {
     grid-area: standings;
 }
 .compact-recap .recap-powerups {
     grid-area: powerups;
-    align-self: start;
+    align-self: stretch;
 }
 .compact-recap .recap-footer {
     grid-area: advance;
     grid-template-rows: minmax(44px, auto);
-    align-self: start;
+    align-self: stretch;
 }
 .compact-recap .recap-layout:not(:has(.recap-powerups)) .recap-footer {
     grid-column: 1 / -1;
@@ -492,38 +501,41 @@ const start = () => {
 .compact-recap .next-round,
 .compact-recap .round-wait {
     min-height: 44px;
-    padding: 0.28rem 0.43rem;
-    font-size: clamp(0.84rem, 2.8vw, 1.14rem);
+    padding: 0.25rem 0.55rem;
+    font-size: clamp(0.82rem, 2.6vw, 1.04rem);
 }
 .compact-recap .next-round:disabled,
 .compact-recap .round-wait {
-    font-size: clamp(0.72rem, 2.15vw, 0.92rem);
+    font-size: clamp(0.7rem, 2vw, 0.88rem);
 }
 .landscape-recap .recap-layout {
-    grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr);
+    grid-template-columns: minmax(0, 0.44fr) minmax(0, 0.56fr);
     grid-template-rows: minmax(0, 1fr) auto auto;
     grid-template-areas:
         "map standings"
         "metrics standings"
         "powerups advance";
-}
-.landscape-recap .recap-overview h1 {
-    @apply sr-only;
+    gap: 0.32rem;
 }
 .landscape-recap .recap-header-inner {
-    min-height: 3rem;
+    min-height: 2.6rem;
+}
+.landscape-recap .recap-brand > span {
+    @apply sr-only;
 }
 .landscape-recap .round-metrics {
-    grid-template-columns: minmax(0, 0.29fr) minmax(0, 0.46fr) minmax(0, 0.25fr);
+    grid-template-columns: minmax(0, 0.34fr) minmax(0, 0.44fr) minmax(0, 0.22fr);
+    padding-block: 0.2rem;
 }
 .landscape-recap .round-metrics > div {
-    padding-inline: clamp(0.33rem, 0.8vw, 0.62rem);
+    padding-inline: clamp(0.28rem, 0.75vw, 0.55rem);
 }
 .landscape-recap .round-metrics dt {
-    font-size: clamp(0.58rem, 1.45vw, 0.72rem);
+    font-size: clamp(0.55rem, 1.3vw, 0.66rem);
+    white-space: nowrap;
 }
 .landscape-recap .round-metrics dd {
-    font-size: clamp(0.8rem, 2vw, 1.12rem);
+    font-size: clamp(0.76rem, 1.8vw, 1rem);
     overflow-wrap: normal;
 }
 @media (max-width: 480px) {

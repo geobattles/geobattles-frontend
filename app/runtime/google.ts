@@ -352,6 +352,16 @@ export const createGoogleRuntime = () => {
 
     const setMapZoom = (zoom: number) => getMap.value.setZoom(zoom);
 
+    const setPanoramaControlsLeft = (left: boolean) => {
+        const panorama = googlePanorama.value;
+        if (!panorama || typeof google === "undefined" || !google.maps?.ControlPosition) return;
+        const position = left ? google.maps.ControlPosition.LEFT_BOTTOM : google.maps.ControlPosition.RIGHT_BOTTOM;
+        panorama.setOptions({
+            panControlOptions: { position },
+            zoomControlOptions: { position },
+        });
+    };
+
     const fitPlayingMap = (map: google.maps.Map, bounds: CountryViewport | null) => {
         clearGameplayFitIdle();
         map.setOptions({ minZoom: bounds ? 0 : 2 });
@@ -502,6 +512,7 @@ export const createGoogleRuntime = () => {
 
         // Map functions
         setMapZoom,
+        setPanoramaControlsLeft,
         frameGameplay,
         resetGameplayViewport,
         cancelGameplayFrame,

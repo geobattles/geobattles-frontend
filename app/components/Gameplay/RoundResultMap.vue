@@ -196,9 +196,9 @@ const coordinates = computed(() => (props.answer ? `${formatCoordinate(props.ans
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.18rem 0.46rem;
+    gap: 0.14rem 0.4rem;
     min-width: 0;
-    padding: 0.32rem 0.5rem;
+    padding: 0.2rem 0.44rem;
     border-top: 1px solid #a2dfa53d;
     background: #0a3028;
 }
@@ -209,8 +209,8 @@ const coordinates = computed(() => (props.answer ? `${formatCoordinate(props.ans
     border: 0;
     background: transparent;
     box-shadow: none;
-    font-size: clamp(0.63rem, 1.76vw, 0.76rem);
-    line-height: 1.2;
+    font-size: clamp(0.6rem, 1.6vw, 0.72rem);
+    line-height: 1.18;
 }
 .compact-map .map-location {
     font-variant-numeric: tabular-nums;
@@ -251,6 +251,15 @@ const coordinates = computed(() => (props.answer ? `${formatCoordinate(props.ans
     z-index: 2;
     top: 0.32rem;
     left: 0.32rem;
+    min-width: 36px;
+    min-height: 34px;
+    padding-inline: 0.56rem;
+    border-radius: 999px;
+    background: #072821e0;
+    box-shadow: 0 3px 10px #0015107a;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-size: 0.72rem;
 }
 .expanded-result-map {
     position: fixed;
